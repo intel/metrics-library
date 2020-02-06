@@ -1,0 +1,11 @@
+https://cgit.freedesktop.org/mesa/mesa/tree
+
+Base commit:
+commit 7475d7727f172387ac3d069887f3095dcb884649
+Author: Emil Velikov <emil.velikov@collabora.com>
+Date:   Thu Jan 31 21:08:36 2019 +0000
+
+    docs: add sha256 checksums for 18.3.3
+
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+

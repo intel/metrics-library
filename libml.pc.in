@@ -1,0 +1,11 @@
+prefix=@DEST_DIR@
+libdir=@LIB_DIR@/
+libpath=${libdir}
+includedir=${prefix}/include
+
+Name: Metrics Library for Intel(R) Graphics Technology
+Description: To be added.
+Version: @LIB_VERSION@
+
+Libs: -L${libpath} @LIB@
+Cflags: -I${includedir}/metrics_library
