@@ -3,8 +3,8 @@ libdir=@LIB_DIR@/
 libpath=${libdir}
 includedir=${prefix}/include
 
-Name: Metrics Library for Intel(R) Graphics Technology
-Description: To be added.
+Name: Metrics Library for Intel(R) Metrics Discovery API
+Description: User mode driver helper library that provides access to GPU performance counters
 Version: @LIB_VERSION@
 
 Libs: -L${libpath} @LIB@
