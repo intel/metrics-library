@@ -76,8 +76,8 @@ namespace ML
             /// @return                 success if oa reports has been collected.
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode Collect(
-                TT::KernelInterface& kernel,
-                const uint32_t       endTimestamp )
+                const TT::KernelInterface& kernel,
+                const uint32_t             endTimestamp )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
@@ -216,8 +216,8 @@ namespace ML
             /// @return             operation status.
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode CollectReports(
-                TT::KernelInterface& kernel,
-                bool&                completed )
+                const TT::KernelInterface& kernel,
+                bool&                      completed )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 

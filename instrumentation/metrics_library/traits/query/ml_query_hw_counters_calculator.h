@@ -53,8 +53,8 @@ namespace ML
             TT::Layouts::HwCounters::Query::ReportApi&     m_ReportApi;
             TT::Layouts::OaBuffer::State&                  m_OaBufferState;
             TT::OaBuffer&                                  m_OaBuffer;
-            const TT::Layouts::Configuration::HwContextIds m_HwContextIds;
             const TT::KernelInterface&                     m_Kernel;
+            const TT::Layouts::Configuration::HwContextIds m_HwContextIds;
             const ConfigurationHandle_1_0&                 m_UserConfiguration;
             const bool                                     m_NullBegin;
             const uint64_t                                 m_GpuTimestampFrequency;
@@ -78,8 +78,8 @@ namespace ML
                 , m_ReportApi( reportApi )
                 , m_OaBufferState( GetOaBufferState() )
                 , m_OaBuffer( query.m_Context.m_OaBuffer )
-                , m_HwContextIds( m_Kernel.GetHwContextIds() )
                 , m_Kernel( query.m_Context.m_Kernel )
+                , m_HwContextIds( m_Kernel.GetHwContextIds() )
                 , m_UserConfiguration( query.m_UserConfiguration )
                 , m_NullBegin( m_Kernel.IsNullBeginOverride() )
                 , m_GpuTimestampFrequency( m_Kernel.GetGpuTimestampFrequency() )
@@ -288,15 +288,16 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Validate contexts.
-                const bool isSrmOag      = m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag;
-                const bool validBegin    = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
-                const bool validEnd      = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
-                const bool equalContexts = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
-                const bool validContexts = ( validBegin && validEnd && equalContexts ) || isSrmOag; // Compute command streamer always returns context id equals to zero.
+                // Compute command streamer always returns context id equals to zero.
+                // Also Linux may use zero context id.
+                const bool useNullContext = T::Queries::HwCountersPolicy::GetData::m_AllowEmptyContextId;
+                const bool isSrmOag       = m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag;
+                const bool validBegin     = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
+                const bool validEnd       = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
+                const bool equalContexts  = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
+                const bool validContexts  = ( validBegin && validEnd ) || isSrmOag || useNullContext;
 
-                log.Debug( "Valid contexts", validContexts );
-
-                return log.m_Result = validContexts
+                return log.m_Result = ( validContexts && equalContexts )
                     ? StatusCode::Success
                     : StatusCode::ReportNotReady;
             }

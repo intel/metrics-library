@@ -52,8 +52,17 @@ namespace ML
 
             struct Common
             {
-                static constexpr bool m_PatchGpuMemory  = false;
-                static constexpr bool m_TriggerOaReport = false;
+                static constexpr bool m_PatchGpuMemory = false;
+
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief  Checks oa triggered reports usage.
+                /// @param  kernel kernel interface.
+                /// @return        true if triggered oa reports can be used.
+                //////////////////////////////////////////////////////////////////////////
+                ML_INLINE static bool UseTriggeredOaReport( const TT::KernelInterface& /*kernel*/ )
+                {
+                    return false;
+                }
             };
 
             struct Create
@@ -68,6 +77,7 @@ namespace ML
 
             struct GetData
             {
+                static constexpr bool m_AllowEmptyContextId  = true;
                 static constexpr bool m_ResetOaBufferState   = false;
                 static constexpr bool m_IncludeAllHwContexts = false;
             };
@@ -98,6 +108,22 @@ namespace ML
         struct QueryHwCountersPolicyOneApiTrait : GEN11::QueryHwCountersPolicyOneApiTrait<T>
         {
             ML_DECLARE_TRAIT( QueryHwCountersPolicyOneApiTrait, GEN11 );
+
+            struct Common
+            {
+                static constexpr bool m_PatchGpuMemory = false;
+
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief  Checks oa triggered reports usage.
+                /// @param  kernel kernel interface.
+                /// @return        true if triggered oa reports can be used.
+                //////////////////////////////////////////////////////////////////////////
+                ML_INLINE static bool UseTriggeredOaReport( const TT::KernelInterface& kernel )
+                {
+                    static bool supported = kernel.IsOaTriggerSupported();
+                    return supported;
+                }
+            };
         };
     } // namespace GEN12
 } // namespace ML

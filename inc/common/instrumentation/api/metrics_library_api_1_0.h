@@ -101,6 +101,7 @@ enum class ObjectType : uint32_t
     // Query objects:
     QueryHwCounters                 = 20000,
     QueryPipelineTimestamps         = 20001,
+    QueryHwCountersCopyReports      = 20002,
 
     // Configuration objects:
     ConfigurationHwCountersOa       = 30000,
@@ -307,13 +308,30 @@ struct CommandBufferQueryHwCounters_1_0
 };
 
 //////////////////////////////////////////////////////////////////////////
+/// @brief Copy query hw counter reports command buffer data.
+//////////////////////////////////////////////////////////////////////////
+struct CommandBufferQueryHwCountersCopyReports_1_0
+{
+    QueryHandle_1_0    HandleSource;
+    QueryHandle_1_0    HandleTarget;
+
+    GpuMemory_1_0      AddressSource;
+    GpuMemory_1_0      AddressTarget;
+
+    uint32_t           SlotSource;
+    uint32_t           SlotTarget;
+
+    uint32_t           SlotCount;
+};
+
+//////////////////////////////////////////////////////////////////////////
 /// @brief Query pipeline timestamps command buffer data.
 //////////////////////////////////////////////////////////////////////////
 struct CommandBufferQueryPipelineTimestamps_1_0
 {
-    QueryHandle_1_0            Handle;
-    uint64_t                   EndTag;
-    bool                       Begin;
+    QueryHandle_1_0    Handle;
+    uint64_t           EndTag;
+    bool               Begin;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -356,11 +374,12 @@ struct CommandBufferData_1_0
 
     union
     {
-        CommandBufferQueryHwCounters_1_0             QueryHwCounters;
-        CommandBufferQueryPipelineTimestamps_1_0     QueryPipelineTimestamps;
-        CommandBufferOverride_1_0                    Override;
-        CommandBufferMarkerStreamUser_1_0            MarkerStreamUser;
-        CommandBufferMarkerStreamUserExtended_1_0    MarkerStreamUserExtended;
+        CommandBufferQueryHwCounters_1_0               QueryHwCounters;
+        CommandBufferQueryHwCountersCopyReports_1_0    QueryHwCountersCopyReports;
+        CommandBufferQueryPipelineTimestamps_1_0       QueryPipelineTimestamps;
+        CommandBufferOverride_1_0                      Override;
+        CommandBufferMarkerStreamUser_1_0              MarkerStreamUser;
+        CommandBufferMarkerStreamUserExtended_1_0      MarkerStreamUserExtended;
     };
 };
 

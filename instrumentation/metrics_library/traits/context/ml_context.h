@@ -52,8 +52,8 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        TT::KernelInterface&      m_Kernel;
-        TT::OaBuffer&             m_OaBuffer;
+        TT::KernelInterface       m_Kernel;
+        TT::OaBuffer              m_OaBuffer;
         const ClientHandle_1_0    m_ClientHandle;
         const ClientCallbacks_1_0 m_ClientCallbacks;
         ClientData_1_0            m_ClientData;
@@ -71,8 +71,8 @@ namespace ML
             const ClientType_1_0&        clientType,
             const ContextCreateData_1_0& createData )
             : Base( clientType )
-            , m_Kernel( T::KernelInterface::GetInstance() )
-            , m_OaBuffer( T::OaBuffer::GetInstance() )
+            , m_Kernel{}
+            , m_OaBuffer( m_Kernel )
             , m_ClientHandle( createData.ClientData->Handle )
             , m_ClientCallbacks{ *createData.ClientCallbacks }
             , m_ClientData{ *createData.ClientData }

@@ -179,6 +179,51 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief  Copies hw query gpu reports into another hw query.
+            ///         Useful to make a copy before reusing a given query.
+            /// @param  buffer      command buffer.
+            /// @param  data        hw counters copy data.
+            /// @return             operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode CopyReports(
+                CommandBuffer&                                     buffer,
+                const CommandBufferQueryHwCountersCopyReports_1_0& data )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_CHECK( IsValid( data.HandleSource ) );
+                ML_FUNCTION_CHECK( IsValid( data.HandleTarget ) );
+
+                // Obtain query objects.
+                auto& querySource = FromHandle( data.HandleSource );
+                auto& queryTarget = FromHandle( data.HandleTarget );
+
+                // Validate requested slot ranges.
+                ML_FUNCTION_CHECK( data.SlotSource + data.SlotCount <= querySource.m_Slots.size() );
+                ML_FUNCTION_CHECK( data.SlotTarget + data.SlotCount <= queryTarget.m_Slots.size() );
+
+                // Copy user configuration.
+                queryTarget.m_UserConfiguration = querySource.m_UserConfiguration;
+
+                // Initialize gpu memory for each target query heap slot.
+                // Normally it happens during query begin. But target query
+                // was never used.
+                for( uint32_t i = 0; i < data.SlotCount; ++i )
+                {
+                    queryTarget.SetGpuMemory( i + data.SlotTarget, data.AddressTarget );
+                }
+
+                // Copy query and return a status.
+                return log.m_Result = queryTarget.Copy(
+                           buffer,
+                           data.AddressSource.GpuAddress,
+                           data.AddressTarget.GpuAddress,
+                           data.SlotSource,
+                           data.SlotTarget,
+                           data.SlotCount );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns query reports.
             /// @return getData data requested by client.
             /// @return         operation status.
@@ -372,6 +417,35 @@ namespace ML
                 ML_FUNCTION_CHECK( WriteEndTag( buffer, gpuAddress, data.EndTag ) );
 
                 return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Copies gpu reports into another query.
+            /// @param  buffer         command buffer.
+            /// @param  source         source query.
+            /// @param  addressSource  source start memory address to copy from.
+            /// @param  addressTarget  target start memory adderess to copy into.
+            /// @param  slotSource     source query slot index.
+            /// @param  slotTarget     target query slot index.
+            /// @param  slotCount      slot count to copy.
+            /// @return                operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE StatusCode Copy(
+                CommandBuffer& buffer,
+                const uint64_t addressSource,
+                const uint64_t addressTarget,
+                const uint32_t slotSource,
+                const uint32_t slotTarget,
+                const uint32_t slotCount )
+            {
+                const uint32_t reportGpuSize = sizeof( TT::Layouts::HwCounters::Query::ReportGpu );
+
+                return T::GpuCommands::CopyData(
+                    buffer,
+                    addressSource + ( slotSource * reportGpuSize ),
+                    addressTarget + ( slotTarget * reportGpuSize ),
+                    slotCount * reportGpuSize );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -898,7 +972,7 @@ namespace ML
 
                 const bool useSrmOar         = buffer.m_Type == GpuCommandBufferType::Posh;
                 const bool useSrmOag         = m_Context.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute;
-                const bool useTriggerOag     = T::Queries::HwCountersPolicy::Common::m_TriggerOaReport;
+                const bool useTriggerOag     = T::Queries::HwCountersPolicy::Common::UseTriggeredOaReport( m_Context.m_Kernel );
                 auto&      useCollectingMode = m_Slots[slot].m_ReportCollectingMode;
 
                 // Use srm for a posh command streamer and store chosen collecting mode

@@ -74,7 +74,7 @@ namespace ML
                 // Load a value to A20 counter.
                 ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                     buffer,
-                    T::GpuRegisters::m_OaPerfA20,
+                    T::GpuRegisters::m_StreamMarkerRender,
                     data.Value ) );
 
                 // Trigger report with report reason 4.
@@ -128,14 +128,14 @@ namespace ML
                     case GpuCommandBufferType::Tile:
                         ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                             buffer,
-                            T::GpuRegisters::m_OaPerfA20,
+                            T::GpuRegisters::m_StreamMarkerRender,
                             data.Value ) );
                         break;
 
                     case GpuCommandBufferType::Posh:
                         ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                             buffer,
-                            T::GpuRegisters::m_OaPerfA19,
+                            T::GpuRegisters::m_StreamMarkerPosh,
                             data.Value ) );
                         break;
 
@@ -186,21 +186,21 @@ namespace ML
                     case GpuCommandBufferType::Tile:
                         ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                             buffer,
-                            T::GpuRegisters::m_OaPerfA20,
+                            T::GpuRegisters::m_StreamMarkerRender,
                             data.Value ) );
                         break;
 
                     case GpuCommandBufferType::Posh:
                         ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                             buffer,
-                            T::GpuRegisters::m_OaPerfA19,
+                            T::GpuRegisters::m_StreamMarkerPosh,
                             data.Value ) );
                         break;
 
                     case GpuCommandBufferType::Compute:
                         ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                             buffer,
-                            T::GpuRegisters::m_OaPerfA18,
+                            T::GpuRegisters::m_StreamMarkerCompute,
                             data.Value ) );
                         break;
 

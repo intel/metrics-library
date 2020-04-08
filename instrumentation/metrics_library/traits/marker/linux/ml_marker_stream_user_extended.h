@@ -70,24 +70,6 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::NotImplemented );
                 return log.m_Result;
             }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes marker stream user extended commands to a chosen
-            ///         graphics pipeline.
-            /// @param  buffer          target command buffer.
-            /// @param  data            marker stream user extended data.
-            /// @param  registerAddress register address.
-            /// @return                 operation status.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename CommandBuffer>
-            ML_INLINE static StatusCode WriteToPipeline(
-                CommandBuffer&                                   /*buffer*/,
-                const CommandBufferMarkerStreamUserExtended_1_0& /*data*/,
-                const uint32_t                                   /*registerAddress*/ )
-            {
-                ML_FUNCTION_LOG( StatusCode::NotImplemented );
-                return log.m_Result;
-            }
         };
     } // namespace BASE
 

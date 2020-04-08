@@ -69,7 +69,7 @@ namespace ML
             /// @brief Members.
             //////////////////////////////////////////////////////////////////////////
         private:
-            const TT::KernelInterface& m_KernelInterface;      // Kernel interface used to communicate with the kernel.
+            const TT::KernelInterface& m_Kernel;               // Kernel interface used to communicate with the kernel.
             KernelOaSet                m_KernelOaSet;          // Kernel oa set used to enable tbs.
             TbsReports                 m_Reports;              // Temporary buffer for tbs reports.
             int32_t                    m_StreamFileDescriptor; // Tbs stream file descriptor.
@@ -82,10 +82,10 @@ namespace ML
         public:
             //////////////////////////////////////////////////////////////////////////
             /// @brief TbsInterfaceTrait constructor.
-            /// @param kernelInterface reference to kernel interface object.
+            /// @param kernel   reference to kernel interface object.
             //////////////////////////////////////////////////////////////////////////
-            TbsInterfaceTrait( const TT::KernelInterface& kernelInterface )
-                : m_KernelInterface( kernelInterface )
+            TbsInterfaceTrait( const TT::KernelInterface& kernel )
+                : m_Kernel( kernel )
                 , m_KernelOaSet{}
                 , m_Reports{}
                 , m_StreamFileDescriptor( T::ConstantsOs::Tbs::m_Invalid )
@@ -109,7 +109,7 @@ namespace ML
             ML_INLINE bool Initialize()
             {
                 Constants::String::Path path          = {};
-                const uint32_t          drmCardNumber = m_KernelInterface.m_IoControl.m_DrmCardNumber;
+                const uint32_t          drmCardNumber = m_Kernel.m_IoControl.m_DrmCardNumber;
 
                 // File location that keeps activated (by metrics discovery) oa metrics set id.
                 snprintf( path, sizeof( path ), T::ConstantsOs::Tbs::m_ActiveMetricSetPath, drmCardNumber, T::ConstantsOs::Tbs::m_ActiveMetricSetGuid );
@@ -155,7 +155,7 @@ namespace ML
                     parameters.num_properties           = ML_ARRAY_SIZE( properties ) / 2;
                     parameters.properties_ptr           = (uintptr_t) properties;
 
-                    m_StreamFileDescriptor = m_KernelInterface.m_IoControl.Send( DRM_IOCTL_I915_PERF_OPEN, parameters );
+                    m_StreamFileDescriptor = m_Kernel.m_IoControl.Send( DRM_IOCTL_I915_PERF_OPEN, parameters );
                     log.Debug( "Tbs stream file descriptor", m_StreamFileDescriptor );
 
                     return log.m_Result = ( m_StreamFileDescriptor != T::ConstantsOs::Tbs::m_Invalid )
@@ -519,7 +519,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint64_t GetGpuTimestampPeriod() const
             {
-                return Constants::Time::m_SecondInNanoseconds / m_KernelInterface.GetGpuTimestampFrequency();
+                return Constants::Time::m_SecondInNanoseconds / m_Kernel.GetGpuTimestampFrequency();
             }
 
             //////////////////////////////////////////////////////////////////////////

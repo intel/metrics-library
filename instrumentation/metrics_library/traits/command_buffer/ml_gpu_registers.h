@@ -158,6 +158,11 @@ namespace ML
             static constexpr uint32_t m_OaPerfC6 = 0x2958;
             static constexpr uint32_t m_OaPerfC7 = 0x295C;
 
+            // Stream markers registers.
+            static constexpr uint32_t m_StreamMarkerRender  = m_OaPerfA20;
+            static constexpr uint32_t m_StreamMarkerPosh    = m_OaPerfA19;
+            static constexpr uint32_t m_StreamMarkerCompute = m_OaPerfA18;
+
             // Oa / Noa counters array.
             using OaCountersLow  = std::array<uint32_t, 36>;
             using OaCountersHigh = std::array<uint32_t, 32>;
@@ -1337,12 +1342,12 @@ namespace ML
         {
             ML_DECLARE_TRAIT( GpuRegistersTrait, GEN11 );
 
-            // Oar registers:
+            // Oar registers.
             static constexpr uint32_t m_OarContextControl = Base::m_OaContextControl;
             static constexpr uint32_t m_OarContextId      = Base::m_ContextId;
             static constexpr uint32_t m_OarGpuTicks       = Base::m_GpuTicks;
 
-            // Oag registers:
+            // Oag registers.
             static constexpr uint32_t m_OagStatus   = 0xDAFC;
             static constexpr uint32_t m_OagHead     = 0xDB00;
             static constexpr uint32_t m_OagTail     = 0xDB04;
@@ -1350,7 +1355,7 @@ namespace ML
             static constexpr uint32_t m_OagTrigger6 = 0xD934;
             static constexpr uint32_t m_OagGpuTicks = 0xDA90;
 
-            // Query registers:
+            // Query registers.
             static constexpr uint32_t m_OaStatus   = m_OagStatus;
             static constexpr uint32_t m_OaHead     = m_OagHead;
             static constexpr uint32_t m_OaTail     = m_OagTail;
@@ -1451,6 +1456,11 @@ namespace ML
             static constexpr uint32_t m_OagPerfC5 = 0xDAC8;
             static constexpr uint32_t m_OagPerfC6 = 0xDACC;
             static constexpr uint32_t m_OagPerfC7 = 0xDAD0;
+
+            // Stream markers registers.
+            static constexpr uint32_t m_StreamMarkerRender  = m_OagPerfA20;
+            static constexpr uint32_t m_StreamMarkerPosh    = m_OagPerfA19;
+            static constexpr uint32_t m_StreamMarkerCompute = m_OagPerfA18;
 
             // Oar / Noar / Oag / Noag counters array.
             using OarCountersLow  = std::array<uint32_t, 36>;

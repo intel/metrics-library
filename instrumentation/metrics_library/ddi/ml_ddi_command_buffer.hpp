@@ -63,6 +63,10 @@ namespace ML
                         log.m_Result = T::Queries::HwCounters::Write( buffer, data->Allocation, data->QueryHwCounters );
                         break;
 
+                    case ObjectType::QueryHwCountersCopyReports:
+                        log.m_Result = T::Queries::HwCounters::CopyReports( buffer, data->QueryHwCountersCopyReports );
+                        break;
+
                     case ObjectType::QueryPipelineTimestamps:
                         log.m_Result = T::Queries::PipelineTimestamps::Write( buffer, data->Allocation, *data );
                         break;
@@ -117,6 +121,10 @@ namespace ML
                 {
                     case ObjectType::QueryHwCounters:
                         log.m_Result = T::Queries::HwCounters::Write( buffer, data->Allocation, data->QueryHwCounters );
+                        break;
+
+                    case ObjectType::QueryHwCountersCopyReports:
+                        log.m_Result = T::Queries::HwCounters::CopyReports( buffer, data->QueryHwCountersCopyReports );
                         break;
 
                     case ObjectType::QueryPipelineTimestamps:

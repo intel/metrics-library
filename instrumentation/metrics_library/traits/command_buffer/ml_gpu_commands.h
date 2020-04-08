@@ -602,6 +602,38 @@ namespace ML
 
                 return buffer.Write( command, true );
             }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Copies a given data from one gpu memory address into another.
+            /// @param  buffer          target command buffer.
+            /// @param  addressSource   source memory address.
+            /// @param  addressTarget   target memory address.
+            /// @param  size            data size in bytes.
+            /// @return                 operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode CopyData(
+                CommandBuffer& buffer,
+                const uint64_t addressSource,
+                const uint64_t addressTarget,
+                const uint32_t size )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_ASSERT( ( size % sizeof( uint32_t ) ) == 0 );
+
+                TT::Layouts::GpuCommands::MI_COPY_MEM_MEM command = {};
+
+                for( uint32_t i = 0; i < size; i += sizeof( uint32_t ) )
+                {
+                    command.Init();
+                    command.SetSourceMemoryAddress( addressSource + i );
+                    command.SetDestinationMemoryAddress( addressTarget + i );
+
+                    ML_FUNCTION_CHECK( buffer.Write( command, true ) );
+                }
+
+                return log.m_Result;
+            }
         };
     } // namespace BASE
 

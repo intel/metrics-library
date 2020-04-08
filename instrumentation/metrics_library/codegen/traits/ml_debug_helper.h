@@ -663,6 +663,10 @@ namespace ML
                         output << "QueryHwCounters";
                         break;
 
+                    case ObjectType::QueryHwCountersCopyReports:
+                        output << "QueryHwCountersCopyReports";
+                        break;
+
                     case ObjectType::QueryPipelineTimestamps:
                         output << "QueryPipelineTimestamps";
                         break;
@@ -1511,50 +1515,54 @@ namespace ML
                 std::stringstream output;
                 output << "CommandBufferData_1_0:" << '\n';
                 IncrementIndentLevel();
-                output << MemberToString( "HandleContext                      ", value.HandleContext );
-                output << MemberToString( "CommandsType                       ", value.CommandsType );
-                output << MemberToString( "Type                               ", value.Type );
-                output << MemberToString( "Allocation                         ", value.Allocation );
-                output << MemberToString( "Data                               ", reinterpret_cast<uintptr_t>( value.Data ) );
-                output << MemberToString( "Size                               ", value.Size );
-                output << MemberToString( "Offset                             ", value.Offset );
+                output << MemberToString( "HandleContext                          ", value.HandleContext );
+                output << MemberToString( "CommandsType                           ", value.CommandsType );
+                output << MemberToString( "Type                                   ", value.Type );
+                output << MemberToString( "Allocation                             ", value.Allocation );
+                output << MemberToString( "Data                                   ", reinterpret_cast<uintptr_t>( value.Data ) );
+                output << MemberToString( "Size                                   ", value.Size );
+                output << MemberToString( "Offset                                 ", value.Offset );
 
                 switch( value.CommandsType )
                 {
                     case ObjectType::QueryHwCounters:
-                        output << MemberToString( "QueryHwCounters                    ", value.QueryHwCounters );
+                        output << MemberToString( "QueryHwCounters                        ", value.QueryHwCounters );
+                        break;
+
+                    case ObjectType::QueryHwCountersCopyReports:
+                        output << MemberToString( "QueryHwCountersCopyReports             ", value.QueryHwCountersCopyReports );
                         break;
 
                     case ObjectType::QueryPipelineTimestamps:
-                        output << MemberToString( "QueryPipelineTimestamps            ", value.QueryPipelineTimestamps );
+                        output << MemberToString( "QueryPipelineTimestamps                ", value.QueryPipelineTimestamps );
                         break;
 
                     case ObjectType::OverrideFlushCaches:
-                        output << MemberToString( "Override                           ", value.Override );
+                        output << MemberToString( "Override                               ", value.Override );
                         break;
 
                     case ObjectType::OverrideUser:
-                        output << MemberToString( "Override                           ", value.Override );
+                        output << MemberToString( "Override                               ", value.Override );
                         break;
 
                     case ObjectType::OverrideDisablePoshPrimitives:
-                        output << MemberToString( "Override                           ", value.Override );
+                        output << MemberToString( "Override                               ", value.Override );
                         break;
 
                     case ObjectType::OverridePoshQuery:
-                        output << MemberToString( "Override                           ", value.Override );
+                        output << MemberToString( "Override                               ", value.Override );
                         break;
 
                     case ObjectType::OverrideNullHardware:
-                        output << MemberToString( "Override                           ", value.Override );
+                        output << MemberToString( "Override                               ", value.Override );
                         break;
 
                     case ObjectType::MarkerStreamUser:
-                        output << MemberToString( "MarkerStreamUser                   ", value.MarkerStreamUser );
+                        output << MemberToString( "MarkerStreamUser                       ", value.MarkerStreamUser );
                         break;
 
                     case ObjectType::MarkerStreamUserExtended:
-                        output << MemberToString( "MarkerStreamUserExtended           ", value.MarkerStreamUserExtended );
+                        output << MemberToString( "MarkerStreamUserExtended               ", value.MarkerStreamUserExtended );
                         break;
 
                     default:
@@ -1594,6 +1602,27 @@ namespace ML
                 IncrementIndentLevel();
                 output << MemberToString( "Handle             ", value.Handle );
                 output << MemberToString( "Enable             ", value.Enable );
+                DecrementIndentLevel();
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts all structure members values to a string.
+            /// @param  value   a given structure to convert.
+            /// @return         converted all members values to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const CommandBufferQueryHwCountersCopyReports_1_0& value )
+            {
+                std::stringstream output;
+                output << "CommandBufferQueryHwCountersCopyReports_1_0:" << '\n';
+                IncrementIndentLevel();
+                output << MemberToString( "HandleSource             ", value.HandleSource );
+                output << MemberToString( "HandleTarget             ", value.HandleTarget );
+                output << MemberToString( "AddressSource            ", value.AddressSource );
+                output << MemberToString( "AddressTarget            ", value.AddressTarget );
+                output << MemberToString( "SlotSource               ", value.SlotSource );
+                output << MemberToString( "SlotTarget               ", value.SlotTarget );
+                output << MemberToString( "SlotCount                ", value.SlotCount );
                 DecrementIndentLevel();
                 return output.str();
             }
@@ -1760,6 +1789,10 @@ namespace ML
 
                 switch( value.Type )
                 {
+                    case ObjectType::QueryHwCountersCopyReports:
+                        output << MemberToString( "Query              ", value.Query );
+                        break;
+
                     case ObjectType::QueryHwCounters:
                         output << MemberToString( "Query              ", value.Query );
                         break;

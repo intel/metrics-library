@@ -205,6 +205,16 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns gpu memory address from gpu command.
+        /// @param  command gpu command.
+        /// @return         gpu memory address.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static uint64_t GetMemoryAddress( const TT::Layouts::GpuCommands::MI_COPY_MEM_MEM& /*command*/ )
+        {
+            return 0;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Calls gpu memory patch callback.
         /// @param  handle          allocation info.
         /// @param  memoryOffset    gpu memory offset.

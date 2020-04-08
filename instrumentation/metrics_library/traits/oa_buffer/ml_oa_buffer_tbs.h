@@ -52,9 +52,10 @@ namespace ML
         public:
             //////////////////////////////////////////////////////////////////////////
             /// @brief OaBufferTbsTrait constructor.
+            /// @param kernel   kernel interface.
             //////////////////////////////////////////////////////////////////////////
-            OaBufferTbsTrait()
-                : m_Kernel( T::KernelInterface::GetInstance() )
+            OaBufferTbsTrait( TT::KernelInterface& kernel )
+                : m_Kernel( kernel )
                 , m_TbsContainer( nullptr )
                 , m_ReferenceCounter( 0 )
             {
@@ -67,16 +68,6 @@ namespace ML
             ML_INLINE static const std::string GetDescription()
             {
                 return "OaBufferTbsTrait<Traits>";
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns one common oa buffer instance.
-            /// @return reference to oa buffer.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static TT::OaBuffer& GetInstance()
-            {
-                static TT::OaBuffer oaBuffer;
-                return oaBuffer;
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -133,8 +124,8 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief   Releases oa buffer.
-            /// @return  operation status.
+            /// @brief  Releases oa buffer.
+            /// @return operation status.
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode Release()
             {
@@ -205,7 +196,7 @@ namespace ML
             /// @param  address   address collected by oa head registers.
             /// @return           oa report index.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetReportIndex( const TT::Layouts::OaBuffer::HeadRegister address ) const
+            ML_INLINE uint32_t GetReportIndex( const TT::Layouts::OaBuffer::HeadRegister /*address*/ ) const
             {
                 ML_ASSERT_ALWAYS();
                 return 0;
@@ -216,7 +207,7 @@ namespace ML
             /// @param  address   address collected by oa tail registers.
             /// @return           oa report index.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetReportIndex( const TT::Layouts::OaBuffer::TailRegister address ) const
+            ML_INLINE uint32_t GetReportIndex( const TT::Layouts::OaBuffer::TailRegister /*address*/ ) const
             {
                 ML_ASSERT_ALWAYS();
                 return 0;
@@ -234,8 +225,8 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief   Returns oa reports count within oa buffer.
-            /// @return  oa reports count within oa buffer.
+            /// @brief  Returns oa reports count within oa buffer.
+            /// @return oa reports count within oa buffer.
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint32_t GetReportsCount() const
             {

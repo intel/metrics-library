@@ -67,20 +67,6 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns kernel interface. We use only one kernel interface for
-        ///         a whole library lifetime to keep a global oa buffer (a shared
-        ///         resource for all library contexts. We need to keep kernel
-        ///         communication even if all contexts has been destroyed.
-        /// @return kernel interface object.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static TT::KernelInterface& GetInstance()
-        {
-            static TT::KernelInterface kernelInterface;
-
-            return kernelInterface;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Initializes kernel interface.
         /// @param  clientData  initializing client data.
         /// @return             operation status.
@@ -318,6 +304,15 @@ namespace ML
             ML_FUNCTION_LOG( false );
 
             return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks oa triggered support in the kernel.
+        /// @return true if oa triggered reports are supported.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsOaTriggerSupported() const
+        {
+            return false;
         }
 
     private:
