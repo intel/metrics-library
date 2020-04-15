@@ -409,7 +409,7 @@ set_target_properties (${LIB_NAME} PROPERTIES VERSION ${LIB_VERSION} SOVERSION $
 
 # project specific target settings
 if (${PLATFORM} STREQUAL Windows) # windows
-    set_property (TARGET ${LIB_NAME} PROPERTY OUTPUT_NAME igd${LIB_NAME_PREFIX}${TARGET_ARCH})
+    set_property (TARGET ${LIB_NAME} PROPERTY OUTPUT_NAME igd${LIB_NAME_PREFIX})
     set (CMAKE_CXX_STANDARD_LIBRARIES "")
     set (CMAKE_C_STANDARD_LIBRARIES "")
     set_target_properties (${LIB_NAME} PROPERTIES VS_GLOBAL_DriverTargetPlatform Universal)
@@ -423,7 +423,7 @@ elseif (${PLATFORM} STREQUAL ghs) # ghs
 elseif (${PLATFORM} STREQUAL qnx) # qnx
     # nothing to do
 else () # linux
-    set_property (TARGET ${LIB_NAME} PROPERTY OUTPUT_NAME igd${LIB_NAME_PREFIX}${TARGET_ARCH})
+    set_property (TARGET ${LIB_NAME} PROPERTY OUTPUT_NAME igd${LIB_NAME_PREFIX})
 endif ()
 
 #################################################################################
@@ -674,6 +674,12 @@ elseif (${PLATFORM} STREQUAL linux) # linux
         COMPONENT metrics-library-devel
         NAMELINK_ONLY
     )
+
+    # workaround with 2 symlinks (e.g. libigdml64.so, libigdml.so) in devel package refering to libigdml.so.1 in regular package
+    ADD_CUSTOM_TARGET(link_target ALL COMMAND ${CMAKE_COMMAND} -E create_symlink "libigdml.so.${LIB_MAJOR_VERSION}" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libigdml${TARGET_ARCH}.so")
+    install(FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libigdml${TARGET_ARCH}.so"
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${CPACK_PACKAGE_ARCHITECTURE}-linux-gnu
+        COMPONENT metrics-library-devel)
 
     # software package generator
     if (LIB_CPACK_GENERATOR)
