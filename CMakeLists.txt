@@ -25,8 +25,9 @@ cmake_minimum_required (VERSION 3.5)
 #################################################################################
 set (PROJECT_NAME metrics_library)
 project (${PROJECT_NAME})
-set (LIB_NAME ${PROJECT_NAME})
-set (LIB_NAME_PREFIX ml)
+
+set (LIB igdml)
+set (LIB_NAME libigdml)
 
 set (SOME_COMMON_INCLUDES FALSE)
 
@@ -397,33 +398,33 @@ endif ()
 #################################################################################
 # add library
 if (${PLATFORM} STREQUAL ghs) # ghs
-    add_library (${LIB_NAME} STATIC ${HEADERS} ${SOURCES})
+    add_library (${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
 elseif (${PLATFORM} STREQUAL linux) # linux
-    add_library (${LIB_NAME} SHARED ${HEADERS} ${SOURCES})
+    add_library (${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES})
 else () # windows & qnx
-    add_library (${LIB_NAME} SHARED ${HEADERS} ${SOURCES})
+    add_library (${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES})
 endif ()
 
 # version
-set_target_properties (${LIB_NAME} PROPERTIES VERSION ${LIB_VERSION} SOVERSION ${LIB_MAJOR_VERSION})
+set_target_properties (${PROJECT_NAME} PROPERTIES VERSION ${LIB_VERSION} SOVERSION ${LIB_MAJOR_VERSION})
 
 # project specific target settings
 if (${PLATFORM} STREQUAL Windows) # windows
-    set_property (TARGET ${LIB_NAME} PROPERTY OUTPUT_NAME igd${LIB_NAME_PREFIX})
+    set_property (TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME ${LIB})
     set (CMAKE_CXX_STANDARD_LIBRARIES "")
     set (CMAKE_C_STANDARD_LIBRARIES "")
-    set_target_properties (${LIB_NAME} PROPERTIES VS_GLOBAL_DriverTargetPlatform Universal)
-    set_target_properties (${LIB_NAME} PROPERTIES VS_PLATFORM_TOOLSET "WindowsApplicationForDrivers10.0")
-    target_link_libraries (${LIB_NAME}
+    set_target_properties (${PROJECT_NAME} PROPERTIES VS_GLOBAL_DriverTargetPlatform Universal)
+    set_target_properties (${PROJECT_NAME} PROPERTIES VS_PLATFORM_TOOLSET "WindowsApplicationForDrivers10.0")
+    target_link_libraries (${PROJECT_NAME}
             onecoreuap.lib
             )
-    windows_apps_props_universal (${LIB_NAME})
+    windows_apps_props_universal (${PROJECT_NAME})
 elseif (${PLATFORM} STREQUAL ghs) # ghs
     # nothing to do
 elseif (${PLATFORM} STREQUAL qnx) # qnx
     # nothing to do
 else () # linux
-    set_property (TARGET ${LIB_NAME} PROPERTY OUTPUT_NAME igd${LIB_NAME_PREFIX})
+    set_property (TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME ${LIB})
 endif ()
 
 #################################################################################
@@ -455,7 +456,7 @@ set (COMMON_TARGET_INCLUDE_DIRECTORIES
     )
 
 if (${PLATFORM} STREQUAL Windows) # windows
-    target_include_directories (${LIB_NAME} PUBLIC
+    target_include_directories (${PROJECT_NAME} PUBLIC
         ${COMMON_TARGET_INCLUDE_DIRECTORIES}
         ${BS_DIR_INSTRUMENTATION}/utils/windows/inc
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/windows
@@ -464,7 +465,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         )
 else () # non-windows
     if (${PLATFORM} STREQUAL linux)
-    target_include_directories (${LIB_NAME} PUBLIC
+    target_include_directories (${PROJECT_NAME} PUBLIC
         ${COMMON_TARGET_INCLUDE_DIRECTORIES}
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux
@@ -496,7 +497,7 @@ endif ()
 # COMPILER FLAGS
 #################################################################################
 if (${PLATFORM} STREQUAL Windows) # windows
-    bs_set_extra_target_properties (${LIB_NAME}
+    bs_set_extra_target_properties (${PROJECT_NAME}
         USERMODE_DRIVER
         )
     set (COMMON_COMPILE_OPTIONS
@@ -510,7 +511,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         /wd4714     # marked as __forceinline not inlined
         )
     target_compile_options (
-        ${LIB_NAME} PRIVATE
+        ${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Release>:
             ${COMMON_COMPILE_OPTIONS}
             /Ot     # favor fast code
@@ -530,7 +531,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
 else () # non-windows
     if (${PLATFORM} STREQUAL linux)
         target_compile_options (
-            ${LIB_NAME} PRIVATE
+            ${PROJECT_NAME} PRIVATE
             -Wall                # enables all compiler's warning messages
             -Werror              # treat warning as errors
             #-Wfatal-errors      # abort compilation on the first error occurred
@@ -592,7 +593,7 @@ endif ()
 if (${PLATFORM} STREQUAL linux)
     set (DRM_LIB_PATH drm)
     target_link_libraries (
-        ${PROJECT_NAME}     # ml
+        ${PROJECT_NAME}     # metrics_library
         ${DRM_LIB_PATH}     # drm
     )
 endif ()
@@ -601,36 +602,38 @@ endif ()
 # INSTALLER
 #################################################################################
 if (${PLATFORM} STREQUAL Windows) # windows
-    install (TARGETS ${LIB_NAME} RUNTIME
+    install (TARGETS ${PROJECT_NAME} RUNTIME
         DESTINATION Release/lh64
         CONFIGURATIONS Release
     )
 
-    install (TARGETS ${LIB_NAME} RUNTIME
+    install (TARGETS ${PROJECT_NAME} RUNTIME
         DESTINATION Release-Internal/lh64
         CONFIGURATIONS ReleaseInternal
     )
 
-    install (TARGETS ${LIB_NAME} RUNTIME
+    install (TARGETS ${PROJECT_NAME} RUNTIME
         DESTINATION Debug/lh64
         CONFIGURATIONS Debug
     )
 
-    install (FILES $<TARGET_PDB_FILE:${LIB_NAME}>
+    install (FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
         DESTINATION Release/lh64/pdb
         CONFIGURATIONS Release
     )
 
-    install (FILES $<TARGET_PDB_FILE:${LIB_NAME}>
+    install (FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
         DESTINATION Release-Internal/lh64/pdb
         CONFIGURATIONS ReleaseInternal
     )
 
-    install (FILES $<TARGET_PDB_FILE:${LIB_NAME}>
+    install (FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
         DESTINATION Debug/lh64/pdb
         CONFIGURATIONS Debug
     )
 elseif (${PLATFORM} STREQUAL linux) # linux
+    include(GNUInstallDirs)
+
     if (${TARGET_ARCH} STREQUAL 64)
         set (CPACK_PACKAGE_ARCHITECTURE        "x86_64")
         set (CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
@@ -642,43 +645,39 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     endif ()
 
     # pkg-config
-    set (PC_FILE lib${LIB_NAME_PREFIX}.pc)
+    set (PC_FILE ${LIB_NAME}.pc)
     set (PC_IN ${PC_FILE}.in)
 
-    set (DEST_DIR ${CMAKE_INSTALL_PREFIX})
-    set (LIB -l${PROJECT_NAME})
-
-    set (LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib/${CPACK_PACKAGE_ARCHITECTURE}-linux-gnu)
     configure_file (${PC_IN} ${CMAKE_BINARY_DIR}/${PC_FILE} @ONLY)
 
     install (FILES ${CMAKE_BINARY_DIR}/${PC_FILE}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${CPACK_PACKAGE_ARCHITECTURE}-linux-gnu/pkgconfig
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
         COMPONENT metrics-library-pkgconfig
     )
 
     # header
     install (FILES ${API_HEADER_LOCATION}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         COMPONENT metrics-library-devel
     )
 
     # library
-    install (TARGETS ${LIB_NAME}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${CPACK_PACKAGE_ARCHITECTURE}-linux-gnu
+    install (TARGETS ${PROJECT_NAME}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT metrics-library
         NAMELINK_SKIP
     )
 
-    install (TARGETS ${LIB_NAME}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${CPACK_PACKAGE_ARCHITECTURE}-linux-gnu
+    install (TARGETS ${PROJECT_NAME}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT metrics-library-devel
         NAMELINK_ONLY
     )
 
     # workaround with 2 symlinks (e.g. libigdml64.so, libigdml.so) in devel package refering to libigdml.so.1 in regular package
-    ADD_CUSTOM_TARGET(link_target ALL COMMAND ${CMAKE_COMMAND} -E create_symlink "libigdml.so.${LIB_MAJOR_VERSION}" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libigdml${TARGET_ARCH}.so")
-    install(FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libigdml${TARGET_ARCH}.so"
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${CPACK_PACKAGE_ARCHITECTURE}-linux-gnu
+    ADD_CUSTOM_TARGET(link_target ALL COMMAND ${CMAKE_COMMAND} -E create_symlink "${LIB_NAME}.so.${LIB_MAJOR_VERSION}" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${LIB_NAME}${TARGET_ARCH}.so")
+    install(FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${LIB_NAME}${TARGET_ARCH}.so"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT metrics-library-devel)
 
     # software package generator
@@ -741,7 +740,7 @@ endif ()
 # CODING STANDARD
 #################################################################################
 #if (MSVC)
-#    add_custom_command (TARGET ${LIB_NAME}
+#    add_custom_command (TARGET ${PROJECT_NAME}
 #                       PRE_BUILD
 #                       COMMAND ${BS_DIR_INSTRUMENTATION}/metrics_library/CodingStandard.bat NoEdit --path ${BS_DIR_EXTERNAL_COMPONENTS}
 #                       COMMENT "Checking coding standards..."
@@ -758,7 +757,7 @@ message ("INFO: PLATFORM               = ${PLATFORM}")
 message ("INFO: HOST_ARCH              = ${HOST_ARCH}")
 message ("INFO: TARGET_ARCH            = ${TARGET_ARCH}")
 message ("INFO: DUMP_DIR               = ${DUMP_DIR}")
-message ("INFO: LIB_INSTALL_DIR        = ${LIB_DIR}")
+message ("INFO: LIB_INSTALL_DIR        = ${CMAKE_INSTALL_FULL_LIBDIR}")
 message ("INFO: LIBDRM_SRC             = ${LIBDRM_SRC}")
 message ("INFO: DRM_LIB_PATH           = ${DRM_LIB_PATH}")
 message ("INFO: BS_DIR_INSTRUMENTATION = ${BS_DIR_INSTRUMENTATION}")
