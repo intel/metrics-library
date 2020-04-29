@@ -61,6 +61,7 @@ namespace ML
             static constexpr uint32_t m_OaStatus             = 0x2B08;
             static constexpr uint32_t m_OaHead               = 0x2B0C;
             static constexpr uint32_t m_OaTail               = 0x2B10;
+            static constexpr uint32_t m_OaBuffer             = 0x2B14;
             static constexpr uint32_t m_GpCounter            = 0x91b8;
             static constexpr uint32_t m_OaTrigger2           = 0x2744;
             static constexpr uint32_t m_OaTrigger6           = 0x2754;
@@ -1348,6 +1349,7 @@ namespace ML
             static constexpr uint32_t m_OarGpuTicks       = Base::m_GpuTicks;
 
             // Oag registers.
+            static constexpr uint32_t m_OagBuffer   = 0xDB08;
             static constexpr uint32_t m_OagStatus   = 0xDAFC;
             static constexpr uint32_t m_OagHead     = 0xDB00;
             static constexpr uint32_t m_OagTail     = 0xDB04;
@@ -1356,6 +1358,7 @@ namespace ML
             static constexpr uint32_t m_OagGpuTicks = 0xDA90;
 
             // Query registers.
+            static constexpr uint32_t m_OaBuffer   = m_OagBuffer;
             static constexpr uint32_t m_OaStatus   = m_OagStatus;
             static constexpr uint32_t m_OaHead     = m_OagHead;
             static constexpr uint32_t m_OaTail     = m_OagTail;

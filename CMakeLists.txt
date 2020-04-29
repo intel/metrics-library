@@ -105,6 +105,12 @@ macro (ml_add_headers _platform)
         )
     set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
+    # marker traits headers
+    file (GLOB _TRAITS_HEADERS
+        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/${_platform}/*.h
+        )
+    set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
     # override traits headers
     file (GLOB _TRAITS_HEADERS
         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/${_platform}/*.h
@@ -114,6 +120,12 @@ macro (ml_add_headers _platform)
     # tools traits headers
     file (GLOB _TRAITS_HEADERS
         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/${_platform}/*.h
+        )
+    set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
+    # validation traits headers
+    file (GLOB _TRAITS_HEADERS
+        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/${_platform}/*.h
         )
     set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 endmacro ()
@@ -152,10 +164,22 @@ if (${PLATFORM} STREQUAL Windows) # windows
         ${BS_DIR_INSTRUMENTATION}/utils/windows/umd/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/windows/umd/iu_std.cpp
         )
+
+    # linux files in solution explorer
+    set (_LINUX_SOURCES_ON_WINDOWS
+        # debug logs framework
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
+        )
+
+    # linux files will not be being built
+    set_source_files_properties (
+        ${_LINUX_SOURCES_ON_WINDOWS} PROPERTIES HEADER_FILE_ONLY ON
+        )
+
+    set (_SOURCES ${_SOURCES} ${_LINUX_SOURCES_ON_WINDOWS})
 elseif (${PLATFORM} STREQUAL "linux")
     set (_SOURCES ${_SOURCES}
-        # external
-        ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/mesa/src/intel/common/gen_device_info.c
         # debug logs framework
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
@@ -174,7 +198,7 @@ set (_HEADERS ${_HEADERS}
     ${API_HEADER_LOCATION}
     )
 
-# instr utils common headers
+# instrumentation utils common headers
 file (GLOB _IU_COMMON_HEADERS
     ${BS_DIR_INSTRUMENTATION}/utils/common/inc/*.h
     )
@@ -288,19 +312,32 @@ file (GLOB _TRAITS_HEADERS
     )
 set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
+# validation traits headers
+file (GLOB _TRAITS_HEADERS
+    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/*.h
+    )
+set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
 # platform dependent
 if (${PLATFORM} STREQUAL Windows) # windows
-    # instr utils headers
+    # instrumentation utils headers
     file (GLOB _IU_OS_HEADERS
         ${BS_DIR_INSTRUMENTATION}/utils/windows/inc/*.h
         )
     set (_HEADERS ${_HEADERS} ${_IU_OS_HEADERS})
 
     ml_add_headers("windows")
+
     # add linux headers to solution explorer
     ml_add_headers("linux")
+
+    # linux instrumentation utils headers
+    file (GLOB _IU_LINUX_HEADERS
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/*.h
+        )
+    set (_HEADERS ${_HEADERS} ${_IU_LINUX_HEADERS})
 elseif (${PLATFORM} STREQUAL "linux") # linux
-    # instr utils headers
+    # instrumentation utils headers
     file (GLOB _IU_OS_HEADERS
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/*.h
         )
@@ -346,6 +383,7 @@ source_group (traits\\objects               ${BS_DIR_INSTRUMENTATION}/metrics_li
 source_group (traits\\override              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/.*h)
 source_group (traits\\query                 ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/.*h)
 source_group (traits\\tools                 ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/.*h)
+source_group (traits\\validation            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/.*h)
 
 # platform dependent
 if (${PLATFORM} STREQUAL Windows) # windows
@@ -353,8 +391,10 @@ if (${PLATFORM} STREQUAL Windows) # windows
     source_group (traits\\configuration\\windows    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/windows/.*h)
     source_group (traits\\constants\\windows        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/windows/.*h)
     source_group (traits\\kernel_interface\\windows ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/windows/.*h)
+    source_group (traits\\marker\\windows           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/windows/.*h)
     source_group (traits\\override\\windows         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/windows/.*h)
     source_group (traits\\tools\\windows            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/windows/.*h)
+    source_group (traits\\validation\\windows       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/windows/.*h)
     # debug logs framework
     source_group (iu FILES
         ${BS_DIR_INSTRUMENTATION}/utils/common/iu_debug.c
@@ -369,19 +409,25 @@ if (${PLATFORM} STREQUAL Windows) # windows
     source_group (traits\\configuration\\linux    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
     source_group (traits\\constants\\linux        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/linux/.*h)
     source_group (traits\\kernel_interface\\linux ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
+    source_group (traits\\marker\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
     source_group (traits\\override\\linux         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
     source_group (traits\\tools\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
+    source_group (traits\\validation\\linux       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/linux/.*h)
+    source_group (iu\\linux FILES
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
+    )
 else () # linux
-    source_group (library\\inc\\linux                                     ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/.*)
-    source_group (library\\inc\\linux\\external\\mesa\\include            ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/mesa/include/.*)
-    source_group (library\\inc\\linux\\external\\mesa\\src                ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/mesa/src/.*)
-    source_group (library\\inc\\linux\\external\\mesa\\src\\intel\\common ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/mesa/src/intel/common/.*)
-    source_group (library\\inc\\linux\\external\\drm                      ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm/.*)
-    source_group (traits\\configuration\\linux                            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
-    source_group (traits\\constants\\linux                                ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/linux/.*h)
-    source_group (traits\\kernel_interface\\linux                         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
-    source_group (traits\\override\\linux                                 ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
-    source_group (traits\\tools\\linux                                    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
+    source_group (library\\inc\\linux                ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/.*)
+    source_group (library\\inc\\linux\\external\\drm ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm/.*)
+    source_group (traits\\configuration\\linux       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
+    source_group (traits\\constants\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/linux/.*h)
+    source_group (traits\\kernel_interface\\linux    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
+    source_group (traits\\marker\\linux              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
+    source_group (traits\\override\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
+    source_group (traits\\tools\\linux               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
+    source_group (traits\\validation\\linux          ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/linux/.*h)
     # debug logs framework
     source_group (iu FILES
         ${BS_DIR_INSTRUMENTATION}/utils/common/iu_debug.c
@@ -453,6 +499,7 @@ set (COMMON_TARGET_INCLUDE_DIRECTORIES
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools
+    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation
     )
 
 if (${PLATFORM} STREQUAL Windows) # windows
@@ -469,9 +516,6 @@ else () # non-windows
         ${COMMON_TARGET_INCLUDE_DIRECTORIES}
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux
-        ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/mesa/include
-        ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/mesa/src
-        ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/mesa/src/intel/common
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm
         )
     endif ()

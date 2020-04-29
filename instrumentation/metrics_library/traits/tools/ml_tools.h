@@ -97,6 +97,58 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief Copies array.
+        /// @return target          target array.
+        /// @param  targetIndex     target start index.
+        /// @param  source          source array.
+        /// @param  sourceIndex     source start index.
+        /// @param  count           slots to copy.
+        /// @param  allowOverrun    allow to overrun if target_index + count >= target_size.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename TargetArray, typename SourceArray>
+        ML_INLINE static void ArrayCopy(
+            TargetArray&       target,
+            const uint32_t     targetIndex,
+            const SourceArray& source,
+            const uint32_t     sourceIndex,
+            const uint32_t     count,
+            const bool         allowOverrun )
+        {
+            const bool     overrun    = ( targetIndex + count ) >= target.size();
+            const uint32_t reportSize = sizeof( target[0] );
+
+            if( overrun == false )
+            {
+                auto targetMemory = &( target[targetIndex] );
+                auto sourceMemory = &( source[sourceIndex] );
+
+                const uint32_t targetSize = reportSize * target.size();
+                const uint32_t sourceSize = reportSize * count;
+
+                MemoryCopy( targetMemory, targetSize, sourceMemory, sourceSize );
+            }
+            else if( allowOverrun )
+            {
+                const uint32_t count0 = target.size() - targetIndex;
+                const uint32_t count1 = count - count0;
+
+                const uint32_t size0 = reportSize * count0;
+                const uint32_t size1 = reportSize * count1;
+
+                auto targetMemory0 = &( target[targetIndex] );
+                auto sourceMemory0 = &( source[0] );
+
+                auto targetMemory1 = &( target[0] );
+                auto sourceMemory1 = &( source[count0] );
+
+                MemoryCopy( targetMemory0, size0, sourceMemory0, size0 );
+                MemoryCopy( targetMemory1, size1, sourceMemory1, size1 );
+
+                ML_ASSERT( count1 < target.size() );
+            }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns masked value.
         /// @param  value   value to mask.
         /// @param  mask    mask.

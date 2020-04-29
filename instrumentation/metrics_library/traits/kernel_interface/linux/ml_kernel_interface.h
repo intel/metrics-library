@@ -41,19 +41,17 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        int32_t                m_DeviceId;
-        struct gen_device_info m_DeviceInformation;
-        TT::IoControl          m_IoControl;
-        TT::TbsInterface       m_TbsInterface;
+        int32_t          m_DeviceId;
+        TT::IoControl    m_IoControl;
+        TT::TbsInterface m_Tbs;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief KernelInterfaceTrait constructor.
         //////////////////////////////////////////////////////////////////////////
         KernelInterfaceTrait()
             : m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
-            , m_DeviceInformation{}
-            , m_IoControl{}
-            , m_TbsInterface( *this )
+            , m_IoControl( *this )
+            , m_Tbs( *this )
         {
         }
 
@@ -71,38 +69,14 @@ namespace ML
         /// @param  clientData  initializing client data.
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode Initialize( const ClientData_1_0& clientData )
+        ML_INLINE StatusCode Initialize( const ClientData_1_0& /*clientData*/ )
         {
-            const bool validIoControl = ML_SUCCESS( m_IoControl.Initialize( clientData ) );
-            const bool validDevice    = validIoControl && InitializeDevice() && m_TbsInterface.Initialize();
+            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_CHECK( m_IoControl.Initialize() );
+            ML_FUNCTION_CHECK( InitializeDevice() );
+            ML_FUNCTION_CHECK( m_Tbs.Initialize() );
 
-            return validDevice
-                ? StatusCode::Success
-                : StatusCode::UnknownGen;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Checks hw counters support from kernel side.
-        /// @return success if hw counters are supported.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode CheckInstrumentationSupport() const
-        {
-            return m_DeviceId != T::ConstantsOs::Drm::m_Invalid
-                ? StatusCode::Success
-                : StatusCode::NotInitialized;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns gen platform identification enumerator.
-        /// @return gen platform identification enumerator.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE ClientGen GetGenType() const
-        {
-            ML_FUNCTION_LOG( ClientGen::Unknown );
-
-            ML_ASSERT( m_DeviceId != T::ConstantsOs::Drm::m_Invalid );
-
-            return log.m_Result = T::ToolsOs::GetLibraryGenFormat( m_DeviceInformation );
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -111,9 +85,23 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint64_t GetGpuTimestampFrequency() const
         {
-            ML_ASSERT( m_DeviceInformation.timestamp_frequency );
+            ML_FUNCTION_LOG( StatusCode::Success );
 
-            return m_DeviceInformation.timestamp_frequency;
+            static uint64_t frequency = 0;
+
+            if( frequency == 0 )
+            {
+                frequency = m_IoControl.GetGpuTimestampFrequency();
+
+                if( frequency == 0 )
+                {
+                    ML_ASSERT_ALWAYS();
+                    frequency = 12000000; // Default, one tick per 83.333ns.
+                    log.Warning( "Predefined default gpu timestamp frequency used", frequency );
+                }
+            }
+
+            return frequency;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -151,7 +139,7 @@ namespace ML
         {
             ML_FUNCTION_LOG( false );
 
-            return log.m_Result = m_TbsInterface.IsEnabled();
+            return log.m_Result = m_Tbs.IsEnabled();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -175,7 +163,7 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success );
 
-            return log.m_Result = m_TbsInterface.Disable();
+            return log.m_Result = m_Tbs.Disable();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -192,7 +180,7 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success );
 
-            return log.m_Result = m_TbsInterface.GetOaReports( oaReports, count, completed );
+            return log.m_Result = m_Tbs.GetOaReports( oaReports, count, completed );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -205,7 +193,7 @@ namespace ML
             ML_FUNCTION_LOG( StatusCode::Success );
 
             // On linux oa metric set can be activated only through tbs.
-            return log.m_Result = m_TbsInterface.Enable( oaConfiguration.m_Id );
+            return log.m_Result = m_Tbs.Enable( oaConfiguration.m_Id );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -223,7 +211,7 @@ namespace ML
             //  1. Current activated metric set -> decrease reference counter.
             //  2. Unknown metric set           -> error.
             //  3. Reference counter == 0       -> disable tbs.
-            if( ML_FAIL( log.m_Result = m_TbsInterface.Release( oaConfiguration.m_Id ) ) )
+            if( ML_FAIL( log.m_Result = m_Tbs.Release( oaConfiguration.m_Id ) ) )
             {
                 log.Error( "Unable to release metric set", oaConfiguration.m_Id );
             }
@@ -241,7 +229,7 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success );
 
-            oaConfiguration.m_Id = m_TbsInterface.GetKernelOaSetId();
+            oaConfiguration.m_Id = m_IoControl.GetKernelMetricSet();
 
             ML_FUNCTION_CHECK( oaConfiguration.m_Id != T::ConstantsOs::Tbs::m_Invalid );
 
@@ -320,26 +308,18 @@ namespace ML
         /// @brief  Initializes device.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool InitializeDevice()
+        ML_INLINE StatusCode InitializeDevice()
         {
-            ML_FUNCTION_LOG( true );
+            ML_FUNCTION_LOG( StatusCode::Success );
 
             // Chipset.
-            if( ML_FAIL( m_IoControl.GetParameter( I915_PARAM_CHIPSET_ID, m_DeviceId ) ) )
+            if( ML_FAIL( m_IoControl.GetChipsetId( m_DeviceId ) ) )
             {
                 log.Error( "Unable to obtain chipset id from the kernel" );
-                return log.m_Result = false;
+                return log.m_Result = StatusCode::NotInitialized;
             }
 
-            // Device.
-            if( !gen_get_device_info( m_DeviceId, &m_DeviceInformation ) )
-            {
-                log.Error( "Unable to obtain device information" );
-                m_DeviceId          = T::ConstantsOs::Drm::m_Invalid;
-                return log.m_Result = false;
-            }
-
-            return log.m_Result;
+            return log.m_Result = ML_STATUS( m_DeviceId != T::ConstantsOs::Drm::m_Invalid );
         }
     };
 } // namespace ML

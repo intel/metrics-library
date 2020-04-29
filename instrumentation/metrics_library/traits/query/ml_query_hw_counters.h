@@ -84,6 +84,18 @@ namespace ML
                     m_ApiReportIndex  = 1;
                     m_ApiReportsCount = 1;
                 }
+
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief  Returns internal hw counters gpu report for a given slot.
+                /// @param  slot    layout slot.
+                /// @return         reference to internal hw counters layout data.
+                //////////////////////////////////////////////////////////////////////////
+                ML_INLINE TT::Layouts::HwCounters::Query::ReportGpu& GetReportGpu() const
+                {
+                    ML_ASSERT( m_GpuMemory.CpuAddress );
+
+                    return *static_cast<TT::Layouts::HwCounters::Query::ReportGpu*>( m_GpuMemory.CpuAddress );
+                }
             };
 
             //////////////////////////////////////////////////////////////////////////
@@ -235,18 +247,21 @@ namespace ML
                 ML_FUNCTION_CHECK( getData.DataSize % sizeof( TT::Layouts::HwCounters::Query::ReportApi ) == 0 );
                 ML_FUNCTION_CHECK( IsValid( getData.Handle ) );
 
-                TT::Queries::HwCounters&                   query   = FromHandle( getData.Handle );
-                TT::Layouts::HwCounters::Query::ReportApi* reports = static_cast<TT::Layouts::HwCounters::Query::ReportApi*>( getData.Data );
+                auto& query      = FromHandle( getData.Handle );
+                auto& kernel     = query.m_Context.m_Kernel;
+                auto  reportsApi = static_cast<TT::Layouts::HwCounters::Query::ReportApi*>( getData.Data );
 
-                if( query.m_Context.m_Kernel.IsNullQueryOverride() )
+                // Skip report calculation for null query.
+                if( kernel.IsNullQueryOverride() )
                 {
                     return log.m_Result;
                 }
 
+                // Calculate all api reports.
                 for( uint32_t i = 0; i < getData.SlotsCount; ++i )
                 {
                     const uint32_t                    slot       = getData.Slot + i;
-                    TT::Queries::HwCountersCalculator calculator = { slot, query, reports[i] };
+                    TT::Queries::HwCountersCalculator calculator = { slot, query, reportsApi[i] };
 
                     // Calculate query reports.
                     log.m_Result = calculator.GetReportApi();
@@ -308,29 +323,32 @@ namespace ML
                 const bool     begin )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_CHECK( m_Context.m_OaBuffer.IsValid() );
 
-                auto&          queryReport   = GetReportGpu( slot );
-                auto&          queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
-                const auto&    oaTail        = begin ? queryReport.m_OaTailBegin : queryReport.m_OaTailTriggerEnd;
-                const uint32_t oaTailIndex   = m_Context.m_OaBuffer.GetReportIndex( oaTail );
-                auto&          oaTailReport  = m_Context.m_OaBuffer.GetReport( oaTailIndex );
+                // Query data.
+                auto& queryReport   = GetReportGpu( slot );
+                auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
 
-                // Validate triggered report against reason and query timestamps.
-                const bool validReason = Derived().ValidateReportReason( oaTailReport.m_Header );
-                const bool validReport = validReason && ValidateTriggeredOaReport( queryReport, oaTailReport );
+                // Tail data.
+                int32_t tailIndex      = 0;
+                bool    tailIndexValid = ML_SUCCESS( m_Context.m_OaBuffer.GetTriggeredReportIndex( queryReport, begin, tailIndex ) );
+                auto    tailReportOa   = tailIndexValid ? m_Context.m_OaBuffer.GetReport( tailIndex ) : TT::Layouts::HwCounters::ReportOa{};
+                bool    tailValid      = tailIndexValid && ValidateTriggeredOaReport( queryReport, tailReportOa );
 
                 // Triggered report debug information.
-                log.Debug( "Triggered oa report:" );
-                log.Debug( "    begin  ", begin );
-                log.Debug( "    index  ", oaTailIndex );
-                log.Debug( "    reason ", oaTailReport.m_Header.m_ReportId.m_ReportReason );
-                log.Debug( "    valid  ", validReport );
-                log.Debug( "    report ", oaTailReport );
+                log.Debug( "Query report      " );
+                log.Debug( "  begin           ", begin );
+                log.Debug( "  timestamp begin ", queryReport.m_Begin.m_Oa.m_Header.m_Timestamp );
+                log.Debug( "  timestamp end   ", queryReport.m_End.m_Oa.m_Header.m_Timestamp );
+                log.Debug( "Tail report:      " );
+                log.Debug( "  index           ", tailIndex );
+                log.Debug( "  valid           ", tailValid );
+                log.Debug( "  report          ", tailReportOa );
 
                 // Recreate query report from triggered oa report or make it empty.
-                if( validReport )
+                if( tailValid )
                 {
-                    queryReportOa = oaTailReport;
+                    queryReportOa = tailReportOa;
                 }
                 else
                 {
@@ -339,7 +357,7 @@ namespace ML
                     log.Critical( "Unable to recreate report from triggered oa report" );
                 }
 
-                return validReport
+                return tailValid
                     ? StatusCode::Success
                     : StatusCode::ReportLost;
             }
@@ -456,9 +474,7 @@ namespace ML
             ML_INLINE TT::Layouts::HwCounters::Query::ReportGpu& GetReportGpu( const uint32_t slot ) const
             {
                 ML_ASSERT( slot < m_Slots.size() );
-                ML_ASSERT( m_Slots[slot].m_GpuMemory.CpuAddress );
-
-                return *static_cast<TT::Layouts::HwCounters::Query::ReportGpu*>( m_Slots[slot].m_GpuMemory.CpuAddress );
+                return m_Slots[slot].GetReportGpu();
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -793,7 +809,7 @@ namespace ML
                 const uint64_t address,
                 const uint64_t endTag )
             {
-                const uint32_t offset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_EndId );
+                const uint32_t offset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_EndTag );
 
                 return T::GpuCommands::StoreDataToMemory64(
                     buffer,
@@ -832,11 +848,12 @@ namespace ML
                 const TT::Layouts::HwCounters::ReportOa&         reportTriggered )
             {
                 ML_FUNCTION_LOG( false );
+                ML_FUNCTION_CHECK_ERROR( Derived().ValidateReportReason( reportTriggered.m_Header ), false );
 
-                const uint32_t queryThreshold   = 500;                                                          // Threshold in ticks. Used to check whether obtained triggered reports were generated
-                const uint32_t queryBegin       = reportQuery.m_Begin.m_Oa.m_Header.m_Timestamp;                // near the actual query begin/end execution. During tests, typical delta between timestamps
-                const uint32_t queryEnd         = reportQuery.m_End.m_Oa.m_Header.m_Timestamp + queryThreshold; // gathered around begin/end trigger reports and timestamps from actual trigger reports was equal to 1 tick.
-                const uint32_t triggerTimestamp = reportTriggered.m_Header.m_Timestamp;                         // With gpu timestamp period equal to 80ns, 500 ticks represent 40us.
+                const uint32_t queryThreshold   = 500;                                                            // Threshold in ticks. Used to check whether obtained triggered reports were generated
+                const uint32_t queryBegin       = reportQuery.m_Begin.m_Oa.m_Header.m_Timestamp - queryThreshold; // near the actual query begin/end execution. During tests, typical delta between timestamps
+                const uint32_t queryEnd         = reportQuery.m_End.m_Oa.m_Header.m_Timestamp + queryThreshold;   // gathered around begin/end trigger reports and timestamps from actual trigger reports was equal to 1 tick.
+                const uint32_t triggerTimestamp = reportTriggered.m_Header.m_Timestamp;                           // With gpu timestamp period equal to 80ns, 500 ticks represent 40us.
 
                 // 1st condition: normal case.
                 // Timestamp should be in range <begin, end>, example:

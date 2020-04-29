@@ -109,7 +109,7 @@ namespace ML
             ML_INLINE bool Initialize()
             {
                 Constants::String::Path path          = {};
-                const uint32_t          drmCardNumber = m_Kernel.m_IoControl.m_DrmCardNumber;
+                const uint32_t          drmCardNumber = m_Kernel.m_IoControl.m_DrmCard;
 
                 // File location that keeps activated (by metrics discovery) oa metrics set id.
                 snprintf( path, sizeof( path ), T::ConstantsOs::Tbs::m_ActiveMetricSetPath, drmCardNumber, T::ConstantsOs::Tbs::m_ActiveMetricSetGuid );
@@ -155,7 +155,7 @@ namespace ML
                     parameters.num_properties           = ML_ARRAY_SIZE( properties ) / 2;
                     parameters.properties_ptr           = (uintptr_t) properties;
 
-                    m_StreamFileDescriptor = m_Kernel.m_IoControl.Send( DRM_IOCTL_I915_PERF_OPEN, parameters );
+                    m_Kernel.m_IoControl.SendDrm( DRM_IOCTL_I915_PERF_OPEN, parameters, m_StreamFileDescriptor );
                     log.Debug( "Tbs stream file descriptor", m_StreamFileDescriptor );
 
                     return log.m_Result = ( m_StreamFileDescriptor != T::ConstantsOs::Tbs::m_Invalid )

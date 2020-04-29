@@ -91,8 +91,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         enum class Type : uint32_t
         {
-            Oa = 0,
-            ContextSwitch,
+            Oa = 0
         };
 
         ML_STRUCTURE_PACK_BEGIN( 4 );
@@ -122,6 +121,40 @@ namespace ML
         ML_STRUCTURE_PACK_BEGIN( 1 );
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief Base type to evaluate oa register value.
+        //////////////////////////////////////////////////////////////////////////
+        static constexpr uint32_t m_OaRegisterShift = 6;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Base type for oa buffer register object.
+        //////////////////////////////////////////////////////////////////////////
+        struct Register
+        {
+            union
+            {
+                uint32_t m_Value;
+
+                struct
+                {
+                    uint32_t m_MemorySelect             : ML_BITFIELD_BIT  (      0 );
+                    uint32_t m_DisableOverrunMode       : ML_BITFIELD_BIT  (      1 );
+                    uint32_t m_OaReportTriggerSelect    : ML_BITFIELD_BIT  (      2 );
+                    uint32_t m_TriggerReportBufferSize  : ML_BITFIELD_RANGE(  3,  5 );
+                    uint32_t m_ReportBufferOffset       : ML_BITFIELD_RANGE(  6, 31 );
+                } All;
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oa buffer allocation offset.
+            /// @return oa buffer allocation offset;
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint32_t GetAllocationOffset() const
+            {
+                return All.m_ReportBufferOffset << m_OaRegisterShift;
+            }
+        };
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief Base type for StatusRegister object.
         //////////////////////////////////////////////////////////////////////////
         struct StatusRegister
@@ -145,7 +178,7 @@ namespace ML
                     uint32_t m_StartTrigger1          : ML_BITFIELD_BIT( 21 );
                     uint32_t                          : ML_BITFIELD_RANGE( 22, 31 );
                 } All;
-            } Dw0;
+            };
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -163,7 +196,32 @@ namespace ML
                     uint32_t m_Head   : ML_BITFIELD_RANGE( 6, 31 ); // Virtual address of the internal trigger based buffer updated by software
                                                                     // after consuming from the report buffer. Updated by software.
                 } All;
-            } Dw0;
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oa head offset.
+            /// @return oa head offset.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint32_t GetOffset() const
+            {
+                return All.m_Head << m_OaRegisterShift;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Returns oa head report index.
+            /// @param base    oa buffer base address.
+            /// @return        oa head report index.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint32_t GetIndex( const Register base ) const
+            {
+                const uint32_t address    = base.GetAllocationOffset();
+                const uint32_t offset     = GetOffset();
+                const uint32_t reportSize = sizeof( TT::Layouts::HwCounters::ReportOa );
+
+                ML_ASSERT( address > 0 );
+                ML_ASSERT( address <= offset );
+                return ( offset - address ) / reportSize;
+            }
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -181,7 +239,32 @@ namespace ML
                     uint32_t m_Tail   : ML_BITFIELD_RANGE( 6, 31 ); // Virtual address of the internal trigger based buffer updated by software
                                                                     // after consuming from the report buffer. Updated by software.
                 } All;
-            } Dw0;
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oa head offset.
+            /// @return oa head offset.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint32_t GetOffset() const
+            {
+                return All.m_Tail << m_OaRegisterShift;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Returns oa head report index.
+            /// @param base    oa buffer base address.
+            /// @return        oa head report index.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint32_t GetIndex( const Register base ) const
+            {
+                const uint32_t address    = base.GetAllocationOffset();
+                const uint32_t offset     = GetOffset();
+                const uint32_t reportSize = sizeof( TT::Layouts::HwCounters::ReportOa );
+
+                ML_ASSERT( address > 0 );
+                ML_ASSERT( address <= offset );
+                return ( offset - address ) / reportSize;
+            }
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -200,7 +283,7 @@ namespace ML
                     uint32_t m_TimerPeriod    : ML_BITFIELD_RANGE( 2, 7 );    // Strobe Period = MinTimestampPeriod * 2^(TimerPeriod).
                     uint32_t                  : ML_BITFIELD_RANGE( 8, 31 );
                 } All;
-            } Dw0;
+            };
         };
 
         ML_STRUCTURE_PACK_END();

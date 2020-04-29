@@ -175,9 +175,7 @@ namespace ML
         ML_INLINE StatusCode Initialize()
         {
             ML_FUNCTION_LOG( StatusCode::Success );
-
             ML_FUNCTION_CHECK( m_Kernel.Initialize( m_ClientData ) );
-            ML_FUNCTION_CHECK( m_Kernel.CheckInstrumentationSupport() );
             ML_FUNCTION_CHECK( m_OaBuffer.Initialize() );
 
             return log.m_Result;

@@ -55,6 +55,13 @@ namespace ML
         {
             using ReportHeader = drm_i915_perf_record_header;
 
+            enum class Revision : uint32_t
+            {
+                Unsupported     = 0,
+                OaSupported     = 1,
+                OaConfiguration = 2,
+            };
+
             static constexpr bool        m_EnableOnCreateContext = false;
             static constexpr bool        m_EnableByForce         = false;
             static constexpr uint32_t    m_TimerPeriod           = 0xFFFFFFFF;

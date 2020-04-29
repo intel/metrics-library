@@ -188,9 +188,12 @@ namespace ML
                 {
                     struct
                     {
-                        uint32_t    m_ReportLost         : 1;
-                        uint32_t    m_ReportInconsistent : 1;
-                        uint32_t    m_Reserved           : 30;
+                        uint32_t    m_ReportLost                : 1;
+                        uint32_t    m_ReportInconsistent        : 1;
+                        uint32_t    m_ReportNotReady            : 1;
+                        uint32_t    m_ReportContextSwitchLost   : 1;
+                        uint32_t    m_ReportWithoutWorkload     : 1;
+                        uint32_t    m_Reserved                  : 27;
                     };
                 };
 
@@ -265,8 +268,8 @@ namespace ML
                     {
                         struct
                         {
-                            // Query end marker (64b) - the memory need to be 64b-aligned (used only in OGL).
-                            uint64_t    m_EndId;
+                            // Query end marker.
+                            uint64_t    m_EndTag;
 
                             // Command buffer split indicators.
                             uint32_t    m_DmaFenceIdBegin;

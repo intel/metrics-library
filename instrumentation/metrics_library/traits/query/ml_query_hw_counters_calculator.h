@@ -119,10 +119,6 @@ namespace ML
                     m_QuerySlot.Reset();
                 }
 
-                // Dump MiRpc begin/end reports.
-                log.Info( "Mirpc begin (0):", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, 0, FormatFlag::AdjustRight, m_ReportGpu.m_Begin.m_Oa, m_ReportGpu.m_Begin.m_Gp );
-                log.Info( "Mirpc end   (0):", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, 0, FormatFlag::AdjustRight, m_ReportGpu.m_End.m_Oa, m_ReportGpu.m_End.m_Gp );
-
                 // Handle each sampling mode:
                 switch( m_Query.m_GetDataMode )
                 {
@@ -141,6 +137,9 @@ namespace ML
 
                 // Validate gpu report consistency.
                 ValidateReportGpuStatus( log.m_Result );
+
+                // Print output api report.
+                log.Info( "Report api", m_ReportApi );
 
                 return log.m_Result;
             }
@@ -168,7 +167,7 @@ namespace ML
                         break;
 
                     case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
-                        ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailBegin.Dw0.All.m_Tail != m_ReportGpu.m_OaTailEnd.Dw0.All.m_Tail, StatusCode::ReportLost );
+                        ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailBegin.All.m_Tail != m_ReportGpu.m_OaTailEnd.All.m_Tail, StatusCode::ReportLost );
                         ML_FUNCTION_CHECK_ERROR( m_Query.UseTriggeredOaReport( m_QuerySlotIndex, true ), StatusCode::ReportLost );
                         ML_FUNCTION_CHECK_ERROR( m_Query.UseTriggeredOaReport( m_QuerySlotIndex, false ), StatusCode::ReportLost );
                         break;
@@ -191,14 +190,6 @@ namespace ML
             {
                 ML_FUNCTION_LOG( true );
 
-                // Print out gpu report to validate.
-                log.Debug( "Begin oa     ", m_ReportGpu.m_Begin.m_Oa );
-                log.Debug( "End   oa     ", m_ReportGpu.m_End.m_Oa );
-                log.Debug( "Begin fence  ", m_ReportGpu.m_DmaFenceIdBegin );
-                log.Debug( "End   fence  ", m_ReportGpu.m_DmaFenceIdEnd );
-                log.Debug( "End   id     ", m_ReportGpu.m_EndId );
-                log.Debug( "User  marker ", m_ReportGpu.m_MarkerUser );
-
                 // Validate gpu report.
                 status = ValidateReportGpu();
                 status = ML_SUCCESS( status ) ? PrepareReportGpu() : status;
@@ -208,8 +199,12 @@ namespace ML
                 log.m_Result = ValidateReportGpuStatus( status );
 
                 // Print debug information.
-                log.Debug( "Gpu report status   ", status );
-                log.Debug( "Gpu report is ready ", log.m_Result );
+                log.Info( "Query begin ", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, 0, FormatFlag::AdjustRight, m_ReportGpu.m_Begin.m_Oa, m_ReportGpu.m_Begin.m_Gp );
+                log.Info( "Query end   ", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, 0, FormatFlag::AdjustRight, m_ReportGpu.m_End.m_Oa, m_ReportGpu.m_End.m_Gp );
+                log.Info( "Fence       ", m_ReportGpu.m_DmaFenceIdBegin, m_ReportGpu.m_DmaFenceIdEnd );
+                log.Info( "End tag     ", m_ReportGpu.m_EndTag );
+                log.Info( "Marker      ", m_ReportGpu.m_MarkerUser );
+                log.Info( "Status      ", status );
 
                 return log.m_Result;
             }
@@ -217,14 +212,16 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Validate gpu report status.
             /// @return status   gpu report validation status.
-            /// @return          success if no issues occured.
+            /// @return          success if no issues occurred.
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE bool ValidateReportGpuStatus( StatusCode& status )
             {
                 ML_FUNCTION_LOG( true );
 
                 // Api report flags.
-                auto reportApiFlags = TT::Layouts::HwCounters::Query::ReportApiFlags{};
+                auto& flags                     = m_ReportApi.m_Flags;
+                flags                           = TT::Layouts::HwCounters::Query::ReportApiFlags{};
+                flags.m_ReportContextSwitchLost = !m_OaBuffer.IsValid();
 
                 switch( status )
                 {
@@ -235,19 +232,20 @@ namespace ML
                     case StatusCode::ReportNotReady:
                         // Gpu report is not ready.
                         // Ask user to repeat request.
-                        log.m_Result = false;
+                        flags.m_ReportNotReady = 1;
+                        log.m_Result           = false;
                         break;
 
                     case StatusCode::ReportLost:
-                        reportApiFlags.m_ReportLost = 1;                   // Mark report as lost.
-                        log.m_Result                = false;               // Do not process this gpu report.
-                        status                      = StatusCode::Success; // Returns success to avoid subsequent get data request.
+                        flags.m_ReportLost = 1;                   // Mark report as lost.
+                        log.m_Result       = false;               // Do not process this gpu report.
+                        status             = StatusCode::Success; // Returns success to avoid subsequent get data request.
                         break;
 
                     case StatusCode::ReportInconsistent:
-                        reportApiFlags.m_ReportInconsistent = 1;                   // Mark report as inconsistent.
-                        log.m_Result                        = false;               // Do not process this gpu report.
-                        status                              = StatusCode::Success; // Returns success to avoid subsequent get data request.
+                        flags.m_ReportInconsistent = 1;                   // Mark report as inconsistent.
+                        log.m_Result               = false;               // Do not process this gpu report.
+                        status                     = StatusCode::Success; // Returns success to avoid subsequent get data request.
                         break;
 
                     default:
@@ -255,9 +253,6 @@ namespace ML
                         log.m_Result = false;
                         break;
                 }
-
-                // Assign api report flags.
-                m_ReportApi.m_Flags = reportApiFlags;
 
                 return log.m_Result;
             }
@@ -270,11 +265,13 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success )
 
-                log.Debug( "Gpu report end tag:" );
-                log.Debug( "    obtained", m_ReportGpu.m_EndId );
-                log.Debug( "    expected", m_Query.m_EndTag );
+                const bool validTags = m_Query.m_EndTag == m_ReportGpu.m_EndTag;
 
-                return log.m_Result = ( m_Query.m_EndTag == m_ReportGpu.m_EndId )
+                log.Debug( "Valid tags   ", validTags );
+                log.Debug( "    obtained ", m_ReportGpu.m_EndTag );
+                log.Debug( "    expected ", m_Query.m_EndTag );
+
+                return log.m_Result = validTags
                     ? StatusCode::Success
                     : StatusCode::ReportNotReady;
             }
@@ -469,9 +466,6 @@ namespace ML
 
                     AdjustGpCounters( m_ReportGpu.m_Begin.m_Gp, m_ReportGpu.m_End.m_Gp, m_ReportApi );
                     AdjustUserCounters( m_ReportGpu.m_Begin.m_User, m_ReportGpu.m_End.m_User, m_ReportApi );
-
-                    // Debug information.
-                    log.Info( "Report api:", m_ReportApi );
                 }
 
                 return log.m_Result;
@@ -889,7 +883,7 @@ namespace ML
                 m_QuerySlot.Reset();
 
                 // Initialize oa buffer state.
-                if( m_OaBuffer.InitializeState( m_ReportGpu, m_OaBufferState ) == false )
+                if( ML_FAIL( m_OaBuffer.UpdateQuery( m_QuerySlot ) ) )
                 {
                     ML_ASSERT_ALWAYS();
                     return log.m_Result = StatusCode::NotInitialized;
@@ -898,7 +892,7 @@ namespace ML
                 // Check if oa buffer contains reports.
                 if( m_OaBuffer.IsEmpty() )
                 {
-                    log.Warning( "Oa buffer is empty." );
+                    log.Warning( "Oa buffer is not available." );
                 }
                 else
                 {
@@ -907,7 +901,7 @@ namespace ML
                     const uint32_t timestampEnd   = reportEnd->m_Header.m_Timestamp;
 
                     // Oa reports.
-                    const uint32_t oaReportsCount = m_OaBuffer.FindOaWindow( m_ReportGpu, m_OaBufferState );
+                    const uint32_t oaReportsCount = m_OaBuffer.FindOaWindow( m_OaBufferState );
 
                     for( uint32_t i = 0; i < oaReportsCount; ++i )
                     {

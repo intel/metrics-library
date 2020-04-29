@@ -107,8 +107,8 @@ struct TraitsDummy {};
 ///             return log.m_Result = false; -> will log "result = false"
 ///        }
 //////////////////////////////////////////////////////////////////////////
-#define ML_FUNCTION_LOG( value )                    using Result = decltype( value );                                                  \
-                                                    TT::template FunctionLog<Result> log( ML_FUNCTION_NAME, value );
+#define ML_FUNCTION_LOG( value )                    using FunctionResult = decltype( value );                                \
+                                                    TT::template FunctionLog<FunctionResult> log( ML_FUNCTION_NAME, value );
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Condition (bool/StatusCode) sanity check.
@@ -134,6 +134,7 @@ struct TraitsDummy {};
 //////////////////////////////////////////////////////////////////////////
 #define ML_SUCCESS( result )                        ( ( result ) == StatusCode::Success )
 #define ML_FAIL( result )                           ( ( result ) != StatusCode::Success )
+#define ML_STATUS( result )                         ( ( result ) ? StatusCode::Success : StatusCode::Failed )
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Size32 macro.

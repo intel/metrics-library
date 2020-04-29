@@ -1163,6 +1163,15 @@ namespace ML
             ML_INLINE static std::string ToString( const TT::Layouts::HwCounters::Query::ReportApi& userReport )
             {
                 std::stringstream output;
+                std::string       flags;
+
+                flags += userReport.m_Flags.m_ReportLost              ? " lost"              : "";
+                flags += userReport.m_Flags.m_ReportInconsistent      ? " inconsistent"      : "";
+                flags += userReport.m_Flags.m_ReportNotReady          ? " not_ready"         : "";
+                flags += userReport.m_Flags.m_ReportContextSwitchLost ? " no_context_switch" : "";
+                flags += userReport.m_Flags.m_ReportWithoutWorkload   ? " no_workload      " : "";
+                flags  = flags.length() ? flags : "none";
+
                 output << "QUERY: ";
                 output << std::hex << std::showbase;
                 output << "time = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_TotalTime;
@@ -1173,6 +1182,8 @@ namespace ML
                 output << ", noa1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[1];
                 output << ", noa2 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[2];
                 output << ", noa3 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[3];
+                output << ", mark = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_MarkerUser;
+                output << ", flags = " << flags;
                 output << "; ";
 
                 return output.str();
@@ -2277,8 +2288,9 @@ namespace ML
                 {
                     auto           value                 = unpackedValues.begin();
                     const uint32_t functionNameLength    = GetFunctionNameLength();
+                    const uint32_t functionNameLengthMax = Constants::Log::m_MaxFunctionNameLength;
                     const uint32_t functionNameAlignment = functionNameLength
-                        ? std::max<uint32_t>( functionNameLength, Constants::Log::m_MaxFunctionNameLength )
+                        ? std::max<uint32_t>( functionNameLength, functionNameLengthMax )
                         : 0;
                     const uint32_t messageLength         = static_cast<uint32_t>( value->size() ) + Constants::Log::m_IndentSize * indent + functionNameAlignment;
 

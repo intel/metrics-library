@@ -76,16 +76,13 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Initializes oa buffer state kept by hw counters query.
-            /// @param  reportGpu       query gpu report.
-            /// @param  oaBufferState   oa buffer state to initialize.
-            /// @return                 true if success.
+            /// @brief  Update oa buffer state kept by hw counters query.
+            /// @param  query   query instance.
+            /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE bool InitializeState(
-                const TT::Layouts::HwCounters::Query::ReportGpu& /*reportGpu*/,
-                TT::Layouts::OaBuffer::State& /*oaBufferState*/ ) const
+            ML_INLINE StatusCode UpdateQuery( TT::Queries::HwCounters::Slot& /*query*/ ) const
             {
-                return true;
+                return StatusCode::Success;
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -110,13 +107,10 @@ namespace ML
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Finds oa reports from oa buffer between query begin/end reports.
-            /// @param  reportGpu       query gpu report.
-            /// @param  oaBufferState   oa buffer state.
-            /// @return                 oa reports count between query begin/end.
+            /// @param  oaBufferState  oa buffer state.
+            /// @return                oa reports count between query begin/end.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t FindOaWindow(
-                const TT::Layouts::HwCounters::Query::ReportGpu& /*reportGpu*/,
-                TT::Layouts::OaBuffer::State& /*oaBufferState*/ ) const
+            ML_INLINE uint32_t FindOaWindow( const TT::Layouts::OaBuffer::State& /*oaBufferState*/ ) const
             {
                 return 0;
             }
@@ -132,25 +126,20 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns oa report index collected by oa head registers.
-            /// @param  address   address collected by oa head registers.
-            /// @return           oa report index.
+            /// @brief  Returns triggered oa report associated with query begin/end report.
+            /// @param  query   gpu report collected by query.
+            /// @param  begin   query begin/end.
+            /// @return index   oa tail index.
+            /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetReportIndex( const TT::Layouts::OaBuffer::HeadRegister /*address*/ ) const
+            ML_INLINE StatusCode GetTriggeredReportIndex(
+                const TT::Layouts::HwCounters::Query::ReportGpu& /*query*/,
+                const bool /*begin*/,
+                int32_t& /*index*/ )
             {
-                return 0;
+                ML_ASSERT_ALWAYS();
+                return StatusCode::Failed;
             }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns oa report index collected by oa tail registers.
-            /// @param  address   address collected by oa tail registers.
-            /// @return           oa report index.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetReportIndex( const TT::Layouts::OaBuffer::TailRegister /*address*/ ) const
-            {
-                return 0;
-            }
-
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Check whether oa buffer contains reports.
             /// @return true if oa buffer is empty.
@@ -168,17 +157,6 @@ namespace ML
             ML_INLINE uint32_t GetReportsCount() const
             {
                 ML_FUNCTION_LOG( uint32_t{ 0 } );
-                return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Collects oa reports from oa buffer.
-            /// @param  endTimestamp    collected reports older than endTimestamp
-            /// @return                 success if oa reports have been collected.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode CollectReports( const uint32_t /*endTimestamp*/ ) const
-            {
-                ML_FUNCTION_LOG( StatusCode::Success );
                 return log.m_Result;
             }
         };

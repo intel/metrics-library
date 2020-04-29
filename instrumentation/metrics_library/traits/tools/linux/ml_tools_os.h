@@ -106,48 +106,6 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Translates mesa device type into metrics library format.
-            /// @param  device  mesa device type.
-            /// @return         library gen type.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static ClientGen GetLibraryGenFormat( const gen_device_info& device )
-            {
-                ML_FUNCTION_LOG( ClientGen::Unknown );
-
-                if( device.is_skylake )
-                {
-                    log.m_Result = ClientGen::Gen9;
-                }
-                else if( device.is_kabylake )
-                {
-                    log.m_Result = ClientGen::Gen9;
-                }
-                else if( device.is_coffeelake )
-                {
-                    log.m_Result = ClientGen::Gen9;
-                }
-                else if( device.is_broxton )
-                {
-                    log.m_Result = ClientGen::Gen9LP;
-                }
-                else if( device.is_geminilake )
-                {
-                    log.m_Result = ClientGen::Gen9LP;
-                }
-                else if( device.is_cannonlake )
-                {
-                    log.m_Result = ClientGen::Gen10;
-                }
-                else
-                {
-                    TT::FunctionLog::Critical( "Unknown gpu gen." );
-                    ML_ASSERT_ALWAYS();
-                }
-
-                return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns a derived object from a given base object. Run-time
             ///         type information is disabled on Linux by driver, so
             ///         static_cast is used here.
