@@ -54,13 +54,11 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         TT::KernelInterface       m_Kernel;
         TT::OaBuffer              m_OaBuffer;
+        TT::ClientOptions         m_ClientOptions;
         const ClientHandle_1_0    m_ClientHandle;
         const ClientCallbacks_1_0 m_ClientCallbacks;
         ClientData_1_0            m_ClientData;
         int64_t                   m_OaConfigurationId;
-        bool                      m_PoshEnabled;
-        bool                      m_PtbrEnabled;
-        bool                      m_AsynchronousCompute;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief ContextTrait constructor.
@@ -73,39 +71,12 @@ namespace ML
             : Base( clientType )
             , m_Kernel{}
             , m_OaBuffer( m_Kernel )
+            , m_ClientOptions( *createData.ClientData )
             , m_ClientHandle( createData.ClientData->Handle )
             , m_ClientCallbacks{ *createData.ClientCallbacks }
             , m_ClientData{ *createData.ClientData }
             , m_OaConfigurationId( 0 )
-            , m_PoshEnabled( false )
-            , m_PtbrEnabled( false )
-            , m_AsynchronousCompute( false )
         {
-            // Copy client options from the pointer provided by the user.
-            if( m_ClientData.ClientOptions != nullptr )
-            {
-                for( uint32_t i = 0; i < m_ClientData.ClientOptionsCount; ++i )
-                {
-                    switch( m_ClientData.ClientOptions[i].Type )
-                    {
-                        case ClientOptionsType::Posh:
-                            m_PoshEnabled = m_ClientData.ClientOptions[i].Posh.Enabled;
-                            break;
-
-                        case ClientOptionsType::Ptbr:
-                            m_PtbrEnabled = m_ClientData.ClientOptions[i].Ptbr.Enabled;
-                            break;
-
-                        case ClientOptionsType::Compute:
-                            m_AsynchronousCompute = m_ClientData.ClientOptions[i].Compute.Asynchronous;
-                            break;
-
-                        default:
-                            ML_ASSERT_ALWAYS();
-                            break;
-                    }
-                }
-            }
         }
 
         //////////////////////////////////////////////////////////////////////////

@@ -535,6 +535,38 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const LinuxAdapterType value )
+            {
+                std::stringstream output;
+                output << "LinuxAdapterType"
+                       << "( ";
+
+                switch( value )
+                {
+                    case LinuxAdapterType::DrmFileDescriptor:
+                        output << "DrmFileDescriptor";
+                        break;
+
+                    case LinuxAdapterType::Last:
+                        output << "Last";
+                        break;
+
+                    default:
+                        output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
+                        output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
+                        break;
+                }
+
+                output << " )";
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts an enumerator to a string that contains the
+            ///         enumerator name.
+            /// @param  value   a given enumerator to convert.
+            /// @return         converted enumerator name to string.
+            //////////////////////////////////////////////////////////////////////////
             ML_INLINE static std::string ToString( const MemoryFlags value )
             {
                 std::stringstream output;
@@ -1343,11 +1375,28 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const ClientDataLinuxAdapter_1_0& value )
+            {
+                std::stringstream output;
+                output << "ClientDataLinuxAdapter_1_0:" << '\n';
+                IncrementIndentLevel();
+                output << MemberToString( "Type                         ", value.Type );
+                output << MemberToString( "DrmFileDescriptor            ", value.DrmFileDescriptor );
+                DecrementIndentLevel();
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts all structure members values to a string.
+            /// @param  value   a given structure to convert.
+            /// @return         converted all members values to string.
+            //////////////////////////////////////////////////////////////////////////
             ML_INLINE static std::string ToString( const ClientDataLinux_1_0& value )
             {
                 std::stringstream output;
                 output << "ClientDataLinux_1_0:" << '\n';
                 IncrementIndentLevel();
+                output << MemberToString( "Adapter            ", value.Adapter );
                 output << MemberToString( "Reserved           ", reinterpret_cast<uintptr_t>( value.Reserved ) );
                 DecrementIndentLevel();
                 return output.str();

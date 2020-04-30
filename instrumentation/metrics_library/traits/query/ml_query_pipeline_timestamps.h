@@ -355,7 +355,7 @@ namespace ML
                 auto& reportApi = *reinterpret_cast<TT::Layouts::PipelineTimestamps::ReportApi*>( getData.Data );
 
                 // Report index / count.
-                reportApi.m_ReportsCount = query.m_Context.m_PoshEnabled ? 2 : 1;
+                reportApi.m_ReportsCount = query.m_Context.m_ClientOptions.m_PoshEnabled ? 2 : 1;
                 query.m_ReportIndex      = ( ++query.m_ReportIndex ) % reportApi.m_ReportsCount;
 
                 // Return api report.

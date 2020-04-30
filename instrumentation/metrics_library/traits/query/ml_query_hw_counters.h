@@ -946,8 +946,8 @@ namespace ML
                 const bool     begin )
             {
                 // Assert if posh (ptbr) is disabled and command buffer type is posh (tile).
-                ML_ASSERT( m_Context.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
-                ML_ASSERT( m_Context.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
+                ML_ASSERT( m_Context.m_ClientOptions.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
+                ML_ASSERT( m_Context.m_ClientOptions.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
 
                 // Override oa report collecting mode if needed.
                 CheckReportCollectingMode( buffer, slot );
@@ -988,7 +988,7 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 const bool useSrmOar         = buffer.m_Type == GpuCommandBufferType::Posh;
-                const bool useSrmOag         = m_Context.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute;
+                const bool useSrmOag         = m_Context.m_ClientOptions.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute;
                 const bool useTriggerOag     = T::Queries::HwCountersPolicy::Common::UseTriggeredOaReport( m_Context.m_Kernel );
                 auto&      useCollectingMode = m_Slots[slot].m_ReportCollectingMode;
 
@@ -1028,8 +1028,8 @@ namespace ML
                 const bool     begin )
             {
                 // Assert if posh (ptbr) is disabled and command buffer type is posh (tile).
-                ML_ASSERT( m_Context.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
-                ML_ASSERT( m_Context.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
+                ML_ASSERT( m_Context.m_ClientOptions.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
+                ML_ASSERT( m_Context.m_ClientOptions.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
 
                 // Override oa report collecting mode if needed.
                 CheckReportCollectingMode( buffer, slot );
@@ -1059,7 +1059,7 @@ namespace ML
                     ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdBegin )
                     : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdEnd );
 
-                const uint32_t registerAddress = m_Context.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute
+                const uint32_t registerAddress = m_Context.m_ClientOptions.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute
                     ? T::GpuRegisters::m_CcsNopId
                     : T::GpuRegisters::m_NopId;
 

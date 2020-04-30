@@ -69,10 +69,10 @@ namespace ML
         /// @param  clientData  initializing client data.
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode Initialize( const ClientData_1_0& /*clientData*/ )
+        ML_INLINE StatusCode Initialize( const ClientData_1_0& clientData )
         {
             ML_FUNCTION_LOG( StatusCode::Success );
-            ML_FUNCTION_CHECK( m_IoControl.Initialize() );
+            ML_FUNCTION_CHECK( m_IoControl.Initialize( clientData ) );
             ML_FUNCTION_CHECK( InitializeDevice() );
             ML_FUNCTION_CHECK( m_Tbs.Initialize() );
 

@@ -118,8 +118,8 @@ namespace ML
                 ML_FUNCTION_CHECK( buffer.m_Type != GpuCommandBufferType::Compute );
 
                 // Assert if posh (ptbr) is disabled and command buffer type is posh (tile).
-                ML_ASSERT( buffer.m_Context.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
-                ML_ASSERT( buffer.m_Context.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
+                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
+                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
 
                 // Load a value to a proper counter. Each command buffer has its counter.
                 switch( buffer.m_Type )
@@ -175,9 +175,9 @@ namespace ML
 
                 // Assert if posh (ptbr) is disabled and command buffer type is posh (tile)
                 // or asynchronous compute is disabled and command buffer is compute.
-                ML_ASSERT( buffer.m_Context.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
-                ML_ASSERT( buffer.m_Context.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
-                ML_ASSERT( buffer.m_Context.m_AsynchronousCompute || buffer.m_Type != GpuCommandBufferType::Compute );
+                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
+                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
+                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_AsynchronousCompute || buffer.m_Type != GpuCommandBufferType::Compute );
 
                 // Load a value to a proper counter. Each command buffer has its counter.
                 switch( buffer.m_Type )

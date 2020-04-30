@@ -96,6 +96,7 @@ namespace ML
                 /// @brief Library context.
                 //////////////////////////////////////////////////////////////////////////
                 using Context                       = ContextTrait<Traits>;                         //  ml_context.h
+                using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Gpu registers commands / command buffer.
@@ -242,6 +243,7 @@ namespace ML
                 #endif
                     FunctionLogStatic::Traits( "using FunctionLogStatic", FunctionLogStatic::GetDescription() );
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
+                    FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBufferCalculator", GpuCommandBufferCalculator::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommands", GpuCommands::GetDescription() );
@@ -359,6 +361,7 @@ namespace ML
                 /// @brief Library context.
                 //////////////////////////////////////////////////////////////////////////
                 using Context                       = ContextTrait<Traits>;                         //  ml_context.h
+                using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Gpu registers commands / command buffer.
@@ -505,6 +508,7 @@ namespace ML
                 #endif
                     FunctionLogStatic::Traits( "using FunctionLogStatic", FunctionLogStatic::GetDescription() );
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
+                    FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBufferCalculator", GpuCommandBufferCalculator::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommands", GpuCommands::GetDescription() );

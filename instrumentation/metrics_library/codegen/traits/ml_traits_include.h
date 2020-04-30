@@ -66,6 +66,7 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 /// @brief Library context:
 //////////////////////////////////////////////////////////////////////////
 #include "ml_context.h"
+#include "ml_client_options.h"
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Gpu registers commands / command buffer:

@@ -242,6 +242,16 @@ enum class ParameterType : uint32_t
 };
 
 //////////////////////////////////////////////////////////////////////////
+/// @brief Linux adapter types.
+//////////////////////////////////////////////////////////////////////////
+enum class LinuxAdapterType : uint8_t
+{
+    DrmFileDescriptor = 0,
+    // ...
+    Last
+};
+
+//////////////////////////////////////////////////////////////////////////
 /// @brief Client type.
 //////////////////////////////////////////////////////////////////////////
 struct ClientType_1_0
@@ -461,8 +471,8 @@ struct GetReportData_1_0
 
     union
     {
-        GetReportQuery_1_0               Query;
-        GetReportOverride_1_0            Override;
+        GetReportQuery_1_0       Query;
+        GetReportOverride_1_0    Override;
     };
 };
 
@@ -569,6 +579,19 @@ struct ClientCallbacks_1_0
 };
 
 //////////////////////////////////////////////////////////////////////////
+/// @brief Linux client adapter data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientDataLinuxAdapter_1_0
+{
+    LinuxAdapterType    Type;
+
+    union
+    {
+        int32_t    DrmFileDescriptor;
+    };
+};
+
+//////////////////////////////////////////////////////////////////////////
 /// @brief Windows client data.
 //////////////////////////////////////////////////////////////////////////
 struct ClientDataWindows_1_0
@@ -584,7 +607,11 @@ struct ClientDataWindows_1_0
 //////////////////////////////////////////////////////////////////////////
 struct ClientDataLinux_1_0
 {
-    void*    Reserved;
+    union
+    {
+        ClientDataLinuxAdapter_1_0*    Adapter;
+        void*                          Reserved;
+    };
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -667,6 +694,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 2
+#define METRICS_LIBRARY_BUILD_NUMBER 3
 
 } // namespace MetricsLibraryApi

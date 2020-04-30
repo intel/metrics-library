@@ -882,13 +882,6 @@ namespace ML
                 m_OaBufferState.Reset();
                 m_QuerySlot.Reset();
 
-                // Initialize oa buffer state.
-                if( ML_FAIL( m_OaBuffer.UpdateQuery( m_QuerySlot ) ) )
-                {
-                    ML_ASSERT_ALWAYS();
-                    return log.m_Result = StatusCode::NotInitialized;
-                }
-
                 // Check if oa buffer contains reports.
                 if( m_OaBuffer.IsEmpty() )
                 {
@@ -896,6 +889,13 @@ namespace ML
                 }
                 else
                 {
+                    // Initialize oa buffer state.
+                    if( ML_FAIL( m_OaBuffer.UpdateQuery( m_QuerySlot ) ) )
+                    {
+                        ML_ASSERT_ALWAYS();
+                        return log.m_Result = StatusCode::NotInitialized;
+                    }
+
                     // Query reports.
                     const uint32_t timestampBegin = reportBegin->m_Header.m_Timestamp;
                     const uint32_t timestampEnd   = reportEnd->m_Header.m_Timestamp;

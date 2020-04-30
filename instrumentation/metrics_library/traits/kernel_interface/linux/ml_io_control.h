@@ -45,6 +45,7 @@ namespace ML
         std::string                m_KernelMetricSet;
         int32_t                    m_DrmFile;
         int32_t                    m_DrmCard;
+        bool                       m_DrmOpenedByUmd;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief IoControlTrait constructor.
@@ -55,6 +56,7 @@ namespace ML
             , m_KernelMetricSet( "" )
             , m_DrmFile( T::ConstantsOs::Drm::m_Invalid )
             , m_DrmCard( T::ConstantsOs::Drm::m_Invalid )
+            , m_DrmOpenedByUmd( false )
         {
         }
 
@@ -63,7 +65,10 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ~IoControlTrait()
         {
-            CloseDrm();
+            if( !m_DrmOpenedByUmd )
+            {
+                CloseDrm();
+            }
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -77,15 +82,32 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Initializes io control interface.
+        /// @param  clientData  initializing client data.
         /// @return initialization status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode Initialize()
+        ML_INLINE StatusCode Initialize( const ClientData_1_0& clientData )
         {
             ML_FUNCTION_LOG( StatusCode::Success );
             ML_ASSERT( m_DrmFile == T::ConstantsOs::Drm::m_Invalid );
             ML_ASSERT( m_DrmCard == T::ConstantsOs::Drm::m_Invalid );
 
-            if( ML_FAIL( OpenDrm() ) )
+            if( clientData.Linux.Adapter != nullptr )
+            {
+                const ClientDataLinuxAdapter_1_0& adapter = *clientData.Linux.Adapter;
+
+                switch( adapter.Type )
+                {
+                    case LinuxAdapterType::DrmFileDescriptor:
+                        m_DrmFile        = adapter.DrmFileDescriptor;
+                        m_DrmOpenedByUmd = true;
+                        break;
+
+                    default:
+                        ML_ASSERT_ALWAYS();
+                        return log.m_Result = StatusCode::IncorrectParameter;
+                }
+            }
+            else if( ML_FAIL( OpenDrm() ) )
             {
                 log.Error( "Failed to open drm render node" );
                 return log.m_Result = StatusCode::Failed;
@@ -93,7 +115,11 @@ namespace ML
 
             if( ML_FAIL( GetDrmCardNumber() ) )
             {
-                CloseDrm();
+                if( !m_DrmOpenedByUmd )
+                {
+                    CloseDrm();
+                }
+
                 log.Error( "Failed to get drm card information" );
                 return log.m_Result = StatusCode::Failed;
             }

@@ -784,7 +784,7 @@ namespace ML
                 // Timestamp.
                 countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp );
 
-                const uint32_t registerAddress = buffer.m_Context.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute
+                const uint32_t registerAddress = buffer.m_Context.m_ClientOptions.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute
                     ? T::GpuRegisters::m_CcsTimestampLow
                     : T::GpuRegisters::m_TimestampLow;
 
