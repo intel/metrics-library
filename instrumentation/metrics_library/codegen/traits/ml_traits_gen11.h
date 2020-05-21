@@ -167,12 +167,10 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Oa buffer support.
                 //////////////////////////////////////////////////////////////////////////
-                #if ML_LINUX
+                #if 0
                 using OaBuffer                      = OaBufferDummyTrait<Traits>;                   //  ml_oa_buffer_dummy.h
                 #endif
-                #if 0
-                using OaBuffer                      = OaBufferTbsTrait<Traits>;                     //  ml_oa_buffer_tbs.h
-                #endif
+                using OaBuffer                      = OaBufferMappedTrait<Traits>;                  //  ml_oa_buffer_mapped.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Overrides.
@@ -190,11 +188,6 @@ namespace ML
                     using PoshQuery                 = OverridePoshQueryTrait<Traits>;               //  linux/ml_override_posh_query.h
                 #endif
                 };
-
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Tbs.
-                //////////////////////////////////////////////////////////////////////////
-                using TbsContainer                  = TbsContainerTrait<Traits>;                    //  ml_oa_buffer_tbs_container.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Queries.
@@ -276,12 +269,10 @@ namespace ML
                     FunctionLogStatic::Traits( "using Configurations::HwCountersOa", Configurations::HwCountersOa::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Configurations::HwCountersUser", Configurations::HwCountersUser::GetDescription() );
-                #if ML_LINUX
-                    FunctionLogStatic::Traits( "using OaBuffer", OaBuffer::GetDescription() );
-                #endif
                 #if 0
                     FunctionLogStatic::Traits( "using OaBuffer", OaBuffer::GetDescription() );
                 #endif
+                    FunctionLogStatic::Traits( "using OaBuffer", OaBuffer::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::User", Overrides::User::GetDescription() );
                 #endif
@@ -292,7 +283,6 @@ namespace ML
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
                 #endif
-                    FunctionLogStatic::Traits( "using TbsContainer", TbsContainer::GetDescription() );
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
                     FunctionLogStatic::Traits( "using Queries::HwCountersPolicy", Queries::HwCountersPolicy::GetDescription() );
                 #if 1
@@ -432,12 +422,10 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Oa buffer support.
                 //////////////////////////////////////////////////////////////////////////
-                #if ML_LINUX
+                #if 0
                 using OaBuffer                      = OaBufferDummyTrait<Traits>;                   //  ml_oa_buffer_dummy.h
                 #endif
-                #if 0
-                using OaBuffer                      = OaBufferTbsTrait<Traits>;                     //  ml_oa_buffer_tbs.h
-                #endif
+                using OaBuffer                      = OaBufferMappedTrait<Traits>;                  //  ml_oa_buffer_mapped.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Overrides.
@@ -455,11 +443,6 @@ namespace ML
                     using PoshQuery                 = OverridePoshQueryTrait<Traits>;               //  linux/ml_override_posh_query.h
                 #endif
                 };
-
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Tbs.
-                //////////////////////////////////////////////////////////////////////////
-                using TbsContainer                  = TbsContainerTrait<Traits>;                    //  ml_oa_buffer_tbs_container.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Queries.
@@ -541,12 +524,10 @@ namespace ML
                     FunctionLogStatic::Traits( "using Configurations::HwCountersOa", Configurations::HwCountersOa::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Configurations::HwCountersUser", Configurations::HwCountersUser::GetDescription() );
-                #if ML_LINUX
-                    FunctionLogStatic::Traits( "using OaBuffer", OaBuffer::GetDescription() );
-                #endif
                 #if 0
                     FunctionLogStatic::Traits( "using OaBuffer", OaBuffer::GetDescription() );
                 #endif
+                    FunctionLogStatic::Traits( "using OaBuffer", OaBuffer::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::User", Overrides::User::GetDescription() );
                 #endif
@@ -557,7 +538,6 @@ namespace ML
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
                 #endif
-                    FunctionLogStatic::Traits( "using TbsContainer", TbsContainer::GetDescription() );
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
                     FunctionLogStatic::Traits( "using Queries::HwCountersPolicy", Queries::HwCountersPolicy::GetDescription() );
                 #if 1

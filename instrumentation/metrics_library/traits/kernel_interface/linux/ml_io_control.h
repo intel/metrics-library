@@ -38,6 +38,7 @@ namespace ML
     {
         ML_DELETE_DEFAULT_COPY_AND_MOVE( IoControlTrait );
 
+    private:
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
@@ -47,6 +48,7 @@ namespace ML
         int32_t                    m_DrmCard;
         bool                       m_DrmOpenedByUmd;
 
+    public:
         //////////////////////////////////////////////////////////////////////////
         /// @brief IoControlTrait constructor.
         /// @param kernel
@@ -171,10 +173,13 @@ namespace ML
 
         /////////////////////////////////////////////////////////////////////////
         /// @brief  Removes metric set configuration from the kernel.
+        ///         Do not change int64_t to int32_t. Drm uses int32_t to
+        ///         identify metric set. But int64_t is needed to remove
+        ///         metric set configuration.
         /// @param  set  metric set to remove.
         /// @return      operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode RemoveMetricSet( int32_t set ) const
+        ML_INLINE StatusCode RemoveMetricSet( int64_t set ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success );
             ML_FUNCTION_CHECK( set != T::ConstantsOs::Tbs::m_Invalid );
@@ -221,8 +226,8 @@ namespace ML
 
             if( ML_FAIL( log.m_Result ) )
             {
-                log.Error( "Error id          ", errno );
-                log.Error( "Error description ", (std::string) strerror( errno ) );
+                log.Debug( "Error id          ", errno );
+                log.Debug( "Error description ", (std::string) strerror( errno ) );
             }
 
             return log.m_Result;
@@ -371,6 +376,35 @@ namespace ML
         }
 
         /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa buffer properties.
+        /// @param  stream     tbs stream id.
+        /// @return addressGpu oa buffer gpu allocation address.
+        /// @return addressCpu oa buffer mapped cpu address.
+        /// @return size       oa buffer size.
+        /// @return            operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetOaBufferProperties(
+            const int32_t                    stream,
+            TT::Layouts::OaBuffer::Register& addressGpu,
+            uint8_t*&                        addressCpu,
+            uint32_t&                        size ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::TbsUnableToRead );
+
+            auto properties = drm_i915_perf_oa_buffer_info{};
+            log.m_Result    = GetStreamParameter( stream, I915_PERF_IOCTL_GET_OA_BUFFER_INFO, properties );
+
+            if( ML_SUCCESS( log.m_Result ) )
+            {
+                size               = properties.size;
+                addressGpu.m_Value = properties.gpu_address;
+                addressCpu         = reinterpret_cast<uint8_t*>( static_cast<uintptr_t>( properties.cpu_address ) );
+            }
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
         /// @brief  Returns  performance module revision.
         /// @return revision performance module revision.
         /// @return          operation status.
@@ -386,6 +420,30 @@ namespace ML
             return log.m_Result;
         }
 
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns gpu timestamp frequency.
+        /// @return gpu timestamp frequency.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint64_t GetGpuTimestampFrequency() const
+        {
+            ML_FUNCTION_LOG( uint64_t{ 0 } );
+
+            int32_t frequency = 0;
+
+            if( ML_SUCCESS( GetDrmParameter( I915_PARAM_CS_TIMESTAMP_FREQUENCY, frequency ) ) )
+            {
+                log.Debug( "Gpu timestamp frequency:", frequency );
+                log.m_Result = static_cast<uint64_t>( frequency );
+            }
+            else
+            {
+                log.Debug( "Unable to obtain gpu timestamp frequency." );
+            }
+
+            return log.m_Result;
+        }
+
+    private:
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Opens intel drm interface
         /// @return operation status.
@@ -492,29 +550,6 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns gpu timestamp frequency.
-        /// @return gpu timestamp frequency.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint64_t GetGpuTimestampFrequency() const
-        {
-            ML_FUNCTION_LOG( uint64_t{ 0 } );
-
-            int32_t frequency = 0;
-
-            if( ML_SUCCESS( GetDrmParameter( I915_PARAM_CS_TIMESTAMP_FREQUENCY, frequency ) ) )
-            {
-                log.Debug( "Gpu timestamp frequency:", frequency );
-                log.m_Result = static_cast<uint64_t>( frequency );
-            }
-            else
-            {
-                log.Debug( "Unable to obtain gpu timestamp frequency." );
-            }
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns parameter from the drm.
         /// @param  parameter   drm parameter type.
         /// @return result      result value.
@@ -571,6 +606,9 @@ namespace ML
             // Check parameter availability.
             switch( request )
             {
+                case I915_PERF_IOCTL_GET_OA_BUFFER_INFO:
+                    break;
+
                 default:
                     ML_ASSERT_ALWAYS();
                     return log.m_Result = StatusCode::NotSupported;
@@ -580,8 +618,8 @@ namespace ML
 
             if( error == T::ConstantsOs::Tbs::m_Invalid )
             {
-                log.Error( "Error id          ", errno );
-                log.Error( "Error description ", (std::string) strerror( errno ) );
+                log.Debug( "Error id          ", errno );
+                log.Debug( "Error description ", (std::string) strerror( errno ) );
 
                 return log.m_Result = StatusCode::Failed;
             }
@@ -630,8 +668,8 @@ namespace ML
 
             if( ML_FAIL( log.m_Result ) )
             {
-                log.Error( "Error id          ", errno );
-                log.Error( "Error description ", (std::string) strerror( errno ) );
+                log.Debug( "Error id          ", errno );
+                log.Debug( "Error description ", (std::string) strerror( errno ) );
             }
 
             return log.m_Result;

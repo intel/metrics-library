@@ -34,16 +34,17 @@ namespace ML
     //////////////////////////////////////////////////////////////////////////
     enum class LogType : uint32_t
     {
-        Critical = ML_BIT( 0 ), // Unexpected unrecoverable errors, use for asserts only.
-        Error    = ML_BIT( 1 ), // Unexpected recoverable errors.
-        Warning  = ML_BIT( 2 ), // Expected errors and warnings.
-        Info     = ML_BIT( 3 ), // Information messages.
-        Debug    = ML_BIT( 4 ), // Debug messages.
-        Traits   = ML_BIT( 5 ), // Traits messages.
-        Entered  = ML_BIT( 6 ), // Entered a function.
-        Exiting  = ML_BIT( 7 ), // Exiting a function.
-        Input    = ML_BIT( 8 ), // Input parameter.
-        Output   = ML_BIT( 9 ), // Output parameter.
+        Critical = ML_BIT( 0 ),  // Unexpected unrecoverable errors, use for asserts only.
+        Error    = ML_BIT( 1 ),  // Unexpected recoverable errors.
+        Warning  = ML_BIT( 2 ),  // Expected errors and warnings.
+        Info     = ML_BIT( 3 ),  // Information messages.
+        Debug    = ML_BIT( 4 ),  // Debug messages.
+        Traits   = ML_BIT( 5 ),  // Traits messages.
+        Entered  = ML_BIT( 6 ),  // Entered a function.
+        Exiting  = ML_BIT( 7 ),  // Exiting a function.
+        Input    = ML_BIT( 8 ),  // Input parameter.
+        Output   = ML_BIT( 9 ),  // Output parameter.
+        Csv      = ML_BIT( 10 ), // Csv file dumping.
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -284,7 +285,7 @@ namespace ML
         /// @brief Logs user's message to console.
         /// @param type         log type.
         /// @param functionName function name.
-        /// @param message      user's message.
+        /// @param values       user's message.
         //////////////////////////////////////////////////////////////////////////
         template <typename... Values>
         ML_INLINE static void Log(
@@ -311,6 +312,44 @@ namespace ML
                     Print( type, functionName, lines[i] );
                 }
             }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Opens csv file.
+        /// @param  name    identification of the csv file.
+        /// @param  file    output file stream.
+        /// @return success if the file has been opened properly.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static StatusCode OpenCsv(
+            const std::string& name,
+            std::ofstream&     file )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success );
+
+            std::string fileName = Constants::Csv::m_NamePrefix;
+
+            fileName += "_";
+            fileName += name;
+            fileName += "_";
+            fileName += T::ToolsOs::GetCurrentTime();
+            fileName += ".csv";
+
+            file.open( fileName );
+
+            return file.is_open()
+                ? log.m_Result
+                : log.m_Result = StatusCode::CannotOpenFile;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Writes user's message to a csv file.
+        /// @param values  user's message.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename... Values>
+        ML_INLINE static void WriteToCsv(
+            const Values&... values )
+        {
+            T::Debug::PrintCsv( values... );
         }
 
     private:

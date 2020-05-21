@@ -101,7 +101,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE bool IsValid() const
             {
-                ML_FUNCTION_LOG( true );
+                ML_FUNCTION_LOG( false );
                 return log.m_Result;
             }
 
@@ -135,20 +135,12 @@ namespace ML
             ML_INLINE StatusCode GetTriggeredReportIndex(
                 const TT::Layouts::HwCounters::Query::ReportGpu& /*query*/,
                 const bool /*begin*/,
-                int32_t& /*index*/ )
+                uint32_t& /*index*/ )
             {
                 ML_ASSERT_ALWAYS();
                 return StatusCode::Failed;
             }
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Check whether oa buffer contains reports.
-            /// @return true if oa buffer is empty.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE bool IsEmpty() const
-            {
-                ML_FUNCTION_LOG( true );
-                return log.m_Result;
-            }
+
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns oa reports count within oa buffer.
@@ -157,6 +149,20 @@ namespace ML
             ML_INLINE uint32_t GetReportsCount() const
             {
                 ML_FUNCTION_LOG( uint32_t{ 0 } );
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Dumps oa buffer reports between query begin / query end.
+            /// @param  beginIndex  triggered begin report index.
+            /// @param  endIndex    triggered end report index.
+            /// @return operation status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode DumpReports(
+                const uint32_t /*beginIndex*/,
+                const uint32_t /*endIndex*/ )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
                 return log.m_Result;
             }
         };

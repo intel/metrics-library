@@ -315,51 +315,21 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Recreates oa report from triggered report from oa buffer.
             /// @param  slot    slot index.
-            /// @param  begin   begin/end indicator.
             /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode UseTriggeredOaReport(
-                const uint32_t slot,
-                const bool     begin )
+            ML_INLINE StatusCode UseTriggeredOaReport( const uint32_t slot )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
                 ML_FUNCTION_CHECK( m_Context.m_OaBuffer.IsValid() );
 
-                // Query data.
-                auto& queryReport   = GetReportGpu( slot );
-                auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
+                uint32_t beginTailIndex = 0;
+                uint32_t endTailIndex   = 0;
 
-                // Tail data.
-                int32_t tailIndex      = 0;
-                bool    tailIndexValid = ML_SUCCESS( m_Context.m_OaBuffer.GetTriggeredReportIndex( queryReport, begin, tailIndex ) );
-                auto    tailReportOa   = tailIndexValid ? m_Context.m_OaBuffer.GetReport( tailIndex ) : TT::Layouts::HwCounters::ReportOa{};
-                bool    tailValid      = tailIndexValid && ValidateTriggeredOaReport( queryReport, tailReportOa );
+                ML_FUNCTION_CHECK( UseTriggeredOaReport( slot, true, beginTailIndex ) );
+                ML_FUNCTION_CHECK( UseTriggeredOaReport( slot, false, endTailIndex ) );
+                ML_FUNCTION_CHECK( m_Context.m_OaBuffer.DumpReports( beginTailIndex, endTailIndex ) );
 
-                // Triggered report debug information.
-                log.Debug( "Query report      " );
-                log.Debug( "  begin           ", begin );
-                log.Debug( "  timestamp begin ", queryReport.m_Begin.m_Oa.m_Header.m_Timestamp );
-                log.Debug( "  timestamp end   ", queryReport.m_End.m_Oa.m_Header.m_Timestamp );
-                log.Debug( "Tail report:      " );
-                log.Debug( "  index           ", tailIndex );
-                log.Debug( "  valid           ", tailValid );
-                log.Debug( "  report          ", tailReportOa );
-
-                // Recreate query report from triggered oa report or make it empty.
-                if( tailValid )
-                {
-                    queryReportOa = tailReportOa;
-                }
-                else
-                {
-                    queryReport.m_Begin.m_Oa.m_Data = {};
-                    queryReport.m_End.m_Oa.m_Data   = {};
-                    log.Critical( "Unable to recreate report from triggered oa report" );
-                }
-
-                return tailValid
-                    ? StatusCode::Success
-                    : StatusCode::ReportLost;
+                return log.m_Result;
             }
 
         protected:
@@ -881,6 +851,56 @@ namespace ML
 
                 return log.m_Result;
             }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Recreates oa report from triggered report from oa buffer.
+            /// @param  slot        slot index.
+            /// @param  begin       begin/end indicator.
+            /// @return tailIndex   triggered report index.
+            /// @return             operation status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode UseTriggeredOaReport(
+                const uint32_t slot,
+                const bool     begin,
+                uint32_t&      tailIndex )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                // Query data.
+                auto& queryReport   = GetReportGpu( slot );
+                auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
+
+                // Tail data.
+                bool tailIndexValid = ML_SUCCESS( m_Context.m_OaBuffer.GetTriggeredReportIndex( queryReport, begin, tailIndex ) );
+                auto tailReportOa   = tailIndexValid ? m_Context.m_OaBuffer.GetReport( tailIndex ) : TT::Layouts::HwCounters::ReportOa{};
+                bool tailValid      = tailIndexValid && ValidateTriggeredOaReport( queryReport, tailReportOa );
+
+                // Triggered report debug information.
+                log.Debug( "Query report      " );
+                log.Debug( "  begin           ", begin );
+                log.Debug( "  timestamp begin ", queryReport.m_Begin.m_Oa.m_Header.m_Timestamp );
+                log.Debug( "  timestamp end   ", queryReport.m_End.m_Oa.m_Header.m_Timestamp );
+                log.Debug( "Tail report:      " );
+                log.Debug( "  index           ", tailIndex );
+                log.Debug( "  valid           ", tailValid );
+                log.Debug( "  report          ", tailReportOa );
+
+                // Recreate query report from triggered oa report or make it empty.
+                if( tailValid )
+                {
+                    queryReportOa = tailReportOa;
+                }
+                else
+                {
+                    queryReport.m_Begin.m_Oa.m_Data = {};
+                    queryReport.m_End.m_Oa.m_Data   = {};
+                    log.Critical( "Unable to recreate report from triggered oa report" );
+                }
+
+                return tailValid
+                    ? StatusCode::Success
+                    : StatusCode::ReportLost;
+            }
         };
     } // namespace BASE
 
@@ -982,34 +1002,17 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
             ML_INLINE void CheckReportCollectingMode(
-                CommandBuffer& buffer,
+                CommandBuffer& /*buffer*/,
                 const uint32_t slot )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
+                ML_ASSERT( T::Queries::HwCountersPolicy::Common::UseTriggeredOaReport( m_Context.m_Kernel ) );
 
-                const bool useSrmOar         = buffer.m_Type == GpuCommandBufferType::Posh;
-                const bool useSrmOag         = m_Context.m_ClientOptions.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute;
-                const bool useTriggerOag     = T::Queries::HwCountersPolicy::Common::UseTriggeredOaReport( m_Context.m_Kernel );
-                auto&      useCollectingMode = m_Slots[slot].m_ReportCollectingMode;
+                // For gen 12+ always use triggered reports.
+                auto& mode = m_Slots[slot].m_ReportCollectingMode;
+                mode       = T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag;
 
-                // Use srm for a posh command streamer and store chosen collecting mode
-                // in the query slot to properly calculate results.
-                useCollectingMode = useSrmOar
-                    ? T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOar
-                    : useCollectingMode;
-
-                // Use oag via srm for asynchronous compute command streamer and store chosen
-                // collecting mode in the query slot to properly calculate results.
-                useCollectingMode = useSrmOag
-                    ? T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag
-                    : useCollectingMode;
-
-                // Gen 12 may use a triggered report from oa buffer (defined by query policy).
-                useCollectingMode = useTriggerOag
-                    ? T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag
-                    : useCollectingMode;
-
-                log.Debug( "Oa report collecting mode", useCollectingMode );
+                log.Debug( "Oa report collecting mode", mode );
             }
 
             //////////////////////////////////////////////////////////////////////////

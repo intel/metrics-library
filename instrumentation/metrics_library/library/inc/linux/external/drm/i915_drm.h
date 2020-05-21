@@ -1594,6 +1594,24 @@ struct drm_i915_perf_open_param {
  */
 #define I915_PERF_IOCTL_CONFIG	_IO('i', 0x2)
 
+/**
+ * Returns oa buffer properties.
+ *
+ * This ioctl is available in perf revision 4.
+ */
+#define I915_PERF_IOCTL_GET_OA_BUFFER_INFO	_IO('i', 0x3)
+
+/**
+ * Oa buffer information structure.
+ */
+struct drm_i915_perf_oa_buffer_info {
+	__u32 size;
+	__u32 head;
+	__u32 tail;
+	__u32 gpu_address;
+	__u64 cpu_address;
+	__u64 reserved[4];
+};
 
 /**
  * Common to all i915 perf records

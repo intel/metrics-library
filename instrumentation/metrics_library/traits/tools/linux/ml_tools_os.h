@@ -117,6 +117,23 @@ namespace ML
             {
                 return static_cast<DerivedObject*>( base );
             }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns current time as string.
+            /// @return current time.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string GetCurrentTime()
+            {
+                std::ostringstream timeOutput;
+                tm                 timeLocal;
+                time_t             timeCurrent = time( nullptr );
+
+                timeLocal = *localtime( &timeCurrent );
+
+                timeOutput << std::put_time( &timeLocal, "%d-%m-%Y_%H-%M-%S" );
+
+                return timeOutput.str();
+            }
         };
     } // namespace BASE
 

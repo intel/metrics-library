@@ -41,15 +41,18 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
+        TT::Context&     m_Context;
         int32_t          m_DeviceId;
         TT::IoControl    m_IoControl;
         TT::TbsInterface m_Tbs;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief KernelInterfaceTrait constructor.
+        /// @param context  metrics library context.
         //////////////////////////////////////////////////////////////////////////
-        KernelInterfaceTrait()
-            : m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
+        KernelInterfaceTrait( TT::Context& context )
+            : m_Context( context )
+            , m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
             , m_IoControl( *this )
             , m_Tbs( *this )
         {
@@ -143,47 +146,6 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief   Enables time based sampling.
-        /// @return  operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode TbsEnable() const
-        {
-            ML_FUNCTION_LOG( StatusCode::TbsUnableToEnable );
-
-            log.Error( "Tbs can be enabled only during oa set activation (for example query begin)." );
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Disables tbs stream.
-        /// @return operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode TbsDisable()
-        {
-            ML_FUNCTION_LOG( StatusCode::Success );
-
-            return log.m_Result = m_Tbs.Disable();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns tbs reports.
-        /// @return oaReports   output oa reports.
-        /// @return count       collected oa reports count.
-        /// @return completed   true if all oa reports has been received.
-        /// @return             operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode TbsGetReports(
-            TT::Layouts::HwCounters::ReportOa* oaReports,
-            uint32_t&                          count,
-            bool&                              completed ) const
-        {
-            ML_FUNCTION_LOG( StatusCode::Success );
-
-            return log.m_Result = m_Tbs.GetOaReports( oaReports, count, completed );
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Loads oa configuration to gpu through tbs interface.
         /// @param  oaConfiguration  oa configuration.
         /// @return                  operation status.
@@ -191,9 +153,9 @@ namespace ML
         ML_INLINE StatusCode LoadOaConfigurationToGpu( const TT::Layouts::Configuration::PerformanceMonitoringRegisters& oaConfiguration )
         {
             ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfiguration.m_Id ) );
 
-            // On linux oa metric set can be activated only through tbs.
-            return log.m_Result = m_Tbs.Enable( oaConfiguration.m_Id );
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -206,15 +168,7 @@ namespace ML
         ML_INLINE StatusCode UnloadOaConfigurationFromGpu( const TT::Layouts::Configuration::PerformanceMonitoringRegisters& oaConfiguration )
         {
             ML_FUNCTION_LOG( StatusCode::Success );
-
-            // Releases metric set, expecting three cases:
-            //  1. Current activated metric set -> decrease reference counter.
-            //  2. Unknown metric set           -> error.
-            //  3. Reference counter == 0       -> disable tbs.
-            if( ML_FAIL( log.m_Result = m_Tbs.Release( oaConfiguration.m_Id ) ) )
-            {
-                log.Error( "Unable to release metric set", oaConfiguration.m_Id );
-            }
+            ML_FUNCTION_CHECK( m_Tbs.m_Stream.ReleaseMetricSet( oaConfiguration.m_Id ) );
 
             return log.m_Result;
         }
@@ -292,15 +246,6 @@ namespace ML
             ML_FUNCTION_LOG( false );
 
             return log.m_Result;
-        }
-
-        /////////////////////////////////////////////////////////////////////////
-        /// @brief  Checks oa triggered support in the kernel.
-        /// @return true if oa triggered reports are supported.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool IsOaTriggerSupported() const
-        {
-            return false;
         }
 
     private:

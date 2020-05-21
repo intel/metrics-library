@@ -53,33 +53,23 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct Tbs
         {
-            using ReportHeader = drm_i915_perf_record_header;
-
             enum class Revision : uint32_t
             {
                 Unsupported     = 0,
                 OaSupported     = 1,
                 OaConfiguration = 2,
+                OaBufferMapping = 4,
             };
 
-            static constexpr bool        m_EnableOnCreateContext = false;
-            static constexpr bool        m_EnableByForce         = false;
-            static constexpr uint32_t    m_TimerPeriod           = 0xFFFFFFFF;
-            static constexpr uint32_t    m_ReportType            = I915_OA_FORMAT_A32u40_A4u32_B8_C8;
-            static constexpr int64_t     m_Invalid               = -1;
-            static constexpr const char* m_ActiveMetricSetPath   = "/sys/class/drm/card%d/metrics/%s/id";
-            static constexpr const char* m_ActiveMetricSetGuid   = "2f01b241-7014-42a7-9eb6-a925cad3daba";
-        };
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Time based sampling container settings.
-        //////////////////////////////////////////////////////////////////////////
-        struct TbsContainer
-        {
-            static constexpr uint32_t m_BufferSize   = 16 * 1024 * 1024;
-            static constexpr uint32_t m_RequestCount = 50;
-            static constexpr uint32_t m_ReportsCount = m_BufferSize / sizeof( TT::Layouts::HwCounters::ReportOa );
-            static constexpr bool     m_PrintAll     = true;
+            static constexpr bool        m_MappingRequired     = false;
+            static constexpr bool        m_PrintOaBuffer       = false;
+            static constexpr bool        m_PrintOaCache        = false;
+            static constexpr uint32_t    m_CacheCapacity       = 100;
+            static constexpr uint32_t    m_TimerPeriod         = 0xFFFFFFFF;
+            static constexpr uint32_t    m_ReportType          = I915_OA_FORMAT_A32u40_A4u32_B8_C8;
+            static constexpr int64_t     m_Invalid             = -1;
+            static constexpr const char* m_ActiveMetricSetPath = "/sys/class/drm/card%d/metrics/%s/id";
+            static constexpr const char* m_ActiveMetricSetGuid = "2f01b241-7014-42a7-9eb6-a925cad3daba";
         };
 
         //////////////////////////////////////////////////////////////////////////

@@ -69,7 +69,7 @@ namespace ML
             const ClientType_1_0&        clientType,
             const ContextCreateData_1_0& createData )
             : Base( clientType )
-            , m_Kernel{}
+            , m_Kernel( *this )
             , m_OaBuffer( m_Kernel )
             , m_ClientOptions( *createData.ClientData )
             , m_ClientHandle( createData.ClientData->Handle )

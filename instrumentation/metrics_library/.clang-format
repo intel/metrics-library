@@ -29,19 +29,20 @@ AccessModifierOffset: -4
 AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
-#AlignConsecutiveMacros: true
+AlignConsecutiveMacros: true
 AlignEscapedNewlinesLeft: Right
 AlignOperands: false
 AlignTrailingComments: true
 
-#AllowAllArgumentsOnNextLine: false
-#AllowAllConstructorInitializersOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
+#AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
-#AllowShortLambdasOnASingleLine: None
+AllowShortLambdasOnASingleLine: None
 AllowShortLoopsOnASingleLine: false
 
 AlwaysBreakAfterDefinitionReturnType: None
@@ -53,7 +54,7 @@ BinPackArguments: false
 BinPackParameters: false
 
 BraceWrapping:
-    #AfterCaseLabel: true
+    AfterCaseLabel: true
     AfterClass: true
     AfterControlStatement: true
     AfterEnum: true
@@ -64,13 +65,14 @@ BraceWrapping:
     AfterExternBlock: true
     BeforeCatch: true
     BeforeElse: true
+    #BeforeLambdaBody: true
     IndentBraces: false
     SplitEmptyFunction: true
     SplitEmptyRecord: true
     SplitEmptyNamespace: true
-BreakBeforeBraces: Custom
 
-BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Custom
 BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeComma
@@ -90,7 +92,9 @@ Cpp11BracedListStyle: false
 
 FixNamespaceComments: true
 
+#IndentCaseBlocks: true
 IndentCaseLabels: true
+#IndentGotoLabels: true
 IndentPPDirectives: AfterHash
 IndentWidth: 4
 IndentWrappedFunctionNames: true
@@ -111,7 +115,7 @@ SortIncludes: false
 SortUsingDeclarations: false
 
 SpaceAfterCStyleCast: true
-#SpaceAfterLogicalNot: false
+SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: true
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeCpp11BracedList: false
@@ -119,12 +123,14 @@ SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: Never
 SpaceBeforeRangeBasedForLoopColon: true
+#SpaceBeforeSquareBrackets: false
 #SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
 
 SpacesBeforeTrailingComments: 1
 SpacesInAngles: false
 SpacesInCStyleCastParentheses: false
+#SpacesInConditionalStatement: true
 SpacesInContainerLiterals: false
 SpacesInParentheses: true
 SpacesInSquareBrackets: false
@@ -133,4 +139,5 @@ Standard: Cpp11
 
 TabWidth: 4
 
+#UseCRLF: true
 UseTab: Never

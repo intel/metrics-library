@@ -120,7 +120,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE static bool UseTriggeredOaReport( const TT::KernelInterface& kernel )
                 {
-                    static bool supported = kernel.IsOaTriggerSupported();
+                    bool supported = kernel.m_Tbs.m_Stream.m_OaBufferMapped.IsMapped();
                     return supported;
                 }
             };

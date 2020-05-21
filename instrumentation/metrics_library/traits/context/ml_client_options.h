@@ -44,6 +44,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         bool m_PoshEnabled;
         bool m_PtbrEnabled;
+        bool m_TbsEnabled;
         bool m_AsynchronousCompute;
 
         //////////////////////////////////////////////////////////////////////////
@@ -53,6 +54,7 @@ namespace ML
         ClientOptionsTrait( const ClientData_1_0& clientData )
             : m_PoshEnabled( false )
             , m_PtbrEnabled( false )
+            , m_TbsEnabled( false )
             , m_AsynchronousCompute( false )
         {
             // Copy client's options from the pointer provided by the user.
@@ -72,6 +74,10 @@ namespace ML
 
                         case ClientOptionsType::Compute:
                             m_AsynchronousCompute = clientData.ClientOptions[i].Compute.Asynchronous;
+                            break;
+
+                        case ClientOptionsType::Tbs:
+                            m_TbsEnabled = clientData.ClientOptions[i].Tbs.Enabled;
                             break;
 
                         default:

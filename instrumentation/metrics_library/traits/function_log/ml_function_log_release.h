@@ -141,5 +141,14 @@ namespace ML
         {
             T::Tools::Log( LogType::Critical, "", values... );
         }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Logs into a csv file.
+        /// @param values   variable values to print out.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename... Values>
+        ML_INLINE void Csv( const Values&... ) const
+        {
+        }
     };
 } // namespace ML

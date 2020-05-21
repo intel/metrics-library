@@ -168,8 +168,7 @@ namespace ML
 
                     case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
                         ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailBegin.All.m_Tail != m_ReportGpu.m_OaTailEnd.All.m_Tail, StatusCode::ReportLost );
-                        ML_FUNCTION_CHECK_ERROR( m_Query.UseTriggeredOaReport( m_QuerySlotIndex, true ), StatusCode::ReportLost );
-                        ML_FUNCTION_CHECK_ERROR( m_Query.UseTriggeredOaReport( m_QuerySlotIndex, false ), StatusCode::ReportLost );
+                        ML_FUNCTION_CHECK_ERROR( m_Query.UseTriggeredOaReport( m_QuerySlotIndex ), StatusCode::ReportLost );
                         break;
 
                     default:
@@ -883,7 +882,7 @@ namespace ML
                 m_QuerySlot.Reset();
 
                 // Check if oa buffer contains reports.
-                if( m_OaBuffer.IsEmpty() )
+                if( !m_OaBuffer.IsValid() )
                 {
                     log.Warning( "Oa buffer is not available." );
                 }
