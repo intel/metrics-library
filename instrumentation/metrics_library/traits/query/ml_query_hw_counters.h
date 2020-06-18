@@ -122,6 +122,22 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief QueryHwCountersTrait destructor.
+            //////////////////////////////////////////////////////////////////////////
+            ~QueryHwCountersTrait()
+            {
+                if( T::Queries::HwCountersPolicy::Create::m_UserCounters )
+                {
+                    const StatusCode result = m_UserConfiguration.IsValid()
+                        ? T::Configurations::HwCountersUser::Delete( m_UserConfiguration )
+                        : StatusCode::Success;
+
+                    (void) result;
+                    ML_ASSERT( ML_SUCCESS( result ) );
+                }
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns description about itself.
             /// @return trait name used in library's code.
             //////////////////////////////////////////////////////////////////////////
@@ -142,7 +158,7 @@ namespace ML
             {
                 auto& context = T::Context::FromHandle( createData.HandleContext );
                 auto  query   = Allocate( context );
-                auto  result  = query ? query->Initialize( createData ) : StatusCode::OutOfMemory;
+                auto  result  = query ? query->Initialize( createData.Slots ) : StatusCode::OutOfMemory;
 
                 if( ML_SUCCESS( result ) )
                 {
@@ -335,14 +351,21 @@ namespace ML
         protected:
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Initializes hw counters.
-            /// @param  data    hw counters create data.
+            /// @param  slots   hw counters slots to create.
             /// @return         success if hw counters has been initialized.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Initialize( const QueryCreateData_1_0& data )
+            ML_INLINE StatusCode Initialize( const uint32_t slots )
             {
-                m_Slots.resize( data.Slots );
+                ML_FUNCTION_LOG( StatusCode::Success );
 
-                return m_Slots.size()
+                if( T::Queries::HwCountersPolicy::Create::m_UserCounters )
+                {
+                    ML_FUNCTION_CHECK( T::Configurations::HwCountersUser::Create( m_Context, m_UserConfiguration ) );
+                }
+
+                m_Slots.resize( slots );
+
+                return log.m_Result = m_Slots.size()
                     ? StatusCode::Success
                     : StatusCode::IncorrectParameter;
             }
@@ -360,7 +383,10 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                m_UserConfiguration = data.HandleUserConfiguration;
+                if( !T::Queries::HwCountersPolicy::Create::m_UserCounters )
+                {
+                    m_UserConfiguration = data.HandleUserConfiguration;
+                }
 
                 const uint64_t gpuAddress = m_Slots[data.Slot].m_GpuMemory.GpuAddress;
 
@@ -387,7 +413,6 @@ namespace ML
                 const CommandBufferQueryHwCounters_1_0& data )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( m_UserConfiguration.data == data.HandleUserConfiguration.data );
 
                 m_EndTag = data.EndTag;
 
@@ -873,7 +898,7 @@ namespace ML
                 // Tail data.
                 bool tailIndexValid = ML_SUCCESS( m_Context.m_OaBuffer.GetTriggeredReportIndex( queryReport, begin, tailIndex ) );
                 auto tailReportOa   = tailIndexValid ? m_Context.m_OaBuffer.GetReport( tailIndex ) : TT::Layouts::HwCounters::ReportOa{};
-                bool tailValid      = tailIndexValid && ValidateTriggeredOaReport( queryReport, tailReportOa );
+                bool tailValid      = tailIndexValid && Derived().ValidateTriggeredOaReport( queryReport, tailReportOa );
 
                 // Triggered report debug information.
                 log.Debug( "Query report      " );

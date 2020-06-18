@@ -1666,6 +1666,20 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const CommandBufferMarkerStreamUserExtended_1_0& value )
+            {
+                std::ostringstream output;
+                output << "CommandBufferMarkerStreamUserExtended_1_0:" << '\n';
+                IncrementIndentLevel();
+                DecrementIndentLevel();
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts all structure members values to a string.
+            /// @param  value   a given structure to convert.
+            /// @return         converted all members values to string.
+            //////////////////////////////////////////////////////////////////////////
             ML_INLINE static std::string ToString( const CommandBufferMarkerStreamUser_1_0& value )
             {
                 std::ostringstream output;

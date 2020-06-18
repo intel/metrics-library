@@ -313,6 +313,24 @@ namespace ML
                     return log.m_Result;
                 }
 
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief  Restarts tbs stream.
+                /// @return operation status.
+                //////////////////////////////////////////////////////////////////////////
+                ML_INLINE StatusCode Restart()
+                {
+                    ML_FUNCTION_LOG( StatusCode::Success );
+
+                    // Disable stream.
+                    Disable();
+
+                    // Try to obtain metric set activated by metrics discovery.
+                    m_MetricSet = m_Kernel.m_IoControl.GetKernelMetricSet();
+
+                    // Enable stream.
+                    return log.m_Result = Enable();
+                }
+
             private:
                 /////////////////////////////////////////////////////////////////////////
                 /// @brief  Enables tbs stream for a given metric set.
@@ -362,7 +380,7 @@ namespace ML
                     // clang-format off
                     addProperty( DRM_I915_PERF_PROP_SAMPLE_OA,      true );
                     addProperty( DRM_I915_PERF_PROP_OA_METRICS_SET, static_cast<uint64_t>( m_MetricSet ) );
-                    addProperty( DRM_I915_PERF_PROP_OA_FORMAT,      T::ConstantsOs::Tbs::m_ReportType );
+                    addProperty( DRM_I915_PERF_PROP_OA_FORMAT,      T::TbsInterface::GetOaReportType() );
                     addProperty( DRM_I915_PERF_PROP_OA_EXPONENT,    m_Kernel.m_Tbs.GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
                     // clang-format on
                 }
@@ -421,11 +439,12 @@ namespace ML
             ML_INLINE StatusCode Initialize()
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( m_IoControl.GetTbsRevision( m_Revision ) );
-                ML_FUNCTION_CHECK( m_Revision >= T::ConstantsOs::Tbs::Revision::OaConfiguration );
-                ML_FUNCTION_CHECK( m_Stream.Initialize() );
 
-                return log.m_Result;
+                // Obtain kernel performance interface revision.
+                m_IoControl.GetTbsRevision( m_Revision );
+
+                // Enable tbs stream.
+                return log.m_Result = m_Stream.Initialize();
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -447,6 +466,15 @@ namespace ML
                 }
 
                 return m_Stream.m_OaBufferMapped;
+            }
+
+            /////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oa report type.
+            /// @return oa report type status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static drm_i915_oa_format GetOaReportType()
+            {
+                return I915_OA_FORMAT_A32u40_A4u32_B8_C8;
             }
 
             //////////////////////////////////////////////////////////////////////////

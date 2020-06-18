@@ -117,6 +117,12 @@ macro (ml_add_headers _platform)
         )
     set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
+    # query traits headers
+    file (GLOB _TRAITS_HEADERS
+        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/${_platform}/*.h
+        )
+    set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
     # tools traits headers
     file (GLOB _TRAITS_HEADERS
         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/${_platform}/*.h
@@ -393,6 +399,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
     source_group (traits\\kernel_interface\\windows ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/windows/.*h)
     source_group (traits\\marker\\windows           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/windows/.*h)
     source_group (traits\\override\\windows         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/windows/.*h)
+    source_group (traits\\query\\windows            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/windows/.*h)
     source_group (traits\\tools\\windows            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/windows/.*h)
     source_group (traits\\validation\\windows       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/windows/.*h)
     # debug logs framework
@@ -411,6 +418,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
     source_group (traits\\kernel_interface\\linux ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
     source_group (traits\\marker\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
     source_group (traits\\override\\linux         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
+    source_group (traits\\query\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/linux/.*h)
     source_group (traits\\tools\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
     source_group (traits\\validation\\linux       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/linux/.*h)
     source_group (iu\\linux FILES
@@ -426,6 +434,7 @@ else () # linux
     source_group (traits\\kernel_interface\\linux    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
     source_group (traits\\marker\\linux              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
     source_group (traits\\override\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
+    source_group (traits\\query\\linux               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/linux/.*h)
     source_group (traits\\tools\\linux               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
     source_group (traits\\validation\\linux          ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/linux/.*h)
     # debug logs framework
@@ -583,16 +592,22 @@ else () # non-windows
             -fpack-struct=8      # struct member alignment - 8 bytes
             -fvisibility=hidden  # hide non-exported symbols
             -Wno-sequence-point  # disable undefined behavior warning
+            -Wno-comment         # allow multi-line comments
             -Ofast               # optimize code in the favor of speed
             )
         if ("${TARGET_ARCH}" STREQUAL "32")
             add_definitions (-m32)
         endif ()
+        if ("${CMAKE_BUILD_TYPE}" STREQUAL "debug")
+            add_definitions (-D_DEBUG)
+        elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release-internal")
+            add_definitions (-D_RELEASE_INTERNAL)
+        endif ()
     elseif (${PLATFORM} STREQUAL qnx)
 
     elseif (${PLATFORM} STREQUAL ghs)
 
-        if (${CMAKE_BUILD_TYPE} STREQUAL "release")
+        if ("${CMAKE_BUILD_TYPE}" STREQUAL "release")
 
         endif ()
     else ()

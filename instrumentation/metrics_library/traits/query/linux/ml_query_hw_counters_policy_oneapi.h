@@ -67,7 +67,8 @@ namespace ML
 
             struct Create
             {
-                static constexpr uint32_t m_SlotsCount = 0xFFFFFFFF;
+                static constexpr uint32_t m_SlotsCount   = 0xFFFFFFFF;
+                static constexpr bool     m_UserCounters = false;
             };
 
             struct Begin
@@ -80,6 +81,11 @@ namespace ML
                 static constexpr bool m_AllowEmptyContextId  = true;
                 static constexpr bool m_ResetOaBufferState   = false;
                 static constexpr bool m_IncludeAllHwContexts = false;
+            };
+
+            struct Activate
+            {
+                static constexpr bool m_RestartTbs = true;
             };
         };
     } // namespace BASE

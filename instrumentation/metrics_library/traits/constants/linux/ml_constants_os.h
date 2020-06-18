@@ -66,7 +66,6 @@ namespace ML
             static constexpr bool        m_PrintOaCache        = false;
             static constexpr uint32_t    m_CacheCapacity       = 100;
             static constexpr uint32_t    m_TimerPeriod         = 0xFFFFFFFF;
-            static constexpr uint32_t    m_ReportType          = I915_OA_FORMAT_A32u40_A4u32_B8_C8;
             static constexpr int64_t     m_Invalid             = -1;
             static constexpr const char* m_ActiveMetricSetPath = "/sys/class/drm/card%d/metrics/%s/id";
             static constexpr const char* m_ActiveMetricSetGuid = "2f01b241-7014-42a7-9eb6-a925cad3daba";

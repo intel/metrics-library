@@ -458,9 +458,8 @@ namespace ML
                 // Timestamp before triggered report.
                 if( begin )
                 {
-                    ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
                         buffer,
-                        T::GpuRegisters::m_TimestampLow,
                         address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ) ) );
 
                     ML_FUNCTION_CHECK( StoreDataToMemory32(
@@ -485,9 +484,8 @@ namespace ML
                 // Timestamp after triggered report.
                 if( !begin )
                 {
-                    ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
                         buffer,
-                        T::GpuRegisters::m_TimestampLow,
                         address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ) ) );
 
                     ML_FUNCTION_CHECK( StoreDataToMemory32(
@@ -580,6 +578,27 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief  Writes timestamp command to gpu command buffer.
+            /// @param  buffer          target command buffer.
+            /// @param  memoryAddress   memory address where timestamp should be stored.
+            /// @return                 operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode StoreTimestamp(
+                CommandBuffer& buffer,
+                const uint64_t memoryAddress )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                    buffer,
+                    T::GpuRegisters::m_TimestampLow,
+                    memoryAddress ) );
+
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Writes pipeline timestamp command to gpu command buffer.
             /// @param  buffer          target command buffer.
             /// @param  memoryAddress   memory address where timestamp should be stored.
@@ -661,6 +680,33 @@ namespace ML
         struct GpuCommandsTrait : GEN11::GpuCommandsTrait<T>
         {
             ML_DECLARE_TRAIT( GpuCommandsTrait, GEN11 );
+
+            using Base::StoreRegisterToMemory32;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Writes timestamp command to gpu command buffer.
+            /// @param  buffer          target command buffer.
+            /// @param  memoryAddress   memory address where timestamp should be stored.
+            /// @return                 operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode StoreTimestamp(
+                CommandBuffer& buffer,
+                const uint64_t memoryAddress )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                const uint32_t registerAddress = buffer.m_Context.m_ClientOptions.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute
+                    ? T::GpuRegisters::m_CcsTimestampLow
+                    : T::GpuRegisters::m_TimestampLow;
+
+                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                    buffer,
+                    registerAddress,
+                    memoryAddress ) );
+
+                return log.m_Result;
+            }
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Writes commands to gpu command buffer to store hw counters.

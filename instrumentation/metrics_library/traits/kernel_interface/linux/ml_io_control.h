@@ -31,7 +31,7 @@ IN THE SOFTWARE.
 namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Base type for IoCIoControlTraitontrol object that sends escape codes.
+    /// @brief Base type for IoControlTrait object that sends escape codes.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct IoControlTrait

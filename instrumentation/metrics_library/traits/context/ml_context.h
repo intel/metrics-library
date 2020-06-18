@@ -82,7 +82,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief ContextTrait destructor.
         //////////////////////////////////////////////////////////////////////////
-        virtual ~ContextTrait()
+        ~ContextTrait()
         {
             // Release reference to oa buffer.
             m_OaBuffer.Release();

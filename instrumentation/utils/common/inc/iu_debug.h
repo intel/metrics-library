@@ -66,9 +66,9 @@ extern "C"
 ///////////////////////////////////////////////////////////////////////////////
 #define IU_CONFIG_FILE_PATH_SIZE_MAX 260
 #define IU_CONFIG_FILE_LINE_SIZE_MAX 100
-#define IU_CONFIG_FILE_LINE_LAYOUT   L"\"%99l[^\"]\"=dword:%99ls\n" // input  - '"ExampleKey"=dword:FFFFFFFF'
-                                                                    // output - 'ExampleKey' and 'FFFFFFFF'
-                                                                    // "\     - if a quotation mark occurred, start an expression matching
+#define IU_CONFIG_FILE_LINE_LAYOUT   L"\"%99l[^\"]\"=dword:%99ls\n" // input  - '"ExampleKey"=dword:FFFFFFFF'                              \
+                                                                    // output - 'ExampleKey' and 'FFFFFFFF'                                \
+                                                                    // "\     - if a quotation mark occurred, start an expression matching \
                                                                     // [^\"]  - continue matching the expression until the quotation mark reappears
 #define IU_CONFIG_FILE_NAME          "iu.config"
 

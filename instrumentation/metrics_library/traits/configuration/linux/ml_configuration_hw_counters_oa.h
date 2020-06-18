@@ -111,7 +111,9 @@ namespace ML
             ML_FUNCTION_LOG( StatusCode::Success );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
 
-            return log.m_Result = m_Kernel.LoadOaConfigurationToGpu( m_OaRegisters );
+            return log.m_Result = T::Queries::HwCountersPolicy::Activate::m_RestartTbs
+                ? m_Kernel.m_Tbs.m_Stream.Restart()
+                : m_Kernel.LoadOaConfigurationToGpu( m_OaRegisters );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -124,7 +126,10 @@ namespace ML
         ML_INLINE StatusCode Deactivate() const
         {
             ML_FUNCTION_LOG( StatusCode::Success );
-            return log.m_Result = m_Kernel.UnloadOaConfigurationFromGpu( m_OaRegisters );
+
+            return log.m_Result = T::Queries::HwCountersPolicy::Activate::m_RestartTbs
+                ? StatusCode::Success
+                : m_Kernel.UnloadOaConfigurationFromGpu( m_OaRegisters );
         }
 
     private:
