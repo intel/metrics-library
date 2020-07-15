@@ -1271,12 +1271,6 @@ struct PIPE_CONTROL
     ///     
     ///     When executed from POCS it results in invalidating the VFR cache.
     ///     
-    ///     Workaround
-    ///     https://vthsd.fm.intel.com/hsd/bdwgfx/bug_de/default.aspx?bug_de_id=1912463
-    ///     : When VF Cache Invalidate is set “Post Sync Operation” must be enabled
-    ///     to “Write Immediate Data” or “Write PS Depth Count” or “Write
-    ///     Timestamp”.
-    ///     
 
     __CODEGEN_INLINE void SetVFCacheInvalidationEnable( const __CODEGEN_BOOL value )
     {
@@ -1413,11 +1407,6 @@ struct PIPE_CONTROL
     ///     Setting this bit is independent of any other bit in this packet. This
     ///     bit controls the invalidation of the texture caches at the top of the
     ///     pipe i.e. at the parsing time.
-    ///     
-    ///     Workaround
-    ///     https://vthsd.iind.intel.com/hsd/gen9lp/default.aspx#bug_de/default.aspx?bug_de_id=2132585
-    ///     : “CS Stall” bit in PIPE_CONTROL command must be always set for GPGPU
-    ///     workloads when “Texture Cache Invalidation Enable” bit is set
     ///     
 
     __CODEGEN_INLINE void SetTextureCacheInvalidationEnable( const __CODEGEN_BOOL value )

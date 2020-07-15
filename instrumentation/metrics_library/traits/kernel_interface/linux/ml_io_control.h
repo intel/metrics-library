@@ -386,7 +386,7 @@ namespace ML
         ML_INLINE StatusCode GetOaBufferProperties(
             const int32_t                    stream,
             TT::Layouts::OaBuffer::Register& addressGpu,
-            uint8_t*&                        addressCpu,
+            void*&                           addressCpu,
             uint32_t&                        size ) const
         {
             ML_FUNCTION_LOG( StatusCode::TbsUnableToRead );
@@ -398,7 +398,7 @@ namespace ML
             {
                 size               = properties.size;
                 addressGpu.m_Value = properties.gpu_address;
-                addressCpu         = reinterpret_cast<uint8_t*>( static_cast<uintptr_t>( properties.cpu_address ) );
+                addressCpu         = reinterpret_cast<void*>( static_cast<uintptr_t>( properties.cpu_address ) );
             }
 
             return log.m_Result;

@@ -681,6 +681,10 @@ namespace ML
         {
             ML_DECLARE_TRAIT( GpuCommandsTrait, GEN11 );
 
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Types.
+            //////////////////////////////////////////////////////////////////////////
+            using Base::StoreDataToMemory32;
             using Base::StoreRegisterToMemory32;
 
             //////////////////////////////////////////////////////////////////////////
@@ -773,7 +777,7 @@ namespace ML
 
                 for( size_t i = 0; i < oagCountersLow.size(); ++i )
                 {
-                    ML_FUNCTION_CHECK( Base::StoreRegisterToMemory32(
+                    ML_FUNCTION_CHECK( StoreRegisterToMemory32(
                         buffer,
                         oagCountersLow[i],
                         countersOffset + ( ( oagCountersLow[i] - T::GpuRegisters::m_OagPerfA0 ) / 2 ) ) );
@@ -786,7 +790,7 @@ namespace ML
 
                 for( size_t i = 0; i < oagCountersHigh.size(); ++i )
                 {
-                    ML_FUNCTION_CHECK( Base::StoreRegisterToMemory32(
+                    ML_FUNCTION_CHECK( StoreRegisterToMemory32(
                         buffer,
                         oagCountersHigh[i],
                         countersOffset + ( ( oagCountersHigh[i] - T::GpuRegisters::m_OagPerfA0Upper ) / 2 ) ) );
@@ -797,7 +801,7 @@ namespace ML
 
                 for( size_t i = 0; i < noagCounters.size(); ++i )
                 {
-                    ML_FUNCTION_CHECK( Base::StoreRegisterToMemory32(
+                    ML_FUNCTION_CHECK( StoreRegisterToMemory32(
                         buffer,
                         noagCounters[i],
                         countersOffset + ( noagCounters[i] - T::GpuRegisters::m_OagPerfB0 ) ) );
@@ -806,7 +810,7 @@ namespace ML
                 // Report id.
                 countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId );
 
-                ML_FUNCTION_CHECK( Base::StoreDataToMemory32(
+                ML_FUNCTION_CHECK( StoreDataToMemory32(
                     buffer,
                     reportId,
                     countersOffset ) );
@@ -814,7 +818,7 @@ namespace ML
                 // Context id.
                 countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ContextId );
 
-                ML_FUNCTION_CHECK( Base::StoreRegisterToMemory32(
+                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_ContextId,
                     countersOffset ) );
@@ -822,7 +826,7 @@ namespace ML
                 // Gpu ticks.
                 countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_GpuTicks );
 
-                ML_FUNCTION_CHECK( Base::StoreRegisterToMemory32(
+                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_OagGpuTicks,
                     countersOffset ) );
@@ -834,7 +838,7 @@ namespace ML
                     ? T::GpuRegisters::m_CcsTimestampLow
                     : T::GpuRegisters::m_TimestampLow;
 
-                ML_FUNCTION_CHECK( Base::StoreRegisterToMemory32(
+                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
                     buffer,
                     registerAddress,
                     countersOffset ) );

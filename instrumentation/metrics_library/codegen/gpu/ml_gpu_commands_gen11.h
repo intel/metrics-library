@@ -1310,11 +1310,6 @@ struct PIPE_CONTROL
     ///     bit controls the invalidation of the texture caches at the top of the
     ///     pipe i.e. at the parsing time.
     ///     
-    ///     Workaround
-    ///     https://vthsd.iind.intel.com/hsd/gen9lp/default.aspx#bug_de/default.aspx?bug_de_id=2132585
-    ///     : “CS Stall” bit in PIPE_CONTROL command must be always set for GPGPU
-    ///     workloads when “Texture Cache Invalidation Enable” bit is set
-    ///     
 
     __CODEGEN_INLINE void SetTextureCacheInvalidationEnable( const __CODEGEN_BOOL value )
     {

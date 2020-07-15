@@ -87,12 +87,14 @@ namespace ML
 
                 // Print input values.
                 log.Input( data );
-                log.Input( size );
 
                 // Call entry point implementation.
                 log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
                     data,
                     size );
+
+                // Print output values.
+                log.Output( size );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -138,12 +140,14 @@ namespace ML
 
                 // Print input values.
                 log.Input( data );
-                log.Input( size );
 
                 // Call entry point implementation.
                 log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
                     data,
                     size );
+
+                // Print output values.
+                log.Output( size );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -209,12 +213,14 @@ namespace ML
 
                 // Print input values.
                 log.Input( data );
-                log.Input( size );
 
                 // Call entry point implementation.
                 log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
                     data,
                     size );
+
+                // Print output values.
+                log.Output( size );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -260,12 +266,14 @@ namespace ML
 
                 // Print input values.
                 log.Input( data );
-                log.Input( size );
 
                 // Call entry point implementation.
                 log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
                     data,
                     size );
+
+                // Print output values.
+                log.Output( size );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -331,12 +339,14 @@ namespace ML
 
                 // Print input values.
                 log.Input( data );
-                log.Input( size );
 
                 // Call entry point implementation.
                 log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
                     data,
                     size );
+
+                // Print output values.
+                log.Output( size );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -382,12 +392,14 @@ namespace ML
 
                 // Print input values.
                 log.Input( data );
-                log.Input( size );
 
                 // Call entry point implementation.
                 log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
                     data,
                     size );
+
+                // Print output values.
+                log.Output( size );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );

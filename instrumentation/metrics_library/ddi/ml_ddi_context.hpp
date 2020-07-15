@@ -119,6 +119,8 @@ namespace ML
                         break;
                 }
 
+                value->Type = *type;
+
                 return log.m_Result;
             }
         };

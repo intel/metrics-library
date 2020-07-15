@@ -206,7 +206,7 @@ namespace ML
                 const uint32_t count  = GetReportsCount();
                 index                 = oaTail.GetIndex( m_OaBuffer.m_GpuAddress );
 
-                return log.m_Result = ML_STATUS( ( index >= 0 ) && ( index < count ) );
+                return log.m_Result = ML_STATUS( index < count );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -291,11 +291,12 @@ namespace ML
                 const uint32_t offset      = GetOffset( index );
                 const uint32_t reportSize  = m_OaBuffer.m_ReportSize;
                 uint8_t*       report      = reinterpret_cast<uint8_t*>( &m_ReportSplitted );
+                uint8_t*       cpuAddress  = reinterpret_cast<uint8_t*>( m_OaBuffer.m_CpuAddress );
                 const uint32_t part1Length = m_OaBuffer.m_Size - offset;
                 const uint32_t part2Length = reportSize - part1Length;
 
-                T::Tools::MemoryCopy( report, reportSize, m_OaBuffer.m_CpuAddress + offset, part1Length );
-                T::Tools::MemoryCopy( report + part1Length, reportSize - part1Length, m_OaBuffer.m_CpuAddress, part2Length );
+                T::Tools::MemoryCopy( report, reportSize, cpuAddress + offset, part1Length );
+                T::Tools::MemoryCopy( report + part1Length, reportSize - part1Length, cpuAddress, part2Length );
 
                 ML_ASSERT( ( offset + reportSize ) > m_OaBuffer.m_Size );
                 return m_ReportSplitted;

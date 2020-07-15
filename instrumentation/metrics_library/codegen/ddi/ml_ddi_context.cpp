@@ -66,6 +66,7 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Print traits properties.
+                T::PrintBuildNumber();
                 T::PrintClient();
                 T::PrintGen();
                 T::PrintTraits();
@@ -120,14 +121,16 @@ namespace ML
 
                 // Print input values.
                 log.Input( parameter );
-                log.Input( type );
-                log.Input( value );
 
                 // Call entry point implementation.
                 log.m_Result = DdiContext<T>::GetParameter_1_0(
                     parameter,
                     type,
                     value );
+
+                // Print output values.
+                log.Output( type );
+                log.Output( value );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -152,6 +155,7 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Print traits properties.
+                T::PrintBuildNumber();
                 T::PrintClient();
                 T::PrintGen();
                 T::PrintTraits();
@@ -206,14 +210,16 @@ namespace ML
 
                 // Print input values.
                 log.Input( parameter );
-                log.Input( type );
-                log.Input( value );
 
                 // Call entry point implementation.
                 log.m_Result = DdiContext<T>::GetParameter_1_0(
                     parameter,
                     type,
                     value );
+
+                // Print output values.
+                log.Output( type );
+                log.Output( value );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -258,6 +264,7 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Print traits properties.
+                T::PrintBuildNumber();
                 T::PrintClient();
                 T::PrintGen();
                 T::PrintTraits();
@@ -312,14 +319,16 @@ namespace ML
 
                 // Print input values.
                 log.Input( parameter );
-                log.Input( type );
-                log.Input( value );
 
                 // Call entry point implementation.
                 log.m_Result = DdiContext<T>::GetParameter_1_0(
                     parameter,
                     type,
                     value );
+
+                // Print output values.
+                log.Output( type );
+                log.Output( value );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -344,6 +353,7 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Print traits properties.
+                T::PrintBuildNumber();
                 T::PrintClient();
                 T::PrintGen();
                 T::PrintTraits();
@@ -398,14 +408,16 @@ namespace ML
 
                 // Print input values.
                 log.Input( parameter );
-                log.Input( type );
-                log.Input( value );
 
                 // Call entry point implementation.
                 log.m_Result = DdiContext<T>::GetParameter_1_0(
                     parameter,
                     type,
                     value );
+
+                // Print output values.
+                log.Output( type );
+                log.Output( value );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -450,6 +462,7 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Print traits properties.
+                T::PrintBuildNumber();
                 T::PrintClient();
                 T::PrintGen();
                 T::PrintTraits();
@@ -504,14 +517,16 @@ namespace ML
 
                 // Print input values.
                 log.Input( parameter );
-                log.Input( type );
-                log.Input( value );
 
                 // Call entry point implementation.
                 log.m_Result = DdiContext<T>::GetParameter_1_0(
                     parameter,
                     type,
                     value );
+
+                // Print output values.
+                log.Output( type );
+                log.Output( value );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -536,6 +551,7 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Print traits properties.
+                T::PrintBuildNumber();
                 T::PrintClient();
                 T::PrintGen();
                 T::PrintTraits();
@@ -590,14 +606,16 @@ namespace ML
 
                 // Print input values.
                 log.Input( parameter );
-                log.Input( type );
-                log.Input( value );
 
                 // Call entry point implementation.
                 log.m_Result = DdiContext<T>::GetParameter_1_0(
                     parameter,
                     type,
                     value );
+
+                // Print output values.
+                log.Output( type );
+                log.Output( value );
 
                 // Validate function result.
                 ML_ASSERT( log.m_Result == StatusCode::Success );

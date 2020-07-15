@@ -212,6 +212,14 @@ namespace ML
                     using PipelineTimestamps          = QueryPipelineTimestampsTrait<Traits>;           //  ml_query_pipeline_timestamps.h
                 };
 
+                static void PrintBuildNumber()
+                {
+                #if ML_DEBUG || ML_INTERNAL
+                    FunctionLogStatic::Traits( "Major number", METRICS_LIBRARY_MAJOR_NUMBER );
+                    FunctionLogStatic::Traits( "Minor number", METRICS_LIBRARY_MINOR_NUMBER );
+                    FunctionLogStatic::Traits( "Build number", METRICS_LIBRARY_BUILD_NUMBER );
+                #endif
+                }
                 static void PrintClient()
                 {
                 #if ML_DEBUG || ML_INTERNAL
@@ -467,6 +475,14 @@ namespace ML
                     using PipelineTimestamps          = QueryPipelineTimestampsTrait<Traits>;           //  ml_query_pipeline_timestamps.h
                 };
 
+                static void PrintBuildNumber()
+                {
+                #if ML_DEBUG || ML_INTERNAL
+                    FunctionLogStatic::Traits( "Major number", METRICS_LIBRARY_MAJOR_NUMBER );
+                    FunctionLogStatic::Traits( "Minor number", METRICS_LIBRARY_MINOR_NUMBER );
+                    FunctionLogStatic::Traits( "Build number", METRICS_LIBRARY_BUILD_NUMBER );
+                #endif
+                }
                 static void PrintClient()
                 {
                 #if ML_DEBUG || ML_INTERNAL

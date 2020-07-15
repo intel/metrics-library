@@ -437,13 +437,6 @@ __CODEGEN_C_ASSERT( 16 == sizeof( MI_REPORT_PERF_COUNT ) );
 ///     This command will cause undefined data to be written to memory if given
 ///     register addresses for the PGTBL_CTL_0 or FENCE registers.
 ///     
-///     
-///     
-///     Workaround
-///     https://vthsd.iind.intel.com/hsd/gen9lp/default.aspx#bug_de/default.aspx?bug_de_id=2136517
-///     : Reads to MMIO registers outside GT ( Register Address > 0x40000) are
-///     not supported.
-///     
 struct MI_STORE_REGISTER_MEM
 {
     __CODEGEN_ACCESS_SPECIFIER_DEFINITION
@@ -1114,12 +1107,6 @@ struct PIPE_CONTROL
     ///     Invalidation Enable;set to 0 needs to be sent prior to the PIPE_CONTROL
     ///     with VF Cache Invalidation Enable set to a 1.
     ///     
-    ///     Workaround
-    ///     https://vthsd.fm.intel.com/hsd/bdwgfx/bug_de/default.aspx?bug_de_id=1912463
-    ///     : When VF Cache Invalidate is set “Post Sync Operation” must be enabled
-    ///     to “Write Immediate Data” or “Write PS Depth Count” or “Write
-    ///     Timestamp”.
-    ///     
     ///     As the VF,VFR data caches do not support a full address tag, SW shall
     ///     invalidate the VF,VFR cache before a draw call that uses modified
     ///     VERTEX_BUFFER state. Failure to do so may result in erroneous hits in
@@ -1263,11 +1250,6 @@ struct PIPE_CONTROL
     ///     bit controls the invalidation of the texture caches at the top of the
     ///     pipe i.e. at the parsing time.
     ///     
-    ///     Workaround
-    ///     https://vthsd.iind.intel.com/hsd/gen9lp/default.aspx#bug_de/default.aspx?bug_de_id=2132585
-    ///     : “CS Stall” bit in PIPE_CONTROL command must be always set for GPGPU
-    ///     workloads when “Texture Cache Invalidation Enable” bit is set
-    ///     
 
     __CODEGEN_INLINE void SetTextureCacheInvalidationEnable( const __CODEGEN_BOOL value )
     {
@@ -1377,13 +1359,6 @@ struct PIPE_CONTROL
     ///     PPGTT address space. If in a secure ring or batch, address given will be
     ///     in GGTT space
     ///     
-    ///     Workaround 
-    ///     https://vthsd.iind.intel.com/hsd/gen9lp/default.aspx#bug_de/default.aspx?bug_de_id=2136058
-    ///     : PIPECONTROL command with “Command Streamer Stall Enable” must be
-    ///     programmed prior to programming a PIPECONTROL command with Post Sync Op
-    ///     in GPGPU mode of operation (i.e when PIPELINE_SELECT command is set to
-    ///     GPGPU mode of operation).
-    ///     
 
     __CODEGEN_INLINE void SetPostSyncOperation( const POST_SYNC_OPERATION value )
     {
@@ -1404,13 +1379,6 @@ struct PIPE_CONTROL
     ///     Any state invalidated will not be saved as part of the render engine
     ///     context image. The state only becomes valid once it is parsed by the
     ///     command streamer.
-    ///     
-    ///     Workaround
-    ///     https://vthsd.iind.intel.com/hsd/gen9lp/default.aspx#bug_de/default.aspx?bug_de_id=2136058
-    ///     : PIPECONTROL command with “Command Streamer Stall Enable” must be
-    ///     programmed prior to programming a PIPECONTROL command with "Media State
-    ///     Clear" set inGPGPU mode of operation (i.e when PIPELINE_SELECT command
-    ///     is set to GPGPU mode of operation).
     ///     
 
     __CODEGEN_INLINE void SetGenericMediaStateClear( const __CODEGEN_BOOL value )
@@ -1583,17 +1551,6 @@ struct PIPE_CONTROL
     ///     Immediate) operation. If this bit is set then the Post-Sync Operation
     ///     field must be cleared.
     ///     
-    ///     Workaround
-    ///     https://vthsd.fm.intel.com/hsd/bdwgfx/default.aspx#bug_de/default.aspx?bug_de_id=1912423
-    ///     : “LRI Post Sync Operation” must not be enabled when “Protected Memory
-    ///     Disable” field is set.
-    ///     Workaround 
-    ///     https://vthsd.iind.intel.com/hsd/gen9lp/default.aspx#bug_de/default.aspx?bug_de_id=2136058
-    ///     : PIPECONTROL command with “Command Streamer Stall Enable” must be
-    ///     programmed prior to programming a PIPECONTROL command with LRI Post Sync
-    ///     Operation in GPGPU mode of operation (i.e when PIPELINE_SELECT command
-    ///     is set to GPGPU mode of operation).
-    ///     
 
     __CODEGEN_INLINE void SetLRIPostSyncOperation( const LRI_POST_SYNC_OPERATION value )
     {
@@ -1665,11 +1622,6 @@ struct PIPE_CONTROL
     ///     power state, the driver must program a PIPELINE_SELECT command with
     ///     force wake disabled for the media engine, after a PIPE_CONTROL that
     ///     disabled protection.
-    ///     
-    ///     Workaround
-    ///     https://vthsd.fm.intel.com/hsd/bdwgfx/default.aspx#bug_de/default.aspx?bug_de_id=1912423
-    ///     : “LRI Post Sync Operation” must not be enabled when “Protected Memory
-    ///     Disable” field is set
     ///     
 
     __CODEGEN_INLINE void SetProtectedMemoryDisable( const __CODEGEN_UINT32 value )

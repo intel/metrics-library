@@ -67,8 +67,9 @@ else ()
     string (TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
     if (NOT (CMAKE_BUILD_TYPE STREQUAL "release" OR
              CMAKE_BUILD_TYPE STREQUAL "release-internal" OR
+             CMAKE_BUILD_TYPE STREQUAL "releaseinternal" OR
              CMAKE_BUILD_TYPE STREQUAL "debug"))
-        errorExit("ERROR: Specify correct CMAKE_BUILD_TYPE (-DCMAKE_BUILD_TYPE=release|release-internal|debug)")
+        errorExit("ERROR: Specify correct CMAKE_BUILD_TYPE (-DCMAKE_BUILD_TYPE=Release|Release-Internal|ReleaseInternal|Debug)")
     endif ()
 endif ()
 

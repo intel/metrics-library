@@ -59,7 +59,7 @@ namespace ML
                 const TT::KernelInterface&         m_Kernel;
                 TT::Layouts::HwCounters::ReportOa* m_Reports;
                 TT::Layouts::OaBuffer::Register    m_GpuAddress;
-                uint8_t*                           m_CpuAddress;
+                void*                              m_CpuAddress;
                 uint32_t                           m_ReportsCount;
                 uint32_t                           m_ReportSize;
                 uint32_t                           m_Size;

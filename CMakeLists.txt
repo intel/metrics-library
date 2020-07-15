@@ -35,7 +35,11 @@ set (SOME_COMMON_INCLUDES FALSE)
 # set (CMAKE_VERBOSE_MAKEFILE ON)
 
 # instrumentation common settings & macros
-include (ml_cmake_adapter.cmake NO_POLICY_SCOPE)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    include (ml_cmake_adapter.cmake NO_POLICY_SCOPE)
+else()
+    include (../instr.cmake NO_POLICY_SCOPE) # windows and others
+endif()
 
 # version
 set (API_HEADER_LOCATION "${BS_DIR_INC}/common/instrumentation/api/metrics_library_api_1_0.h")
@@ -184,7 +188,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         )
 
     set (_SOURCES ${_SOURCES} ${_LINUX_SOURCES_ON_WINDOWS})
-elseif (${PLATFORM} STREQUAL "linux")
+elseif (${PLATFORM} STREQUAL linux)
     set (_SOURCES ${_SOURCES}
         # debug logs framework
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
@@ -426,7 +430,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
     )
-else () # linux
+elseif (${PLATFORM} STREQUAL linux) # linux
     source_group (library\\inc\\linux                ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/.*)
     source_group (library\\inc\\linux\\external\\drm ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm/.*)
     source_group (traits\\configuration\\linux       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
@@ -446,26 +450,23 @@ else () # linux
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
     )
+else()
+    message("-- Using platform is ${PLATFORM}")
 endif ()
 
 #################################################################################
 # TARGET FLAGS (add_library & link_libraries)
 #################################################################################
 # add library
-if (${PLATFORM} STREQUAL ghs) # ghs
-    add_library (${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
-elseif (${PLATFORM} STREQUAL linux) # linux
-    add_library (${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES})
-else () # windows & qnx
-    add_library (${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES})
-endif ()
+add_library (${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES})
 
 # version
 set_target_properties (${PROJECT_NAME} PROPERTIES VERSION ${LIB_VERSION} SOVERSION ${LIB_MAJOR_VERSION})
 
 # project specific target settings
 if (${PLATFORM} STREQUAL Windows) # windows
-    set_property (TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME ${LIB})
+    instr_target_settings (${PROJECT_NAME})
+    set_property (TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME ${LIB}${ARCH})
     set (CMAKE_CXX_STANDARD_LIBRARIES "")
     set (CMAKE_C_STANDARD_LIBRARIES "")
     set_target_properties (${PROJECT_NAME} PROPERTIES VS_GLOBAL_DriverTargetPlatform Universal)
@@ -474,12 +475,10 @@ if (${PLATFORM} STREQUAL Windows) # windows
             onecoreuap.lib
             )
     windows_apps_props_universal (${PROJECT_NAME})
-elseif (${PLATFORM} STREQUAL ghs) # ghs
-    # nothing to do
-elseif (${PLATFORM} STREQUAL qnx) # qnx
-    # nothing to do
-else () # linux
+elseif (${PLATFORM} STREQUAL linux) # linux
     set_property (TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME ${LIB})
+else()
+    message("-- Using platform is ${PLATFORM}")
 endif ()
 
 #################################################################################
@@ -516,34 +515,16 @@ if (${PLATFORM} STREQUAL Windows) # windows
         ${COMMON_TARGET_INCLUDE_DIRECTORIES}
         ${BS_DIR_INSTRUMENTATION}/utils/windows/inc
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/windows
-        ${BS_DIR_INSTRUMENTATION}/driver/codegen
-        ${BS_DIR_INC}/common/instrumentation/codegen
         )
-else () # non-windows
-    if (${PLATFORM} STREQUAL linux)
+elseif (${PLATFORM} STREQUAL linux) # linux
     target_include_directories (${PROJECT_NAME} PUBLIC
         ${COMMON_TARGET_INCLUDE_DIRECTORIES}
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm
         )
-    endif ()
-    # ghs sdp
-    if (${PLATFORM} STREQUAL ghs)
-
-    endif ()
-    # qnx sdp
-    if (${PLATFORM} STREQUAL qnx)
-
-    endif ()
-    # drm
-    if (NOT ${PLATFORM} STREQUAL qnx)
-
-    endif ()
-    if (NOT ${LIBDRM_SRC} STREQUAL "")
-
-    endif ()
-
+else()
+    message("-- Using platform is ${PLATFORM}")
 endif ()
 
 #################################################################################
@@ -581,41 +562,32 @@ if (${PLATFORM} STREQUAL Windows) # windows
             ${COMMON_COMPILE_OPTIONS}
         >
         )
-else () # non-windows
-    if (${PLATFORM} STREQUAL linux)
-        target_compile_options (
-            ${PROJECT_NAME} PRIVATE
-            -Wall                # enables all compiler's warning messages
-            -Werror              # treat warning as errors
-            #-Wfatal-errors      # abort compilation on the first error occurred
-            -Wno-unknown-pragmas # allow unknown pragmas (such as #pragma region)
-            -fpack-struct=8      # struct member alignment - 8 bytes
-            -fvisibility=hidden  # hide non-exported symbols
-            -Wno-sequence-point  # disable undefined behavior warning
-            -Wno-comment         # allow multi-line comments
-            -Ofast               # optimize code in the favor of speed
-            )
-        if ("${TARGET_ARCH}" STREQUAL "32")
-            add_definitions (-m32)
-        endif ()
-        if ("${CMAKE_BUILD_TYPE}" STREQUAL "debug")
-            add_definitions (-D_DEBUG)
-        elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release-internal")
-            add_definitions (-D_RELEASE_INTERNAL)
-        endif ()
-    elseif (${PLATFORM} STREQUAL qnx)
-
-    elseif (${PLATFORM} STREQUAL ghs)
-
-        if ("${CMAKE_BUILD_TYPE}" STREQUAL "release")
-
-        endif ()
-    else ()
-
+elseif (${PLATFORM} STREQUAL linux) # linux
+    target_compile_options (
+        ${PROJECT_NAME} PRIVATE
+        -Wall                # enables all compiler's warning messages
+        -Werror              # treat warning as errors
+        #-Wfatal-errors      # abort compilation on the first error occurred
+        -Wno-unknown-pragmas # allow unknown pragmas (such as #pragma region)
+        -fpack-struct=8      # struct member alignment - 8 bytes
+        -fvisibility=hidden  # hide non-exported symbols
+        -Wno-sequence-point  # disable undefined behavior warning
+        -Wno-comment         # allow multi-line comments
+        -Ofast               # optimize code in the favor of speed
+        )
+    if ("${TARGET_ARCH}" STREQUAL "32")
+        add_definitions (-m32)
     endif ()
-
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "debug")
+        add_definitions (-D_DEBUG)
+    elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release-internal")
+        add_definitions (-D_RELEASE_INTERNAL)
+    elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "releaseinternal")
+        add_definitions (-D_RELEASE_INTERNAL)
+    endif ()
+else()
+    message("-- Using platform is ${PLATFORM}")
 endif ()
-
 #################################################################################
 # GENERATOR
 #################################################################################
@@ -644,6 +616,8 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     if ("${TARGET_ARCH}" STREQUAL "32")
         set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
     endif ()
+else()
+    message("-- Using platform is ${PLATFORM}")
 endif ()
 
 #################################################################################
@@ -691,7 +665,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         CONFIGURATIONS Debug
     )
 elseif (${PLATFORM} STREQUAL linux) # linux
-    include(GNUInstallDirs)
+    include (GNUInstallDirs)
 
     if (${TARGET_ARCH} STREQUAL 64)
         set (CPACK_PACKAGE_ARCHITECTURE        "x86_64")
@@ -791,8 +765,8 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     set (CPACK_COMPONENTS_ALL metrics-library-pkgconfig metrics-library-devel metrics-library)
 
     include (CPack)
-else () # ghs & qnx
-    # nothing to do
+else()
+    message("-- Using platform is ${PLATFORM}")
 endif ()
 
 #################################################################################
@@ -809,18 +783,24 @@ endif ()
 #################################################################################
 # DEBUG
 #################################################################################
-message ("INFO: PROJECT_NAME           = ${PROJECT_NAME}")
-message ("INFO: VERSION                = ${LIB_VERSION}")
-message ("INFO: BUILD_TYPE             = ${CMAKE_BUILD_TYPE}")
-message ("INFO: PLATFORM               = ${PLATFORM}")
-message ("INFO: HOST_ARCH              = ${HOST_ARCH}")
-message ("INFO: TARGET_ARCH            = ${TARGET_ARCH}")
-message ("INFO: DUMP_DIR               = ${DUMP_DIR}")
-message ("INFO: LIB_INSTALL_DIR        = ${CMAKE_INSTALL_FULL_LIBDIR}")
-message ("INFO: LIBDRM_SRC             = ${LIBDRM_SRC}")
-message ("INFO: DRM_LIB_PATH           = ${DRM_LIB_PATH}")
-message ("INFO: BS_DIR_INSTRUMENTATION = ${BS_DIR_INSTRUMENTATION}")
-message ("INFO: BS_DIR_INC             = ${BS_DIR_INC}")
-message ("INFO: BS_DIR_EXTERNAL        = ${BS_DIR_EXTERNAL}")
-message ("INFO: CMAKE_C_FLAGS          = ${CMAKE_C_FLAGS}")
-message ("INFO: CMAKE_CXX_FLAGS        = ${CMAKE_CXX_FLAGS}")
+if (${PLATFORM} STREQUAL Windows) # windows
+    instr_debug (${PROJECT_NAME})
+elseif (${PLATFORM} STREQUAL linux) # linux
+    message ("INFO: PROJECT_NAME           = ${PROJECT_NAME}")
+    message ("INFO: VERSION                = ${LIB_VERSION}")
+    message ("INFO: BUILD_TYPE             = ${CMAKE_BUILD_TYPE}")
+    message ("INFO: PLATFORM               = ${PLATFORM}")
+    message ("INFO: HOST_ARCH              = ${HOST_ARCH}")
+    message ("INFO: TARGET_ARCH            = ${TARGET_ARCH}")
+    message ("INFO: DUMP_DIR               = ${DUMP_DIR}")
+    message ("INFO: LIB_INSTALL_DIR        = ${CMAKE_INSTALL_FULL_LIBDIR}")
+    message ("INFO: LIBDRM_SRC             = ${LIBDRM_SRC}")
+    message ("INFO: DRM_LIB_PATH           = ${DRM_LIB_PATH}")
+    message ("INFO: BS_DIR_INSTRUMENTATION = ${BS_DIR_INSTRUMENTATION}")
+    message ("INFO: BS_DIR_INC             = ${BS_DIR_INC}")
+    message ("INFO: BS_DIR_EXTERNAL        = ${BS_DIR_EXTERNAL}")
+    message ("INFO: CMAKE_C_FLAGS          = ${CMAKE_C_FLAGS}")
+    message ("INFO: CMAKE_CXX_FLAGS        = ${CMAKE_CXX_FLAGS}")
+else()
+    message("-- Using platform is ${PLATFORM}")
+endif ()

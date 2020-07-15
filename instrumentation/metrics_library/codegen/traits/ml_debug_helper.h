@@ -1122,6 +1122,7 @@ namespace ML
                     case LogType::Warning:
                         output << "Warning";
                         break;
+
                     case LogType::Info:
                         output << "Info";
                         break;
@@ -1248,6 +1249,54 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief  Creates report reason log.
+            /// @param  reportReason    a given report reason.
+            /// @return                 string that contains formatted report reason.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const TT::Layouts::OaBuffer::ReportReason reportReason )
+            {
+                std::ostringstream output;
+
+                switch( reportReason )
+                {
+                    case T::Layouts::OaBuffer::ReportReason::Timer:
+                        output << "Timer";
+                        break;
+
+                    case T::Layouts::OaBuffer::ReportReason::User1:
+                        output << "User1";
+                        break;
+
+                    case T::Layouts::OaBuffer::ReportReason::User2:
+                        output << "User2";
+                        break;
+
+                    case T::Layouts::OaBuffer::ReportReason::ContextSwitch:
+                        output << "ContextSwitch";
+                        break;
+
+                    case T::Layouts::OaBuffer::ReportReason::C6:
+                        output << "C6";
+                        break;
+
+                    case T::Layouts::OaBuffer::ReportReason::FrequencyChange:
+                        output << "FrequencyChange";
+                        break;
+
+                    case T::Layouts::OaBuffer::ReportReason::DmaSampling:
+                        output << "DmaSampling";
+                        break;
+
+                    default:
+                        output << "Illegal report reason: " << std::hex << std::showbase << static_cast<uint32_t>( reportReason );
+                        output << " (" << std::dec << static_cast<uint32_t>( reportReason ) << ")";
+                        break;
+                }
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Converts a boolean value to a string.
             /// @param  value   a given boolean value to convert.
             /// @return         converted boolean value to string.
@@ -1337,6 +1386,262 @@ namespace ML
                 else
                 {
                     output << "0x" << std::setfill( '0' ) << std::setw( sizeof( void* ) * 2 ) << std::hex << reinterpret_cast<uintptr_t>( value );
+                }
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts a numeric value to a string.
+            /// @param  value   a given numeric value to convert.
+            /// @return         converted numeric value to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const uint8_t value )
+            {
+                std::ostringstream output;
+
+                if( UseDefaultFormat() )
+                {
+                    if( Constants::Log::m_ShowHexadecimal )
+                    {
+                        output << "0x" << std::setfill( '0' ) << std::setw( sizeof( value ) * 2 ) << std::hex << value;
+                    }
+
+                    if( Constants::Log::m_ShowDecimal )
+                    {
+                        output << ( Constants::Log::m_ShowHexadecimal ? " = " : "" );
+                        output << std::dec << value;
+                    }
+                }
+                else
+                {
+                    output.flags( GetFormat().flags() );
+                    output.width( GetFormat().width() );
+                    output << value;
+                }
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts a numeric value to a string.
+            /// @param  value   a given numeric value to convert.
+            /// @return         converted numeric value to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const uint16_t value )
+            {
+                std::ostringstream output;
+
+                if( UseDefaultFormat() )
+                {
+                    if( Constants::Log::m_ShowHexadecimal )
+                    {
+                        output << "0x" << std::setfill( '0' ) << std::setw( sizeof( value ) * 2 ) << std::hex << value;
+                    }
+
+                    if( Constants::Log::m_ShowDecimal )
+                    {
+                        output << ( Constants::Log::m_ShowHexadecimal ? " = " : "" );
+                        output << std::dec << value;
+                    }
+                }
+                else
+                {
+                    output.flags( GetFormat().flags() );
+                    output.width( GetFormat().width() );
+                    output << value;
+                }
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts a numeric value to a string.
+            /// @param  value   a given numeric value to convert.
+            /// @return         converted numeric value to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const uint32_t value )
+            {
+                std::ostringstream output;
+
+                if( UseDefaultFormat() )
+                {
+                    if( Constants::Log::m_ShowHexadecimal )
+                    {
+                        output << "0x" << std::setfill( '0' ) << std::setw( sizeof( value ) * 2 ) << std::hex << value;
+                    }
+
+                    if( Constants::Log::m_ShowDecimal )
+                    {
+                        output << ( Constants::Log::m_ShowHexadecimal ? " = " : "" );
+                        output << std::dec << value;
+                    }
+                }
+                else
+                {
+                    output.flags( GetFormat().flags() );
+                    output.width( GetFormat().width() );
+                    output << value;
+                }
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts a numeric value to a string.
+            /// @param  value   a given numeric value to convert.
+            /// @return         converted numeric value to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const uint64_t value )
+            {
+                std::ostringstream output;
+
+                if( UseDefaultFormat() )
+                {
+                    if( Constants::Log::m_ShowHexadecimal )
+                    {
+                        output << "0x" << std::setfill( '0' ) << std::setw( sizeof( value ) * 2 ) << std::hex << value;
+                    }
+
+                    if( Constants::Log::m_ShowDecimal )
+                    {
+                        output << ( Constants::Log::m_ShowHexadecimal ? " = " : "" );
+                        output << std::dec << value;
+                    }
+                }
+                else
+                {
+                    output.flags( GetFormat().flags() );
+                    output.width( GetFormat().width() );
+                    output << value;
+                }
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts a numeric value to a string.
+            /// @param  value   a given numeric value to convert.
+            /// @return         converted numeric value to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const int8_t value )
+            {
+                std::ostringstream output;
+
+                if( UseDefaultFormat() )
+                {
+                    if( Constants::Log::m_ShowHexadecimal )
+                    {
+                        output << "0x" << std::setfill( '0' ) << std::setw( sizeof( value ) * 2 ) << std::hex << value;
+                    }
+
+                    if( Constants::Log::m_ShowDecimal )
+                    {
+                        output << ( Constants::Log::m_ShowHexadecimal ? " = " : "" );
+                        output << std::dec << value;
+                    }
+                }
+                else
+                {
+                    output.flags( GetFormat().flags() );
+                    output.width( GetFormat().width() );
+                    output << value;
+                }
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts a numeric value to a string.
+            /// @param  value   a given numeric value to convert.
+            /// @return         converted numeric value to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const int16_t value )
+            {
+                std::ostringstream output;
+
+                if( UseDefaultFormat() )
+                {
+                    if( Constants::Log::m_ShowHexadecimal )
+                    {
+                        output << "0x" << std::setfill( '0' ) << std::setw( sizeof( value ) * 2 ) << std::hex << value;
+                    }
+
+                    if( Constants::Log::m_ShowDecimal )
+                    {
+                        output << ( Constants::Log::m_ShowHexadecimal ? " = " : "" );
+                        output << std::dec << value;
+                    }
+                }
+                else
+                {
+                    output.flags( GetFormat().flags() );
+                    output.width( GetFormat().width() );
+                    output << value;
+                }
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts a numeric value to a string.
+            /// @param  value   a given numeric value to convert.
+            /// @return         converted numeric value to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const int32_t value )
+            {
+                std::ostringstream output;
+
+                if( UseDefaultFormat() )
+                {
+                    if( Constants::Log::m_ShowHexadecimal )
+                    {
+                        output << "0x" << std::setfill( '0' ) << std::setw( sizeof( value ) * 2 ) << std::hex << value;
+                    }
+
+                    if( Constants::Log::m_ShowDecimal )
+                    {
+                        output << ( Constants::Log::m_ShowHexadecimal ? " = " : "" );
+                        output << std::dec << value;
+                    }
+                }
+                else
+                {
+                    output.flags( GetFormat().flags() );
+                    output.width( GetFormat().width() );
+                    output << value;
+                }
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts a numeric value to a string.
+            /// @param  value   a given numeric value to convert.
+            /// @return         converted numeric value to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const int64_t value )
+            {
+                std::ostringstream output;
+
+                if( UseDefaultFormat() )
+                {
+                    if( Constants::Log::m_ShowHexadecimal )
+                    {
+                        output << "0x" << std::setfill( '0' ) << std::setw( sizeof( value ) * 2 ) << std::hex << value;
+                    }
+
+                    if( Constants::Log::m_ShowDecimal )
+                    {
+                        output << ( Constants::Log::m_ShowHexadecimal ? " = " : "" );
+                        output << std::dec << value;
+                    }
+                }
+                else
+                {
+                    output.flags( GetFormat().flags() );
+                    output.width( GetFormat().width() );
+                    output << value;
                 }
 
                 return output.str();
@@ -2225,39 +2530,6 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Converts a template value to a string.
-            /// @param  value   a given template value to convert.
-            /// @return         converted template value to string.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename ValueT>
-            ML_INLINE static std::string ToString( const ValueT value )
-            {
-                std::ostringstream output;
-
-                if( UseDefaultFormat() )
-                {
-                    if( Constants::Log::m_ShowHexadecimal )
-                    {
-                        output << "0x" << std::setfill( '0' ) << std::setw( sizeof( value ) * 2 ) << std::hex << ( uintptr_t )( value );
-                    }
-
-                    if( Constants::Log::m_ShowDecimal )
-                    {
-                        output << ( Constants::Log::m_ShowHexadecimal ? " = " : "" );
-                        output << std::dec << ( uintptr_t )( value );
-                    }
-                }
-                else
-                {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
-                    output << ( uintptr_t )( value );
-                }
-
-                return output.str();
-            }
-
-            //////////////////////////////////////////////////////////////////////////
             /// @brief  Creates a string that contains a member name of the structure
             ///         with its value.
             /// @param  parameterName   a given name of the member.
@@ -2268,18 +2540,32 @@ namespace ML
             ML_INLINE static std::string MemberToString( const char* parameterName, const ValueT value )
             {
                 std::ostringstream output;
-                const uint32_t     indent              = GetIndentLevel();
-                const uint32_t     parameterNameLength = static_cast<uint32_t>( strlen( parameterName ) );
-                const int32_t      messageLength       = std::max<int32_t>( Constants::Log::m_MaxMessageLength - parameterNameLength - Constants::Log::m_IndentSize * indent, 0 );
+                const uint32_t     indent                = GetIndentLevel();
+                const uint32_t     parameterNameLength   = static_cast<uint32_t>( strlen( parameterName ) );
+                const uint32_t     functionNameLength    = GetFunctionNameLength();
+                const uint32_t     functionNameLengthMax = Constants::Log::m_MaxFunctionNameLength;
+                const uint32_t     functionNameAlignment = std::max<uint32_t>( functionNameLength, functionNameLengthMax );
+                const uint32_t     messageLength         = Constants::Log::m_IndentSize * indent + functionNameAlignment + parameterNameLength;
 
+                // Apply indentation.
                 for( uint32_t i = 0; i < indent; ++i )
                 {
                     output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
                 }
 
-                output << parameterName << std::setw( messageLength ) << ' ';
+                // Print the parameter name and add a single space to avoid arguments concatenation.
+                output << parameterName << ' ';
+
+                // Apply alignment.
+                if( messageLength < Constants::Log::m_MaxMessageLength )
+                {
+                    output << std::setw( Constants::Log::m_MaxMessageLength - messageLength ) << ' ';
+                }
+
+                // Print value.
                 output << T::Debug::ToString( value );
 
+                // Add a new line if needed.
                 if( output.str().back() != '\n' )
                 {
                     output << '\n';
@@ -2379,16 +2665,8 @@ namespace ML
                     auto           value                 = unpackedValues.begin();
                     const uint32_t functionNameLength    = GetFunctionNameLength();
                     const uint32_t functionNameLengthMax = Constants::Log::m_MaxFunctionNameLength;
-                    const uint32_t functionNameAlignment = functionNameLength
-                        ? std::max<uint32_t>( functionNameLength, functionNameLengthMax )
-                        : 0;
+                    const uint32_t functionNameAlignment = std::max<uint32_t>( functionNameLength, functionNameLengthMax );
                     const uint32_t messageLength         = static_cast<uint32_t>( value->size() ) + Constants::Log::m_IndentSize * indent + functionNameAlignment;
-
-                    // Apply function name alignment.
-                    if( functionNameAlignment > functionNameLength )
-                    {
-                        output << std::setw( functionNameAlignment - functionNameLength ) << ' ';
-                    }
 
                     // Apply indentation.
                     for( uint32_t i = 0; i < indent; ++i )
