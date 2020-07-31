@@ -36,10 +36,16 @@ namespace ML
         /// @brief Base type for QueryHwCountersCalculatorTrait object.
         //////////////////////////////////////////////////////////////////////////
         template <typename T>
-        struct QueryHwCountersCalculatorTrait
+        struct QueryHwCountersCalculatorTrait : TraitObject<T, TT::Queries::HwCountersCalculator>
         {
             ML_DELETE_DEFAULT_CONSTRUCTOR( QueryHwCountersCalculatorTrait );
             ML_DELETE_DEFAULT_COPY_AND_MOVE( QueryHwCountersCalculatorTrait );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Types.
+            //////////////////////////////////////////////////////////////////////////
+            using Base = TraitObject<T, TT::Queries::HwCountersCalculator>;
+            using Base::Derived;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief Members.
@@ -69,7 +75,8 @@ namespace ML
                 const uint32_t                             slot,
                 TT::Queries::HwCounters&                   query,
                 TT::Layouts::HwCounters::Query::ReportApi& reportApi )
-                : m_Query( query )
+                : Base()
+                , m_Query( query )
                 , m_QuerySlotIndex( slot )
                 , m_QuerySlot( query.GetSlotData( slot ) )
                 , m_ReportGpu( GetReportGpu() )
@@ -329,7 +336,7 @@ namespace ML
                     log.m_Result = GetNextOaReport(
                         oaBegin,
                         oaEnd,
-                        frequency.m_Value,
+                        frequency,
                         overrun,
                         events );
 
@@ -407,7 +414,7 @@ namespace ML
 
                 reportApi.m_MiddleQueryEvents = events;
                 reportApi.m_OverrunOccured    = overrun;
-                reportApi.m_BeginTimestamp    = GetBeginTimestamp( oaBegin->m_Header.m_Timestamp, m_GpuTimestampFrequency );
+                reportApi.m_BeginTimestamp    = T::Queries::HwCountersCalculator::GetBeginTimestamp( oaBegin->m_Header.m_Timestamp, m_GpuTimestampFrequency );
                 reportApi.m_SplitOccured      = m_ReportGpu.m_DmaFenceIdBegin != m_ReportGpu.m_DmaFenceIdEnd;
 
                 // Output logs.
@@ -442,13 +449,13 @@ namespace ML
                             {
                                 // Use only last counters partial differentials.
                                 log.Info( "Null begin override with query extended is used." );
-                                AggregateCounters( source, m_ReportApi );
+                                Derived().AggregateCounters( source, m_ReportApi );
                             }
                         }
                         else
                         {
                             // Aggregate all counters partial differentials
-                            AggregateCounters( source, m_ReportApi );
+                            Derived().AggregateCounters( source, m_ReportApi );
                         }
 
                         m_ReportApi.m_SplitOccured |= source.m_SplitOccured;
@@ -481,6 +488,16 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief  Computes slice frequency.
+            /// @param  frequency   gpu frequency value.
+            /// @return             slice frequency.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint64_t ComputeSliceFrequency( const TT::Layouts::HwCounters::ReportId frequency ) const
+            {
+                return ( ( frequency.m_FrequencySliceHigh << 7 ) + frequency.m_FrequencySliceLow ) * 100 / 6;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns gpu frequency.
             /// @return frequencyChanged indicates gpu frequency change between begin/end.
             /// @return frequency        gpu frequency value.
@@ -510,8 +527,8 @@ namespace ML
             /// @return             success if frequency was evaluated successfully.
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode GetFrequencySlice(
-                const TT::Layouts::HwCounters::ReportId&   frequency,
-                TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
+                const TT::Layouts::HwCounters::ReportId    frequency,
+                TT::Layouts::HwCounters::Query::ReportApi& reportApi )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
@@ -521,7 +538,7 @@ namespace ML
                 // encoding table that is part of the definition of the
                 // RP_FREQ_NORMAL register. => (100 / 6)
                 reportApi.m_UnsliceFrequency = frequency.m_FrequencyUnslice * 100 / 6;
-                reportApi.m_SliceFrequency   = ( ( frequency.m_FrequencySliceHigh << 7 ) + frequency.m_FrequencySliceLow ) * 100 / 6;
+                reportApi.m_SliceFrequency   = Derived().ComputeSliceFrequency( frequency );
 
                 // Convert MHz to Hz.
                 reportApi.m_UnsliceFrequency *= Constants::Time::m_Megahertz;
@@ -765,7 +782,7 @@ namespace ML
                     const auto reason = static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_ReportReason );
 
                     // 1. Check allowed contexts.
-                    log.m_Result = reportOa.m_Header.m_ReportId.m_ContextValid && IsValidContextId( reportOa.m_Header.m_ContextId );
+                    log.m_Result = reportOa.m_Header.m_ReportId.m_ContextValid && IsValidContextId( static_cast<uint32_t>( reportOa.m_Header.m_ContextId ) ); // TODO: remove the cast
 
                     // 2. Now check the report reason:
                     if( reason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::C6 ) )
@@ -833,7 +850,7 @@ namespace ML
             ML_INLINE StatusCode GetNextOaReport(
                 const TT::Layouts::HwCounters::ReportOa*& reportBegin,
                 const TT::Layouts::HwCounters::ReportOa*& reportEnd,
-                uint32_t&                                 frequency,
+                TT::Layouts::HwCounters::ReportId&        frequency,
                 bool&                                     overrun,
                 TT::Layouts::OaBuffer::ReportReason&      events )
             {
@@ -871,7 +888,7 @@ namespace ML
             ML_INLINE StatusCode GetOaInit(
                 const TT::Layouts::HwCounters::ReportOa*& reportBegin,
                 const TT::Layouts::HwCounters::ReportOa*& reportEnd,
-                uint32_t&                                 frequency,
+                TT::Layouts::HwCounters::ReportId&        frequency,
                 TT::Layouts::OaBuffer::ReportReason&      events )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
@@ -895,10 +912,6 @@ namespace ML
                         return log.m_Result = StatusCode::NotInitialized;
                     }
 
-                    // Query reports.
-                    const uint32_t timestampBegin = reportBegin->m_Header.m_Timestamp;
-                    const uint32_t timestampEnd   = reportEnd->m_Header.m_Timestamp;
-
                     // Oa reports.
                     const uint32_t oaReportsCount = m_OaBuffer.FindOaWindow( m_OaBufferState );
 
@@ -907,15 +920,15 @@ namespace ML
                         const uint32_t                           oaReportIndex = ( m_OaBufferState.m_TailBeginIndex + i ) % m_OaBuffer.GetReportsCount();
                         const TT::Layouts::HwCounters::ReportOa& oaReport      = m_OaBuffer.GetReport( oaReportIndex );
 
-                        if( T::Tools::Compare32( oaReport.m_Header.m_Timestamp, timestampBegin ) <= 0 )
+                        if( Derived().CompareTimestamps( oaReport.m_Header.m_Timestamp, reportBegin->m_Header.m_Timestamp ) <= 0 )
                         {
-                            frequency = oaReport.m_Header.m_ReportId.m_Value;
+                            frequency = oaReport.m_Header.m_ReportId;
                             log.Info( "oaReport (skip begin):", FormatFlag::Decimal, oaReportIndex, oaReport );
                         }
-                        else if( T::Tools::Compare32( oaReport.m_Header.m_Timestamp, timestampEnd ) >= 0 )
+                        else if( Derived().CompareTimestamps( oaReport.m_Header.m_Timestamp, reportEnd->m_Header.m_Timestamp ) >= 0 )
                         {
                             // All next reports in the oa buffer are too new, so ignore subsequent reports.
-                            frequency = oaReport.m_Header.m_ReportId.m_Value;
+                            frequency = oaReport.m_Header.m_ReportId;
                             log.Info( "oaReport (skip end):", FormatFlag::Decimal, oaReportIndex, oaReport );
                             break;
                         }
@@ -966,7 +979,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode GetOaBeginReport(
                 const TT::Layouts::HwCounters::ReportOa*& reportBegin,
-                uint32_t&                                 frequency )
+                TT::Layouts::HwCounters::ReportId&        frequency )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
@@ -981,7 +994,7 @@ namespace ML
                 {
                     // Set to the previous end report.
                     reportBegin = &m_OaBufferState.m_ReportCopy[m_OaBufferState.m_ReportCopyIndex];
-                    frequency   = reportBegin->m_Header.m_ReportId.m_Value;
+                    frequency   = reportBegin->m_Header.m_ReportId;
 
                     m_OaBufferState.m_LogBeginIndex = m_OaBufferState.m_CurrentIndex != m_OaBufferState.m_FirstIndex
                         ? m_OaBufferState.m_CurrentIndex - 1
@@ -1022,13 +1035,8 @@ namespace ML
                     // Copy oa report from oa Buffer.
                     m_OaBufferState.m_ReportCopy[m_OaBufferState.m_ReportCopyIndex] = oaReport;
 
-                    // Get timestamp from the mirpc end report.
-                    const uint32_t timestampEnd    = m_ReportOaEnd.m_Header.m_Timestamp;
-                    const uint32_t timestampReport = oaReport.m_Header.m_Timestamp;
-                    const uint32_t timestampCopy   = m_OaBufferState.m_ReportCopy[m_OaBufferState.m_ReportCopyIndex].m_Header.m_Timestamp;
-
                     // Check overrun condition.
-                    overrun = ( T::Tools::Compare32( timestampReport, timestampEnd ) >= 0 ) || ( timestampReport != timestampCopy );
+                    overrun = Derived().IsOverrun( oaReport.m_Header.m_Timestamp );
 
                     if( overrun )
                     {
@@ -1091,6 +1099,38 @@ namespace ML
                 }
 
                 return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Compares reports timestamps.
+            /// @param  value1  first timestamp.
+            /// @param  value2  second timestamp.
+            /// @return         -1 if value1 is lesser than value2.
+            ///                 1 if value1 is greater than value2.
+            ///                 0 if value1 is equal to value2.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE int32_t CompareTimestamps(
+                const uint32_t value1,
+                const uint32_t value2 ) const
+            {
+                return T::Tools::Compare32( value1, value2 );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Check timestamp overrun condition.
+            /// @param  timestampReport timestamp from current report.
+            /// @return true if overrun occurred, false otherwise.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE bool IsOverrun( const uint32_t timestampReport ) const
+            {
+                ML_FUNCTION_LOG( false );
+
+                // Get timestamp from the mirpc end report.
+                const uint32_t timestampEnd  = m_ReportOaEnd.m_Header.m_Timestamp;
+                const uint32_t timestampCopy = m_OaBufferState.m_ReportCopy[m_OaBufferState.m_ReportCopyIndex].m_Header.m_Timestamp;
+
+                // Check overrun condition.
+                return log.m_Result = ( T::Tools::Compare32( timestampReport, timestampEnd ) >= 0 ) || ( timestampReport != timestampCopy );
             }
 
             //////////////////////////////////////////////////////////////////////////

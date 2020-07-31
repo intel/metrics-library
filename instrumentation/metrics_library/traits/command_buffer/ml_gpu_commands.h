@@ -291,13 +291,13 @@ namespace ML
                 switch( reportingMode )
                 {
                     case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
-                        return StoreHwCountersViaMirpc( buffer, address, reportId, begin );
+                        return T::GpuCommands::StoreHwCountersViaMirpc( buffer, address, reportId, begin );
 
                     case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOar:
-                        return StoreHwCountersViaSrmOar( buffer, address, reportId, begin );
+                        return T::GpuCommands::StoreHwCountersViaSrmOar( buffer, address, reportId, begin );
 
                     case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
-                        return StoreHwCountersViaOagTriggers( buffer, address, reportId, queryId, begin );
+                        return T::GpuCommands::StoreHwCountersViaOagTriggers( buffer, address, reportId, queryId, begin );
 
                     default:
                         ML_ASSERT_ALWAYS();

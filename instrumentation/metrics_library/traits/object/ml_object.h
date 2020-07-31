@@ -116,6 +116,42 @@ namespace ML
     };
 
     //////////////////////////////////////////////////////////////////////////
+    /// @brief Trait object type.
+    /// @param T        traits.
+    /// @param Object   derived object used to cast from base class to derived.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T, typename Object>
+    struct TraitObject
+    {
+        ML_DELETE_DEFAULT_COPY_AND_MOVE( TraitObject );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Trait object constructor.
+        //////////////////////////////////////////////////////////////////////////
+        TraitObject()
+        {
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Trait object destructor.
+        //////////////////////////////////////////////////////////////////////////
+        virtual ~TraitObject()
+        {
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns derived object instance.
+        /// @return derived object instance.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE Object& Derived()
+        {
+            Object* object = T::ToolsOs::template DynamicCast<Object>( this );
+            ML_ASSERT( object );
+            return *object;
+        }
+    };
+
+    //////////////////////////////////////////////////////////////////////////
     /// @brief Ddi object type.
     /// @param T        traits.
     /// @param Object   derived object used to cast from base class to derived.
@@ -123,10 +159,16 @@ namespace ML
     /// @param Type     object type to validate object type.
     //////////////////////////////////////////////////////////////////////////
     template <typename T, typename Object, typename Handle, ObjectType Type>
-    struct DdiObject : BaseObject
+    struct DdiObject : BaseObject, TraitObject<T, Object>
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( DdiObject );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( DdiObject );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using BaseTraitObject = TraitObject<T, Object>;
+        using BaseTraitObject::Derived;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Ddi object constructor.
@@ -185,17 +227,6 @@ namespace ML
             return valid
                 ? StatusCode::Success
                 : StatusCode::IncorrectParameter;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns derived object instance.
-        /// @return derived object instance.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE Object& Derived()
-        {
-            Object* object = T::ToolsOs::template DynamicCast<Object>( this );
-            ML_ASSERT( object );
-            return *object;
         }
 
         //////////////////////////////////////////////////////////////////////////

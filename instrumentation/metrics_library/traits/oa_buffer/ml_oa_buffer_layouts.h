@@ -45,12 +45,13 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         enum class ReportReason : uint32_t
         {
-            Timer               = 0b000001,
-            User1               = 0b000010,
-            User2               = 0b000100,
-            ContextSwitch       = 0b001000,
-            C6                  = 0b010000,
-            FrequencyChange     = 0b100000,
+            Timer               = 0b0000001,
+            User1               = 0b0000010,
+            User2               = 0b0000100,
+            ContextSwitch       = 0b0001000,
+            C6                  = 0b0010000,
+            FrequencyChange     = 0b0100000,
+            MmioTrigger         = 0b1000000,
 
             // Aliases:
             ConfigurationUpdate = User1,
@@ -59,7 +60,7 @@ namespace ML
             TriggerQuery        = User1,
 
             // Software values - values with more than a single bit are allowed:
-            DmaSampling         = 0b000011
+            DmaSampling         = 0b0000011
         };
 
         //////////////////////////////////////////////////////////////////////////

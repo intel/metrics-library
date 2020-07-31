@@ -197,9 +197,31 @@ namespace ML
             {
                 log.m_Result = ( ( value1 - value2 ) < 0x80000000 ) ? 1 : -1;
             }
-            else
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Compares two measure points (counters overflow is also handled).
+        /// @param value1   first value to compare.
+        /// @param value2   second value to compare.
+        /// @return        -1 if value1 is lesser than value2.
+        ///                 1 if value1 is greater than value2.
+        ///                 0 if value1 is equal to value2.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static int32_t Compare64(
+            const uint64_t value1,
+            const uint64_t value2 )
+        {
+            ML_FUNCTION_LOG( int32_t{ 0 } );
+
+            if( value1 < value2 )
             {
-                log.m_Result = 0;
+                log.m_Result = ( ( value2 - value1 ) < 0x8000000000000000 ) ? -1 : 1;
+            }
+            else if( value1 > value2 )
+            {
+                log.m_Result = ( ( value1 - value2 ) < 0x8000000000000000 ) ? 1 : -1;
             }
 
             return log.m_Result;

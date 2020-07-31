@@ -1691,11 +1691,15 @@ namespace ML
             ML_INLINE static std::string ToString( const ClientDataLinuxAdapter_1_0& value )
             {
                 std::ostringstream output;
+            #if ML_LINUX
                 output << "ClientDataLinuxAdapter_1_0:" << '\n';
                 IncrementIndentLevel();
                 output << MemberToString( "Type                         ", value.Type );
                 output << MemberToString( "DrmFileDescriptor            ", value.DrmFileDescriptor );
                 DecrementIndentLevel();
+            #else
+                (void) value;
+            #endif
                 return output.str();
             }
 
@@ -1707,11 +1711,15 @@ namespace ML
             ML_INLINE static std::string ToString( const ClientDataLinux_1_0& value )
             {
                 std::ostringstream output;
+            #if ML_LINUX
                 output << "ClientDataLinux_1_0:" << '\n';
                 IncrementIndentLevel();
                 output << MemberToString( "Adapter            ", value.Adapter );
                 output << MemberToString( "Reserved           ", reinterpret_cast<uintptr_t>( value.Reserved ) );
                 DecrementIndentLevel();
+            #else
+                (void) value;
+            #endif
                 return output.str();
             }
 
@@ -1723,6 +1731,7 @@ namespace ML
             ML_INLINE static std::string ToString( const ClientDataWindows_1_0& value )
             {
                 std::ostringstream output;
+            #if ML_WINDOWS
                 output << "ClientDataWindows_1_0:" << '\n';
                 IncrementIndentLevel();
                 output << MemberToString( "Device                               ", reinterpret_cast<uintptr_t>( value.Device ) );
@@ -1730,6 +1739,9 @@ namespace ML
                 output << MemberToString( "Escape                               ", reinterpret_cast<uintptr_t>( value.Escape ) );
                 output << MemberToString( "KmdInstrumentationEnabled            ", value.KmdInstrumentationEnabled );
                 DecrementIndentLevel();
+            #else
+                (void) value;
+            #endif
                 return output.str();
             }
 

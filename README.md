@@ -39,10 +39,10 @@ cmake .
 make -j$(nproc)
 ```
 
-4\. Built library will be here (for 64-bit Linux):
+4\. Built library will be here (for 64-bit release Linux):
 
 ```shell
-(project_root)/dump/linux64/metrics_library/libigdml64.so
+(project_root)/dump/linux64/release/metrics_library/libigdml.so
 ```
 
 5\. To prepare an installation package:
