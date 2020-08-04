@@ -55,10 +55,15 @@ namespace ML
         {
             enum class Revision : uint32_t
             {
-                Unsupported     = 0,
-                OaSupported     = 1,
-                OaConfiguration = 2,
-                OaBufferMapping = 4,
+                Unsupported      = 0,
+                OaSupported      = 1,
+                OaConfiguration  = 2,
+                HoldPreemption   = 3,
+                AllowedSsEu      = 4,
+                PollOaPeriod     = 5,
+                TriggerReports   = 6,
+                TriggerWhitelist = 7,
+                OaBufferMapping  = 8
             };
 
             static constexpr bool        m_MappingRequired     = false;

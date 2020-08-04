@@ -376,29 +376,57 @@ namespace ML
         }
 
         /////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns oa buffer properties.
+        /// @brief  Returns oa buffer cpu address.
         /// @param  stream     tbs stream id.
-        /// @return addressGpu oa buffer gpu allocation address.
         /// @return addressCpu oa buffer mapped cpu address.
         /// @return size       oa buffer size.
         /// @return            operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaBufferProperties(
-            const int32_t                    stream,
-            TT::Layouts::OaBuffer::Register& addressGpu,
-            void*&                           addressCpu,
-            uint32_t&                        size ) const
+        ML_INLINE StatusCode MapOaBuffer(
+            const int32_t stream,
+            void*&        addressCpu,
+            uint32_t&     size ) const
         {
             ML_FUNCTION_LOG( StatusCode::TbsUnableToRead );
 
+            // Obtain oa buffer size / offset.
             auto properties = drm_i915_perf_oa_buffer_info{};
             log.m_Result    = GetStreamParameter( stream, I915_PERF_IOCTL_GET_OA_BUFFER_INFO, properties );
 
+            if( ML_FAIL( log.m_Result ) )
+            {
+                return log.m_Result;
+            }
+
+            // Obtain oa buffer cpu address.
+            size         = properties.size;
+            addressCpu   = mmap( 0, properties.size, PROT_READ, MAP_PRIVATE, stream, properties.offset );
+            log.m_Result = ML_STATUS( addressCpu != nullptr );
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa buffer cpu address.
+        /// @param  stream     tbs stream id.
+        /// @return addressCpu oa buffer mapped cpu address.
+        /// @return size       oa buffer size.
+        /// @return            operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode MapOaBufferLegacy(
+            const int32_t stream,
+            void*&        addressCpu,
+            uint32_t&     size ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::TbsUnableToRead );
+
+            auto properties = drm_i915_perf_oa_buffer_info_legacy{};
+            log.m_Result    = GetStreamParameter( stream, I915_PERF_IOCTL_GET_OA_BUFFER_INFO_LEGACY, properties );
+
             if( ML_SUCCESS( log.m_Result ) )
             {
-                size               = properties.size;
-                addressGpu.m_Value = properties.gpu_address;
-                addressCpu         = reinterpret_cast<void*>( static_cast<uintptr_t>( properties.cpu_address ) );
+                size       = properties.size;
+                addressCpu = reinterpret_cast<void*>( static_cast<uintptr_t>( properties.cpu_address ) );
             }
 
             return log.m_Result;
@@ -607,6 +635,7 @@ namespace ML
             switch( request )
             {
                 case I915_PERF_IOCTL_GET_OA_BUFFER_INFO:
+                case I915_PERF_IOCTL_GET_OA_BUFFER_INFO_LEGACY:
                     break;
 
                 default:

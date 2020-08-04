@@ -58,7 +58,6 @@ namespace ML
             {
                 const TT::KernelInterface&         m_Kernel;
                 TT::Layouts::HwCounters::ReportOa* m_Reports;
-                TT::Layouts::OaBuffer::Register    m_GpuAddress;
                 void*                              m_CpuAddress;
                 uint32_t                           m_ReportsCount;
                 uint32_t                           m_ReportSize;
@@ -73,7 +72,6 @@ namespace ML
                 OaBufferMapped( const TT::KernelInterface& kernel )
                     : m_Kernel( kernel )
                     , m_Reports( nullptr )
-                    , m_GpuAddress{}
                     , m_CpuAddress( nullptr )
                     , m_ReportsCount( 0 )
                     , m_ReportSize( sizeof( TT::Layouts::HwCounters::ReportOa ) )
@@ -135,30 +133,25 @@ namespace ML
                 ML_INLINE StatusCode Map()
                 {
                     ML_FUNCTION_LOG( StatusCode::Success );
-                    ML_FUNCTION_CHECK( IsSupported() );
                     ML_FUNCTION_CHECK( m_Stream != T::ConstantsOs::Tbs::m_Invalid );
 
                     // Obtain oa buffer properties.
-                    log.m_Result = m_Kernel.m_IoControl.GetOaBufferProperties(
-                        m_Stream,
-                        m_GpuAddress,
-                        m_CpuAddress,
-                        m_Size );
+                    log.m_Result = IsSupported()
+                        ? m_Kernel.m_IoControl.MapOaBuffer( m_Stream, m_CpuAddress, m_Size )
+                        : m_Kernel.m_IoControl.MapOaBufferLegacy( m_Stream, m_CpuAddress, m_Size );
 
                     // Validate obtain data.
                     ML_FUNCTION_CHECK( log.m_Result );
                     ML_FUNCTION_CHECK( m_Size > 0 );
-                    ML_FUNCTION_CHECK( m_GpuAddress.GetAllocationOffset() > 0 );
                     ML_FUNCTION_CHECK( m_CpuAddress != nullptr );
 
                     m_Reports      = reinterpret_cast<TT::Layouts::HwCounters::ReportOa*>( m_CpuAddress );
                     m_ReportsCount = m_Size / m_ReportSize;
-                    m_Mapped       = m_Size && m_CpuAddress && m_GpuAddress.GetAllocationOffset();
+                    m_Mapped       = m_Size && m_CpuAddress;
 
                     // Log collected data.
                     log.Info( "Mapped        ", m_Mapped );
                     log.Info( "Address cpu   ", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_CpuAddress );
-                    log.Info( "Address gpu   ", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_GpuAddress.GetAllocationOffset() );
                     log.Info( "Size          ", m_Size );
                     log.Info( "Reports count ", m_ReportsCount );
 
@@ -174,7 +167,11 @@ namespace ML
                     ML_FUNCTION_LOG( StatusCode::Success );
                     ML_FUNCTION_CHECK( m_Mapped );
 
-                    m_GpuAddress   = {};
+                    if( m_CpuAddress )
+                    {
+                        munmap( m_CpuAddress, m_Size );
+                    }
+
                     m_CpuAddress   = nullptr;
                     m_Reports      = nullptr;
                     m_ReportsCount = 0;

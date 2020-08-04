@@ -104,15 +104,15 @@ namespace ML
                 auto& state     = query.m_OaBufferState;
                 auto& reportGpu = query.GetReportGpu();
 
-                const uint32_t base      = m_OaBuffer.m_GpuAddress.GetAllocationOffset();
+                const uint32_t base      = reportGpu.m_OaBuffer.GetAllocationOffset();
                 const uint32_t tailBegin = reportGpu.m_OaTailBegin.GetOffset();
                 const uint32_t tailEnd   = reportGpu.m_OaTailEnd.GetOffset();
 
                 const bool validBegin = tailBegin >= base;
                 const bool validEnd   = tailEnd >= base;
 
-                state.m_TailBeginIndex = reportGpu.m_OaTailBegin.GetIndex( m_OaBuffer.m_GpuAddress );
-                state.m_TailEndIndex   = reportGpu.m_OaTailEnd.GetIndex( m_OaBuffer.m_GpuAddress );
+                state.m_TailBeginIndex = reportGpu.m_OaTailBegin.GetIndex( reportGpu.m_OaBuffer );
+                state.m_TailEndIndex   = reportGpu.m_OaTailEnd.GetIndex( reportGpu.m_OaBuffer );
                 log.m_Result           = ML_STATUS( validBegin && validEnd );
 
                 log.Debug( "Base address  ", base );
@@ -188,23 +188,23 @@ namespace ML
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns triggered oa report associated with query begin/end report.
-            /// @param  query   gpu report collected by query.
-            /// @param  begin   query begin/end.
-            /// @return index   oa tail index.
-            /// @return         operation status.
+            /// @param  reportGpu   gpu report collected by query.
+            /// @param  begin       query begin/end.
+            /// @return index       oa tail index.
+            /// @return             operation status.
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode GetTriggeredReportIndex(
-                const TT::Layouts::HwCounters::Query::ReportGpu& query,
+                const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
                 const bool                                       begin,
                 uint32_t&                                        index )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
                 ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
-                ML_FUNCTION_CHECK( m_OaBuffer.m_GpuAddress.GetAllocationOffset() > 0 );
+                ML_FUNCTION_CHECK( reportGpu.m_OaBuffer.GetAllocationOffset() > 0 );
 
-                const auto&    oaTail = begin ? query.m_OaTailBegin : query.m_OaTailTriggerEnd;
+                const auto&    oaTail = begin ? reportGpu.m_OaTailBegin : reportGpu.m_OaTailTriggerEnd;
                 const uint32_t count  = GetReportsCount();
-                index                 = oaTail.GetIndex( m_OaBuffer.m_GpuAddress );
+                index                 = oaTail.GetIndex( reportGpu.m_OaBuffer );
 
                 return log.m_Result = ML_STATUS( index < count );
             }

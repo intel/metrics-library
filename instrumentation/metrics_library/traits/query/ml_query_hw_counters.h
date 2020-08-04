@@ -722,7 +722,7 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                const uint32_t oaStatusOffset    = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaStatus );
+                const uint32_t oaBufferOffset    = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaBuffer );
                 const uint32_t oaTailBeginOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailBegin );
                 const uint32_t oaTailEndOffset   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailEnd );
 
@@ -742,8 +742,8 @@ namespace ML
 
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
-                        T::GpuRegisters::m_OaStatus,
-                        address + oaStatusOffset ) );
+                        T::GpuRegisters::m_OaBuffer,
+                        address + oaBufferOffset ) );
                 }
 
                 return log.m_Result;

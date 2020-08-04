@@ -276,7 +276,7 @@ namespace ML
                             uint32_t    m_DmaFenceIdEnd;
 
                             // Oa buffer data related.
-                            TT::Layouts::OaBuffer::StatusRegister           m_OaStatus;
+                            TT::Layouts::OaBuffer::Register                 m_OaBuffer;
                             TT::Layouts::OaBuffer::TailRegister             m_OaTailBegin;          // Oa window begin & triggered mode.
                             TT::Layouts::OaBuffer::TailRegister             m_OaTailTriggerEnd;     // Triggered mode only.
                             TT::Layouts::OaBuffer::TailRegister             m_OaTailEnd;            // Oa window end.

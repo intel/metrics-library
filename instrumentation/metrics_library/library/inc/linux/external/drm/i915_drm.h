@@ -1595,16 +1595,29 @@ struct drm_i915_perf_open_param {
 #define I915_PERF_IOCTL_CONFIG	_IO('i', 0x2)
 
 /**
- * Returns oa buffer properties.
+ * Returns OA buffer properties to be used with mmap.
  *
- * This ioctl is available in perf revision 4.
+ * This ioctl is available in perf revision 8.
  */
-#define I915_PERF_IOCTL_GET_OA_BUFFER_INFO	_IO('i', 0x3)
+#define I915_PERF_IOCTL_GET_OA_BUFFER_INFO _IOWR('i', 0x3, struct drm_i915_perf_oa_buffer_info)
 
 /**
- * Oa buffer information structure.
- */
+ * OA buffer size and offset.
+*/
 struct drm_i915_perf_oa_buffer_info {
+	__u32 type;   /* in */
+	__u32 flags;  /* in */
+	__u64 size;   /* out */
+	__u64 offset; /* out */
+	__u64 rsvd;   /* mbz */
+};
+
+/**
+ * Oa buffer legacy information structure.
+ */
+#define I915_PERF_IOCTL_GET_OA_BUFFER_INFO_LEGACY	_IO('i', 0x3)
+
+struct drm_i915_perf_oa_buffer_info_legacy {
 	__u32 size;
 	__u32 head;
 	__u32 tail;

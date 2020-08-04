@@ -37,6 +37,7 @@ IN THE SOFTWARE.
 /// @brief Linux utility:
 //////////////////////////////////////////////////////////////////////////
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <dirent.h>
