@@ -122,12 +122,15 @@ namespace ML
                     using Override                  = OverrideLayoutsTrait<Traits>;                 //  linux/ml_override_layouts.h
                 #endif
                     using PipelineTimestamps        = PipelineTimestampsLayoutsTrait<Traits>;       //  ml_pipeline_timestamps_layouts.h
+                    using GpuRegisters              = GpuRegistersLayoutsTrait<Traits>;             //  ml_gpu_registers_layouts.h
                 };
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Debug helper.
                 //////////////////////////////////////////////////////////////////////////
-                using Debug                         = DebugTrait<Traits>;                           //  ml_debug_helper.h
+                #if ML_LINUX
+                using Debug                         = DebugTrait<Traits>;                           //  linux/ml_debug_helper.h
+                #endif
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Markers.
@@ -180,9 +183,7 @@ namespace ML
                 #if ML_LINUX
                     using User                      = OverrideUserTrait<Traits>;                    //  linux/ml_override_user.h
                 #endif
-                #if ML_LINUX
-                    using NullHardware              = OverrideNullHardwareTrait<Traits>;            //  linux/ml_override_null_hardware.h
-                #endif
+                    using NullHardware              = OverrideNullHardwareTrait<Traits>;            //  ml_override_null_hardware.h
                     using FlushCaches               = OverrideFlushCachesTrait<Traits>;             //  ml_override_flush_caches.h
                 #if ML_LINUX
                     using PoshQuery                 = OverridePoshQueryTrait<Traits>;               //  linux/ml_override_posh_query.h
@@ -259,7 +260,10 @@ namespace ML
                     FunctionLogStatic::Traits( "using Layouts::Override", Layouts::Override::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Layouts::PipelineTimestamps", Layouts::PipelineTimestamps::GetDescription() );
+                    FunctionLogStatic::Traits( "using Layouts::GpuRegisters", Layouts::GpuRegisters::GetDescription() );
+                #if ML_LINUX
                     FunctionLogStatic::Traits( "using Debug", Debug::GetDescription() );
+                #endif
                     FunctionLogStatic::Traits( "using Markers::StreamUser", Markers::StreamUser::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Markers::StreamUserExtended", Markers::StreamUserExtended::GetDescription() );
@@ -284,9 +288,7 @@ namespace ML
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::User", Overrides::User::GetDescription() );
                 #endif
-                #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::NullHardware", Overrides::NullHardware::GetDescription() );
-                #endif
                     FunctionLogStatic::Traits( "using Overrides::FlushCaches", Overrides::FlushCaches::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
@@ -385,12 +387,15 @@ namespace ML
                     using Override                  = OverrideLayoutsTrait<Traits>;                 //  linux/ml_override_layouts.h
                 #endif
                     using PipelineTimestamps        = PipelineTimestampsLayoutsTrait<Traits>;       //  ml_pipeline_timestamps_layouts.h
+                    using GpuRegisters              = GpuRegistersLayoutsTrait<Traits>;             //  ml_gpu_registers_layouts.h
                 };
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Debug helper.
                 //////////////////////////////////////////////////////////////////////////
-                using Debug                         = DebugTrait<Traits>;                           //  ml_debug_helper.h
+                #if ML_LINUX
+                using Debug                         = DebugTrait<Traits>;                           //  linux/ml_debug_helper.h
+                #endif
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Markers.
@@ -443,9 +448,7 @@ namespace ML
                 #if ML_LINUX
                     using User                      = OverrideUserTrait<Traits>;                    //  linux/ml_override_user.h
                 #endif
-                #if ML_LINUX
-                    using NullHardware              = OverrideNullHardwareTrait<Traits>;            //  linux/ml_override_null_hardware.h
-                #endif
+                    using NullHardware              = OverrideNullHardwareTrait<Traits>;            //  ml_override_null_hardware.h
                     using FlushCaches               = OverrideFlushCachesTrait<Traits>;             //  ml_override_flush_caches.h
                 #if ML_LINUX
                     using PoshQuery                 = OverridePoshQueryTrait<Traits>;               //  linux/ml_override_posh_query.h
@@ -522,7 +525,10 @@ namespace ML
                     FunctionLogStatic::Traits( "using Layouts::Override", Layouts::Override::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Layouts::PipelineTimestamps", Layouts::PipelineTimestamps::GetDescription() );
+                    FunctionLogStatic::Traits( "using Layouts::GpuRegisters", Layouts::GpuRegisters::GetDescription() );
+                #if ML_LINUX
                     FunctionLogStatic::Traits( "using Debug", Debug::GetDescription() );
+                #endif
                     FunctionLogStatic::Traits( "using Markers::StreamUser", Markers::StreamUser::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Markers::StreamUserExtended", Markers::StreamUserExtended::GetDescription() );
@@ -547,9 +553,7 @@ namespace ML
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::User", Overrides::User::GetDescription() );
                 #endif
-                #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::NullHardware", Overrides::NullHardware::GetDescription() );
-                #endif
                     FunctionLogStatic::Traits( "using Overrides::FlushCaches", Overrides::FlushCaches::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );

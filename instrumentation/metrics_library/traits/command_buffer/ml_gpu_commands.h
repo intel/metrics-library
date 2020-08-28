@@ -512,17 +512,20 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
+                auto risingEdge  = TT::Layouts::GpuRegisters::OaReportTrigger( false );
+                auto fallingEdge = TT::Layouts::GpuRegisters::OaReportTrigger( true );
+
                 // Write rising edge.
                 ML_FUNCTION_CHECK( LoadRegisterImmediate32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger2,
-                    T::GpuRegisters::m_OaTriggerRisingEdge ) );
+                    risingEdge.m_Value ) );
 
                 // Write falling edge.
                 ML_FUNCTION_CHECK( LoadRegisterImmediate32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger2,
-                    T::GpuRegisters::m_OaTriggerFallingEdge ) );
+                    fallingEdge.m_Value ) );
 
                 return log.m_Result;
             }
@@ -538,17 +541,20 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
+                auto risingEdge  = TT::Layouts::GpuRegisters::OaReportTrigger( false );
+                auto fallingEdge = TT::Layouts::GpuRegisters::OaReportTrigger( true );
+
                 // Write rising edge.
                 ML_FUNCTION_CHECK( LoadRegisterImmediate32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger6,
-                    T::GpuRegisters::m_OaTriggerRisingEdge ) );
+                    risingEdge.m_Value ) );
 
                 // Write falling edge.
                 ML_FUNCTION_CHECK( LoadRegisterImmediate32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger6,
-                    T::GpuRegisters::m_OaTriggerFallingEdge ) );
+                    fallingEdge.m_Value ) );
 
                 return log.m_Result;
             }
@@ -564,15 +570,18 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                ML_FUNCTION_CHECK( LoadRegisterImmediatePostSync32(
-                    buffer,
-                    T::GpuRegisters::m_OaTrigger6,
-                    T::GpuRegisters::m_OaTriggerRisingEdge ) );
+                auto risingEdge  = TT::Layouts::GpuRegisters::OaReportTrigger( false );
+                auto fallingEdge = TT::Layouts::GpuRegisters::OaReportTrigger( true );
 
                 ML_FUNCTION_CHECK( LoadRegisterImmediatePostSync32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger6,
-                    T::GpuRegisters::m_OaTriggerFallingEdge ) );
+                    risingEdge.m_Value ) );
+
+                ML_FUNCTION_CHECK( LoadRegisterImmediatePostSync32(
+                    buffer,
+                    T::GpuRegisters::m_OaTrigger6,
+                    fallingEdge.m_Value ) );
 
                 return log.m_Result;
             }

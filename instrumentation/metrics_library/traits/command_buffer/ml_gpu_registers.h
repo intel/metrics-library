@@ -65,8 +65,6 @@ namespace ML
             static constexpr uint32_t m_GpCounter            = 0x91b8;
             static constexpr uint32_t m_OaTrigger2           = 0x2744;
             static constexpr uint32_t m_OaTrigger6           = 0x2754;
-            static constexpr uint32_t m_OaTriggerRisingEdge  = 0x80200000;
-            static constexpr uint32_t m_OaTriggerFallingEdge = 0x80600000;
             static constexpr uint32_t m_RpstatFrequencyMask  = 0xFF800000;
 
             // Oa counters low.

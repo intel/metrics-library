@@ -89,11 +89,14 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
     #include "linux/ml_override_layouts.h"
 #endif
 #include "ml_pipeline_timestamps_layouts.h"
+#include "ml_gpu_registers_layouts.h"
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Debug helper:
 //////////////////////////////////////////////////////////////////////////
-#include "ml_debug_helper.h"
+#if ML_LINUX
+    #include "linux/ml_debug_helper.h"
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Markers:
@@ -138,9 +141,7 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 #if ML_LINUX
     #include "linux/ml_override_user.h"
 #endif
-#if ML_LINUX
-    #include "linux/ml_override_null_hardware.h"
-#endif
+#include "ml_override_null_hardware.h"
 #include "ml_override_flush_caches.h"
 #if ML_LINUX
     #include "linux/ml_override_posh_query.h"

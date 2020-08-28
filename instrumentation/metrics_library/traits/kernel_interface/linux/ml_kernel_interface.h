@@ -75,6 +75,7 @@ namespace ML
         ML_INLINE StatusCode Initialize( const ClientData_1_0& clientData )
         {
             ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_CHECK( CheckParanoidMode() );
             ML_FUNCTION_CHECK( m_IoControl.Initialize( clientData ) );
             ML_FUNCTION_CHECK( InitializeDevice() );
             ML_FUNCTION_CHECK( m_Tbs.Initialize() );
@@ -265,6 +266,36 @@ namespace ML
             }
 
             return log.m_Result = ML_STATUS( m_DeviceId != T::ConstantsOs::Drm::m_Invalid );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks i915 paranoid mode required by query to work.
+        /// @return success if paranoid mode is available.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode CheckParanoidMode()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success );
+
+            auto file      = fopen( T::ConstantsOs::Drm::m_ParanoidPath, "r" );
+            char flag[256] = "";
+
+            const bool validFile = file != nullptr;
+            const bool validRead = validFile && ( fread( flag, 1, sizeof( flag ), file ) > 0 );
+            const bool validFlag = validRead && ( atoi( flag ) == 0 );
+
+            // Close file.
+            if( file )
+            {
+                fclose( file );
+            }
+
+            // Log each step.
+            ML_FUNCTION_CHECK( validFile );
+            ML_FUNCTION_CHECK( validRead );
+            ML_FUNCTION_CHECK( validFlag );
+
+            // Return paranoid settings state.
+            return log.m_Result = ML_STATUS( validFlag );
         }
     };
 } // namespace ML
