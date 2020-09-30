@@ -348,7 +348,7 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success );
 
-            std::string fileName = Constants::Csv::m_NamePrefix;
+            std::string fileName = Constants::Library::m_Name;
 
             fileName += "_";
             fileName += name;

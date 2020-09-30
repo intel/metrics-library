@@ -1921,15 +1921,15 @@ namespace ML
                         output << MemberToString( "QueryPipelineTimestamps                ", value.QueryPipelineTimestamps );
                         break;
 
+                    case ObjectType::OverrideDisablePoshPrimitives:
+                        output << MemberToString( "Override                               ", value.Override );
+                        break;
+
                     case ObjectType::OverrideFlushCaches:
                         output << MemberToString( "Override                               ", value.Override );
                         break;
 
-                    case ObjectType::OverrideUser:
-                        output << MemberToString( "Override                               ", value.Override );
-                        break;
-
-                    case ObjectType::OverrideDisablePoshPrimitives:
+                    case ObjectType::OverrideNullHardware:
                         output << MemberToString( "Override                               ", value.Override );
                         break;
 
@@ -1937,7 +1937,7 @@ namespace ML
                         output << MemberToString( "Override                               ", value.Override );
                         break;
 
-                    case ObjectType::OverrideNullHardware:
+                    case ObjectType::OverrideUser:
                         output << MemberToString( "Override                               ", value.Override );
                         break;
 
@@ -2187,11 +2187,11 @@ namespace ML
 
                 switch( value.Type )
                 {
-                    case ObjectType::QueryHwCountersCopyReports:
+                    case ObjectType::QueryHwCounters:
                         output << MemberToString( "Query              ", value.Query );
                         break;
 
-                    case ObjectType::QueryHwCounters:
+                    case ObjectType::QueryHwCountersCopyReports:
                         output << MemberToString( "Query              ", value.Query );
                         break;
 
@@ -2199,15 +2199,15 @@ namespace ML
                         output << MemberToString( "Query              ", value.Query );
                         break;
 
+                    case ObjectType::OverrideDisablePoshPrimitives:
+                        output << MemberToString( "Override           ", value.Override );
+                        break;
+
                     case ObjectType::OverrideFlushCaches:
                         output << MemberToString( "Override           ", value.Override );
                         break;
 
-                    case ObjectType::OverrideUser:
-                        output << MemberToString( "Override           ", value.Override );
-                        break;
-
-                    case ObjectType::OverrideDisablePoshPrimitives:
+                    case ObjectType::OverrideNullHardware:
                         output << MemberToString( "Override           ", value.Override );
                         break;
 
@@ -2215,7 +2215,7 @@ namespace ML
                         output << MemberToString( "Override           ", value.Override );
                         break;
 
-                    case ObjectType::OverrideNullHardware:
+                    case ObjectType::OverrideUser:
                         output << MemberToString( "Override           ", value.Override );
                         break;
 

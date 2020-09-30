@@ -91,6 +91,12 @@ macro (ml_add_headers _platform)
         )
     set (_HEADERS ${_HEADERS} ${_LIBRARY_HEADERS})
 
+    # generated traits headers
+    file (GLOB _TRAITS_HEADERS
+        ${BS_DIR_INSTRUMENTATION}/metrics_library/codegen/traits/${_platform}/*.h
+        )
+    set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
     # configuration traits headers
     file (GLOB _TRAITS_HEADERS
         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/${_platform}/*.h
@@ -239,7 +245,7 @@ file (GLOB_RECURSE _COMMANDS_HEADERS
 set (_HEADERS ${_HEADERS} ${_COMMANDS_HEADERS})
 
 # generated traits headers
-file (GLOB_RECURSE _TRAITS_HEADERS
+file (GLOB _TRAITS_HEADERS
     ${BS_DIR_INSTRUMENTATION}/metrics_library/codegen/traits/*.h
     )
 set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
@@ -394,9 +400,16 @@ source_group (traits\\override              ${BS_DIR_INSTRUMENTATION}/metrics_li
 source_group (traits\\query                 ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/.*h)
 source_group (traits\\tools                 ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/.*h)
 source_group (traits\\validation            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/.*h)
+# debug logs framework
+source_group (iu FILES
+    ${BS_DIR_INSTRUMENTATION}/utils/common/iu_debug.c
+    ${BS_DIR_INSTRUMENTATION}/utils/common/inc/iu_debug.h
+    ${BS_DIR_INSTRUMENTATION}/utils/common/inc/iu_std.h
+)
 
 # platform dependent
 if (${PLATFORM} STREQUAL Windows) # windows
+    source_group (codegen\\traits\\windows          ${BS_DIR_INSTRUMENTATION}/metrics_library/codegen/traits/windows/.*h)
     source_group (library\\inc\\windows             ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/windows/.*h)
     source_group (traits\\configuration\\windows    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/windows/.*h)
     source_group (traits\\constants\\windows        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/windows/.*h)
@@ -407,15 +420,13 @@ if (${PLATFORM} STREQUAL Windows) # windows
     source_group (traits\\tools\\windows            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/windows/.*h)
     source_group (traits\\validation\\windows       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/windows/.*h)
     # debug logs framework
-    source_group (iu FILES
-        ${BS_DIR_INSTRUMENTATION}/utils/common/iu_debug.c
-        ${BS_DIR_INSTRUMENTATION}/utils/common/inc/iu_debug.h
-        ${BS_DIR_INSTRUMENTATION}/utils/common/inc/iu_std.h
+    source_group (iu\\windows FILES
         ${BS_DIR_INSTRUMENTATION}/utils/windows/umd/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/windows/umd/iu_std.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/windows/inc/iu_os.h
     )
     # add linux headers to solution explorer
+    source_group (codegen\\traits\\linux          ${BS_DIR_INSTRUMENTATION}/metrics_library/codegen/traits/linux/.*h)
     source_group (library\\inc\\linux             ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/.*)
     source_group (traits\\configuration\\linux    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
     source_group (traits\\constants\\linux        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/linux/.*h)
@@ -429,8 +440,10 @@ if (${PLATFORM} STREQUAL Windows) # windows
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_i915_perf.h
     )
 elseif (${PLATFORM} STREQUAL linux) # linux
+    source_group (codegen\\traits\\linux             ${BS_DIR_INSTRUMENTATION}/metrics_library/codegen/traits/linux/.*h)
     source_group (library\\inc\\linux                ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/.*)
     source_group (library\\inc\\linux\\external\\drm ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm/.*)
     source_group (traits\\configuration\\linux       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
@@ -442,13 +455,11 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     source_group (traits\\tools\\linux               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
     source_group (traits\\validation\\linux          ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/linux/.*h)
     # debug logs framework
-    source_group (iu FILES
-        ${BS_DIR_INSTRUMENTATION}/utils/common/iu_debug.c
-        ${BS_DIR_INSTRUMENTATION}/utils/common/inc/iu_debug.h
-        ${BS_DIR_INSTRUMENTATION}/utils/common/inc/iu_std.h
+    source_group (iu\\linux FILES
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_i915_perf.h
     )
 else()
     message("-- Using platform is ${PLATFORM}")

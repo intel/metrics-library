@@ -63,7 +63,7 @@ namespace ML
             ClientApi api = ClientApi::Unknown;
 
             const bool validApiVariable = ML_SUCCESS( BASE::ToolsOsTrait<ML_TRAITS_DUMMY>::GetSystemVariable( Constants::Library::m_ApiOverride, api ) );
-            const bool validApi         = api < ClientApi::Last;
+            const bool validApi         = ( api > ClientApi::Unknown && api < ClientApi::Last );
 
             if( validApiVariable && validApi )
             {
@@ -80,7 +80,7 @@ namespace ML
             ClientGen gen = ClientGen::Unknown;
 
             const bool validGenVariable = ML_SUCCESS( BASE::ToolsOsTrait<ML_TRAITS_DUMMY>::GetSystemVariable( Constants::Library::m_GenOverride, gen ) );
-            const bool validGen         = gen < ClientGen::Last;
+            const bool validGen         = ( gen > ClientGen::Unknown && gen < ClientGen::Last );
 
             if( validGenVariable && validGen )
             {

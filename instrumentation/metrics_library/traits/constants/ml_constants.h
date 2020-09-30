@@ -138,18 +138,11 @@ namespace ML
         };
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Csv constants.
-        //////////////////////////////////////////////////////////////////////////
-        struct Csv
-        {
-            static constexpr const char* m_NamePrefix = "MetricsLibrary";
-        };
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief Library constants.
         //////////////////////////////////////////////////////////////////////////
         struct Library
         {
+            static constexpr const char* m_Name        = "MetricsLibrary";
             static constexpr const char* m_GenOverride = "Gen";
             static constexpr const char* m_ApiOverride = "Api";
         };

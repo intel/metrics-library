@@ -90,7 +90,8 @@ namespace ML
                 const char* name,
                 Result&     data )
             {
-                const char* rawData = std::getenv( name );
+                const std::string variableName = std::string( Constants::Library::m_Name ) + name;
+                const char*       rawData      = std::getenv( variableName.c_str() );
 
                 if( rawData == nullptr )
                 {
