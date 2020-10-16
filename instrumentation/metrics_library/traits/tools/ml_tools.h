@@ -228,6 +228,17 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns a calculated hash for a given value.
+        /// @param  value   a value to hash.
+        /// @return         a calculated hash.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename HashType>
+        ML_INLINE static size_t GetHash( const HashType value )
+        {
+            return std::hash<HashType>()( value );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns a difference between two measure points,
         ///         counters overflow is also handled.
         /// @param  end     end counter.

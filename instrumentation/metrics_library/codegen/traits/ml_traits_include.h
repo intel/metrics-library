@@ -169,7 +169,7 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 //////////////////////////////////////////////////////////////////////////
 #if ML_ENABLE_OPENCL
     #if ML_LINUX
-        #include "linux/ml_query_hw_counters_policy_opencl.h"
+        #include "linux/ml_policy_opencl.h"
     #endif
 #endif
 
@@ -178,7 +178,7 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 //////////////////////////////////////////////////////////////////////////
 #if ML_ENABLE_ONEAPI
     #if ML_LINUX
-        #include "linux/ml_query_hw_counters_policy_oneapi.h"
+        #include "linux/ml_policy_oneapi.h"
     #endif
 #endif
 

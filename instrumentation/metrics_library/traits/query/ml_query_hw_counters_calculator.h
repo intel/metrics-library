@@ -120,7 +120,7 @@ namespace ML
                 }
 
                 // Reset oa buffer state if required (dx12/vulkan).
-                if( T::Queries::HwCountersPolicy::GetData::m_ResetOaBufferState )
+                if( T::Policy::QueryHwCounters::GetData::m_ResetOaBufferState )
                 {
                     m_OaBufferState.Reset();
                     m_QuerySlot.Reset();
@@ -286,14 +286,14 @@ namespace ML
             /// @brief  Validates gpu report contexts.
             /// @return true if gpu report contexts is valid.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode ValidateReportGpuContexts() const
+            ML_INLINE StatusCode ValidateReportGpuContexts()
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Validate contexts.
                 // Compute command streamer always returns context id equals to zero.
                 // Also Linux may use zero context id.
-                const bool useNullContext = T::Queries::HwCountersPolicy::GetData::m_AllowEmptyContextId;
+                const bool useNullContext = Derived().AllowEmptyContextId();
                 const bool isSrmOag       = m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag;
                 const bool validBegin     = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
                 const bool validEnd       = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
@@ -1152,6 +1152,15 @@ namespace ML
             {
                 return m_QuerySlot.m_OaBufferState;
             }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns true if null context id is valid, false otherwise.
+            /// @return true if null context id is valid.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE bool AllowEmptyContextId() const
+            {
+                return T::Policy::QueryHwCounters::GetData::m_AllowEmptyContextId;
+            }
         };
     } // namespace BASE
 
@@ -1182,6 +1191,15 @@ namespace ML
         struct QueryHwCountersCalculatorTrait : GEN11::QueryHwCountersCalculatorTrait<T>
         {
             ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, GEN11 );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Null context id is valid on trigger based query.
+            /// @return true if null context id is valid.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE bool AllowEmptyContextId() const
+            {
+                return true;
+            }
         };
     } // namespace GEN12
 } // namespace ML

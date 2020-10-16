@@ -62,7 +62,7 @@ namespace ML
                 /// @brief OpenCL specific traits.
                 //////////////////////////////////////////////////////////////////////////
                 #if ML_LINUX
-                using QueryHwCountersPolicy     = QueryHwCountersPolicyOpenCLTrait<Traits>;         //  linux/ml_query_hw_counters_policy_opencl.h
+                using Policy                    = PolicyOpenCLTrait<Traits>;                        //  linux/ml_policy_opencl.h
                 #endif
 
                 //////////////////////////////////////////////////////////////////////////
@@ -199,7 +199,6 @@ namespace ML
                 /// @brief Hw Counters.
                 //////////////////////////////////////////////////////////////////////////
                     using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
-                    using HwCountersPolicy            = QueryHwCountersPolicy;
                 #if 1
                     using HwCountersCalculatorMain    = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
                 #endif
@@ -294,7 +293,6 @@ namespace ML
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
-                    FunctionLogStatic::Traits( "using Queries::HwCountersPolicy", Queries::HwCountersPolicy::GetDescription() );
                 #if 1
                     FunctionLogStatic::Traits( "using Queries::HwCountersCalculatorMain", Queries::HwCountersCalculatorMain::GetDescription() );
                 #endif
@@ -303,7 +301,7 @@ namespace ML
                 #endif
                     FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
                 #if ML_LINUX
-                    FunctionLogStatic::Traits( "using QueryHwCountersPolicy", QueryHwCountersPolicy::GetDescription() );
+                    FunctionLogStatic::Traits( "using Policy", Policy::GetDescription() );
                 #endif
                 #endif
                 }
@@ -327,7 +325,7 @@ namespace ML
                 /// @brief One Api specific traits.
                 //////////////////////////////////////////////////////////////////////////
                 #if ML_LINUX
-                using QueryHwCountersPolicy     = QueryHwCountersPolicyOneApiTrait<Traits>;         //  linux/ml_query_hw_counters_policy_oneapi.h
+                using Policy                    = PolicyOneApiTrait<Traits>;                        //  linux/ml_policy_oneapi.h
                 #endif
 
                 //////////////////////////////////////////////////////////////////////////
@@ -464,7 +462,6 @@ namespace ML
                 /// @brief Hw Counters.
                 //////////////////////////////////////////////////////////////////////////
                     using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
-                    using HwCountersPolicy            = QueryHwCountersPolicy;
                 #if 1
                     using HwCountersCalculatorMain    = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
                 #endif
@@ -559,7 +556,6 @@ namespace ML
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
-                    FunctionLogStatic::Traits( "using Queries::HwCountersPolicy", Queries::HwCountersPolicy::GetDescription() );
                 #if 1
                     FunctionLogStatic::Traits( "using Queries::HwCountersCalculatorMain", Queries::HwCountersCalculatorMain::GetDescription() );
                 #endif
@@ -568,7 +564,7 @@ namespace ML
                 #endif
                     FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
                 #if ML_LINUX
-                    FunctionLogStatic::Traits( "using QueryHwCountersPolicy", QueryHwCountersPolicy::GetDescription() );
+                    FunctionLogStatic::Traits( "using Policy", Policy::GetDescription() );
                 #endif
                 #endif
                 }

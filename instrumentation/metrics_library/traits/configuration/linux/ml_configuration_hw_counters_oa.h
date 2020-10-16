@@ -111,7 +111,7 @@ namespace ML
             ML_FUNCTION_LOG( StatusCode::Success );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
 
-            return log.m_Result = T::Queries::HwCountersPolicy::Activate::m_RestartTbs
+            return log.m_Result = T::Policy::ConfigurationOa::Activate::m_RestartTbs
                 ? m_Kernel.m_Tbs.m_Stream.Restart()
                 : m_Kernel.LoadOaConfigurationToGpu( m_OaRegisters );
         }
@@ -127,7 +127,7 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success );
 
-            return log.m_Result = T::Queries::HwCountersPolicy::Activate::m_RestartTbs
+            return log.m_Result = T::Policy::ConfigurationOa::Activate::m_RestartTbs
                 ? StatusCode::Success
                 : m_Kernel.UnloadOaConfigurationFromGpu( m_OaRegisters );
         }
@@ -150,7 +150,7 @@ namespace ML
         ML_INLINE StatusCode FlushCommandBuffer() const
         {
             const bool  validFlushCallback = m_Context.m_ClientCallbacks.CommandBufferFlush != nullptr;
-            const bool  validFlushPolicy   = T::Queries::HwCountersPolicy::Begin::FlushCommandBuffer;
+            const bool  validFlushPolicy   = T::Policy::QueryHwCounters::Begin::FlushCommandBuffer;
             const auto& callback           = m_Context.m_ClientCallbacks.CommandBufferFlush;
 
             return validFlushCallback && validFlushPolicy

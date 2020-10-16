@@ -126,7 +126,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ~QueryHwCountersTrait()
             {
-                if( T::Queries::HwCountersPolicy::Create::m_UserCounters )
+                if( T::Policy::QueryHwCounters::Create::m_UserCounters )
                 {
                     const StatusCode result = m_UserConfiguration.IsValid()
                         ? T::Configurations::HwCountersUser::Delete( m_UserConfiguration )
@@ -358,7 +358,7 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                if( T::Queries::HwCountersPolicy::Create::m_UserCounters )
+                if( T::Policy::QueryHwCounters::Create::m_UserCounters )
                 {
                     ML_FUNCTION_CHECK( T::Configurations::HwCountersUser::Create( m_Context, m_UserConfiguration ) );
                 }
@@ -383,7 +383,7 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                if( !T::Queries::HwCountersPolicy::Create::m_UserCounters )
+                if( !T::Policy::QueryHwCounters::Create::m_UserCounters )
                 {
                     m_UserConfiguration = data.HandleUserConfiguration;
                 }
@@ -391,7 +391,7 @@ namespace ML
                 const uint64_t gpuAddress = m_Slots[data.Slot].m_GpuMemory.GpuAddress;
 
                 ML_FUNCTION_CHECK( FlushCommandStreamer( buffer, true ) );
-                ML_FUNCTION_CHECK( Derived().WriteNopId( buffer, gpuAddress, true ) );
+                ML_FUNCTION_CHECK( WriteNopId( buffer, gpuAddress, true ) );
                 ML_FUNCTION_CHECK( WriteCoreFrequency( buffer, gpuAddress, true ) );
                 ML_FUNCTION_CHECK( WriteOaState( buffer, gpuAddress, true ) );
                 ML_FUNCTION_CHECK( WriteUserCounters( buffer, gpuAddress, true ) );
@@ -423,7 +423,7 @@ namespace ML
                 ML_FUNCTION_CHECK( WriteGpCounters( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteUserCounters( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteOaState( buffer, gpuAddress, false ) );
-                ML_FUNCTION_CHECK( Derived().WriteNopId( buffer, gpuAddress, false ) );
+                ML_FUNCTION_CHECK( WriteNopId( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteCoreFrequency( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteUserMarker( buffer, gpuAddress, data.MarkerUser ) );
                 ML_FUNCTION_CHECK( WriteDriverMarker( buffer, gpuAddress, data.MarkerDriver ) );
@@ -696,7 +696,7 @@ namespace ML
             {
                 static std::atomic_uint reportId( 0 );
                 const auto&             collectingMode = m_Slots[slot].m_ReportCollectingMode;
-                const uint32_t          queryId        = static_cast<const uint32_t>( reinterpret_cast<const uintptr_t>( this ) );
+                const uint32_t          queryId        = static_cast<const uint32_t>( T::Tools::GetHash( reinterpret_cast<const uintptr_t>( this ) ) );
 
                 return T::GpuCommands::StoreHwCounters(
                     buffer,
@@ -898,7 +898,7 @@ namespace ML
                 // Tail data.
                 bool tailIndexValid = ML_SUCCESS( m_Context.m_OaBuffer.GetTriggeredReportIndex( queryReport, begin, tailIndex ) );
                 auto tailReportOa   = tailIndexValid ? m_Context.m_OaBuffer.GetReport( tailIndex ) : TT::Layouts::HwCounters::ReportOa{};
-                bool tailValid      = tailIndexValid && Derived().ValidateTriggeredOaReport( queryReport, tailReportOa );
+                bool tailValid      = tailIndexValid && ValidateTriggeredOaReport( queryReport, tailReportOa );
 
                 // Triggered report debug information.
                 log.Debug( "Query report      " );
@@ -1031,7 +1031,7 @@ namespace ML
                 const uint32_t slot )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
-                ML_ASSERT( T::Queries::HwCountersPolicy::Common::UseTriggeredOaReport( m_Context.m_Kernel ) );
+                ML_ASSERT( T::Policy::QueryHwCounters::Common::UseTriggeredOaReport( m_Context.m_Kernel ) );
 
                 // For gen 12+ always use triggered reports.
                 auto& mode = m_Slots[slot].m_ReportCollectingMode;
@@ -1068,33 +1068,6 @@ namespace ML
                     address,
                     slot,
                     begin );
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes noop id register.
-            /// @param  buffer  target command buffer.
-            /// @param  address gpu memory address.
-            /// @param  begin   query begin.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename CommandBuffer>
-            ML_INLINE StatusCode WriteNopId(
-                CommandBuffer& buffer,
-                const uint64_t address,
-                const bool     begin )
-            {
-                const uint32_t offset = begin
-                    ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdBegin )
-                    : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdEnd );
-
-                const uint32_t registerAddress = m_Context.m_ClientOptions.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute
-                    ? T::GpuRegisters::m_CcsNopId
-                    : T::GpuRegisters::m_NopId;
-
-                return T::GpuCommands::StoreRegisterToMemory32(
-                    buffer,
-                    registerAddress,
-                    address + offset );
             }
         };
     } // namespace GEN12

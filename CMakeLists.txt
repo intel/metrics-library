@@ -127,9 +127,9 @@ macro (ml_add_headers _platform)
         )
     set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
-    # query traits headers
+    # policy traits headers
     file (GLOB _TRAITS_HEADERS
-        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/${_platform}/*.h
+        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/policy/${_platform}/*.h
         )
     set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
@@ -316,6 +316,12 @@ file (GLOB _TRAITS_HEADERS
     )
 set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
+# policy traits headers
+file (GLOB _TRAITS_HEADERS
+    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/policy/*.h
+    )
+set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
 # query hw counters traits headers
 file (GLOB _TRAITS_HEADERS
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/*.h
@@ -397,6 +403,7 @@ source_group (traits\\marker                ${BS_DIR_INSTRUMENTATION}/metrics_li
 source_group (traits\\oa_buffer             ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/oa_buffer/.*h)
 source_group (traits\\objects               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/object/.*h)
 source_group (traits\\override              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/.*h)
+source_group (traits\\policy                ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/policy/.*h)
 source_group (traits\\query                 ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/.*h)
 source_group (traits\\tools                 ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/.*h)
 source_group (traits\\validation            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/.*h)
@@ -416,7 +423,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
     source_group (traits\\kernel_interface\\windows ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/windows/.*h)
     source_group (traits\\marker\\windows           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/windows/.*h)
     source_group (traits\\override\\windows         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/windows/.*h)
-    source_group (traits\\query\\windows            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/windows/.*h)
+    source_group (traits\\policy\\windows           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/policy/windows/.*h)
     source_group (traits\\tools\\windows            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/windows/.*h)
     source_group (traits\\validation\\windows       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/windows/.*h)
     # debug logs framework
@@ -433,7 +440,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
     source_group (traits\\kernel_interface\\linux ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
     source_group (traits\\marker\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
     source_group (traits\\override\\linux         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
-    source_group (traits\\query\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/linux/.*h)
+    source_group (traits\\policy\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/policy/linux/.*h)
     source_group (traits\\tools\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
     source_group (traits\\validation\\linux       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/linux/.*h)
     source_group (iu\\linux FILES
@@ -451,7 +458,7 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     source_group (traits\\kernel_interface\\linux    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
     source_group (traits\\marker\\linux              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
     source_group (traits\\override\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
-    source_group (traits\\query\\linux               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query/linux/.*h)
+    source_group (traits\\policy\\linux              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/policy/linux/.*h)
     source_group (traits\\tools\\linux               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
     source_group (traits\\validation\\linux          ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/linux/.*h)
     # debug logs framework
@@ -516,6 +523,7 @@ set (COMMON_TARGET_INCLUDE_DIRECTORIES
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/oa_buffer
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/object
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override
+    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/policy
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/query
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation

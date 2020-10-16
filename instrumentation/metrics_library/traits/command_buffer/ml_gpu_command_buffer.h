@@ -227,7 +227,7 @@ namespace ML
             const uint64_t               commandOffset ) const
         {
             const bool  validPatchFunction = m_Context.m_ClientCallbacks.GpuMemoryPatch != nullptr;
-            const bool  validPatchPolicy   = T::Queries::HwCountersPolicy::Common::m_PatchGpuMemory;
+            const bool  validPatchPolicy   = T::Policy::QueryHwCounters::Common::m_PatchGpuMemory;
             const auto& callback           = m_Context.m_ClientCallbacks.GpuMemoryPatch;
 
             return validPatchFunction && validPatchPolicy

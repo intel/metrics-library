@@ -68,14 +68,15 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                // Command buffer must be Render for Gen9.
-                ML_FUNCTION_CHECK( buffer.m_Type == GpuCommandBufferType::Render );
+                const uint32_t marker = T::Policy::StreamMarker::m_Use32bitValue
+                    ? data.Value | ( data.Reserved << Constants::StreamMarker::m_HighBitsShift )
+                    : data.Value;
 
-                // Load a value to A20 counter.
+                // Load a value to A19 counter.
                 ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                     buffer,
-                    T::GpuRegisters::m_StreamMarkerRender,
-                    data.Value ) );
+                    T::GpuRegisters::m_StreamMarker,
+                    marker ) );
 
                 // Trigger report with report reason 4.
                 ML_FUNCTION_CHECK( T::GpuCommands::TriggerStreamReport( buffer ) );
@@ -100,56 +101,6 @@ namespace ML
         struct MarkerStreamUserTrait : GEN9::MarkerStreamUserTrait<T>
         {
             ML_DECLARE_TRAIT( MarkerStreamUserTrait, GEN9 );
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes marker stream user commands to command buffer.
-            /// @param  buffer  target command buffer.
-            /// @param  data    marker stream user data.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename CommandBuffer>
-            ML_INLINE static StatusCode Write(
-                CommandBuffer&                           buffer,
-                const CommandBufferMarkerStreamUser_1_0& data )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Command buffer type cannot be Compute for Gen11.
-                ML_FUNCTION_CHECK( buffer.m_Type != GpuCommandBufferType::Compute );
-
-                // Assert if posh (ptbr) is disabled and command buffer type is posh (tile).
-                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
-                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
-
-                // Load a value to a proper counter. Each command buffer has its counter.
-                switch( buffer.m_Type )
-                {
-                    case GpuCommandBufferType::Render:
-                    case GpuCommandBufferType::Tile:
-                        ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                            buffer,
-                            T::GpuRegisters::m_StreamMarkerRender,
-                            data.Value ) );
-                        break;
-
-                    case GpuCommandBufferType::Posh:
-                        ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                            buffer,
-                            T::GpuRegisters::m_StreamMarkerPosh,
-                            data.Value ) );
-                        break;
-
-                    default:
-                        ML_ASSERT_ALWAYS();
-                        log.m_Result = StatusCode::IncorrectParameter;
-                        break;
-                }
-
-                // Trigger report with report reason 4.
-                ML_FUNCTION_CHECK( T::GpuCommands::TriggerStreamReport( buffer ) );
-
-                return log.m_Result;
-            }
         };
     } // namespace GEN11
 
@@ -159,62 +110,6 @@ namespace ML
         struct MarkerStreamUserTrait : GEN11::MarkerStreamUserTrait<T>
         {
             ML_DECLARE_TRAIT( MarkerStreamUserTrait, GEN11 );
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes marker stream user commands to command buffer.
-            /// @param  buffer  target command buffer.
-            /// @param  data    marker stream user data.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename CommandBuffer>
-            ML_INLINE static StatusCode Write(
-                CommandBuffer&                           buffer,
-                const CommandBufferMarkerStreamUser_1_0& data )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Assert if posh (ptbr) is disabled and command buffer type is posh (tile)
-                // or asynchronous compute is disabled and command buffer is compute.
-                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
-                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
-                ML_ASSERT( buffer.m_Context.m_ClientOptions.m_AsynchronousCompute || buffer.m_Type != GpuCommandBufferType::Compute );
-
-                // Load a value to a proper counter. Each command buffer has its counter.
-                switch( buffer.m_Type )
-                {
-                    case GpuCommandBufferType::Render:
-                    case GpuCommandBufferType::Tile:
-                        ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                            buffer,
-                            T::GpuRegisters::m_StreamMarkerRender,
-                            data.Value ) );
-                        break;
-
-                    case GpuCommandBufferType::Posh:
-                        ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                            buffer,
-                            T::GpuRegisters::m_StreamMarkerPosh,
-                            data.Value ) );
-                        break;
-
-                    case GpuCommandBufferType::Compute:
-                        ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                            buffer,
-                            T::GpuRegisters::m_StreamMarkerCompute,
-                            data.Value ) );
-                        break;
-
-                    default:
-                        ML_ASSERT_ALWAYS();
-                        log.m_Result = StatusCode::IncorrectParameter;
-                        break;
-                }
-
-                // Trigger report with report reason 4.
-                ML_FUNCTION_CHECK( T::GpuCommands::TriggerStreamReport( buffer ) );
-
-                return log.m_Result;
-            }
         };
     } // namespace GEN12
 } // namespace ML

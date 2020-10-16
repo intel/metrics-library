@@ -158,6 +158,7 @@ namespace ML
             static constexpr uint32_t m_OaPerfC7 = 0x295C;
 
             // Stream markers registers.
+            static constexpr uint32_t m_StreamMarker        = m_OaPerfA19;
             static constexpr uint32_t m_StreamMarkerRender  = m_OaPerfA20;
             static constexpr uint32_t m_StreamMarkerPosh    = m_OaPerfA19;
             static constexpr uint32_t m_StreamMarkerCompute = m_OaPerfA18;
@@ -1341,10 +1342,9 @@ namespace ML
         {
             ML_DECLARE_TRAIT( GpuRegistersTrait, GEN11 );
 
-            // Oar registers.
-            static constexpr uint32_t m_OarContextControl = Base::m_OaContextControl;
-            static constexpr uint32_t m_OarContextId      = Base::m_ContextId;
-            static constexpr uint32_t m_OarGpuTicks       = Base::m_GpuTicks;
+            // Render registers.
+            static constexpr uint32_t m_RenderMmioRangeBegin = 0x2000;
+            static constexpr uint32_t m_RenderMmioRangeEnd   = 0x27FF;
 
             // Oag registers.
             static constexpr uint32_t m_OagBuffer   = 0xDB08;
@@ -1362,11 +1362,6 @@ namespace ML
             static constexpr uint32_t m_OaTail     = m_OagTail;
             static constexpr uint32_t m_OaTrigger2 = m_OagTrigger2;
             static constexpr uint32_t m_OaTrigger6 = m_OagTrigger6;
-
-            // Compute command streamer registers.
-            static constexpr uint32_t m_CcsNopId         = 0x1A094;
-            static constexpr uint32_t m_CcsTimestampLow  = 0x1A358;
-            static constexpr uint32_t m_CcsTimestampHigh = 0x1A35C;
 
             // Oag counters low.
             static constexpr uint32_t m_OagPerfA0  = 0xD980;
@@ -1459,6 +1454,7 @@ namespace ML
             static constexpr uint32_t m_OagPerfC7 = 0xDAD0;
 
             // Stream markers registers.
+            static constexpr uint32_t m_StreamMarker        = m_OagPerfA19;
             static constexpr uint32_t m_StreamMarkerRender  = m_OagPerfA20;
             static constexpr uint32_t m_StreamMarkerPosh    = m_OagPerfA19;
             static constexpr uint32_t m_StreamMarkerCompute = m_OagPerfA18;

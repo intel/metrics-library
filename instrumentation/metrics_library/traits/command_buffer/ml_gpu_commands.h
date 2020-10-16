@@ -131,12 +131,12 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     registerAddress,
                     memoryAddress ) );
 
-                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     registerAddress + sizeof( uint32_t ),
                     memoryAddress + sizeof( uint32_t ) ) );
@@ -366,7 +366,7 @@ namespace ML
 
                 for( size_t i = 0; i < oaCountersLow.size(); ++i )
                 {
-                    ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         oaCountersLow[i],
                         countersOffset + ( ( oaCountersLow[i] - T::GpuRegisters::m_OaPerfA0 ) / 2 ) ) );
@@ -379,7 +379,7 @@ namespace ML
 
                 for( size_t i = 0; i < oaCountersHigh.size(); ++i )
                 {
-                    ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         oaCountersHigh[i],
                         countersOffset + ( ( oaCountersHigh[i] - T::GpuRegisters::m_OaPerfA0Upper ) / 2 ) ) );
@@ -390,7 +390,7 @@ namespace ML
 
                 for( size_t i = 0; i < noaCounters.size(); ++i )
                 {
-                    ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         noaCounters[i],
                         countersOffset + ( noaCounters[i] - T::GpuRegisters::m_OaPerfB0 ) ) );
@@ -407,7 +407,7 @@ namespace ML
                 // Context id.
                 countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ContextId );
 
-                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_ContextId,
                     countersOffset ) );
@@ -415,7 +415,7 @@ namespace ML
                 // Gpu ticks.
                 countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_GpuTicks );
 
-                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_GpuTicks,
                     countersOffset ) );
@@ -423,7 +423,7 @@ namespace ML
                 // Timestamp.
                 countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp );
 
-                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_TimestampLow,
                     countersOffset ) );
@@ -470,7 +470,7 @@ namespace ML
                 // OaTail before triggered report.
                 else
                 {
-                    ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         T::GpuRegisters::m_OaTail,
                         address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailTriggerEnd ) ) );
@@ -516,13 +516,13 @@ namespace ML
                 auto fallingEdge = TT::Layouts::GpuRegisters::OaReportTrigger( true );
 
                 // Write rising edge.
-                ML_FUNCTION_CHECK( LoadRegisterImmediate32(
+                ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger2,
                     risingEdge.m_Value ) );
 
                 // Write falling edge.
-                ML_FUNCTION_CHECK( LoadRegisterImmediate32(
+                ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger2,
                     fallingEdge.m_Value ) );
@@ -545,13 +545,13 @@ namespace ML
                 auto fallingEdge = TT::Layouts::GpuRegisters::OaReportTrigger( true );
 
                 // Write rising edge.
-                ML_FUNCTION_CHECK( LoadRegisterImmediate32(
+                ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger6,
                     risingEdge.m_Value ) );
 
                 // Write falling edge.
-                ML_FUNCTION_CHECK( LoadRegisterImmediate32(
+                ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger6,
                     fallingEdge.m_Value ) );
@@ -573,12 +573,12 @@ namespace ML
                 auto risingEdge  = TT::Layouts::GpuRegisters::OaReportTrigger( false );
                 auto fallingEdge = TT::Layouts::GpuRegisters::OaReportTrigger( true );
 
-                ML_FUNCTION_CHECK( LoadRegisterImmediatePostSync32(
+                ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediatePostSync32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger6,
                     risingEdge.m_Value ) );
 
-                ML_FUNCTION_CHECK( LoadRegisterImmediatePostSync32(
+                ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediatePostSync32(
                     buffer,
                     T::GpuRegisters::m_OaTrigger6,
                     fallingEdge.m_Value ) );
@@ -599,7 +599,7 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_TimestampLow,
                     memoryAddress ) );
@@ -694,31 +694,62 @@ namespace ML
             /// @brief Types.
             //////////////////////////////////////////////////////////////////////////
             using Base::StoreDataToMemory32;
-            using Base::StoreRegisterToMemory32;
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes timestamp command to gpu command buffer.
+            /// @brief  Writes MI_STORE_REGISTER_MEMORY command to gpu command buffer.
             /// @param  buffer          target command buffer.
-            /// @param  memoryAddress   memory address where timestamp should be stored.
+            /// @param  registerAddress register address.
+            /// @param  memoryAddress   memory address.
             /// @return                 operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
-            ML_INLINE static StatusCode StoreTimestamp(
+            ML_INLINE static StatusCode StoreRegisterToMemory32(
                 CommandBuffer& buffer,
+                const uint32_t registerAddress,
                 const uint64_t memoryAddress )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                TT::Layouts::GpuCommands::MI_STORE_REGISTER_MEM command = {};
 
-                const uint32_t registerAddress = buffer.m_Context.m_ClientOptions.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute
-                    ? T::GpuRegisters::m_CcsTimestampLow
-                    : T::GpuRegisters::m_TimestampLow;
+                command.Init();
+                command.SetUseGlobalGTT( false );
+                command.SetRegisterAddress( registerAddress );
+                command.SetMemoryAddress( memoryAddress );
 
-                ML_FUNCTION_CHECK( StoreRegisterToMemory32(
-                    buffer,
-                    registerAddress,
-                    memoryAddress ) );
+                if( registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
+                    registerAddress <= T::GpuRegisters::m_RenderMmioRangeEnd )
+                {
+                    command.SetMMIORemapEnable( true );
+                }
 
-                return log.m_Result;
+                return buffer.Write( command, true );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Writes MI_LOAD_REGISTER_IMM command to gpu command buffer.
+            /// @param  buffer          target command buffer.
+            /// @param  registerAddress register address.
+            /// @param  data            data to load.
+            /// @return                 operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode LoadRegisterImmediate32(
+                CommandBuffer& buffer,
+                const uint32_t registerAddress,
+                const uint32_t data )
+            {
+                TT::Layouts::GpuCommands::MI_LOAD_REGISTER_IMM command = {};
+
+                command.Init();
+                command.SetRegisterOffset( registerAddress );
+                command.SetDataDWord( data );
+
+                if( registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
+                    registerAddress <= T::GpuRegisters::m_RenderMmioRangeEnd )
+                {
+                    command.SetMMIORemapEnable( true );
+                }
+
+                return buffer.Write( command, false );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -843,13 +874,9 @@ namespace ML
                 // Timestamp.
                 countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp );
 
-                const uint32_t registerAddress = buffer.m_Context.m_ClientOptions.m_AsynchronousCompute && buffer.m_Type == GpuCommandBufferType::Compute
-                    ? T::GpuRegisters::m_CcsTimestampLow
-                    : T::GpuRegisters::m_TimestampLow;
-
                 ML_FUNCTION_CHECK( StoreRegisterToMemory32(
                     buffer,
-                    registerAddress,
+                    T::GpuRegisters::m_TimestampLow,
                     countersOffset ) );
 
                 return log.m_Result;
