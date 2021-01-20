@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -57,6 +57,8 @@ namespace ML
             , m_TbsEnabled( false )
             , m_AsynchronousCompute( false )
         {
+            ML_FUNCTION_LOG( StatusCode::Success );
+
             // Copy client's options from the pointer provided by the user.
             if( clientData.ClientOptions != nullptr )
             {
@@ -81,7 +83,7 @@ namespace ML
                             break;
 
                         default:
-                            ML_ASSERT_ALWAYS();
+                            log.Warning( "Unknown client option", clientData.ClientOptions[i].Type );
                             break;
                     }
                 }

@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -2774,6 +2774,217 @@ struct MI_COPY_MEM_MEM
 } __CODEGEN_ATTRIBUTES_STRUCTURE;
 
 __CODEGEN_C_ASSERT( 20 == sizeof( MI_COPY_MEM_MEM ) );
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief MI_LOAD_REGISTER_REG
+/// @details
+///     The MI_LOAD_REGISTER_REG command reads from a source register location
+///     and writes that value to a destination register location.
+///       
+///     Any offset that is to a destination outside of the GT core will allow
+///     the parser to continue once the cycle is at the GT boundry and not
+///     destination. Any other address will ensure the destination is updated
+///     prior to parsing the next command
+///       
+///     
+///     The command temporarily halts commands that will cause cycles down the
+///     3D pipeline.
+///     
+///     Destination register with mask implemented (Ex: Some registers have bits
+///     [31:16] as mask bits and bits[15:0] as data) will not get updated unless
+///     the  value read from source register has the bits corresponding to the
+///     mask bits set. Note that any mask implemented register when read returns
+///     "0" for the bits corresponding to mask location. When the source and
+///     destination are mask implemented registers, destination register will
+///     not get updated with the source register contents.
+///     
+///     This command is not allowed to update the privilege register range when
+///     executed from a non-privilege batch buffer.
+///     
+struct MI_LOAD_REGISTER_REG
+{
+    __CODEGEN_ACCESS_SPECIFIER_DEFINITION
+    union tagTheStructure
+    {
+        struct tagCommon
+        {
+            /// DWORD 0
+            __CODEGEN_UINT32         DWordLength                                      : __CODEGEN_BITFIELD( 0,  7)    ; ///< U8
+            __CODEGEN_UINT32         Reserved_8                                       : __CODEGEN_BITFIELD( 8, 22)    ; ///< U15
+            __CODEGEN_UINT32         MICommandOpcode                                  : __CODEGEN_BITFIELD(23, 28)    ; ///< U6
+            __CODEGEN_UINT32         CommandType                                      : __CODEGEN_BITFIELD(29, 31)    ; ///< U3
+
+            /// DWORD 1
+            __CODEGEN_UINT32         Reserved_32                                      : __CODEGEN_BITFIELD( 0,  1)    ; ///< U2
+            __CODEGEN_UINT32         SourceRegisterAddress                            : __CODEGEN_BITFIELD( 2, 22)    ; ///< U21
+            __CODEGEN_UINT32         Reserved_55                                      : __CODEGEN_BITFIELD(23, 31)    ; ///< U9
+
+            /// DWORD 2
+            __CODEGEN_UINT32         Reserved_64                                      : __CODEGEN_BITFIELD( 0,  1)    ; ///< U2
+            __CODEGEN_UINT32         DestinationRegisterAddress                       : __CODEGEN_BITFIELD( 2, 22)    ; ///< U21
+            __CODEGEN_UINT32         Reserved_87                                      : __CODEGEN_BITFIELD(23, 31)    ; ///< U9
+
+        } Common;
+        __CODEGEN_UINT32            RawData[ 3 ];
+    } TheStructure;
+
+    __CODEGEN_ACCESS_SPECIFIER_METHODS
+    //////////////////////////////////////////////////////////////////////////
+    /// @name STRUCTURE DEBUG
+    /// @{
+
+    /// @brief User-defined debug function for structure
+    __CODEGEN_DebugType( MI_LOAD_REGISTER_REG )
+    {
+        __CODEGEN_DebugAttributeEnum(   TheStructure.Common.DWordLength                                 ,  0,  7, DWORD_LENGTH );
+        __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
+        __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandType                                 , 29, 31, COMMAND_TYPE );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.SourceRegisterAddress                       ,  2, 22 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.DestinationRegisterAddress                  ,  2, 22 );
+    }
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name LOCAL ENUMERATIONS
+    /// @{
+
+    /// @brief U8
+    typedef enum tagDWORD_LENGTH
+    {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1                                  = 1, ///< 
+    } DWORD_LENGTH;
+
+    /// @brief U6
+    typedef enum tagMI_COMMAND_OPCODE
+    {
+        MI_COMMAND_OPCODE_MI_LOAD_REGISTER_REG                           = 42, ///< 
+    } MI_COMMAND_OPCODE;
+
+    /// @brief U3
+    typedef enum tagCOMMAND_TYPE
+    {
+        COMMAND_TYPE_MI_COMMAND                                          = 0, ///< 
+    } COMMAND_TYPE;
+
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name ENUMERATION DEBUG
+    /// @{
+
+    /// @brief User-defined debug function for enumeration
+    __CODEGEN_DebugEnum( DWORD_LENGTH )
+    {
+        __CODEGEN_DebugEnumValue( DWORD_LENGTH_EXCLUDES_DWORD_0_1 );
+    }
+
+    /// @brief User-defined debug function for enumeration
+    __CODEGEN_DebugEnum( MI_COMMAND_OPCODE )
+    {
+        __CODEGEN_DebugEnumValue( MI_COMMAND_OPCODE_MI_LOAD_REGISTER_REG );
+    }
+
+    /// @brief User-defined debug function for enumeration
+    __CODEGEN_DebugEnum( COMMAND_TYPE )
+    {
+        __CODEGEN_DebugEnumValue( COMMAND_TYPE_MI_COMMAND );
+    }
+
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name INITIALIZATION
+    /// @{
+
+    /// @brief Explicit member initialization function
+    __CODEGEN_INLINE void Init( void )
+    {
+        TheStructure.RawData[ 0 ]                                    = 0x15000001;
+        //TheStructure.Common.DWordLength                            = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        //TheStructure.Common.MICommandOpcode                        = MI_COMMAND_OPCODE_MI_LOAD_REGISTER_REG;
+        //TheStructure.Common.CommandType                            = COMMAND_TYPE_MI_COMMAND;
+        TheStructure.RawData[ 1 ]                                    = 0x0;
+        //TheStructure.Common.SourceRegisterAddress                  = 0x0;
+        TheStructure.RawData[ 2 ]                                    = 0x0;
+        //TheStructure.Common.DestinationRegisterAddress             = 0x0;
+    }
+
+    /// @brief Explicit static initialization function
+    static MI_LOAD_REGISTER_REG sInit( void ) 
+    {
+        MI_LOAD_REGISTER_REG state;
+        state.Init();
+        return state;
+    }
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name ACCESSORS
+    /// @{
+
+    /// @brief Raw Data Access
+    __CODEGEN_INLINE __CODEGEN_UINT32& GetRawData( const __CODEGEN_UINT index )
+    {
+        __CODEGEN_ASSERT( index < 3 );
+        return TheStructure.RawData[ index ];
+    }
+
+    /// @brief Write SourceRegisterAddress
+    /// @details 
+    ///     This field specifies Bits 22:2 of the Register offset the DWord will be
+    ///     written to. As the register address must be DWord-aligned, Bits 1:0 of
+    ///     that address MBZ.
+    ///     
+
+    typedef enum tagSOURCEREGISTERADDRESS
+    {
+        SOURCEREGISTERADDRESS_BIT_SHIFT  = 2,
+        SOURCEREGISTERADDRESS_ALIGN_SIZE = 4,
+    } SOURCEREGISTERADDRESS;
+
+    __CODEGEN_INLINE void SetSourceRegisterAddress( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.SourceRegisterAddress = value >> SOURCEREGISTERADDRESS_BIT_SHIFT;
+    }
+
+    /// @brief Read SourceRegisterAddress
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetSourceRegisterAddress( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.SourceRegisterAddress << SOURCEREGISTERADDRESS_BIT_SHIFT );
+    }
+
+    /// @brief Write DestinationRegisterAddress
+    /// @details 
+    ///     This field specifies Bits 22:2 of the Register offset the DWord will be
+    ///     written to. As the register address must be DWord-aligned, Bits 1:0 of
+    ///     that address MBZ.
+    ///     
+
+    typedef enum tagDESTINATIONREGISTERADDRESS
+    {
+        DESTINATIONREGISTERADDRESS_BIT_SHIFT  = 2,
+        DESTINATIONREGISTERADDRESS_ALIGN_SIZE = 4,
+    } DESTINATIONREGISTERADDRESS;
+
+    __CODEGEN_INLINE void SetDestinationRegisterAddress( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.DestinationRegisterAddress = value >> DESTINATIONREGISTERADDRESS_BIT_SHIFT;
+    }
+
+    /// @brief Read DestinationRegisterAddress
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetDestinationRegisterAddress( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.DestinationRegisterAddress << DESTINATIONREGISTERADDRESS_BIT_SHIFT );
+    }
+
+    /// @}
+} __CODEGEN_ATTRIBUTES_STRUCTURE;
+
+__CODEGEN_C_ASSERT( 12 == sizeof( MI_LOAD_REGISTER_REG ) );
         
 __CODEGEN_NAMESPACE_CLOSE
 __CODEGEN_FILE_DIRECTIVES_CLOSE

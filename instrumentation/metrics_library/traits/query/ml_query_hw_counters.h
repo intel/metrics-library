@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -833,7 +833,7 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Validates triggered oa report against query begin/end timestamps.
+            /// @brief  Validates triggered oa report against query begin/end ticks.
             /// @param  reportQuery     query report.
             /// @param  reportTriggered triggered oa report to validate.
             /// @return                 true if triggered oa report is valid.
@@ -845,31 +845,31 @@ namespace ML
                 ML_FUNCTION_LOG( false );
                 ML_FUNCTION_CHECK_ERROR( Derived().ValidateReportReason( reportTriggered.m_Header ), false );
 
-                const uint32_t queryThreshold   = 500;                                                            // Threshold in ticks. Used to check whether obtained triggered reports were generated
-                const uint32_t queryBegin       = reportQuery.m_Begin.m_Oa.m_Header.m_Timestamp - queryThreshold; // near the actual query begin/end execution. During tests, typical delta between timestamps
-                const uint32_t queryEnd         = reportQuery.m_End.m_Oa.m_Header.m_Timestamp + queryThreshold;   // gathered around begin/end trigger reports and timestamps from actual trigger reports was equal to 1 tick.
-                const uint32_t triggerTimestamp = reportTriggered.m_Header.m_Timestamp;                           // With gpu timestamp period equal to 80ns, 500 ticks represent 40us.
+                const uint32_t queryThreshold  = 4000;                                                          // Threshold in ticks. Used to check whether obtained triggered reports were generated
+                const uint32_t queryBeginTicks = reportQuery.m_Begin.m_Oa.m_Header.m_GpuTicks - queryThreshold; // near the actual query begin/end execution. During tests, typical delta between ticks
+                const uint32_t queryEndTicks   = reportQuery.m_End.m_Oa.m_Header.m_GpuTicks + queryThreshold;   // gathered around begin/end trigger reports and ticks from actual trigger reports was equal to 1 tick.
+                const uint32_t triggerTicks    = reportTriggered.m_Header.m_GpuTicks;
 
                 // 1st condition: normal case.
-                // Timestamp should be in range <begin, end>, example:
+                // Ticks should be in range <begin, end>, example:
                 // ------<qb----oa--------qe>-------
 
                 // 2nd condition: overflow case.
-                // Timestamp should be smaller (a) or greater (b), for example:
+                // Ticks should be smaller (a) or greater (b), for example:
                 // (a) --oa--qe>--------------<qb-------
                 // (b) ------qe>--------------<qb---oa--
 
-                if( queryEnd >= queryBegin )
+                if( queryEndTicks >= queryBeginTicks )
                 {
-                    const bool validBegin = queryBegin <= triggerTimestamp;
-                    const bool validEnd   = queryEnd >= triggerTimestamp;
+                    const bool validBegin = queryBeginTicks <= triggerTicks;
+                    const bool validEnd   = queryEndTicks >= triggerTicks;
 
                     log.m_Result = validBegin && validEnd;
                 }
                 else
                 {
-                    const bool caseA = ( triggerTimestamp <= queryBegin ) && ( triggerTimestamp <= queryEnd );
-                    const bool caseB = ( triggerTimestamp >= queryBegin ) && ( triggerTimestamp >= queryEnd );
+                    const bool caseA = ( triggerTicks <= queryBeginTicks ) && ( triggerTicks <= queryEndTicks );
+                    const bool caseB = ( triggerTicks >= queryBeginTicks ) && ( triggerTicks >= queryEndTicks );
 
                     log.m_Result = caseA || caseB;
                 }
@@ -896,19 +896,25 @@ namespace ML
                 auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
 
                 // Tail data.
-                bool tailIndexValid = ML_SUCCESS( m_Context.m_OaBuffer.GetTriggeredReportIndex( queryReport, begin, tailIndex ) );
-                auto tailReportOa   = tailIndexValid ? m_Context.m_OaBuffer.GetReport( tailIndex ) : TT::Layouts::HwCounters::ReportOa{};
-                bool tailValid      = tailIndexValid && ValidateTriggeredOaReport( queryReport, tailReportOa );
+                bool  tailIndexValid = ML_SUCCESS( m_Context.m_OaBuffer.GetTriggeredReportIndex( queryReport, begin, tailIndex ) );
+                auto  dummyReportOa  = TT::Layouts::HwCounters::ReportOa{};
+                auto& tailReportOa   = tailIndexValid ? m_Context.m_OaBuffer.GetReport( tailIndex ) : dummyReportOa;
+                bool  tailValid      = tailIndexValid && ValidateTriggeredOaReport( queryReport, tailReportOa );
+
+                // Set the contextId.
+                Derived().SetContextId( queryReportOa.m_Header.m_ContextId, tailReportOa );
 
                 // Triggered report debug information.
-                log.Debug( "Query report      " );
-                log.Debug( "  begin           ", begin );
-                log.Debug( "  timestamp begin ", queryReport.m_Begin.m_Oa.m_Header.m_Timestamp );
-                log.Debug( "  timestamp end   ", queryReport.m_End.m_Oa.m_Header.m_Timestamp );
-                log.Debug( "Tail report:      " );
-                log.Debug( "  index           ", tailIndex );
-                log.Debug( "  valid           ", tailValid );
-                log.Debug( "  report          ", tailReportOa );
+                log.Debug( "Query report     " );
+                log.Debug( "  begin          ", begin );
+                log.Debug( "  ticks begin    ", queryReport.m_Begin.m_Oa.m_Header.m_GpuTicks );
+                log.Debug( "  ticks end      ", queryReport.m_End.m_Oa.m_Header.m_GpuTicks );
+                log.Debug( "  contextId      ", queryReportOa.m_Header.m_ContextId );
+                log.Debug( "Tail report:     " );
+                log.Debug( "  index          ", tailIndex );
+                log.Debug( "  tailIndexValid ", tailIndexValid );
+                log.Debug( "  valid          ", tailValid );
+                log.Debug( "  tailReportOa   ", tailReportOa );
 
                 // Recreate query report from triggered oa report or make it empty.
                 if( tailValid )
@@ -920,11 +926,21 @@ namespace ML
                     queryReport.m_Begin.m_Oa.m_Data = {};
                     queryReport.m_End.m_Oa.m_Data   = {};
                     log.Critical( "Unable to recreate report from triggered oa report" );
+                    log.m_Result = StatusCode::ReportLost;
                 }
 
-                return tailValid
-                    ? StatusCode::Success
-                    : StatusCode::ReportLost;
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Copies context id from cache into triggered report.
+            /// @param  contextId       hw context id from the cache.
+            /// @return reportTriggered triggered oa report.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE void SetContextId(
+                const uint32_t /*contextId*/,
+                TT::Layouts::HwCounters::ReportOa& /*reportTriggered*/)
+            {
             }
         };
     } // namespace BASE

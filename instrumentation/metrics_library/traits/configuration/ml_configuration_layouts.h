@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -55,6 +55,15 @@ namespace ML
         enum class Type : uint32_t
         {
             Dynamic = 0, // GTDI_CONFIGURATION_SET_DYNAMIC
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Timestamp type.
+        //////////////////////////////////////////////////////////////////////////
+        enum class TimestampType : uint32_t
+        {
+            Oa = ML_BIT( 0 ),
+            Cs = ML_BIT( 1 )
         };
 
         //////////////////////////////////////////////////////////////////////////

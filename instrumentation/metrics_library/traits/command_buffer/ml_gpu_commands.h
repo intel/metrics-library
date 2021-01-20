@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,17 @@ namespace ML
         {
             ML_DELETE_DEFAULT_CONSTRUCTOR( GpuCommandsTrait );
             ML_DELETE_DEFAULT_COPY_AND_MOVE( GpuCommandsTrait );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Gpu command flags.
+            //////////////////////////////////////////////////////////////////////////
+            enum class Flags : uint32_t
+            {
+                None             = 0,
+                DisableMmioRemap = ML_BIT( 0 ),
+                EnableStall      = ML_BIT( 1 ),
+                EnablePostSync   = ML_BIT( 2 )
+            };
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns description about itself.
@@ -98,14 +109,19 @@ namespace ML
             /// @param  buffer          target command buffer.
             /// @param  registerAddress register address.
             /// @param  memoryAddress   memory address.
+            /// @param  flags           gpu command flags.
             /// @return                 operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
             ML_INLINE static StatusCode StoreRegisterToMemory32(
                 CommandBuffer& buffer,
                 const uint32_t registerAddress,
-                const uint64_t memoryAddress )
+                const uint64_t memoryAddress,
+                const Flags    flags = Flags::None )
             {
+                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_CHECK( CheckFlags( flags, Flags::None ) );
+
                 TT::Layouts::GpuCommands::MI_STORE_REGISTER_MEM command = {};
 
                 command.Init();
@@ -113,7 +129,7 @@ namespace ML
                 command.SetRegisterAddress( registerAddress );
                 command.SetMemoryAddress( memoryAddress );
 
-                return buffer.Write( command, true );
+                return log.m_Result = buffer.Write( command, true );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -121,15 +137,18 @@ namespace ML
             /// @param  buffer          target command buffer.
             /// @param  registerAddress register address.
             /// @param  memoryAddress   memory address.
+            /// @param  flags           gpu command flags.
             /// @return                 operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
             ML_INLINE static StatusCode StoreRegisterToMemory64(
                 CommandBuffer& buffer,
                 const uint32_t registerAddress,
-                const uint64_t memoryAddress )
+                const uint64_t memoryAddress,
+                const Flags    flags = Flags::None )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_CHECK( CheckFlags( flags, Flags::None ) );
 
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
@@ -202,21 +221,26 @@ namespace ML
             /// @param  buffer          target command buffer.
             /// @param  registerAddress register address.
             /// @param  data            data to load.
+            /// @param  flags           gpu command flags.
             /// @return                 operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
             ML_INLINE static StatusCode LoadRegisterImmediate32(
                 CommandBuffer& buffer,
                 const uint32_t registerAddress,
-                const uint32_t data )
+                const uint32_t data,
+                const Flags    flags = Flags::None )
             {
+                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_CHECK( CheckFlags( flags, Flags::None ) );
+
                 TT::Layouts::GpuCommands::MI_LOAD_REGISTER_IMM command = {};
 
                 command.Init();
                 command.SetRegisterOffset( registerAddress );
                 command.SetDataDWord( data );
 
-                return buffer.Write( command, false );
+                return log.m_Result = buffer.Write( command, false );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -267,6 +291,33 @@ namespace ML
                 command.SetCommandStreamerStallEnable( true );
 
                 return buffer.Write( command, false );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Writes MI_LOAD_REGISTER_REG command to gpu command buffer.
+            /// @param  buffer                      target command buffer.
+            /// @param  sourceRegisterAddress       source register address.
+            /// @param  destinationRegisterAddress  destination register address.
+            /// @param  flags                       gpu command flags.
+            /// @return                             operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode LoadRegisterToRegister32(
+                CommandBuffer& buffer,
+                const uint32_t sourceRegisterAddress,
+                const uint32_t destinationRegisterAddress,
+                const Flags    flags = Flags::None )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_CHECK( CheckFlags( flags, Flags::None ) );
+
+                TT::Layouts::GpuCommands::MI_LOAD_REGISTER_REG command = {};
+
+                command.Init();
+                command.SetSourceRegisterAddress( sourceRegisterAddress );
+                command.SetDestinationRegisterAddress( destinationRegisterAddress );
+
+                return log.m_Result = buffer.Write( command, false );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -455,12 +506,12 @@ namespace ML
                     ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa )
                     : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
 
-                // Timestamp before triggered report.
+                // Ticks before triggered report.
                 if( begin )
                 {
-                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTicks(
                         buffer,
-                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ) ) );
+                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_GpuTicks ) ) );
 
                     ML_FUNCTION_CHECK( StoreDataToMemory32(
                         buffer,
@@ -479,14 +530,15 @@ namespace ML
                 // Trigger report in oa buffer.
                 ML_FUNCTION_CHECK( T::GpuCommands::TriggerQueryReport(
                     buffer,
-                    queryId ) );
+                    queryId,
+                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ContextId ) ) );
 
-                // Timestamp after triggered report.
+                // Ticks after triggered report.
                 if( !begin )
                 {
-                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTicks(
                         buffer,
-                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ) ) );
+                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_GpuTicks ) ) );
 
                     ML_FUNCTION_CHECK( StoreDataToMemory32(
                         buffer,
@@ -508,7 +560,8 @@ namespace ML
             template <typename CommandBuffer>
             ML_INLINE static StatusCode TriggerQueryReport(
                 CommandBuffer& buffer,
-                const uint32_t /*queryId*/ )
+                const uint32_t /*queryId*/,
+                const uint64_t /*contextIdAddress*/ )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
@@ -608,6 +661,27 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief  Writes gpu ticks command to gpu command buffer.
+            /// @param  buffer          target command buffer.
+            /// @param  memoryAddress   memory address where gpu ticks should be stored.
+            /// @return                 operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode StoreTicks(
+                CommandBuffer& buffer,
+                const uint64_t memoryAddress )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
+                    buffer,
+                    T::GpuRegisters::m_GpuTicks,
+                    memoryAddress ) );
+
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Writes pipeline timestamp command to gpu command buffer.
             /// @param  buffer          target command buffer.
             /// @param  memoryAddress   memory address where timestamp should be stored.
@@ -662,6 +736,35 @@ namespace ML
 
                 return log.m_Result;
             }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Checks if given flags are supported by a gpu command.
+            /// @param  givenFlags      flags to check.
+            /// @param  supportedFlags  supported flags.
+            /// @return                 true if given flags are included in supported
+            ///                         ones.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename... SupportedFlags>
+            ML_INLINE static bool CheckFlags(
+                const Flags givenFlags,
+                const SupportedFlags... supportedFlags )
+            {
+                uint32_t           index = 0;
+                std::vector<Flags> unpackedSupportedFlags( sizeof...( supportedFlags ) );
+
+                (void) std::initializer_list<int>{ ( unpackedSupportedFlags[index++] = supportedFlags, 0 )... };
+
+                Flags packedSupportedFlags = Flags::None;
+
+                for( uint32_t i = 0; i < index; ++i )
+                {
+                    packedSupportedFlags = packedSupportedFlags | unpackedSupportedFlags[i];
+                }
+
+                const bool supported = static_cast<uint32_t>( ( givenFlags ^ packedSupportedFlags ) & givenFlags ) == 0;
+
+                return supported;
+            }
         };
     } // namespace BASE
 
@@ -694,20 +797,28 @@ namespace ML
             /// @brief Types.
             //////////////////////////////////////////////////////////////////////////
             using Base::StoreDataToMemory32;
+            using Base::CheckFlags;
+            using Flags = typename Base::Flags;
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes MI_STORE_REGISTER_MEMORY command to gpu command buffer.
+            /// @brief  Writes MI_STORE_REGISTER_MEMORY command to gpu command buffer
+            ///         with mmio remap flag.
             /// @param  buffer          target command buffer.
             /// @param  registerAddress register address.
             /// @param  memoryAddress   memory address.
+            /// @param  flags           gpu command flags.
             /// @return                 operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
             ML_INLINE static StatusCode StoreRegisterToMemory32(
                 CommandBuffer& buffer,
                 const uint32_t registerAddress,
-                const uint64_t memoryAddress )
+                const uint64_t memoryAddress,
+                const Flags    flags = Flags::None )
             {
+                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_CHECK( CheckFlags( flags, Flags::DisableMmioRemap ) );
+
                 TT::Layouts::GpuCommands::MI_STORE_REGISTER_MEM command = {};
 
                 command.Init();
@@ -715,41 +826,74 @@ namespace ML
                 command.SetRegisterAddress( registerAddress );
                 command.SetMemoryAddress( memoryAddress );
 
-                if( registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
+                const bool isMmioRemapEnabled = static_cast<uint32_t>( flags & Flags::DisableMmioRemap ) == 0;
+
+                if( isMmioRemapEnabled &&
+                    registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
                     registerAddress <= T::GpuRegisters::m_RenderMmioRangeEnd )
                 {
                     command.SetMMIORemapEnable( true );
                 }
 
-                return buffer.Write( command, true );
+                return log.m_Result = buffer.Write( command, true );
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes MI_LOAD_REGISTER_IMM command to gpu command buffer.
+            /// @brief  Writes MI_LOAD_REGISTER_IMM command to gpu command buffer
+            ///         with mmio remap flag.
             /// @param  buffer          target command buffer.
             /// @param  registerAddress register address.
             /// @param  data            data to load.
+            /// @param  flags           gpu command flags.
             /// @return                 operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
             ML_INLINE static StatusCode LoadRegisterImmediate32(
                 CommandBuffer& buffer,
                 const uint32_t registerAddress,
-                const uint32_t data )
+                const uint32_t data,
+                const Flags    flags = Flags::None )
             {
+                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_CHECK( CheckFlags( flags, Flags::DisableMmioRemap ) );
+
                 TT::Layouts::GpuCommands::MI_LOAD_REGISTER_IMM command = {};
 
                 command.Init();
                 command.SetRegisterOffset( registerAddress );
                 command.SetDataDWord( data );
 
-                if( registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
+                const bool isMmioRemapEnabled = static_cast<uint32_t>( flags & Flags::DisableMmioRemap ) == 0;
+
+                if( isMmioRemapEnabled &&
+                    registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
                     registerAddress <= T::GpuRegisters::m_RenderMmioRangeEnd )
                 {
                     command.SetMMIORemapEnable( true );
                 }
 
-                return buffer.Write( command, false );
+                return log.m_Result = buffer.Write( command, false );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Writes gpu ticks command to gpu command buffer.
+            /// @param  buffer          target command buffer.
+            /// @param  memoryAddress   memory address where gpu ticks should be stored.
+            /// @return                 operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode StoreTicks(
+                CommandBuffer& buffer,
+                const uint64_t memoryAddress )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
+                    buffer,
+                    T::GpuRegisters::m_OagGpuTicks,
+                    memoryAddress ) );
+
+                return log.m_Result;
             }
 
             //////////////////////////////////////////////////////////////////////////

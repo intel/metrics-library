@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -28,27 +28,6 @@ IN THE SOFTWARE.
 
 #pragma once
 // clang-format off
-
-//////////////////////////////////////////////////////////////////////////
-/// @brief Configuration macros.
-//////////////////////////////////////////////////////////////////////////
-#if defined( _DEBUG )
-    #define ML_DEBUG                                1
-#else
-    #define ML_DEBUG                                0
-#endif
-
-#if defined( _RELEASE_INTERNAL )
-    #define ML_INTERNAL                             1
-#else
-    #define ML_INTERNAL                             0
-#endif
-
-#if !defined( _DEBUG ) && !defined( _RELEASE_INTERNAL )
-    #define ML_RELEASE                              1
-#else
-    #define ML_RELEASE                              0
-#endif
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief typename T shortcut macro.

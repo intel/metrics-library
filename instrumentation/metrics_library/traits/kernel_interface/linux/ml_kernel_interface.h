@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -85,9 +85,10 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Gets exact gpu timestamp frequency.
-        /// @return gpu timestamp frequency.
+        /// @param  timestampType  select timestamp domain - oa or cs.
+        /// @return                gpu timestamp frequency.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint64_t GetGpuTimestampFrequency() const
+        ML_INLINE uint64_t GetGpuTimestampFrequency( const TT::Layouts::Configuration::TimestampType timestampType ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success );
 
@@ -95,7 +96,7 @@ namespace ML
 
             if( frequency == 0 )
             {
-                frequency = m_IoControl.GetGpuTimestampFrequency();
+                frequency = m_IoControl.GetGpuTimestampFrequency( timestampType );
 
                 if( frequency == 0 )
                 {
@@ -110,15 +111,16 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Gets gpu timestamp tick value.
-        /// @return gpu timestamp tick value.
+        /// @param  timestampType  select timestamp domain - oa or cs.
+        /// @return                gpu timestamp tick value.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint64_t GetGpuTimestampTick() const
+        ML_INLINE uint64_t GetGpuTimestampTick( const TT::Layouts::Configuration::TimestampType timestampType ) const
         {
             static uint64_t gpuTimestampTickValue = 0;
 
             if( gpuTimestampTickValue == 0 )
             {
-                gpuTimestampTickValue = Constants::Time::m_SecondInNanoseconds / GetGpuTimestampFrequency();
+                gpuTimestampTickValue = Constants::Time::m_SecondInNanoseconds / GetGpuTimestampFrequency( timestampType );
             }
 
             return gpuTimestampTickValue;

@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-    Copyright © 2020, Intel Corporation
+    Copyright © 2021, Intel Corporation
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -159,6 +159,7 @@ enum class StatusCode : uint32_t
     ReportLost,
     ReportInconsistent,
     CannotOpenFile,
+    ReportContextSwitchLost,
     // ...
     Last
 };
@@ -705,6 +706,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 31
+#define METRICS_LIBRARY_BUILD_NUMBER 40
 
 } // namespace MetricsLibraryApi

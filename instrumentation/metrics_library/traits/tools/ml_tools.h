@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -46,6 +46,60 @@ namespace ML
         Output   = ML_BIT( 9 ),  // Output parameter.
         Csv      = ML_BIT( 10 ), // Csv file dumping.
     };
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief  Overloaded bitwise "and" operator for enumerations.
+    /// @param  value1  first enumerator.
+    /// @param  value2  second enumerator.
+    /// @return         result of bitwise "and" operator.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename EnumerationType>
+    ML_INLINE constexpr EnumerationType operator&(
+        const EnumerationType value1,
+        const EnumerationType value2 )
+    {
+        ML_STATIC_ASSERT( std::is_enum<EnumerationType>::value, "The template parameter is not an enumeration type." );
+
+        return static_cast<EnumerationType>(
+            static_cast<typename std::underlying_type<EnumerationType>::type>( value1 ) &
+            static_cast<typename std::underlying_type<EnumerationType>::type>( value2 ) );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief  Overloaded bitwise "or" operator for enumerations.
+    /// @param  value1  first enumerator.
+    /// @param  value2  second enumerator.
+    /// @return         result of bitwise "or" operator.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename EnumerationType>
+    ML_INLINE constexpr EnumerationType operator|(
+        const EnumerationType value1,
+        const EnumerationType value2 )
+    {
+        ML_STATIC_ASSERT( std::is_enum<EnumerationType>::value, "The template parameter is not an enumeration type." );
+
+        return static_cast<EnumerationType>(
+            static_cast<typename std::underlying_type<EnumerationType>::type>( value1 ) |
+            static_cast<typename std::underlying_type<EnumerationType>::type>( value2 ) );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief  Overloaded bitwise "xor" operator for enumerations.
+    /// @param  value1  first enumerator.
+    /// @param  value2  second enumerator.
+    /// @return         result of bitwise "xor" operator.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename EnumerationType>
+    ML_INLINE constexpr EnumerationType operator^(
+        const EnumerationType value1,
+        const EnumerationType value2 )
+    {
+        ML_STATIC_ASSERT( std::is_enum<EnumerationType>::value, "The template parameter is not an enumeration type." );
+
+        return static_cast<EnumerationType>(
+            static_cast<typename std::underlying_type<EnumerationType>::type>( value1 ) ^
+            static_cast<typename std::underlying_type<EnumerationType>::type>( value2 ) );
+    }
 
     //////////////////////////////////////////////////////////////////////////
     /// @brief ToolsTrait object.

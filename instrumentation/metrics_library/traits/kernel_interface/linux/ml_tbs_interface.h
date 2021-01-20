@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -105,19 +105,6 @@ namespace ML
                 }
 
                 //////////////////////////////////////////////////////////////////////////
-                /// @brief  Checks oa buffer mapping is supported.
-                /// @return true if oa buffer mapping is supported.
-                //////////////////////////////////////////////////////////////////////////
-                ML_INLINE bool IsSupported() const
-                {
-                    const uint32_t    revision  = static_cast<uint32_t>( m_Kernel.m_Tbs.m_Revision );
-                    const uint32_t    expected  = static_cast<uint32_t>( T::ConstantsOs::Tbs::Revision::OaBufferMapping );
-                    const static bool supported = revision >= expected;
-
-                    return supported;
-                }
-
-                //////////////////////////////////////////////////////////////////////////
                 /// @brief  Checks if oa buffer is mapped.
                 /// @return true if oa buffer is mapped.
                 //////////////////////////////////////////////////////////////////////////
@@ -136,9 +123,7 @@ namespace ML
                     ML_FUNCTION_CHECK( m_Stream != T::ConstantsOs::Tbs::m_Invalid );
 
                     // Obtain oa buffer properties.
-                    log.m_Result = IsSupported()
-                        ? m_Kernel.m_IoControl.MapOaBuffer( m_Stream, m_CpuAddress, m_Size )
-                        : m_Kernel.m_IoControl.MapOaBufferLegacy( m_Stream, m_CpuAddress, m_Size );
+                    log.m_Result = m_Kernel.m_IoControl.MapOaBuffer( m_Stream, m_CpuAddress, m_Size );
 
                     // Validate obtain data.
                     ML_FUNCTION_CHECK( log.m_Result );
@@ -298,14 +283,18 @@ namespace ML
                 ML_INLINE StatusCode Disable()
                 {
                     ML_FUNCTION_LOG( StatusCode::Success );
-                    ML_FUNCTION_CHECK( IsEnabled() );
 
-                    // Release used metric set.
-                    ReleaseMetricSet( m_MetricSet );
+                    if( !m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled )
+                    {
+                        ML_FUNCTION_CHECK( IsEnabled() );
 
-                    // Close stream.
-                    m_Kernel.m_IoControl.CloseTbs( m_Id );
-                    m_Id = T::ConstantsOs::Tbs::m_Invalid;
+                        // Release used metric set.
+                        ReleaseMetricSet( m_MetricSet );
+
+                        // Close stream.
+                        m_Kernel.m_IoControl.CloseTbs( m_Id );
+                        m_Id = T::ConstantsOs::Tbs::m_Invalid;
+                    }
 
                     return log.m_Result;
                 }
@@ -586,7 +575,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint64_t GetGpuTimestampPeriod() const
             {
-                return Constants::Time::m_SecondInNanoseconds / m_Kernel.GetGpuTimestampFrequency();
+                return Constants::Time::m_SecondInNanoseconds / m_Kernel.GetGpuTimestampFrequency( T::Layouts::Configuration::TimestampType::Oa );
             }
 
             //////////////////////////////////////////////////////////////////////////

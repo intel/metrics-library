@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -80,10 +80,15 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
+                // Some cases does not require mapped oa buffer.
+                // For example when tbs is used by metrics discovery.
+                log.m_Result = m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled
+                    ? StatusCode::Success
+                    : m_OaBuffer.Map();
+
                 // Mapped oa buffer may not be required for some cases.
                 // For example linux without oa buffer mapping patch
                 // will use a standard mirpc (without context switch handling).
-                log.m_Result = m_OaBuffer.Map();
                 log.m_Result = T::ConstantsOs::Tbs::m_MappingRequired
                     ? log.m_Result
                     : StatusCode::Success;
@@ -130,7 +135,10 @@ namespace ML
             ML_INLINE StatusCode Release()
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
-                return log.m_Result = m_OaBuffer.Unmap();
+
+                return log.m_Result = m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled
+                    ? StatusCode::Success
+                    : m_OaBuffer.Unmap();
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -169,13 +177,14 @@ namespace ML
             /// @param  index   oa report index within oa buffer.
             /// @return         reference to oa report.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE const TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t index )
+            ML_INLINE TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t index )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
                 ML_ASSERT( m_OaBuffer.IsMapped() )
 
-                const bool  oaReportSplit = IsSplitted( index );
-                const auto& oaReport      = oaReportSplit
+                const bool oaReportSplit = IsSplitted( index );
+
+                auto& oaReport = oaReportSplit
                     ? GetSplittedReport( index )
                     : m_OaBuffer.m_Reports[index];
 
@@ -200,7 +209,6 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
                 ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
-                ML_FUNCTION_CHECK( reportGpu.m_OaBuffer.GetAllocationOffset() > 0 );
 
                 const auto&    oaTail = begin ? reportGpu.m_OaTailBegin : reportGpu.m_OaTailTriggerEnd;
                 const uint32_t count  = GetReportsCount();

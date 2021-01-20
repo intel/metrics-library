@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -371,25 +371,35 @@ namespace ML
                         output << "Gen10";
                         break;
 
+                #if ML_ENABLE_GEN11
                     case ClientGen::Gen11:
                         output << "Gen11";
                         break;
+                #endif
 
+                #if ML_ENABLE_GEN11
                     case ClientGen::Gen11LP:
                         output << "Gen11LP";
                         break;
+                #endif
 
+                #if ML_ENABLE_GEN12
                     case ClientGen::Gen12:
                         output << "Gen12";
                         break;
+                #endif
 
+                #if ML_ENABLE_GEN9
                     case ClientGen::Gen9:
                         output << "Gen9";
                         break;
+                #endif
 
+                #if ML_ENABLE_GEN9
                     case ClientGen::Gen9LP:
                         output << "Gen9LP";
                         break;
+                #endif
 
                     case ClientGen::Last:
                         output << "Last";
@@ -833,6 +843,10 @@ namespace ML
 
                     case StatusCode::OutOfMemory:
                         output << "OutOfMemory";
+                        break;
+
+                    case StatusCode::ReportContextSwitchLost:
+                        output << "ReportContextSwitchLost";
                         break;
 
                     case StatusCode::ReportInconsistent:

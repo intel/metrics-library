@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -262,7 +262,6 @@ namespace ML
                 const uint32_t offset     = GetOffset();
                 const uint32_t reportSize = sizeof( TT::Layouts::HwCounters::ReportOa );
 
-                ML_ASSERT( address > 0 );
                 ML_ASSERT( address <= offset );
                 return ( offset - address ) / reportSize;
             }

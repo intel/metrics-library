@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -210,6 +210,16 @@ namespace ML
         /// @return         gpu memory address.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static uint64_t GetMemoryAddress( const TT::Layouts::GpuCommands::MI_COPY_MEM_MEM& /*command*/ )
+        {
+            return 0;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns gpu memory address from gpu command.
+        /// @param  command gpu command.
+        /// @return         gpu memory address.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static uint64_t GetMemoryAddress( const TT::Layouts::GpuCommands::MI_LOAD_REGISTER_REG& /*command*/ )
         {
             return 0;
         }

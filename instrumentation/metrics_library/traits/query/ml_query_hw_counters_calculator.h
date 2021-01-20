@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -63,6 +63,7 @@ namespace ML
             const TT::Layouts::Configuration::HwContextIds m_HwContextIds;
             const ConfigurationHandle_1_0&                 m_UserConfiguration;
             const bool                                     m_NullBegin;
+            TT::Layouts::Configuration::TimestampType      m_TimestampType;
             const uint64_t                                 m_GpuTimestampFrequency;
 
             //////////////////////////////////////////////////////////////////////////
@@ -89,7 +90,10 @@ namespace ML
                 , m_HwContextIds( m_Kernel.GetHwContextIds() )
                 , m_UserConfiguration( query.m_UserConfiguration )
                 , m_NullBegin( m_Kernel.IsNullBeginOverride() )
-                , m_GpuTimestampFrequency( m_Kernel.GetGpuTimestampFrequency() )
+                , m_TimestampType( m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag
+                                    ? T::Layouts::Configuration::TimestampType::Oa
+                                    : T::Layouts::Configuration::TimestampType::Cs )
+                , m_GpuTimestampFrequency( m_Kernel.GetGpuTimestampFrequency( m_TimestampType ) )
             {
             }
 
@@ -142,9 +146,6 @@ namespace ML
                 m_ReportApi.m_MarkerDriver = m_ReportGpu.m_MarkerDriver;
                 m_ReportApi.m_MarkerUser   = m_ReportGpu.m_MarkerUser;
 
-                // Validate gpu report consistency.
-                ValidateReportGpuStatus( log.m_Result );
-
                 // Print output api report.
                 log.Info( "Report api", m_ReportApi );
 
@@ -196,6 +197,22 @@ namespace ML
             {
                 ML_FUNCTION_LOG( true );
 
+                // Show what has been collected.
+                log.Debug( "Gpu report              " );
+                log.Debug( "    m_Begin.m_Oa        ", m_ReportGpu.m_Begin.m_Oa );
+                log.Debug( "    m_End.m_Oa          ", m_ReportGpu.m_End.m_Oa );
+                log.Debug( "    m_EndTag            ", m_ReportGpu.m_EndTag );
+                log.Debug( "    m_DmaFenceIdBegin   ", m_ReportGpu.m_DmaFenceIdBegin );
+                log.Debug( "    m_DmaFenceIdEnd     ", m_ReportGpu.m_DmaFenceIdEnd );
+                log.Debug( "    m_OaBuffer          ", m_ReportGpu.m_OaBuffer.All.m_ReportBufferOffset );
+                log.Debug( "    m_OaTailBegin       ", m_ReportGpu.m_OaTailBegin.All.m_Tail );
+                log.Debug( "    m_OaTailTriggerEnd  ", m_ReportGpu.m_OaTailTriggerEnd.All.m_Tail );
+                log.Debug( "    m_OaTailEnd         ", m_ReportGpu.m_OaTailEnd.All.m_Tail );
+                log.Debug( "    m_CoreFrequencyBegin", m_ReportGpu.m_CoreFrequencyBegin );
+                log.Debug( "    m_CoreFrequencyEnd  ", m_ReportGpu.m_CoreFrequencyEnd );
+                log.Debug( "    m_MarkerUser        ", m_ReportGpu.m_MarkerUser );
+                log.Debug( "    m_MarkerDriver      ", m_ReportGpu.m_MarkerDriver );
+
                 // Validate gpu report.
                 status = ValidateReportGpu();
                 status = ML_SUCCESS( status ) ? PrepareReportGpu() : status;
@@ -225,9 +242,10 @@ namespace ML
                 ML_FUNCTION_LOG( true );
 
                 // Api report flags.
-                auto& flags                     = m_ReportApi.m_Flags;
-                flags                           = TT::Layouts::HwCounters::Query::ReportApiFlags{};
-                flags.m_ReportContextSwitchLost = !m_OaBuffer.IsValid();
+                auto& flags = m_ReportApi.m_Flags;
+                flags       = TT::Layouts::HwCounters::Query::ReportApiFlags{};
+
+                flags.m_ReportContextSwitchLost |= !m_OaBuffer.IsValid();
 
                 switch( status )
                 {
@@ -252,6 +270,12 @@ namespace ML
                         flags.m_ReportInconsistent = 1;                   // Mark report as inconsistent.
                         log.m_Result               = false;               // Do not process this gpu report.
                         status                     = StatusCode::Success; // Returns success to avoid subsequent get data request.
+                        break;
+
+                    case StatusCode::ReportContextSwitchLost:
+                        flags.m_ReportContextSwitchLost = 1;                   // Context switches between begin / end are lost.
+                        log.m_Result                    = true;                // Process this gpu report.
+                        status                          = StatusCode::Success; // Returns success to avoid subsequent get data request.
                         break;
 
                     default:
@@ -326,21 +350,32 @@ namespace ML
                 // Clear api report data.
                 reportApi = {};
 
-                // Find appropriate begin & end reports.
-                do
+                if( BrowseOaBuffer() )
                 {
-                    // Revert pOaEnd to MiRpc end.
-                    oaEnd = &m_ReportGpu.m_End.m_Oa;
+                    // Find appropriate begin & end reports.
+                    do
+                    {
+                        // Revert pOaEnd to MiRpc end.
+                        oaEnd = &m_ReportGpu.m_End.m_Oa;
 
-                    // Set appropriate begin & end reports.
-                    log.m_Result = GetNextOaReport(
-                        oaBegin,
-                        oaEnd,
-                        frequency,
-                        overrun,
-                        events );
+                        // Set appropriate begin & end reports.
+                        log.m_Result = GetNextOaReport(
+                            oaBegin,
+                            oaEnd,
+                            frequency,
+                            overrun,
+                            events );
 
-                } while( ML_SUCCESS( log.m_Result ) && !IsValidOaReport( *oaBegin ) && !overrun );
+                    } while( ML_SUCCESS( log.m_Result ) && !IsValidOaReport( *oaBegin ) && !overrun );
+                }
+                else
+                {
+                    log.Warning( "Context switches are not available for the report in the query" );
+                    log.m_Result = StatusCode::ReportContextSwitchLost;
+
+                    // Validate context switches lost.
+                    ML_FUNCTION_CHECK( ValidateReportGpuStatus( log.m_Result ) );
+                }
 
                 // Api report id and count and check of the report consistency.
                 if( ML_SUCCESS( log.m_Result ) )
@@ -361,12 +396,12 @@ namespace ML
                         {
                             log.Warning( "The report in the query is inconsistent" );
                             log.m_Result = StatusCode::ReportInconsistent;
+
+                            // Validate gpu report consistency.
+                            ML_FUNCTION_CHECK( ValidateReportGpuStatus( log.m_Result ) );
                         }
                     }
                 }
-
-                // Sanity check.
-                ML_FUNCTION_CHECK( log.m_Result );
 
                 // Gpu frequencies.
                 ML_FUNCTION_CHECK( GetFrequencyGpu( reportApi.m_CoreFrequencyChanged, reportApi.m_CoreFrequency ) );
@@ -602,7 +637,7 @@ namespace ML
                 uint64_t timestampEnd   = end.m_Header.m_Timestamp;
 
                 // Total time in nanoseconds.
-                reportApi.m_TotalTime += T::Tools::CountersDelta( timestampEnd, timestampBegin, 32 ) * m_Kernel.GetGpuTimestampTick();
+                reportApi.m_TotalTime += T::Tools::CountersDelta( timestampEnd, timestampBegin, 32 ) * m_Kernel.GetGpuTimestampTick( m_TimestampType );
 
                 // Gpu ticks.
                 reportApi.m_GpuTicks = T::Tools::CountersDelta( end.m_Header.m_GpuTicks, begin.m_Header.m_GpuTicks, 32 );
@@ -779,7 +814,7 @@ namespace ML
                 // The mirpc begin report is always valid, in other cases check that the buffer report meets all conditions.
                 if( &reportOa != &m_ReportOaBegin )
                 {
-                    const auto reason = static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_ReportReason );
+                    const uint32_t reason = reportOa.m_Header.m_ReportId.m_ReportReason;
 
                     // 1. Check allowed contexts.
                     log.m_Result = reportOa.m_Header.m_ReportId.m_ContextValid && IsValidContextId( static_cast<uint32_t>( reportOa.m_Header.m_ContextId ) ); // TODO: remove the cast
@@ -1160,6 +1195,27 @@ namespace ML
             ML_INLINE bool AllowEmptyContextId() const
             {
                 return T::Policy::QueryHwCounters::GetData::m_AllowEmptyContextId;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns command buffer type.
+            /// @return render command buffer as long as other types are not used.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE GpuCommandBufferType GetCommandBufferType() const
+            {
+                return GpuCommandBufferType::Render;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns true if oa buffer should be browsed.
+            /// @return true if oa buffer should be browsed to find context switches.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE bool BrowseOaBuffer()
+            {
+                const bool isCommandBufferCompute = Derived().GetCommandBufferType() == GpuCommandBufferType::Compute;
+
+                // There is no need to browse oa buffer for compute command streamers.
+                return !isCommandBufferCompute && T::Policy::QueryHwCounters::GetData::m_IncludeRenderContextSwitchReports;
             }
         };
     } // namespace BASE

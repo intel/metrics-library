@@ -20,33 +20,34 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 
-@file ml_os.h
+@file ml_configuration_macros.h
 
-@brief Os specific headers.
+@brief Metrics Library configuration macros.
 
 \******************************************************************************/
 
 #pragma once
+// clang-format off
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Standard headers:
+/// @brief Configuration macros.
 //////////////////////////////////////////////////////////////////////////
-#include <string.h>
+#if defined( _DEBUG )
+    #define ML_DEBUG                                1
+#else
+    #define ML_DEBUG                                0
+#endif
 
-//////////////////////////////////////////////////////////////////////////
-/// @brief Linux utility:
-//////////////////////////////////////////////////////////////////////////
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <stddef.h>
+#if defined( _RELEASE_INTERNAL )
+    #define ML_INTERNAL                             1
+#else
+    #define ML_INTERNAL                             0
+#endif
 
-//////////////////////////////////////////////////////////////////////////
-/// @brief Drm utility:
-//////////////////////////////////////////////////////////////////////////
-#define __user
-#include "external/drm/i915_drm.h"
-#include "external/drm/xf86drm.h"
+#if !defined( _DEBUG ) && !defined( _RELEASE_INTERNAL )
+    #define ML_RELEASE                              1
+#else
+    #define ML_RELEASE                              0
+#endif
+
+// clang-format on

@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -95,9 +95,11 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 struct GetData
                 {
-                    static constexpr bool m_AllowEmptyContextId  = true;
-                    static constexpr bool m_ResetOaBufferState   = false;
-                    static constexpr bool m_IncludeAllHwContexts = false;
+                    static constexpr bool m_AllowEmptyContextId               = true;
+                    static constexpr bool m_ResetOaBufferState                = false;
+                    static constexpr bool m_IncludeAllHwContexts              = false;
+                    static constexpr bool m_RecoverContextId                  = false;
+                    static constexpr bool m_IncludeRenderContextSwitchReports = true;
                 };
             };
 
@@ -172,6 +174,20 @@ namespace ML
                         bool supported = kernel.m_Tbs.m_Stream.m_OaBufferMapped.IsMapped();
                         return supported;
                     }
+                };
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Configuration oa policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct ConfigurationOa : Base::ConfigurationOa
+            {
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief Configuration activation policies.
+                //////////////////////////////////////////////////////////////////////////
+                struct Activate
+                {
+                    static constexpr bool m_RestartTbs = false;
                 };
             };
         };

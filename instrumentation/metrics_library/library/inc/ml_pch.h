@@ -1,6 +1,6 @@
 /******************************************************************************\
 
-Copyright © 2020, Intel Corporation
+Copyright © 2021, Intel Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -28,16 +28,23 @@ IN THE SOFTWARE.
 #pragma once
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Metrics library api header.
-//////////////////////////////////////////////////////////////////////////
-#include "metrics_library_api_1_0.h"
-using namespace MetricsLibraryApi;
-
-//////////////////////////////////////////////////////////////////////////
 /// @brief Metrics Library common headers.
 //////////////////////////////////////////////////////////////////////////
 #include "ml_os.h"
 #include "ml_macros_os.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Metrics library configuration.
+//////////////////////////////////////////////////////////////////////////
+#include "ml_configuration_macros.h"
+#include "ml_configuration_api.h"
+#include "ml_configuration_gen.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Metrics library api header.
+//////////////////////////////////////////////////////////////////////////
+#include "metrics_library_api_1_0.h"
+using namespace MetricsLibraryApi;
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief STL support.
@@ -63,8 +70,6 @@ using namespace MetricsLibraryApi;
 /// @brief Metrics library main headers.
 //////////////////////////////////////////////////////////////////////////
 #include "ml_macros.h"
-#include "ml_configuration_api.h"
-#include "ml_configuration_gen.h"
 #include "ml_constants.h"
 #include "ml_validation.h"
 #include "ml_gpu_commands_include.h"
