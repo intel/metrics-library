@@ -105,6 +105,19 @@ namespace ML
                 }
 
                 //////////////////////////////////////////////////////////////////////////
+                /// @brief  Checks oa buffer mapping is supported.
+                /// @return true if oa buffer mapping is supported.
+                //////////////////////////////////////////////////////////////////////////
+                ML_INLINE bool IsSupported() const
+                {
+                    const uint32_t    revision  = static_cast<uint32_t>( m_Kernel.m_Revision );
+                    const uint32_t    expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::OaBufferMapping );
+                    const static bool supported = revision >= expected;
+
+                    return supported;
+                }
+
+                //////////////////////////////////////////////////////////////////////////
                 /// @brief  Checks if oa buffer is mapped.
                 /// @return true if oa buffer is mapped.
                 //////////////////////////////////////////////////////////////////////////
@@ -150,7 +163,6 @@ namespace ML
                 ML_INLINE StatusCode Unmap()
                 {
                     ML_FUNCTION_LOG( StatusCode::Success );
-                    ML_FUNCTION_CHECK( m_Mapped );
 
                     if( m_CpuAddress )
                     {
@@ -324,13 +336,12 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE StatusCode Enable()
                 {
+                    std::vector<uint64_t> properties;
+
                     ML_FUNCTION_LOG( StatusCode::Success );
                     ML_FUNCTION_CHECK( IsEnabled() == false );
                     ML_FUNCTION_CHECK( m_MetricSet != T::ConstantsOs::Tbs::m_Invalid );
-
-                    // Fill stream properties.
-                    std::vector<uint64_t> properties;
-                    GetProperties( properties );
+                    ML_FUNCTION_CHECK( m_Kernel.m_Tbs.GetStreamProperties( properties, m_MetricSet ) );
 
                     // Enable stream.
                     log.m_Result = m_Kernel.m_IoControl.OpenTbs( properties, m_Id );
@@ -351,25 +362,6 @@ namespace ML
 
                     return log.m_Result;
                 }
-
-                /////////////////////////////////////////////////////////////////////////
-                /// @brief  Returns tbs properties.
-                /// @return properties tbs properties.
-                //////////////////////////////////////////////////////////////////////////
-                ML_INLINE void GetProperties( std::vector<uint64_t>& properties ) const
-                {
-                    auto addProperty = [&]( const uint64_t key, const uint64_t value ) {
-                        properties.push_back( key );
-                        properties.push_back( value );
-                    };
-
-                    // clang-format off
-                    addProperty( DRM_I915_PERF_PROP_SAMPLE_OA,      true );
-                    addProperty( DRM_I915_PERF_PROP_OA_METRICS_SET, static_cast<uint64_t>( m_MetricSet ) );
-                    addProperty( DRM_I915_PERF_PROP_OA_FORMAT,      T::TbsInterface::GetOaReportType() );
-                    addProperty( DRM_I915_PERF_PROP_OA_EXPONENT,    m_Kernel.m_Tbs.GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
-                    // clang-format on
-                }
             };
 
         public:
@@ -382,11 +374,10 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief Members.
             //////////////////////////////////////////////////////////////////////////
-            TT::KernelInterface&           m_Kernel;
-            TT::ConstantsOs::Tbs::Revision m_Revision;
-            TT::IoControl&                 m_IoControl;
-            TbsReportsCache                m_ReportsCache;
-            TbsStream                      m_Stream;
+            TT::KernelInterface& m_Kernel;
+            TT::IoControl&       m_IoControl;
+            TbsReportsCache      m_ReportsCache;
+            TbsStream            m_Stream;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief TbsInterfaceTrait constructor.
@@ -394,7 +385,6 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             TbsInterfaceTrait( TT::KernelInterface& kernel )
                 : m_Kernel( kernel )
-                , m_Revision( T::ConstantsOs::Tbs::Revision::Unsupported )
                 , m_IoControl( kernel.m_IoControl )
                 , m_ReportsCache{}
                 , m_Stream( kernel )
@@ -426,10 +416,6 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                // Obtain kernel performance interface revision.
-                m_IoControl.GetTbsRevision( m_Revision );
-
-                // Enable tbs stream.
                 return log.m_Result = m_Stream.Initialize();
             }
 
@@ -461,6 +447,33 @@ namespace ML
             ML_INLINE static drm_i915_oa_format GetOaReportType()
             {
                 return I915_OA_FORMAT_A32u40_A4u32_B8_C8;
+            }
+
+            /////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns tbs properties.
+            /// @param  metricSet   metric set associated with tbs stream.
+            /// @return properties  tbs properties.
+            /// @return             operation status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode GetStreamProperties(
+                std::vector<uint64_t>& properties,
+                const int32_t          metricSet ) const
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                auto addProperty = [&]( const uint64_t key, const uint64_t value ) {
+                    properties.push_back( key );
+                    properties.push_back( value );
+                };
+
+                // clang-format off
+                addProperty( DRM_I915_PERF_PROP_SAMPLE_OA,      true );
+                addProperty( DRM_I915_PERF_PROP_OA_METRICS_SET, static_cast<uint64_t>( metricSet ) );
+                addProperty( DRM_I915_PERF_PROP_OA_FORMAT,      T::TbsInterface::GetOaReportType() );
+                addProperty( DRM_I915_PERF_PROP_OA_EXPONENT,    GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
+                // clang-format on
+
+                return log.m_Result;
             }
 
             //////////////////////////////////////////////////////////////////////////

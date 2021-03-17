@@ -58,7 +58,7 @@ namespace ML
         const ClientHandle_1_0    m_ClientHandle;
         const ClientCallbacks_1_0 m_ClientCallbacks;
         ClientData_1_0            m_ClientData;
-        int64_t                   m_OaConfigurationId;
+        TT::SubDevice             m_SubDevice;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief ContextTrait constructor.
@@ -75,7 +75,7 @@ namespace ML
             , m_ClientHandle( createData.ClientData->Handle )
             , m_ClientCallbacks{ *createData.ClientCallbacks }
             , m_ClientData{ *createData.ClientData }
-            , m_OaConfigurationId( 0 )
+            , m_SubDevice( *this )
         {
         }
 

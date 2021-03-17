@@ -20,9 +20,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 
-@file ml_marker_stream_user.h
+@file ml_sub_device_common.h
 
-@brief Allows to create, write marker stream user and get data from the marker.
+@brief Sub device support.
 
 \******************************************************************************/
 
@@ -33,18 +33,40 @@ namespace ML
     namespace BASE
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for MarkerStreamUserTrait object.
+        /// @brief Base type for SubDeviceCommonTrait object.
         //////////////////////////////////////////////////////////////////////////
         template <typename T>
-        struct MarkerStreamUserTrait : DdiObject<T, TT::Markers::StreamUser, MarkerHandle_1_0, ObjectType::MarkerStreamUser>
+        struct SubDeviceCommonTrait : TraitObject<T, TT::SubDevice>
         {
-            ML_DELETE_DEFAULT_CONSTRUCTOR( MarkerStreamUserTrait );
-            ML_DELETE_DEFAULT_COPY_AND_MOVE( MarkerStreamUserTrait );
+            ML_DELETE_DEFAULT_COPY_AND_MOVE( SubDeviceCommonTrait );
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief Types.
             //////////////////////////////////////////////////////////////////////////
-            using Base = DdiObject<T, TT::Markers::StreamUser, MarkerHandle_1_0, ObjectType::MarkerStreamUser>;
+            using Base = TraitObject<T, TT::SubDevice>;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Members.
+            //////////////////////////////////////////////////////////////////////////
+            TT::Context& m_Context;
+            uint32_t     m_SubDeviceIndex;
+            uint32_t     m_SubDeviceCount;
+            bool         m_IsSubDevice;
+            bool         m_Enabled;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Device constructor.
+            /// @param  context metrics library context.
+            //////////////////////////////////////////////////////////////////////////
+            SubDeviceCommonTrait( TT::Context& context )
+                : Base()
+                , m_Context( context )
+                , m_SubDeviceIndex( context.m_ClientOptions.m_SubDeviceIndex )
+                , m_SubDeviceCount( context.m_ClientOptions.m_SubDeviceCount )
+                , m_IsSubDevice( context.m_ClientOptions.m_IsSubDevice )
+                , m_Enabled( false )
+            {
+            }
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns description about itself.
@@ -52,37 +74,16 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE static const std::string GetDescription()
             {
-                return "MarkerStreamUserTrait<Traits>";
+                return "SubDeviceCommonTrait<Traits>";
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes marker stream user commands to command buffer.
-            /// @param  buffer  target command buffer.
-            /// @param  data    marker stream user data.
-            /// @return         operation status.
+            /// @brief  Initializes device data.
+            /// @return operation status.
             //////////////////////////////////////////////////////////////////////////
-            template <typename CommandBuffer>
-            ML_INLINE static StatusCode Write(
-                CommandBuffer&                           buffer,
-                const CommandBufferMarkerStreamUser_1_0& data )
+            StatusCode Initialize()
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
-
-                const uint32_t marker = T::Policy::StreamMarker::m_Use32bitValue
-                    ? data.Value | ( data.Reserved << Constants::StreamMarker::m_HighBitsShift )
-                    : data.Value;
-
-                // Load a value to A19 counter.
-                ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                    buffer,
-                    T::GpuRegisters::m_StreamMarker,
-                    marker ) );
-
-                // Trigger report with report reason 4.
-                ML_FUNCTION_CHECK( T::GpuCommands::TriggerStreamReport(
-                    buffer,
-                    marker ) );
-
                 return log.m_Result;
             }
         };
@@ -90,28 +91,31 @@ namespace ML
 
     namespace GEN9
     {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Gen9 type for SubDeviceCommonTrait object.
+        //////////////////////////////////////////////////////////////////////////
         template <typename T>
-        struct MarkerStreamUserTrait : BASE::MarkerStreamUserTrait<T>
+        struct SubDeviceCommonTrait : BASE::SubDeviceCommonTrait<T>
         {
-            ML_DECLARE_TRAIT( MarkerStreamUserTrait, BASE );
+            ML_DECLARE_TRAIT( SubDeviceCommonTrait, BASE );
         };
     } // namespace GEN9
 
     namespace GEN11
     {
         template <typename T>
-        struct MarkerStreamUserTrait : GEN9::MarkerStreamUserTrait<T>
+        struct SubDeviceCommonTrait : GEN9::SubDeviceCommonTrait<T>
         {
-            ML_DECLARE_TRAIT( MarkerStreamUserTrait, GEN9 );
+            ML_DECLARE_TRAIT( SubDeviceCommonTrait, GEN9 );
         };
     } // namespace GEN11
 
     namespace GEN12
     {
         template <typename T>
-        struct MarkerStreamUserTrait : GEN11::MarkerStreamUserTrait<T>
+        struct SubDeviceCommonTrait : GEN11::SubDeviceCommonTrait<T>
         {
-            ML_DECLARE_TRAIT( MarkerStreamUserTrait, GEN11 );
+            ML_DECLARE_TRAIT( SubDeviceCommonTrait, GEN11 );
         };
     } // namespace GEN12
 } // namespace ML

@@ -87,9 +87,12 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Initializes io control interface.
             /// @param  clientData  initializing client data.
+            /// @return revision    drm performance revision.
             /// @return initialization status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Initialize( const ClientData_1_0& clientData )
+            ML_INLINE StatusCode Initialize(
+                const ClientData_1_0&           clientData,
+                TT::ConstantsOs::Drm::Revision& revision )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
                 ML_ASSERT( m_DrmFile == T::ConstantsOs::Drm::m_Invalid );
@@ -138,6 +141,124 @@ namespace ML
                           T::ConstantsOs::Tbs::m_ActiveMetricSetGuid ); // Activated metric set guid.
 
                 m_KernelMetricSet = path;
+
+                // Obtain drm performance revision.
+                // No check for fail, since old kernels do not support this information.
+                GetDrmRevision( revision );
+
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Queries i915 for specific information length.
+            /// @param  id      query id.
+            /// @return         data length.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint32_t QueryLength( const uint32_t id )
+            {
+                ML_FUNCTION_LOG( uint32_t{ 0 } );
+
+                auto query = drm_i915_query{};
+                auto item  = drm_i915_query_item{};
+
+                // Query length.
+                item.query_id   = id;
+                item.length     = 0;
+                query.items_ptr = reinterpret_cast<uint64_t>( &item );
+                query.num_items = 1;
+
+                const bool validCall   = ML_SUCCESS( SendDrm( DRM_IOCTL_I915_QUERY, query ) );
+                const bool validLength = item.length > 0;
+
+                return ( validCall && validLength )
+                    ? item.length
+                    : 0;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Queries i915 for specific information.
+            /// @param  id      query id.
+            /// @return data    output data.
+            /// @return             operation status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode Query( drm_i915_query& query )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                return log.m_Result = SendDrm( DRM_IOCTL_I915_QUERY, query );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Queries i915 for specific information.
+            /// @param  id      query id.
+            /// @return data    returned data.
+            /// @return         operation status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode Query(
+                const uint32_t        id,
+                std::vector<uint8_t>& data )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                auto query = drm_i915_query{};
+                auto item  = drm_i915_query_item{};
+
+                // Prepare space for query data.
+                data.resize( QueryLength( id ) );
+
+                // Prepare query item.
+                item.query_id   = id;
+                item.length     = data.size();
+                item.data_ptr   = reinterpret_cast<uint64_t>( data.data() );
+                query.items_ptr = reinterpret_cast<uint64_t>( &item );
+                query.num_items = 1;
+
+                // Input check.
+                ML_FUNCTION_CHECK( item.length > 0 );
+
+                // Send io control.
+                log.m_Result = SendDrm( DRM_IOCTL_I915_QUERY, query );
+
+                // Output check.
+                ML_FUNCTION_CHECK( log.m_Result );
+                ML_FUNCTION_CHECK( data.size() == static_cast<uint32_t>( item.length ) );
+
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Queries i915 for specific information.
+            /// @param  id      query id.
+            /// @return data    output data.
+            /// @return         operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename Data>
+            ML_INLINE StatusCode Query(
+                const uint32_t id,
+                Data&          data )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                auto query = drm_i915_query{};
+                auto item  = drm_i915_query_item{};
+
+                item.query_id   = id;
+                item.length     = QueryLength( id );
+                item.data_ptr   = reinterpret_cast<uint64_t>( &data );
+                query.items_ptr = reinterpret_cast<uint64_t>( &item );
+                query.num_items = 1;
+
+                // Input check.
+                ML_FUNCTION_CHECK( item.length > 0 );
+                ML_FUNCTION_CHECK( item.length == sizeof( data ) );
+
+                // Send io control.
+                log.m_Result = SendDrm( DRM_IOCTL_I915_QUERY, query );
+
+                // Output check.
+                ML_FUNCTION_CHECK( log.m_Result );
+                ML_FUNCTION_CHECK( item.length > 0 );
+                ML_FUNCTION_CHECK( item.length == sizeof( data ) );
 
                 return log.m_Result;
             }
@@ -413,13 +534,13 @@ namespace ML
             /// @return revision performance module revision.
             /// @return          operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode GetTbsRevision( TT::ConstantsOs::Tbs::Revision& revision ) const
+            ML_INLINE StatusCode GetDrmRevision( TT::ConstantsOs::Drm::Revision& revision ) const
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                int32_t output = static_cast<int32_t>( T::ConstantsOs::Tbs::Revision::Unsupported );
+                int32_t output = static_cast<int32_t>( T::ConstantsOs::Drm::Revision::Unsupported );
                 log.m_Result   = GetDrmParameter( I915_PARAM_PERF_REVISION, output );
-                revision       = static_cast<TT::ConstantsOs::Tbs::Revision>( output );
+                revision       = static_cast<TT::ConstantsOs::Drm::Revision>( output );
 
                 return log.m_Result;
             }
@@ -448,45 +569,7 @@ namespace ML
                 return log.m_Result;
             }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns parameter from the drm.
-            /// @param  parameter   drm parameter type.
-            /// @return result      result value.
-            /// @return             operation status.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename Result>
-            ML_INLINE StatusCode GetDrmParameter(
-                const uint32_t parameter,
-                Result&        result ) const
-            {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_STATIC_ASSERT( sizeof( Result ) == sizeof( int32_t ), "Incorrect input size, expected 4 bytes." );
-
-                int32_t output     = 0;
-                auto    parameters = drm_i915_getparam_t{};
-                parameters.param   = parameter;
-                parameters.value   = &output;
-
-                // Check parameter availability.
-                switch( parameter )
-                {
-                    case I915_PARAM_PERF_REVISION:
-                    case I915_PARAM_CHIPSET_ID:
-                    case I915_PARAM_CS_TIMESTAMP_FREQUENCY:
-                        break;
-
-                    default:
-                        ML_ASSERT_ALWAYS();
-                        return log.m_Result = StatusCode::NotSupported;
-                }
-
-                log.m_Result = SendDrm( DRM_IOCTL_I915_GETPARAM, parameters );
-                result       = static_cast<Result>( output );
-
-                return log.m_Result;
-            }
-
-        private:
+        protected:
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Opens intel drm interface
             /// @return operation status.
@@ -589,6 +672,44 @@ namespace ML
                 }
 
                 closedir( drmDirectory );
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns parameter from the drm.
+            /// @param  parameter   drm parameter type.
+            /// @return result      result value.
+            /// @return             operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename Result>
+            ML_INLINE StatusCode GetDrmParameter(
+                const uint32_t parameter,
+                Result&        result ) const
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_STATIC_ASSERT( sizeof( Result ) == sizeof( int32_t ), "Incorrect input size, expected 4 bytes." );
+
+                int32_t output     = 0;
+                auto    parameters = drm_i915_getparam_t{};
+                parameters.param   = parameter;
+                parameters.value   = &output;
+
+                // Check parameter availability.
+                switch( parameter )
+                {
+                    case I915_PARAM_PERF_REVISION:
+                    case I915_PARAM_CHIPSET_ID:
+                    case I915_PARAM_CS_TIMESTAMP_FREQUENCY:
+                        break;
+
+                    default:
+                        ML_ASSERT_ALWAYS();
+                        return log.m_Result = StatusCode::NotSupported;
+                }
+
+                log.m_Result = SendDrm( DRM_IOCTL_I915_GETPARAM, parameters );
+                result       = static_cast<Result>( output );
+
                 return log.m_Result;
             }
 

@@ -53,19 +53,6 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct Tbs
         {
-            enum class Revision : uint32_t
-            {
-                Unsupported      = 0,
-                OaSupported      = 1,
-                OaConfiguration  = 2,
-                HoldPreemption   = 3,
-                AllowedSsEu      = 4,
-                PollOaPeriod     = 5,
-                TriggerReports   = 6,
-                TriggerWhitelist = 7,
-                OaBufferMapping  = 8
-            };
-
             static constexpr bool        m_MappingRequired     = false;
             static constexpr bool        m_PrintOaBuffer       = false;
             static constexpr bool        m_PrintOaCache        = false;
@@ -81,6 +68,23 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct Drm
         {
+            ////////////////////////////////////////////////////////////////////////
+            /// @brief Drm revision.
+            //////////////////////////////////////////////////////////////////////////
+            enum class Revision : uint32_t
+            {
+                Unsupported      = 0,
+                OaSupported      = 1,
+                OaConfiguration  = 2,
+                HoldPreemption   = 3,
+                AllowedSsEu      = 4,
+                PollOaPeriod     = 5,
+                TriggerReports   = 6,
+                TriggerWhitelist = 7,
+                OaBufferMapping  = 8,
+                SubDevices       = 10
+            };
+
             static constexpr int32_t     m_Invalid      = -1;
             static constexpr const char* m_Name         = "i915";
             static constexpr const char* m_Path         = "/sys/dev/char/%d:%d/device/drm";

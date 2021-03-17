@@ -42,10 +42,14 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        bool m_PoshEnabled;
-        bool m_PtbrEnabled;
-        bool m_TbsEnabled;
-        bool m_AsynchronousCompute;
+        bool     m_PoshEnabled;
+        bool     m_PtbrEnabled;
+        bool     m_TbsEnabled;
+        bool     m_AsynchronousCompute;
+        bool     m_IsSubDevice;
+        bool     m_SubDeviceDataPresent;
+        uint32_t m_SubDeviceCount;
+        uint32_t m_SubDeviceIndex;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief ClientOptionsTrait constructor.
@@ -56,6 +60,10 @@ namespace ML
             , m_PtbrEnabled( false )
             , m_TbsEnabled( false )
             , m_AsynchronousCompute( false )
+            , m_IsSubDevice( false )
+            , m_SubDeviceDataPresent( false )
+            , m_SubDeviceCount( 0 )
+            , m_SubDeviceIndex( 0 )
         {
             ML_FUNCTION_LOG( StatusCode::Success );
 
@@ -64,22 +72,37 @@ namespace ML
             {
                 for( uint32_t i = 0; i < clientData.ClientOptionsCount; ++i )
                 {
+                    auto& options = clientData.ClientOptions[i];
+
                     switch( clientData.ClientOptions[i].Type )
                     {
                         case ClientOptionsType::Posh:
-                            m_PoshEnabled = clientData.ClientOptions[i].Posh.Enabled;
+                            m_PoshEnabled = options.Posh.Enabled;
                             break;
 
                         case ClientOptionsType::Ptbr:
-                            m_PtbrEnabled = clientData.ClientOptions[i].Ptbr.Enabled;
+                            m_PtbrEnabled = options.Ptbr.Enabled;
                             break;
 
                         case ClientOptionsType::Compute:
-                            m_AsynchronousCompute = clientData.ClientOptions[i].Compute.Asynchronous;
+                            m_AsynchronousCompute = options.Compute.Asynchronous;
                             break;
 
                         case ClientOptionsType::Tbs:
-                            m_TbsEnabled = clientData.ClientOptions[i].Tbs.Enabled;
+                            m_TbsEnabled = options.Tbs.Enabled;
+                            break;
+
+                        case ClientOptionsType::SubDevice:
+                            m_IsSubDevice          = options.SubDevice.Enabled;
+                            m_SubDeviceDataPresent = true;
+                            break;
+
+                        case ClientOptionsType::SubDeviceIndex:
+                            m_SubDeviceIndex = options.SubDeviceIndex.Index;
+                            break;
+
+                        case ClientOptionsType::SubDeviceCount:
+                            m_SubDeviceCount = options.SubDeviceCount.Count;
                             break;
 
                         default:

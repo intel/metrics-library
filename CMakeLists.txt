@@ -109,6 +109,12 @@ macro (ml_add_headers _platform)
         )
     set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
+    # device traits headers
+    file (GLOB _TRAITS_HEADERS
+        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device/${_platform}/*.h
+        )
+    set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
     # kernel interface traits headers
     file (GLOB _TRAITS_HEADERS
         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/${_platform}/*.h
@@ -274,6 +280,12 @@ file (GLOB _TRAITS_HEADERS
     )
 set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
+# device traits headers
+file (GLOB _TRAITS_HEADERS
+    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device/*.h
+    )
+set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
 # example traits headers
 file (GLOB _TRAITS_HEADERS
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/example/*.h
@@ -396,6 +408,7 @@ source_group (traits\\command_buffer        ${BS_DIR_INSTRUMENTATION}/metrics_li
 source_group (traits\\configuration         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/.*h)
 source_group (traits\\constants             ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/.*h)
 source_group (traits\\context               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/context/.*h)
+source_group (traits\\device                ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device/.*h)
 source_group (traits\\example               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/example/.*h)
 source_group (traits\\function_log          ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/function_log/.*h)
 source_group (traits\\kernel_interface      ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/.*h)
@@ -437,6 +450,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
     source_group (library\\inc\\linux             ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/.*)
     source_group (traits\\configuration\\linux    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
     source_group (traits\\constants\\linux        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/linux/.*h)
+    source_group (traits\\device\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device/linux/.*h)
     source_group (traits\\kernel_interface\\linux ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
     source_group (traits\\marker\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
     source_group (traits\\override\\linux         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
@@ -455,6 +469,7 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     source_group (library\\inc\\linux\\external\\drm ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm/.*)
     source_group (traits\\configuration\\linux       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
     source_group (traits\\constants\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/linux/.*h)
+    source_group (traits\\device\\linux              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device/linux/.*h)
     source_group (traits\\kernel_interface\\linux    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
     source_group (traits\\marker\\linux              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
     source_group (traits\\override\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
@@ -516,6 +531,7 @@ set (COMMON_TARGET_INCLUDE_DIRECTORIES
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/context
+    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/example
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/function_log
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface

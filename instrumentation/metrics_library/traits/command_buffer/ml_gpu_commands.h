@@ -587,10 +587,13 @@ namespace ML
             /// @brief  Writes LOAD_REGISTER_IMM commands to trigger oa report with
             ///         report reason 4.
             /// @param  buffer  target command buffer.
+            /// @param  marker  marker value.
             /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
-            ML_INLINE static StatusCode TriggerStreamReport( CommandBuffer& buffer )
+            ML_INLINE static StatusCode TriggerStreamReport(
+                CommandBuffer& buffer,
+                const uint32_t /*marker*/ )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
@@ -616,10 +619,13 @@ namespace ML
             /// @brief  Writes PIPE_CONTROL commands to trigger oa report with post
             ///         sync operation.
             /// @param  buffer  target command buffer.
+            /// @param  marker  marker value.
             /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
-            ML_INLINE static StatusCode TriggerStreamReportPostSync( CommandBuffer& buffer )
+            ML_INLINE static StatusCode TriggerStreamReportPostSync(
+                CommandBuffer& buffer,
+                const uint32_t /*marker*/ )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 

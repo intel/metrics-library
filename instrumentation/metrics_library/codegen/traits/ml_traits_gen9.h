@@ -99,6 +99,12 @@ namespace ML
                 using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
 
                 //////////////////////////////////////////////////////////////////////////
+                /// @brief SubDevice.
+                //////////////////////////////////////////////////////////////////////////
+                using SubDeviceCommon               = SubDeviceCommonTrait<Traits>;                 //  ml_sub_device_common.h
+                using SubDevice                     = SubDeviceCommon;
+
+                //////////////////////////////////////////////////////////////////////////
                 /// @brief Gpu registers commands / command buffer.
                 //////////////////////////////////////////////////////////////////////////
                 using GpuCommandBuffer              = GpuCommandBufferTrait<Traits>;                //  ml_gpu_command_buffer.h
@@ -245,6 +251,8 @@ namespace ML
                     FunctionLogStatic::Traits( "using FunctionLogStatic", FunctionLogStatic::GetDescription() );
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
                     FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
+                    FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
+                    FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBufferCalculator", GpuCommandBufferCalculator::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommands", GpuCommands::GetDescription() );
@@ -360,6 +368,12 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 using Context                       = ContextTrait<Traits>;                         //  ml_context.h
                 using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
+
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief SubDevice.
+                //////////////////////////////////////////////////////////////////////////
+                using SubDeviceCommon               = SubDeviceCommonTrait<Traits>;                 //  ml_sub_device_common.h
+                using SubDevice                     = SubDeviceCommon;
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Gpu registers commands / command buffer.
@@ -508,6 +522,8 @@ namespace ML
                     FunctionLogStatic::Traits( "using FunctionLogStatic", FunctionLogStatic::GetDescription() );
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
                     FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
+                    FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
+                    FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBufferCalculator", GpuCommandBufferCalculator::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommands", GpuCommands::GetDescription() );

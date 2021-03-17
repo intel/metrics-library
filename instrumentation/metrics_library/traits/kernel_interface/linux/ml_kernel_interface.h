@@ -41,10 +41,11 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        TT::Context&     m_Context;
-        int32_t          m_DeviceId;
-        TT::IoControl    m_IoControl;
-        TT::TbsInterface m_Tbs;
+        TT::Context&                   m_Context;
+        TT::ConstantsOs::Drm::Revision m_Revision;
+        int32_t                        m_DeviceId;
+        TT::IoControl                  m_IoControl;
+        TT::TbsInterface               m_Tbs;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief KernelInterfaceTrait constructor.
@@ -52,6 +53,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         KernelInterfaceTrait( TT::Context& context )
             : m_Context( context )
+            , m_Revision( T::ConstantsOs::Drm::Revision::Unsupported )
             , m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
             , m_IoControl( *this )
             , m_Tbs( *this )
@@ -76,8 +78,9 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success );
             ML_FUNCTION_CHECK( CheckParanoidMode() );
-            ML_FUNCTION_CHECK( m_IoControl.Initialize( clientData ) );
+            ML_FUNCTION_CHECK( m_IoControl.Initialize( clientData, m_Revision ) );
             ML_FUNCTION_CHECK( InitializeDevice() );
+            ML_FUNCTION_CHECK( InitializeSubDevice() );
             ML_FUNCTION_CHECK( m_Tbs.Initialize() );
 
             return log.m_Result;
@@ -261,13 +264,21 @@ namespace ML
             ML_FUNCTION_LOG( StatusCode::Success );
 
             // Chipset.
-            if( ML_FAIL( m_IoControl.GetChipsetId( m_DeviceId ) ) )
-            {
-                log.Error( "Unable to obtain chipset id from the kernel" );
-                return log.m_Result = StatusCode::NotInitialized;
-            }
+            ML_FUNCTION_CHECK( m_IoControl.GetChipsetId( m_DeviceId ) );
+            ML_FUNCTION_CHECK( m_DeviceId != T::ConstantsOs::Drm::m_Invalid );
 
-            return log.m_Result = ML_STATUS( m_DeviceId != T::ConstantsOs::Drm::m_Invalid );
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Initializes sub device.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode InitializeSubDevice()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success );
+
+            return log.m_Result = m_Context.m_SubDevice.Initialize();
         }
 
         //////////////////////////////////////////////////////////////////////////

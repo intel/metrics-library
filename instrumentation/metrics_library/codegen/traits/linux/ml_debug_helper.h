@@ -449,6 +449,18 @@ namespace ML
                         output << "Ptbr";
                         break;
 
+                    case ClientOptionsType::SubDevice:
+                        output << "SubDevice";
+                        break;
+
+                    case ClientOptionsType::SubDeviceCount:
+                        output << "SubDeviceCount";
+                        break;
+
+                    case ClientOptionsType::SubDeviceIndex:
+                        output << "SubDeviceIndex";
+                        break;
+
                     case ClientOptionsType::Tbs:
                         output << "Tbs";
                         break;
@@ -1813,24 +1825,36 @@ namespace ML
                 std::ostringstream output;
                 output << "ClientOptionsData_1_0:" << '\n';
                 IncrementIndentLevel();
-                output << MemberToString( "Type             ", value.Type );
+                output << MemberToString( "Type                       ", value.Type );
 
                 switch( value.Type )
                 {
                     case ClientOptionsType::Posh:
-                        output << MemberToString( "Posh             ", value.Posh );
+                        output << MemberToString( "Posh                       ", value.Posh );
                         break;
 
                     case ClientOptionsType::Ptbr:
-                        output << MemberToString( "Ptbr             ", value.Ptbr );
+                        output << MemberToString( "Ptbr                       ", value.Ptbr );
                         break;
 
                     case ClientOptionsType::Compute:
-                        output << MemberToString( "Compute          ", value.Compute );
+                        output << MemberToString( "Compute                    ", value.Compute );
                         break;
 
                     case ClientOptionsType::Tbs:
-                        output << MemberToString( "Tbs              ", value.Tbs );
+                        output << MemberToString( "Tbs                        ", value.Tbs );
+                        break;
+
+                    case ClientOptionsType::SubDevice:
+                        output << MemberToString( "SubDevice                  ", value.SubDevice );
+                        break;
+
+                    case ClientOptionsType::SubDeviceIndex:
+                        output << MemberToString( "SubDeviceIndex             ", value.SubDeviceIndex );
+                        break;
+
+                    case ClientOptionsType::SubDeviceCount:
+                        output << MemberToString( "SubDeviceCount             ", value.SubDeviceCount );
                         break;
 
                     default:
@@ -1868,6 +1892,51 @@ namespace ML
                 output << "ClientOptionsPtbrData_1_0:" << '\n';
                 IncrementIndentLevel();
                 output << MemberToString( "Enabled          ", value.Enabled );
+                DecrementIndentLevel();
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts all structure members values to a string.
+            /// @param  value   a given structure to convert.
+            /// @return         converted all members values to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const ClientOptionsSubDeviceCountData_1_0& value )
+            {
+                std::ostringstream output;
+                output << "ClientOptionsSubDeviceCountData_1_0:" << '\n';
+                IncrementIndentLevel();
+                output << MemberToString( "Count            ", value.Count );
+                DecrementIndentLevel();
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts all structure members values to a string.
+            /// @param  value   a given structure to convert.
+            /// @return         converted all members values to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const ClientOptionsSubDeviceData_1_0& value )
+            {
+                std::ostringstream output;
+                output << "ClientOptionsSubDeviceData_1_0:" << '\n';
+                IncrementIndentLevel();
+                output << MemberToString( "Enabled          ", value.Enabled );
+                DecrementIndentLevel();
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts all structure members values to a string.
+            /// @param  value   a given structure to convert.
+            /// @return         converted all members values to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static std::string ToString( const ClientOptionsSubDeviceIndexData_1_0& value )
+            {
+                std::ostringstream output;
+                output << "ClientOptionsSubDeviceIndexData_1_0:" << '\n';
+                IncrementIndentLevel();
+                output << MemberToString( "Index            ", value.Index );
                 DecrementIndentLevel();
                 return output.str();
             }

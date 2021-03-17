@@ -497,6 +497,11 @@ namespace ML
                     ML_ASSERT_ALWAYS();
                     break;
             }
+
+            if( T::ConstantsOs::Log::m_FlushEachLog )
+            {
+                fflush( stdout );
+            }
         }
 
         //////////////////////////////////////////////////////////////////////////

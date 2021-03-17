@@ -143,6 +143,7 @@ namespace ML
             static constexpr bool        m_FilterEnabled             = false;
             static constexpr const char* m_FilteredString            = "";
             static constexpr uint32_t    m_FilteredLines             = 0;
+            static constexpr bool        m_FlushEachLog              = true;
         };
 
         //////////////////////////////////////////////////////////////////////////
