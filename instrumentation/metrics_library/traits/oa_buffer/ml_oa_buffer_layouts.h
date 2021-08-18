@@ -1,8 +1,9 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright © 2020-2021 Intel Corporation
+Copyright (C) 2020-2021 Intel Corporation
 
 SPDX-License-Identifier: MIT
+
 ============================= end_copyright_notice ===========================*/
 
 /*
@@ -11,8 +12,9 @@ SPDX-License-Identifier: MIT
 @brief Layout for oa buffer.
 */
 
-#pragma once
 // clang-format off
+
+#pragma once
 
 namespace ML
 {
