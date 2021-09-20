@@ -1,13 +1,13 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright © 2020-2021 Intel Corporation
+Copyright (C) 2020-2021 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_ddi_gen12.h
+@file ml_ddi_xe_lp.h
 
 @brief Auto-generated file. Prepares a function table that contains Metrics Library
        entry points for a given os / gen / api.
@@ -21,18 +21,18 @@ Template:           Tools/MetricsLibraryGenerator/templates/function_table.h
 
 #pragma once
 
-#if ML_ENABLE_GEN12
+#if ML_ENABLE_XE_LP
 #include "ml_ddi.h"
 
 namespace ML
 {
-    namespace GEN12
+    namespace XE_LP
     {
         #if ML_ENABLE_OPENCL
         namespace OpenCL
         {
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Function signatures for GEN12.
+            /// @brief Function signatures for XE_LP.
             //////////////////////////////////////////////////////////////////////////
             StatusCode ML_STDCALL ContextCreate_1_0( ClientType_1_0, ContextCreateData_1_0*, ContextHandle_1_0* );
             StatusCode ML_STDCALL ContextDelete_1_0( const ContextHandle_1_0 );
@@ -52,13 +52,13 @@ namespace ML
             StatusCode ML_STDCALL MarkerDelete_1_0( const MarkerHandle_1_0 );
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief DDI function pointers for GEN12.
+            /// @brief DDI function pointers for XE_LP.
             //////////////////////////////////////////////////////////////////////////
             template<typename T>
             struct DdiFunctionTable : DdiFunctionTableBase
             {
                 //////////////////////////////////////////////////////////////////////////
-                /// @brief Initializes all function pointers for GEN12.
+                /// @brief Initializes all function pointers for XE_LP.
                 //////////////////////////////////////////////////////////////////////////
                 DdiFunctionTable()
                 {
@@ -101,7 +101,7 @@ namespace ML
         namespace OneApi
         {
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Function signatures for GEN12.
+            /// @brief Function signatures for XE_LP.
             //////////////////////////////////////////////////////////////////////////
             StatusCode ML_STDCALL ContextCreate_1_0( ClientType_1_0, ContextCreateData_1_0*, ContextHandle_1_0* );
             StatusCode ML_STDCALL ContextDelete_1_0( const ContextHandle_1_0 );
@@ -121,13 +121,13 @@ namespace ML
             StatusCode ML_STDCALL MarkerDelete_1_0( const MarkerHandle_1_0 );
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief DDI function pointers for GEN12.
+            /// @brief DDI function pointers for XE_LP.
             //////////////////////////////////////////////////////////////////////////
             template<typename T>
             struct DdiFunctionTable : DdiFunctionTableBase
             {
                 //////////////////////////////////////////////////////////////////////////
-                /// @brief Initializes all function pointers for GEN12.
+                /// @brief Initializes all function pointers for XE_LP.
                 //////////////////////////////////////////////////////////////////////////
                 DdiFunctionTable()
                 {
@@ -166,6 +166,6 @@ namespace ML
         } // namespace OneApi
         #endif // ML_ENABLE_ONEAPI
 
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML
-#endif // ML_ENABLE_GEN12
+#endif // ML_ENABLE_XE_LP

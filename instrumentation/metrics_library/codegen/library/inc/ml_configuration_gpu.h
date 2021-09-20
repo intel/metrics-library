@@ -1,13 +1,13 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright © 2020-2021 Intel Corporation
+Copyright (C) 2020-2021 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_configuration_gen.h
+@file ml_configuration_gpu.h
 
 @brief Auto-generated file. Allows to compile a given gen platform.
 
@@ -32,10 +32,10 @@ Template:           Tools/MetricsLibraryGenerator/templates/configuration_gen.h
     #define ML_ENABLE_GEN11 0
 #endif
 
-// GEN12
+// XE_LP
 #if ML_LINUX
-    #define ML_ENABLE_GEN12 1
+    #define ML_ENABLE_XE_LP 1
 #else
-    #define ML_ENABLE_GEN12 0
+    #define ML_ENABLE_XE_LP 0
 #endif
 

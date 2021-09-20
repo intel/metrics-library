@@ -122,15 +122,15 @@ namespace ML
         using DdiOverride = GEN9::DdiOverride<T>;
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief GEN12-specific functions for DdiOverride.
+        /// @brief XE_LP-specific functions for DdiOverride.
         ///        These should ONLY be used for MAJOR algorithm changes.
         //////////////////////////////////////////////////////////////////////////
         template <typename T>
         using DdiOverride = GEN11::DdiOverride<T>;
-    } // namespace GEN12
+    } // namespace XE_LP
 
 #pragma endregion
 } // namespace ML

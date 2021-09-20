@@ -139,6 +139,15 @@ namespace ML
                 : StatusCode::InsufficientSpace;
         }
 
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns pointer to the command buffer.
+        /// @return pointer to the command buffer.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint8_t* GetBuffer()
+        {
+            return reinterpret_cast<uint8_t*>( m_Buffer );
+        }
+
     private:
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns gpu memory address from gpu command.
@@ -312,6 +321,15 @@ namespace ML
             m_MemoryPatchesCount += patchMemory ? 1 : 0;
 
             return StatusCode::Success;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns null pointer due to calculator command buffer.
+        /// @return null pointer.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint8_t* GetBuffer()
+        {
+            return nullptr;
         }
     };
 } // namespace ML

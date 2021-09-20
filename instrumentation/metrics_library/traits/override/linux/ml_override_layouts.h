@@ -64,12 +64,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct OverrideLayoutsTrait : GEN11::OverrideLayoutsTrait<T>
         {
             ML_DECLARE_TRAIT( OverrideLayoutsTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

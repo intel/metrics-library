@@ -22,14 +22,15 @@ Template:           Tools/MetricsLibraryGenerator/templates/export.h
 
 #include "ml_pch.h"
 #include "ml_export.h"
+#include "ml_driver_store_os.h"
 #if ML_ENABLE_GEN9
 #include "ml_traits_gen9.h"
 #endif
 #if ML_ENABLE_GEN11
 #include "ml_traits_gen11.h"
 #endif
-#if ML_ENABLE_GEN12
-#include "ml_traits_gen12.h"
+#if ML_ENABLE_XE_LP
+#include "ml_traits_xe_lp.h"
 #endif
 
 using namespace ML;
@@ -91,19 +92,19 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
     }
 #endif // ML_ENABLE_GEN11
 
-#if ML_ENABLE_GEN12
+#if ML_ENABLE_XE_LP
     if( clientType.Gen == ClientGen::Gen12 )
     {
         switch( clientType.Api )
         {
             #if ML_ENABLE_OPENCL
             case ClientApi::OpenCL:
-                return &ML_GET_NAMESPACE( GEN12, OpenCL )::DdiFunctionTable<ML_GET_NAMESPACE( GEN12, OpenCL )::Traits>::GetInstance();
+                return &ML_GET_NAMESPACE( XE_LP, OpenCL )::DdiFunctionTable<ML_GET_NAMESPACE( XE_LP, OpenCL )::Traits>::GetInstance();
             #endif
 
             #if ML_ENABLE_ONEAPI
             case ClientApi::OneApi:
-                return &ML_GET_NAMESPACE( GEN12, OneApi )::DdiFunctionTable<ML_GET_NAMESPACE( GEN12, OneApi )::Traits>::GetInstance();
+                return &ML_GET_NAMESPACE( XE_LP, OneApi )::DdiFunctionTable<ML_GET_NAMESPACE( XE_LP, OneApi )::Traits>::GetInstance();
             #endif
 
             default:
@@ -111,7 +112,7 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
                 break;
         }
     }
-#endif // ML_ENABLE_GEN12
+#endif // ML_ENABLE_XE_LP
 
     return nullptr;
 }
@@ -119,10 +120,10 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
 namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
-    /// @brief  Translates all unsupported gens to supported ones.
-    /// @return clientType  supported gen for a given input gen.
+    /// @brief  Translates all unsupported gpu types to supported ones.
+    /// @return clientType  supported gpu type for a given input gpu type.
     //////////////////////////////////////////////////////////////////////////
-    ML_INLINE void TranslateToSupportedGenType( ClientGen& clientGen )
+    ML_INLINE void TranslateToSupportedGpuType( ClientGen& clientGen )
     {
         switch( clientGen )
         {
@@ -162,7 +163,7 @@ namespace ML
     //////////////////////////////////////////////////////////////////////////
     ML_INLINE void TranslateToSupportedClientType( ClientType_1_0& clientType )
     {
-        TranslateToSupportedGenType( clientType.Gen );
+        TranslateToSupportedGpuType( clientType.Gen );
         TranslateToSupportedApiType( clientType.Api );
     }
 
@@ -206,23 +207,33 @@ extern "C" {
     //////////////////////////////////////////////////////////////////////////
     ML_EXPORT( StatusCode ) ContextCreate_1_0( ClientType_1_0 clientType, ContextCreateData_1_0* createData, ContextHandle_1_0* handle )
     {
-        // Initialize logging system.
-        LibraryConfiguration::IntializeLogger();
+        auto overriddenContextCreate_1_0 = ( ContextCreateFunction_1_0 )( DriverStoreOs::GetRedirectedDdi( METRICS_LIBRARY_CONTEXT_CREATE_1_0 ) );
 
-        // Override api/gen settings.
-        LibraryConfiguration::OverrideClientType( clientType );
+        if( overriddenContextCreate_1_0 != nullptr )
+        {
+            return overriddenContextCreate_1_0( clientType, createData, handle );
+        }
+        else
+        {
+            // Initialize logging system.
+            LibraryConfiguration::IntializeLogger();
 
-        // Translate a given client type to a supported one.
-        TranslateToSupportedClientType( clientType );
+            // Override api/gen settings.
+            LibraryConfiguration::OverrideClientType( clientType );
 
-        // Obtain function table.
-        auto functionTable = GetDdiFunctionTable( clientType );
-        ML_ASSERT( functionTable != nullptr );
+            // Translate a given client type to a supported one.
+            TranslateToSupportedClientType( clientType );
 
-        return functionTable
-            ? functionTable->pfnContextCreate_1_0( clientType, createData, handle )
-            : StatusCode::NullPointer;
-    }
+            // Obtain function table.
+            auto functionTable = GetDdiFunctionTable( clientType );
+            ML_ASSERT( functionTable != nullptr );
+
+            return functionTable
+                ? functionTable->pfnContextCreate_1_0( clientType, createData, handle )
+                : StatusCode::NullPointer;
+            }
+        }
+
 
     //////////////////////////////////////////////////////////////////////////
     /// @brief  Export of metrics_library api entry ContextDelete_1_0.
@@ -231,14 +242,26 @@ extern "C" {
     //////////////////////////////////////////////////////////////////////////
     ML_EXPORT( StatusCode ) ContextDelete_1_0( const ContextHandle_1_0 handle )
     {
-        // Obtain function table.
-        auto functionTable = GetDdiFunctionTable( handle );
-        ML_ASSERT( functionTable != nullptr );
+        auto overriddenContextDelete_1_0 = ( ContextDeleteFunction_1_0 )( DriverStoreOs::GetRedirectedDdi( METRICS_LIBRARY_CONTEXT_DELETE_1_0 ) );
 
-        return functionTable
-            ? functionTable->pfnContextDelete_1_0( handle )
-            : StatusCode::NullPointer;
-    }
+        if( overriddenContextDelete_1_0 != nullptr )
+        {
+            const StatusCode status = overriddenContextDelete_1_0( handle );
+            DriverStoreOs::UnloadLibrary();
+            return status;
+        }
+        else
+        {
+            // Obtain function table.
+            auto functionTable = GetDdiFunctionTable( handle );
+            ML_ASSERT( functionTable != nullptr );
+
+            return functionTable
+                ? functionTable->pfnContextDelete_1_0( handle )
+                : StatusCode::NullPointer;
+            }
+        }
+
 
 #if defined( __cplusplus )
 }

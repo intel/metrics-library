@@ -45,6 +45,7 @@ namespace ML
         const ClientCallbacks_1_0 m_ClientCallbacks;
         ClientData_1_0            m_ClientData;
         TT::SubDevice             m_SubDevice;
+        TT::DdiObjects            m_DdiObjects;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief ContextTrait constructor.
@@ -54,7 +55,7 @@ namespace ML
         ContextTrait(
             const ClientType_1_0&        clientType,
             const ContextCreateData_1_0& createData )
-            : Base( clientType )
+            : Base( clientType, *this )
             , m_Kernel( *this )
             , m_OaBuffer( m_Kernel )
             , m_ClientOptions( *createData.ClientData )
@@ -62,6 +63,7 @@ namespace ML
             , m_ClientCallbacks{ *createData.ClientCallbacks }
             , m_ClientData{ *createData.ClientData }
             , m_SubDevice( *this )
+            , m_DdiObjects{}
         {
         }
 

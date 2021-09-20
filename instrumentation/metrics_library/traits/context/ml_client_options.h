@@ -32,6 +32,7 @@ namespace ML
         bool     m_PtbrEnabled;
         bool     m_TbsEnabled;
         bool     m_AsynchronousCompute;
+        bool     m_WorkloadPartitionEnabled;
         bool     m_IsSubDevice;
         bool     m_SubDeviceDataPresent;
         uint32_t m_SubDeviceCount;
@@ -46,6 +47,7 @@ namespace ML
             , m_PtbrEnabled( false )
             , m_TbsEnabled( false )
             , m_AsynchronousCompute( false )
+            , m_WorkloadPartitionEnabled( false )
             , m_IsSubDevice( false )
             , m_SubDeviceDataPresent( false )
             , m_SubDeviceCount( 0 )
@@ -64,31 +66,43 @@ namespace ML
                     {
                         case ClientOptionsType::Posh:
                             m_PoshEnabled = options.Posh.Enabled;
+                            log.Info( "Posh enabled", m_PoshEnabled );
                             break;
 
                         case ClientOptionsType::Ptbr:
                             m_PtbrEnabled = options.Ptbr.Enabled;
+                            log.Info( "Ptbr enabled", m_PtbrEnabled );
                             break;
 
                         case ClientOptionsType::Compute:
                             m_AsynchronousCompute = options.Compute.Asynchronous;
+                            log.Info( "Asynchronous compute", m_AsynchronousCompute );
                             break;
 
                         case ClientOptionsType::Tbs:
                             m_TbsEnabled = options.Tbs.Enabled;
+                            log.Info( "Tbs enabled", m_TbsEnabled );
                             break;
 
                         case ClientOptionsType::SubDevice:
                             m_IsSubDevice          = options.SubDevice.Enabled;
                             m_SubDeviceDataPresent = true;
+                            log.Info( "Subdevice enabled", m_IsSubDevice );
                             break;
 
                         case ClientOptionsType::SubDeviceIndex:
                             m_SubDeviceIndex = options.SubDeviceIndex.Index;
+                            log.Info( "Subdevice index", m_SubDeviceIndex );
                             break;
 
                         case ClientOptionsType::SubDeviceCount:
                             m_SubDeviceCount = options.SubDeviceCount.Count;
+                            log.Info( "Subdevice count", m_SubDeviceCount );
+                            break;
+
+                        case ClientOptionsType::WorkloadPartition:
+                            m_WorkloadPartitionEnabled = options.WorkloadPartition.Enabled;
+                            log.Info( "Workload partition enabled", m_WorkloadPartitionEnabled );
                             break;
 
                         default:

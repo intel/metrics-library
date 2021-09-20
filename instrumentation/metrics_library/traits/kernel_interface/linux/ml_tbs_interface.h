@@ -447,7 +447,8 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                auto addProperty = [&]( const uint64_t key, const uint64_t value ) {
+                auto addProperty = [&]( const uint64_t key, const uint64_t value )
+                {
                     properties.push_back( key );
                     properties.push_back( value );
                 };
@@ -625,12 +626,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct TbsInterfaceTrait : GEN11::TbsInterfaceTrait<T>
         {
             ML_DECLARE_TRAIT( TbsInterfaceTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

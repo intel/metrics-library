@@ -160,15 +160,15 @@ namespace ML
         using DdiConfiguration = GEN9::DdiConfiguration<T>;
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief GEN12-specific functions for DdiConfiguration.
+        /// @brief XE_LP-specific functions for DdiConfiguration.
         ///        These should ONLY be used for MAJOR algorithm changes.
         //////////////////////////////////////////////////////////////////////////
         template <typename T>
         using DdiConfiguration = GEN11::DdiConfiguration<T>;
-    } // namespace GEN12
+    } // namespace XE_LP
 
 #pragma endregion
 } // namespace ML

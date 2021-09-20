@@ -214,19 +214,26 @@ namespace ML
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Dumps oa buffer reports between query begin / query end.
-            /// @param  beginIndex  triggered begin report index.
-            /// @param  endIndex    triggered end report index.
+            /// @param  reportGpu   gpu query report.
             /// @return operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode DumpReports(
-                const uint32_t beginIndex,
-                const uint32_t endIndex )
+            ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu reportGpu )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 if( T::Tools::CheckLogLevel( LogType::Csv ) )
                 {
-                    for( uint32_t i = beginIndex; i <= endIndex; ++i )
+                    const auto emptyReportOa  = TT::Layouts::HwCounters::ReportOa{};
+                    uint32_t   beginTailIndex = 0;
+                    uint32_t   endTailIndex   = 0;
+
+                    ML_FUNCTION_CHECK( GetTriggeredReportIndex( reportGpu, true, beginTailIndex ) );
+                    ML_FUNCTION_CHECK( GetTriggeredReportIndex( reportGpu, false, endTailIndex ) );
+
+                    // Print empty report first to distinguish oa buffer reports for different queries.
+                    log.Csv( emptyReportOa );
+
+                    for( uint32_t i = beginTailIndex; i <= endTailIndex; ++i )
                     {
                         log.Csv( GetReport( i ) );
                     }
@@ -316,12 +323,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct OaBufferMappedTrait : GEN11::OaBufferMappedTrait<T>
         {
             ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

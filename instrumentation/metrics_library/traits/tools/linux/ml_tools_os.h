@@ -143,12 +143,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct ToolsOsTrait : GEN11::ToolsOsTrait<T>
         {
             ML_DECLARE_TRAIT( ToolsOsTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

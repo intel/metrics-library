@@ -80,7 +80,7 @@ namespace ML
         struct Configuration
         {
             static constexpr uint32_t m_InvalidHandle        = 0;
-            static constexpr uint32_t m_MaxOaProlog          = 5;
+            static constexpr uint32_t m_MaxOaProlog          = 11;
             static constexpr uint32_t m_MaxOaEpilog          = 2;
             static constexpr uint32_t m_MaxRegistersBase     = 4096;
             static constexpr uint32_t m_MaxRegisters         = m_MaxRegistersBase + m_MaxOaEpilog + m_MaxOaProlog;
@@ -117,7 +117,7 @@ namespace ML
             static constexpr bool        m_SimplifyFunctionName      = false;
             static constexpr uint32_t    m_SimplifyFunctionNameLevel = 0;
             static constexpr uint32_t    m_MaxFunctionNameLength     = 25;
-            static constexpr uint32_t    m_MaxReportReasonLength     = 2;  //                   32.
+            static constexpr uint32_t    m_MaxReportReasonLength     = 2;  //                   64.
             static constexpr uint32_t    m_MaxReportIdLength         = 4;  //                 4096.
             static constexpr uint32_t    m_MaxUint32Length           = 10; //           4294967295.
             static constexpr uint32_t    m_MaxUint64Length           = 20; // 18446744073709551615.
@@ -138,7 +138,7 @@ namespace ML
         struct Library
         {
             static constexpr const char* m_Name        = "MetricsLibrary";
-            static constexpr const char* m_GenOverride = "Gen";
+            static constexpr const char* m_GpuOverride = "Gpu";
             static constexpr const char* m_ApiOverride = "Api";
         };
 

@@ -36,6 +36,7 @@ namespace ML
             using Base::Allocate;
             using Base::Delete;
             using Base::Derived;
+            using Base::m_Context;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief Base type for HwCounters slot object.
@@ -48,6 +49,8 @@ namespace ML
                 GpuMemory_1_0                                        m_GpuMemory;            // Gpu memory associated with query slot.
                 uint32_t                                             m_ApiReportIndex;       // Current report id exposed by api.
                 uint32_t                                             m_ApiReportsCount;      // Reports count exposed by api.
+                uint8_t*                                             m_WorkloadBegin;        // Store a buffer pointer at the begin of query.
+                uint8_t*                                             m_WorkloadEnd;          // Store a buffer pointer at the end of query.
                 TT::Layouts::OaBuffer::State                         m_OaBufferState;        // Oa buffer state captured during slot execution.
                 TT::Layouts::HwCounters::Query::ReportCollectingMode m_ReportCollectingMode; // Report collecting mode (via MIRPC / SRMs / Oa triggers).
 
@@ -69,6 +72,8 @@ namespace ML
                 {
                     m_ApiReportIndex  = 1;
                     m_ApiReportsCount = 1;
+                    m_WorkloadBegin   = nullptr;
+                    m_WorkloadEnd     = nullptr;
                 }
 
                 //////////////////////////////////////////////////////////////////////////
@@ -82,12 +87,27 @@ namespace ML
 
                     return *static_cast<TT::Layouts::HwCounters::Query::ReportGpu*>( m_GpuMemory.CpuAddress );
                 }
+
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief  Clears gpu memory for a given slot.
+                //////////////////////////////////////////////////////////////////////////
+                ML_INLINE void ClearReportGpu()
+                {
+                    if( T::Policy::QueryHwCounters::Begin::m_ClearGpuMemory )
+                    {
+                        auto reportGpu = static_cast<TT::Layouts::HwCounters::Query::ReportGpu*>( m_GpuMemory.CpuAddress );
+
+                        if( reportGpu != nullptr )
+                        {
+                            *reportGpu = {};
+                        }
+                    }
+                }
             };
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief Members.
             //////////////////////////////////////////////////////////////////////////
-            TT::Context&                                m_Context;
             TT::Layouts::HwCounters::Query::GetDataMode m_GetDataMode;
             ConfigurationHandle_1_0                     m_UserConfiguration;
             std::vector<Slot>                           m_Slots;
@@ -98,8 +118,7 @@ namespace ML
             /// @param context a reference to context object.
             //////////////////////////////////////////////////////////////////////////
             QueryHwCountersTrait( TT::Context& context )
-                : Base( context.m_ClientType )
-                , m_Context( context )
+                : Base( context )
                 , m_GetDataMode( context.m_Kernel.GetQueryHwCountersReportingMode() )
                 , m_UserConfiguration{ nullptr }
                 , m_Slots()
@@ -323,13 +342,9 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
                 ML_FUNCTION_CHECK( m_Context.m_OaBuffer.IsValid() );
-
-                uint32_t beginTailIndex = 0;
-                uint32_t endTailIndex   = 0;
-
-                ML_FUNCTION_CHECK( UseTriggeredOaReport( slot, true, beginTailIndex ) );
-                ML_FUNCTION_CHECK( UseTriggeredOaReport( slot, false, endTailIndex ) );
-                ML_FUNCTION_CHECK( m_Context.m_OaBuffer.DumpReports( beginTailIndex, endTailIndex ) );
+                ML_FUNCTION_CHECK( m_Context.m_OaBuffer.DumpReports( GetReportGpu( slot ) ) );
+                ML_FUNCTION_CHECK( UseTriggeredOaReport( slot, true ) );
+                ML_FUNCTION_CHECK( UseTriggeredOaReport( slot, false ) );
 
                 return log.m_Result;
             }
@@ -369,20 +384,31 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
+                const uint64_t gpuAddress   = m_Slots[data.Slot].m_GpuMemory.GpuAddress;
+                auto&          queryDerived = Derived();
+
                 if( !T::Policy::QueryHwCounters::Create::m_UserCounters )
                 {
                     m_UserConfiguration = data.HandleUserConfiguration;
                 }
 
-                const uint64_t gpuAddress = m_Slots[data.Slot].m_GpuMemory.GpuAddress;
+                if( !buffer.IsCalculateSizePhase() )
+                {
+                    m_Slots[data.Slot].ClearReportGpu();
+                }
 
                 ML_FUNCTION_CHECK( FlushCommandStreamer( buffer, true ) );
                 ML_FUNCTION_CHECK( WriteNopId( buffer, gpuAddress, true ) );
                 ML_FUNCTION_CHECK( WriteCoreFrequency( buffer, gpuAddress, true ) );
-                ML_FUNCTION_CHECK( WriteOaState( buffer, gpuAddress, true ) );
+                ML_FUNCTION_CHECK( queryDerived.WriteOaState( buffer, gpuAddress, true ) );
                 ML_FUNCTION_CHECK( WriteUserCounters( buffer, gpuAddress, true ) );
-                ML_FUNCTION_CHECK( WriteGpCounters( buffer, gpuAddress, true ) );
-                ML_FUNCTION_CHECK( Derived().WriteHwCounters( buffer, gpuAddress, data.Slot, true ) );
+                ML_FUNCTION_CHECK( queryDerived.WriteGpCounters( buffer, gpuAddress, true ) );
+                ML_FUNCTION_CHECK( queryDerived.WriteHwCounters( buffer, gpuAddress, data.Slot, true ) );
+
+                if( !buffer.IsCalculateSizePhase() )
+                {
+                    m_Slots[data.Slot].m_WorkloadBegin = buffer.GetBuffer() + buffer.m_Usage;
+                }
 
                 return log.m_Result;
             }
@@ -400,15 +426,20 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                m_EndTag = data.EndTag;
+                const uint64_t gpuAddress   = m_Slots[data.Slot].m_GpuMemory.GpuAddress;
+                auto&          queryDerived = Derived();
+                m_EndTag                    = data.EndTag;
 
-                const uint64_t gpuAddress = m_Slots[data.Slot].m_GpuMemory.GpuAddress;
+                if( !buffer.IsCalculateSizePhase() )
+                {
+                    m_Slots[data.Slot].m_WorkloadEnd = buffer.GetBuffer();
+                }
 
                 ML_FUNCTION_CHECK( FlushCommandStreamer( buffer, false ) );
-                ML_FUNCTION_CHECK( Derived().WriteHwCounters( buffer, gpuAddress, data.Slot, false ) );
-                ML_FUNCTION_CHECK( WriteGpCounters( buffer, gpuAddress, false ) );
+                ML_FUNCTION_CHECK( queryDerived.WriteHwCounters( buffer, gpuAddress, data.Slot, false ) );
+                ML_FUNCTION_CHECK( queryDerived.WriteGpCounters( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteUserCounters( buffer, gpuAddress, false ) );
-                ML_FUNCTION_CHECK( WriteOaState( buffer, gpuAddress, false ) );
+                ML_FUNCTION_CHECK( queryDerived.WriteOaState( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteNopId( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteCoreFrequency( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteUserMarker( buffer, gpuAddress, data.MarkerUser ) );
@@ -423,7 +454,7 @@ namespace ML
             /// @param  buffer         command buffer.
             /// @param  source         source query.
             /// @param  addressSource  source start memory address to copy from.
-            /// @param  addressTarget  target start memory adderess to copy into.
+            /// @param  addressTarget  target start memory address to copy into.
             /// @param  slotSource     source query slot index.
             /// @param  slotTarget     target query slot index.
             /// @param  slotCount      slot count to copy.
@@ -582,10 +613,15 @@ namespace ML
                     ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_User )
                     : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_User );
 
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 return T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     registerAddress,
-                    memoryAddress + offset );
+                    memoryAddress + offset,
+                    flags );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -605,10 +641,15 @@ namespace ML
                     ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdBegin )
                     : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdEnd );
 
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 return T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_NopId,
-                    address + offset );
+                    address + offset,
+                    flags );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -628,10 +669,15 @@ namespace ML
                     ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CoreFrequencyBegin )
                     : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CoreFrequencyEnd );
 
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 return T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_CoreFrequency,
-                    address + offset );
+                    address + offset,
+                    flags );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -654,12 +700,17 @@ namespace ML
                     ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Gp )
                     : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Gp );
 
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 for( uint32_t i = 0; i < count; ++i )
                 {
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         T::GpuRegisters::m_GpCounter + ( i * sizeof( uint32_t ) ),
-                        address + offset + ( i * sizeof( uint32_t ) ) ) );
+                        address + offset + ( i * sizeof( uint32_t ) ),
+                        flags ) );
                 }
 
                 return log.m_Result;
@@ -680,9 +731,16 @@ namespace ML
                 const uint32_t slot,
                 const bool     begin )
             {
+                // Override oa report collecting mode if needed.
+                Derived().CheckReportCollectingMode( buffer, slot );
+
                 static std::atomic_uint reportId( 0 );
                 const auto&             collectingMode = m_Slots[slot].m_ReportCollectingMode;
                 const uint32_t          queryId        = static_cast<const uint32_t>( T::Tools::GetHash( reinterpret_cast<const uintptr_t>( this ) ) );
+
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
 
                 return T::GpuCommands::StoreHwCounters(
                     buffer,
@@ -690,7 +748,8 @@ namespace ML
                     address,
                     ( ++reportId ) % 0x1000,
                     queryId,
-                    begin );
+                    begin,
+                    flags );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -712,24 +771,31 @@ namespace ML
                 const uint32_t oaTailBeginOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailBegin );
                 const uint32_t oaTailEndOffset   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailEnd );
 
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 if( begin )
                 {
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         T::GpuRegisters::m_OaTail,
-                        address + oaTailBeginOffset ) );
+                        address + oaTailBeginOffset,
+                        flags ) );
                 }
                 else
                 {
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         T::GpuRegisters::m_OaTail,
-                        address + oaTailEndOffset ) );
+                        address + oaTailEndOffset,
+                        flags ) );
 
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         T::GpuRegisters::m_OaBuffer,
-                        address + oaBufferOffset ) );
+                        address + oaBufferOffset,
+                        flags ) );
                 }
 
                 return log.m_Result;
@@ -750,10 +816,15 @@ namespace ML
             {
                 const uint32_t offset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_MarkerUser );
 
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 return T::GpuCommands::StoreDataToMemory64(
                     buffer,
                     marker,
-                    address + offset );
+                    address + offset,
+                    flags );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -771,10 +842,15 @@ namespace ML
             {
                 const uint32_t offset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_MarkerDriver );
 
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 return T::GpuCommands::StoreDataToMemory64(
                     buffer,
                     marker,
-                    address + offset );
+                    address + offset,
+                    flags );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -792,10 +868,34 @@ namespace ML
             {
                 const uint32_t offset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_EndTag );
 
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 return T::GpuCommands::StoreDataToMemory64(
                     buffer,
                     endTag,
-                    address + offset );
+                    address + offset,
+                    flags );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Checks oa report collecting mode.
+            /// @param  buffer    target command buffer.
+            /// @param  slot      query slot index.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE void CheckReportCollectingMode(
+                CommandBuffer& /*buffer*/,
+                const uint32_t slot )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+
+                // For gen 9 always use mirpc.
+                auto& mode = m_Slots[slot].m_ReportCollectingMode;
+                mode       = T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters;
+
+                log.Debug( "Oa report collecting mode", mode );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -831,10 +931,10 @@ namespace ML
                 ML_FUNCTION_LOG( false );
                 ML_FUNCTION_CHECK_ERROR( Derived().ValidateReportReason( reportTriggered.m_Header ), false );
 
-                const uint32_t queryThreshold  = 4000;                                                          // Threshold in ticks. Used to check whether obtained triggered reports were generated
-                const uint32_t queryBeginTicks = reportQuery.m_Begin.m_Oa.m_Header.m_GpuTicks - queryThreshold; // near the actual query begin/end execution. During tests, typical delta between ticks
-                const uint32_t queryEndTicks   = reportQuery.m_End.m_Oa.m_Header.m_GpuTicks + queryThreshold;   // gathered around begin/end trigger reports and ticks from actual trigger reports was equal to 1 tick.
-                const uint32_t triggerTicks    = reportTriggered.m_Header.m_GpuTicks;
+                const uint32_t queryThreshold  = 4000;                                                                                   // Threshold in ticks. Used to check whether obtained triggered reports were generated
+                const uint32_t queryBeginTicks = static_cast<uint32_t>( reportQuery.m_Begin.m_Oa.m_Header.m_GpuTicks ) - queryThreshold; // near the actual query begin/end execution. During tests, typical delta between ticks
+                const uint32_t queryEndTicks   = static_cast<uint32_t>( reportQuery.m_End.m_Oa.m_Header.m_GpuTicks ) + queryThreshold;   // gathered around begin/end trigger reports and ticks from actual trigger reports was equal to 1 tick.
+                const uint32_t triggerTicks    = static_cast<uint32_t>( reportTriggered.m_Header.m_GpuTicks );
 
                 // 1st condition: normal case.
                 // Ticks should be in range <begin, end>, example:
@@ -867,19 +967,18 @@ namespace ML
             /// @brief  Recreates oa report from triggered report from oa buffer.
             /// @param  slot        slot index.
             /// @param  begin       begin/end indicator.
-            /// @return tailIndex   triggered report index.
             /// @return             operation status.
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode UseTriggeredOaReport(
                 const uint32_t slot,
-                const bool     begin,
-                uint32_t&      tailIndex )
+                const bool     begin )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Query data.
-                auto& queryReport   = GetReportGpu( slot );
-                auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
+                uint32_t tailIndex     = 0;
+                auto&    queryReport   = GetReportGpu( slot );
+                auto&    queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
 
                 // Tail data.
                 bool  tailIndexValid = ML_SUCCESS( m_Context.m_OaBuffer.GetTriggeredReportIndex( queryReport, begin, tailIndex ) );
@@ -925,7 +1024,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE void SetContextId(
                 const uint32_t /*contextId*/,
-                TT::Layouts::HwCounters::ReportOa& /*reportTriggered*/)
+                TT::Layouts::HwCounters::ReportOa& /*reportTriggered*/ )
             {
             }
         };
@@ -965,6 +1064,10 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
+                // Assert if posh (ptbr) is disabled and command buffer type is posh (tile).
+                ML_ASSERT( m_Context.m_ClientOptions.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
+                ML_ASSERT( m_Context.m_ClientOptions.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
+
                 const bool useSrm            = buffer.m_Type == GpuCommandBufferType::Posh;
                 auto&      useCollectingMode = m_Slots[slot].m_ReportCollectingMode;
 
@@ -976,40 +1079,10 @@ namespace ML
 
                 log.Debug( "Oa report collecting mode", useCollectingMode );
             }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes hw counters.
-            /// @param  buffer      target command buffer.
-            /// @param  address     gpu memory address.
-            /// @param  slot        query slot index.
-            /// @param  begin       query begin.
-            /// @return             operation status.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename CommandBuffer>
-            ML_INLINE StatusCode WriteHwCounters(
-                CommandBuffer& buffer,
-                const uint64_t address,
-                const uint32_t slot,
-                const bool     begin )
-            {
-                // Assert if posh (ptbr) is disabled and command buffer type is posh (tile).
-                ML_ASSERT( m_Context.m_ClientOptions.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
-                ML_ASSERT( m_Context.m_ClientOptions.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
-
-                // Override oa report collecting mode if needed.
-                CheckReportCollectingMode( buffer, slot );
-
-                // Collect report.
-                return Base::WriteHwCounters(
-                    buffer,
-                    address,
-                    slot,
-                    begin );
-            }
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct QueryHwCountersTrait : GEN11::QueryHwCountersTrait<T>
@@ -1033,9 +1106,8 @@ namespace ML
                 const uint32_t slot )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
-                ML_ASSERT( T::Policy::QueryHwCounters::Common::UseTriggeredOaReport( m_Context.m_Kernel ) );
 
-                // For gen 12+ always use triggered reports.
+                // For XeLP+ always use triggered reports.
                 auto& mode = m_Slots[slot].m_ReportCollectingMode;
                 mode       = T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag;
 
@@ -1043,34 +1115,21 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes hw counters.
-            /// @param  buffer      target command buffer.
-            /// @param  address     gpu memory address.
-            /// @param  slot        query slot index.
-            /// @param  begin       query begin.
-            /// @return             operation status.
+            /// @brief  Writes general purpose counters.
+            /// @param  buffer  target command buffer.
+            /// @param  address gpu memory address.
+            /// @param  begin   query begin.
+            /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
-            ML_INLINE StatusCode WriteHwCounters(
-                CommandBuffer& buffer,
-                const uint64_t address,
-                const uint32_t slot,
-                const bool     begin )
+            ML_INLINE StatusCode WriteGpCounters(
+                CommandBuffer& /*buffer*/,
+                const uint64_t /*address*/,
+                const bool /*begin*/ )
             {
-                // Assert if posh (ptbr) is disabled and command buffer type is posh (tile).
-                ML_ASSERT( m_Context.m_ClientOptions.m_PoshEnabled || buffer.m_Type != GpuCommandBufferType::Posh );
-                ML_ASSERT( m_Context.m_ClientOptions.m_PtbrEnabled || buffer.m_Type != GpuCommandBufferType::Tile );
-
-                // Override oa report collecting mode if needed.
-                CheckReportCollectingMode( buffer, slot );
-
-                // Collect report.
-                return Base::WriteHwCounters(
-                    buffer,
-                    address,
-                    slot,
-                    begin );
+                // General purpose counters are deprecated on XE+.
+                return StatusCode::Success;
             }
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

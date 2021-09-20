@@ -83,6 +83,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 using Context                       = ContextTrait<Traits>;                         //  ml_context.h
                 using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
+                using DdiObjects                    = DdiObjectsTrait<Traits>;                      //  ml_ddi_objects.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief SubDevice.
@@ -191,12 +192,7 @@ namespace ML
                 /// @brief Hw Counters.
                 //////////////////////////////////////////////////////////////////////////
                     using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
-                #if 1
-                    using HwCountersCalculatorMain    = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
-                #endif
-                #if 1
-                    using HwCountersCalculator        = HwCountersCalculatorMain;
-                #endif
+                    using HwCountersCalculator        = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Pipeline timestamps.
@@ -218,10 +214,10 @@ namespace ML
                     FunctionLogStatic::Traits( "Client", "OpenCL" );
                 #endif
                 }
-                static void PrintGen()
+                static void PrintGpuType()
                 {
                 #if ML_DEBUG || ML_INTERNAL
-                    FunctionLogStatic::Traits( "Gen", "GEN9" );
+                    FunctionLogStatic::Traits( "Gpu type", "GEN9" );
                 #endif
                 }
                 static void PrintTraits()
@@ -237,6 +233,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using FunctionLogStatic", FunctionLogStatic::GetDescription() );
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
                     FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
+                    FunctionLogStatic::Traits( "using DdiObjects", DdiObjects::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
@@ -287,12 +284,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
-                #if 1
-                    FunctionLogStatic::Traits( "using Queries::HwCountersCalculatorMain", Queries::HwCountersCalculatorMain::GetDescription() );
-                #endif
-                #if 1
                     FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
-                #endif
                     FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Policy", Policy::GetDescription() );
@@ -354,6 +346,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 using Context                       = ContextTrait<Traits>;                         //  ml_context.h
                 using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
+                using DdiObjects                    = DdiObjectsTrait<Traits>;                      //  ml_ddi_objects.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief SubDevice.
@@ -462,12 +455,7 @@ namespace ML
                 /// @brief Hw Counters.
                 //////////////////////////////////////////////////////////////////////////
                     using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
-                #if 1
-                    using HwCountersCalculatorMain    = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
-                #endif
-                #if 1
-                    using HwCountersCalculator        = HwCountersCalculatorMain;
-                #endif
+                    using HwCountersCalculator        = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Pipeline timestamps.
@@ -489,10 +477,10 @@ namespace ML
                     FunctionLogStatic::Traits( "Client", "OneApi" );
                 #endif
                 }
-                static void PrintGen()
+                static void PrintGpuType()
                 {
                 #if ML_DEBUG || ML_INTERNAL
-                    FunctionLogStatic::Traits( "Gen", "GEN9" );
+                    FunctionLogStatic::Traits( "Gpu type", "GEN9" );
                 #endif
                 }
                 static void PrintTraits()
@@ -508,6 +496,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using FunctionLogStatic", FunctionLogStatic::GetDescription() );
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
                     FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
+                    FunctionLogStatic::Traits( "using DdiObjects", DdiObjects::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
@@ -558,12 +547,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
-                #if 1
-                    FunctionLogStatic::Traits( "using Queries::HwCountersCalculatorMain", Queries::HwCountersCalculatorMain::GetDescription() );
-                #endif
-                #if 1
                     FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
-                #endif
                     FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Policy", Policy::GetDescription() );

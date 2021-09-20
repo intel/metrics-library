@@ -43,7 +43,7 @@ namespace ML
         /// @param context  library context.
         //////////////////////////////////////////////////////////////////////////
         ConfigurationHwCountersUserTrait( TT::Context& context )
-            : Base( context.m_ClientType )
+            : Base( context )
             , m_Kernel( context.m_Kernel )
             , m_UserRegisters{}
         {

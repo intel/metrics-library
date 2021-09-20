@@ -99,15 +99,15 @@ namespace ML
         using DdiMarker = GEN9::DdiMarker<T>;
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief GEN12-specific functions for DdiMarker.
+        /// @brief XE_LP-specific functions for DdiMarker.
         ///        These should ONLY be used for MAJOR algorithm changes.
         //////////////////////////////////////////////////////////////////////////
         template <typename T>
         using DdiMarker = GEN11::DdiMarker<T>;
-    } // namespace GEN12
+    } // namespace XE_LP
 
 #pragma endregion
 } // namespace ML

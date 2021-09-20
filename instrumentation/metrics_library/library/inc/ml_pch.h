@@ -25,7 +25,7 @@ SPDX-License-Identifier: MIT
 //////////////////////////////////////////////////////////////////////////
 #include "ml_configuration_macros.h"
 #include "ml_configuration_api.h"
-#include "ml_configuration_gen.h"
+#include "ml_configuration_gpu.h"
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Metrics library api header.
@@ -41,10 +41,12 @@ using namespace MetricsLibraryApi;
 #include <atomic>
 #include <cmath>
 #include <fstream>
+#include <mutex>
 #include <iomanip>
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 //////////////////////////////////////////////////////////////////////////

@@ -1,13 +1,13 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright © 2020-2021 Intel Corporation
+Copyright (C) 2020-2021 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_gpu_commands_gen12.h
+@file ml_gpu_commands_xe_lp.h
 
 @brief auto-generated file
 
@@ -165,7 +165,7 @@ __CODEGEN_NAMESPACE_OPEN
 ///     GTT_SELECT must not be set to 1 (i.e. GGTT) when MI_REPORT_PERF_COUNT
 ///     command is programmed in a non-privileged batch buffer. Refer to the
 ///     "User Mode Privileged commands" Table in MI_BATCH_BUFFER_START command
-///     section for more details. All batch buffers in PPGTT are considered as
+///     section for more details.All batch buffers in PPGTT are considered as
 ///     Non-privileged.
 ///     
 struct MI_REPORT_PERF_COUNT
@@ -407,11 +407,8 @@ __CODEGEN_C_ASSERT( 16 == sizeof( MI_REPORT_PERF_COUNT ) );
 ///     that DWord to memory. The register address is specified along with the
 ///     command to perform the read.
 ///     
-///     
 ///     The command temporarily halts command execution.
-///     
 ///     The memory address for the write is snooped on the host bus.
-///     
 ///     This command should not be used from within a "non-privilege" batch
 ///     buffer to access global virtual space. doing so will be treated as
 ///     privilege access violation. Refer "User Mode Privilege Command" in
@@ -419,10 +416,8 @@ __CODEGEN_C_ASSERT( 16 == sizeof( MI_REPORT_PERF_COUNT ) );
 ///     encountering privilege access violation. This command can be used within
 ///     ring buffers and/or "privilege" batch buffers to access global virtual
 ///     space.
-///     
 ///     This command will cause undefined data to be written to memory if given
 ///     register addresses for the PGTBL_CTL_0 or FENCE registers.
-///     
 ///     
 ///     
 struct MI_STORE_REGISTER_MEM
@@ -575,32 +570,31 @@ struct MI_STORE_REGISTER_MEM
     ///     Compute engine share a common remapping table to facilitate remapping
     ///     across engines, where as a dedicated remap table for each of Video
     ///     Decode and Video Enhancement engine class.
-    ///     A MMIO remapping table per engine class is created with MMIO address
+    ///       A MMIO remapping table per engine class is created with MMIO address
     ///     belonging to multiple instances of an engine within an engine class.
     ///     However Render and Compute engine share a common remapping table to
     ///     facilitate remapping across engines, where as a dedicated remap table
     ///     for each of Video Decode and Video Enhancement engine class.
-    ///     This mode provides mechanism for SW to always use MMIO address belonging
-    ///     to fixed instance (instance zero) with in an engine class during command
-    ///     buffer creation agnostic to the instance on which it will get scheduled.
-    ///     This will also allow context interoperability across instances with in
-    ///     an engine class and extends to across engines in case of Render and
-    ///     Compute.
-    ///     
+    ///       This mode provides mechanism for SW to always use MMIO address
+    ///     belonging to fixed instance (instance zero) with in an engine class
+    ///     during command buffer creation agnostic to the instance on which it will
+    ///     get scheduled. This will also allow context interoperability across
+    ///     instances with in an engine class and extends to across engines in case
+    ///     of Render and Compute.
     ///     
     ///     SW must always use MMIO address belonging to Instance-0 of an engine
     ///     while enabling "MMIO Remap" in MI commands.
-    ///     
     ///     MMIO Remapping will be done by HW prior to doing any other functionality
     ///     associated with the MI command or the privilege checks.
-    ///     
     ///     "Add CS MMIO Start Offset" must not be enabled when "MMIO Remap" is
     ///     Enabled and Vice-versa.
-    ///     
     ///     When remapping is not found in the remap table, HW will use the MMIO
     ///     address directly without any modification.
     ///     
     ///     
+    ///     "MMIO Remap Enable" can be enabled only for the "Register Offsets"
+    ///     mentioned in the "MMIO remap table" of a given engine on which the
+    ///     command is getting executed.
     ///     
 
     __CODEGEN_INLINE void SetMMIORemapEnable( const __CODEGEN_UINT32 value )
@@ -618,8 +612,8 @@ struct MI_STORE_REGISTER_MEM
 
     /// @brief Write AddCSMMIOStartOffset
     /// @details 
-    ///     This bit controls the functionality of the “Register Address” field in
-    ///     the command.
+    ///     This bit controls the functionality of the Register Address field in the
+    ///     command.
     ///     
 
     __CODEGEN_INLINE void SetAddCSMMIOStartOffset( const __CODEGEN_UINT32 value )
@@ -639,8 +633,10 @@ struct MI_STORE_REGISTER_MEM
     /// @details 
     ///     If set, this command is executed (or not) depending on the current value
     ///     of the MI_PREDICATE internal state bit in MMIO register
-    ///     MI_PREDICATE_RESULT[0]. This command is ignored only if PredicateEnable
-    ///     is set and value in the MMIO register MI_PREDICATE_RESULT[0] is 0.
+    ///     MI_PREDICATE_RESULT[0]. This command is ignored if PredicateEnable is
+    ///     set and value in the MMIO register MI_PREDICATE_RESULT[0] is 0. This
+    ///     command may also be droped when MI_SET_PREDICATE condition to drop is
+    ///     true.
     ///     
 
     __CODEGEN_INLINE void SetPredicateEnable( const __CODEGEN_UINT32 value )
@@ -685,14 +681,11 @@ struct MI_STORE_REGISTER_MEM
     ///     read from. As the register address must be DWord-aligned, Bits 1:0 of
     ///     that address MBZ.
     ///     
-    ///     
     ///     Storing a VGA register is not permitted and will store an UNDEFINED
     ///     value.
-    ///     
     ///     The values of PGTBL_CTL0 or any of the FENCE registers cannot be stored
     ///     to memory; UNDEFINED values will be written to memory if the addresses
     ///     of these registers are specified.
-    ///     
     ///     
     ///     
 
@@ -721,7 +714,7 @@ struct MI_STORE_REGISTER_MEM
     ///     register value specified in the DWord above will be written. The address
     ///     specifies the DWord location of the data.Range =
     ///     GraphicsVirtualAddress[63:2] for a DWord register
-    ///     GraphicsAddress [63:48] are ignored by the HW and assumed to be in
+    ///       GraphicsAddress [63:48] are ignored by the HW and assumed to be in
     ///     correct canonical form [63:48] == [47].
     ///     
 
@@ -762,39 +755,39 @@ __CODEGEN_C_ASSERT( 16 == sizeof( MI_STORE_REGISTER_MEM ) );
 ///     Write cache flush bits must not be set (Render Target Cache Flush
 ///     Enable, DC Flush Enable, Depth Cache Flush Enable )
 ///     
-///     Post Sync Operations must not be set to “Write PS Depth Count”
+///     Post Sync Operations must not be set to Write PS Depth Count
 ///     
-///     “Stall at Pixel Scoreboard” must not be set
+///     Stall at Pixel Scoreboard must not be set
 ///     
-///     “Protected Memory Application ID” must not be programmed.
+///     Protected Memory Application ID must not be programmed.
 ///     
-///     “Notify Enable” must not be set.
+///     Notify Enable must not be set.
 ///     
-///     “Depth Stall Enable” must not be set.
+///     Depth Stall Enable must not be set.
 ///     
-///     “Generic Media State Clear” must not be set.
+///     Generic Media State Clear must not be set.
 ///     
-///     “PSD Sync Enable” must not be set.
+///     PSD Sync Enable must not be set.
 ///     
-///     “Protected Memory Enable” must not be set.
+///     Protected Memory Enable must not be set.
 ///     
-///     “Protected Memory Disable” must not be set.
+///     Protected Memory Disable must not be set.
 ///     
 ///     
 ///     
 ///     SW must follow below programming restrictions when programming
-///     PIPE_CONTROL command for ComputeCS:
+///     PIPE_CONTROL command:
 ///     
 ///     "Command Streamer Stall Enable" must be always set.
 ///     
-///     Post Sync Operations must not be set to “Write PS Depth Count”
+///     Post Sync Operations must not be set to Write PS Depth Count
 ///     
 ///     Following bits must not be set when programmed for ComputeCS
 ///     
 ///     "Render Target Cache Flush Enable", "Depth Cache Flush Enable" and "Tile
 ///     Cache Flush Enable"
 ///     
-///     "Depth Stall Enable", “Stall at Pixel Scoreboard” and "PSD Sync Enable".
+///     "Depth Stall Enable", Stall at Pixel Scoreboard and "PSD Sync Enable".
 ///     
 ///     "OVR Tile 0 Flush", "TBIMR Force Batch Closure", "AMFS Flush Enable" "VF
 ///     Cache Invalidation Enable" and "Global Snapshot Count Reset".
@@ -1129,9 +1122,10 @@ struct PIPE_CONTROL
 
     /// @brief Write HDCPipelineFlush
     /// @details 
-    ///     If set, HDC ensures it pipeline is flushed and the memory transactions
-    ///     are coherent in L3$ as part of the flush operation. This will not result
-    ///     in flushing L3$ potion that caches DC writes.
+    ///     If set, HDC ensures it's pipeline is flushed and the memory
+    ///     transactions are coherent in L3$ as part of the flush operation. The HDC
+    ///     read-only cache is also flushed as well. This will not result in
+    ///     flushing L3$ potion that caches DC writes.
     ///     
 
     __CODEGEN_INLINE void SetHDCPipelineFlush( const __CODEGEN_UINT32 value )
@@ -1215,6 +1209,15 @@ struct PIPE_CONTROL
     ///     bit controls the invalidation of the L1 and L2 state caches at the top
     ///     of the pipe i.e. at the parsing time.
     ///     
+    ///     
+    ///     
+    ///       When State Cache redirect to CS Section enable bit is set in MMIO
+    ///     register SLICE_COMMON_ECO_CHCICKEN1 (0731Ch), Command Cache Invalidate
+    ///     Enable must be also set upon setting State Cache Invalidate bit in
+    ///     PIPE_CONTROL command.
+    ///     
+    ///       
+    ///     
 
     __CODEGEN_INLINE void SetStateCacheInvalidationEnable( const __CODEGEN_BOOL value )
     {
@@ -1276,9 +1279,9 @@ struct PIPE_CONTROL
     ///     Setting this bit enables flushing of the L3$ portions that caches DC
     ///     writes.
     ///     
-    ///     DC Flush (L3 Flush) by default doesn’t result in flushing/invalidating
-    ///     the IA Coherent lines from L3$, however this can be achieved by setting
-    ///     control bit “Pipe line flush Coherent lines”  in “L3SQCREG4” register.
+    ///     DC Flush (L3 Flush)by default doesnt result in flushing/invalidating the
+    ///     IA Coherent lines from L3$, however this can be achieved by setting
+    ///     control bit Pipe line flush Coherent lines in L3SQCREG4 register.
     ///     
 
     __CODEGEN_INLINE void SetDCFlushEnable( const __CODEGEN_BOOL value )
@@ -1357,17 +1360,17 @@ struct PIPE_CONTROL
     /// @brief Write IndirectStatePointersDisable
     /// @details 
     ///     At the completion of the post-sync operation associated with this pipe
-    ///     control packet, the indirect state pointers in the hardware are
-    ///     considered invalid; the indirect pointers are not saved in the context.
+    ///     control packet, the indirectstate pointers in the hardware are
+    ///     considered invalid; the indirect pointers are not saved in thecontext.
     ///     If any new indirect state commands are executed in the command stream
-    ///     while the pipe control is pending, the new indirect state commands are
+    ///     while the pipe controlis pending, the new indirect state commands are
     ///     preserved.
     ///     
     ///     [DevIVB+]: Using Invalidate State Pointer (ISP) only inhibits context
-    ///     restoring of Push Constant (3DSTATE_CONSTANT_*) commands. Push Constant
+    ///     restoring of Push Constant (3DSTATE_CONSTANT_*) commands.Push Constant
     ///     commands are only considered as Indirect State Pointers. Once ISP is
-    ///     issued in a context, SW must initialize by programming push constant
-    ///     commands for all the shaders (at least to zero length) before attempting
+    ///     issued in a context,SW must initialize by programming push constant
+    ///     commands for all the shaders (at least to zero length)before attempting
     ///     any rendering operation for the same context.
     ///     
     ///     When executed in POCS results in inhibiting the context restore of
@@ -1435,6 +1438,9 @@ struct PIPE_CONTROL
     ///     write fence sync operations to assure that results from operations
     ///     initiated prior to this command are visible in memory once software
     ///     observes this synchronization.
+    ///     
+    ///     This bit must not be set when Depth Stall Enable bit is set in this
+    ///     packet.
     ///     
     ///     Whenever a Binding Table Index (BTI) used by a Render Target Message
     ///     points to a different RENDER_SURFACE_STATE, SWmust issue a Render Target
@@ -1552,11 +1558,11 @@ struct PIPE_CONTROL
     ///     PSDs are synced up, post-sync LRI can be optionally used to change EU
     ///     enables.
     ///     
-    ///     If this bit is set, these bits must not be set:  Depth Stall Enable
-    ///      Command Streamer Stall Enable
-    ///      Render Target Cache Flush Enable
-    ///      Stall At Pixel Scoreboard
-    ///      
+    ///     If this bit is set, these bits must not be set:Depth Stall Enable
+    ///     Command Streamer Stall Enable
+    ///     Render Target Cache Flush Enable
+    ///     Stall At Pixel Scoreboard
+    ///     
     ///     
 
     __CODEGEN_INLINE void SetPSDSyncEnable( const __CODEGEN_BOOL value )
@@ -1589,7 +1595,7 @@ struct PIPE_CONTROL
     ///     setting.
     ///     
     ///     Post Sync Operation or CS stall must be set to ensure a TLB invalidate
-    ///     occurs.  Otherwise no cycle will occur to the TLB cache to invalidate.
+    ///     occurs. Otherwise no cycle will occur to the TLB cache to invalidate.
     ///     
 
     __CODEGEN_INLINE void SetTLBInvalidate( const __CODEGEN_UINT32 value )
@@ -1614,10 +1620,10 @@ struct PIPE_CONTROL
     ///     
     ///     This debug mode bit must not be exercised on any product.
     ///     
-    ///     TIMESTAMP is not reset by PIPE_CONTROL with this bit set.
-    ///      When Post Sync Operation is set to "Write PS Depth Count" along with
-    ///     Global Snapshot Count Reset, PS Depth Count is Reported first before
-    ///     resetting the value.
+    ///     TIMESTAMP is not reset by PIPE_CONTROL with this bit set. When Post Sync
+    ///     Operation is set to "Write PS Depth Count" along with Global Snapshot
+    ///     Count Reset, PS Depth Count is Reported first before resetting the
+    ///     value.
     ///     
 
     __CODEGEN_INLINE void SetGlobalSnapshotCountReset( const GLOBAL_SNAPSHOT_COUNT_RESET value )
@@ -1684,7 +1690,7 @@ struct PIPE_CONTROL
     ///     writes are allowed to non-PCM memory.
     ///     
     ///     Enabling Protected Memory Access and disabling protected memory access
-    ///     must be programmed in pairs. Enabling Protected Memory Access and
+    ///     must be programmed in pairs.Enabling Protected Memory Access and
     ///     disabling protected memory access must be programmed in the same
     ///     dispatch of commands to HW.
     ///     
@@ -1753,7 +1759,7 @@ struct PIPE_CONTROL
     ///     If enabled, at the end of the current pipe-control the AMFS unit stalls
     ///     until all spawned texel shaders are completed, and then the AMFS unit
     ///     flushes internal cache(s) to memory.
-    ///     This bit should be enabled when a procedural texture transitions from
+    ///       This bit should be enabled when a procedural texture transitions from
     ///     the write state to the read state. 
     ///     
 
@@ -1798,7 +1804,7 @@ struct PIPE_CONTROL
     ///     On setting this bit * Command Streamer does an implied Stalling Flush
     ///     with Render,Depth and DC Caches Flushes * On completion of flush all RO
     ///     caches are invalidated. Followed by * Command streamer sends messages to
-    ///     L3 and TDL to wipe out the storage contents in L3 and EUs. Followed by *
+    ///     L3 and TDL to wipe out the storagecontents inL3 and EUs. Followed by *
     ///     The hardware access to the Protected Content Memory is disabled. Setting
     ///     Protected Memory Enable bit along with this bit is illegal.
     ///     
@@ -1823,82 +1829,57 @@ struct PIPE_CONTROL
     ///     completing. This bit must be set for all write fence sync operations to
     ///     assure that results from operations initiated prior to this command are
     ///     visible in memory once software observes this synchronization.
-    ///     
-    ///     
+    ///       
     ///     
     ///     SW must always set CS Stall bit when Tile Cache Flush Enable bit is set
     ///     in the PIPECONTROL command.
-    ///     
-    ///     
     ///     SW must ensure level1 depth and color caches are flushed prior to
-    ///     flushing the tile cache. This can be achieved by following means:
-    ///     
-    ///     Single PIPECONTROL command to flush level1 caches and the tile cache.
-    ///     Attributes listed below must be set. OR
-    ///     
-    ///     Tile Cache Flush Enable
-    ///     
+    ///     flushing the tile cache. This can be achieved by following means:Single
+    ///     PIPECONTROL command to flush level1 caches and the tile cache.
+    ///     Attributes listed below must be set. ORTile Cache Flush Enable
     ///     Render Target Cache Flush Enable
-    ///     
     ///     Depth Cache Flush Enable
-    ///     
-    ///     
-    ///     
     ///     
     ///     Flushing of L1 caches followed by flushing of tile cache through two
     ///     different PIEPCONTROL commands. SW must ensure not to issue any
     ///     rendering commands between the two PIPECONTROL commands.
-    ///     
-    ///     
     ///     
     ///     
     ///     
     ///     
     ///     Tile Cache Enabled Mode:
-    ///     
-    ///     SW must always set CS Stall bit when Tile Cache Flush Enable bit is set
-    ///     in the PIPECONTROL command.
-    ///     
+    ///       
+    ///       SW must always set CS Stall bit when Tile Cache Flush Enable bit is
+    ///     set in the PIPECONTROL command.
     ///     SW must ensure level1 depth and color caches are flushed prior to
-    ///     flushing the tile cache. This can be achieved by following means:
-    ///     
-    ///     Single PIPECONTROL command to flush level1 caches and the tile cache.
-    ///     Hardware will sequence the flushing of L1 caches followed by the Tile
-    ///     cache. Attributes listed below must be set. OR
-    ///     
-    ///     Tile Cache Flush Enable
-    ///     
+    ///     flushing the tile cache. This can be achieved by following means:Single
+    ///     PIPECONTROL command to flush level1 caches and the tile cache. Hardware
+    ///     will sequence the flushing of L1 caches followed by the Tile cache.
+    ///     Attributes listed below must be set. ORTile Cache Flush Enable
     ///     Render Target Cache Flush Enable
-    ///     
     ///     Depth Cache Flush Enable
-    ///     
-    ///     
-    ///     
     ///     
     ///     Flushing of L1 caches followed by flushing of tile cache through two
     ///     different PIEPCONTROL commands. SW must ensure not to issue any
     ///     rendering commands between the two PIPECONTROL commands.
     ///     
     ///     
-    ///     
-    ///     
-    ///     
-    ///     
+    ///       
     ///     Unified Cache (Tile Cache Disabled): 
-    ///     
-    ///     In unified cache mode of operation Color and Depth (Z) streams are
-    ///     cached in DC space of L2 along with Data Port stream. On a “Tile Cache
-    ///     Flush” only Color and Depth (Z) streams from DC space of L2 are flushed
-    ///     to globally observable and where as “DC Flush Enable” will only flush
-    ///     Data Port stream from the DC space of L2 to globally observable. Refer
-    ///     L3 configuration section for Unified cache usage model. In this mode of
+    ///       
+    ///       In unified cache mode of operation Color and Depth (Z) streams are
+    ///     cached in DC space of L2 along with Data Port stream. On a Tile Cache
+    ///     Flush only Color and Depth (Z) streams from DC space of L2 are flushed
+    ///     to globally observable and where as DC Flush Enable will only flush Data
+    ///     Port stream from the DC space of L2 to globally observable. Refer L3
+    ///     configuration section for Unified cache usage model. In this mode of
     ///     operation there is no dedicated memory allocated for Tile Cache in L2.
     ///     When the Color and Depth (Z) streams are enabled to be cached in the DC
-    ///     space of L2, Software must use “Render Target Cache Flush Enable” and
-    ///     “Depth Cache Flush Enable” along with “Tile Cache Flush” for getting the
+    ///     space of L2, Software must use Render Target Cache Flush Enable and
+    ///     Depth Cache Flush Enable along with Tile Cache Flush for getting the
     ///     color and depth (Z) write data to be globally observable. In this mode
-    ///     of operation it is not required to set “CS Stall” upon setting “Tile
-    ///     Cache Flush” bit.
+    ///     of operation it is not required to set CS Stall upon setting Tile Cache
+    ///     Flush bit.
     ///     
 
     __CODEGEN_INLINE void SetTileCacheFlushEnable( const __CODEGEN_UINT32 value )
@@ -1936,63 +1917,96 @@ struct PIPE_CONTROL
 
     /// @brief Write L3FabricFlush
     /// @details 
-    ///     “L3 Fabric Flush” will ensure all the pending transactions in the L3
-    ///     Fabric are flushed to global observation point. HW does implicit “L3
-    ///     Fabric Flush” on all stalling flushes (both explicit and implicit) and
-    ///     on PIPECONTROL having “Post Sync Operation” enabled. This bit provides
-    ///     an explicit control for debug purpose.
+    ///     L3 Fabric Flush will ensure all the pending transactions in the L3
+    ///     Fabric are flushed to global observation point. HW does implicit L3
+    ///     Fabric Flush on all stalling flushes (both explicit and implicit) and on
+    ///     PIPECONTROL having Post Sync Operation enabled. This bit provides an
+    ///     explicit control for debug purpose.
+    ///       
     ///     
     ///     
+    ///     
+    ///     
+    ///       
     ///     Pipelined L3 Fabric Flush:
-    ///     When “Depth Stall Enable” is set “L3 Fabric Flush” is pipelined along
-    ///     with the workload and issued from raster stage in the pipeline. Flush
-    ///     marker for this flush type on reaching raster stage, will ensure all the
-    ///     prior workload is complete and then “L3 Fabric Flush” is performed
-    ///     before allowing the workload following the flush marker to execute.
+    ///       
     ///     
-    ///     By default “L3 Fabric Flush” happens top of the pipe as part of
+    ///       
+    ///       
+    ///     
+    ///       When Depth Stall Enable is set L3 Fabric Flush is pipelined along with
+    ///     the workload and issued from raster stage in the pipeline. Flush marker
+    ///     for this flush type on reaching raster stage, will ensure all the prior
+    ///     workload is complete and then L3 Fabric Flush is performed before
+    ///     allowing the workload following the flush marker to execute.
+    ///     
+    ///       
+    ///       
+    ///       
+    ///     
+    ///       By default L3 Fabric Flush happens top of the pipe as part of
     ///     post-synchronization operation on a flush completion. SW must explicitly
-    ///     set WM_CHICKEN2[5] (5584h) bit to enable “Pipelined L3 Fabric Flush”.
-    ///     This bit must be programmed for all contexts and hence it can be
-    ///     initialized during golden context creation time.
+    ///     set WM_CHICKEN2[5] (5584h) bit to enable Pipelined L3 Fabric Flush. This
+    ///     bit must be programmed for all contexts and hence it can be initialized
+    ///     during golden context creation time.
     ///     
+    ///       
+    ///       
+    ///       
+    ///     
+    ///       
     ///     Usages:
-    ///     This mechanism is used to flush the updated compressed control state of
-    ///     an surface during fast clear to global observable point before the
+    ///       
+    ///     
+    ///       
+    ///       
+    ///     
+    ///       This mechanism is used to flush the updated compressed control state
+    ///     of an surface during fast clear to global observable point before the
     ///     rendering operations are started using these surfaces. Most common usage
-    ///     case is to flush the L1 (Color, Depth) caches with “L3 Fabric Flush” and
-    ///     “Depth Stall Enable” post Fast Clears prior to starting the rendering
-    ///     operations. Refer “Render Target Fast Clear” and “Depth Buffer Clear”
+    ///     case is to flush the L1 (Color, Depth) caches with L3 Fabric Flush and
+    ///     Depth Stall Enable post Fast Clears prior to starting the rendering
+    ///     operations. Refer Render Target Fast Clear and Depth Buffer Clear
     ///     sections for more details.
     ///     
+    ///       
+    ///       
+    ///       
+    ///     
+    ///       
     ///     - For a sequence of color fast clears
+    ///       
     ///     
-    ///     <li style="margin: 0in 0in 8pt 0.5in;">A single PIPE_CONTROL command
-    ///     with “Render Target Cache Flush”, “L3 Fabric Flush” and “Depth Stall”
-    ///     set at the end of the sequence suffices. This assumes the output of the
-    ///     fast clears are used only post this PIPE_CONTROL command. 
-    ///     
-    ///     
-    ///     
-    ///     - For a sequence of depth fast clears
-    ///     
-    ///     
-    ///     <li style="margin: 0in 0in 8pt 0.5in;">A single PIPE_CONTROL command
-    ///     with “Depth Cache Flush”, “L3 Fabric Flush” and “Depth Stall” set at the
-    ///     end of the sequence suffices. This assumes the output of the depth fast
+    ///       
+    ///       <li style="margin: 0in 0in 8pt 0.5in;">A single PIPE_CONTROL command
+    ///     with Render Target Cache Flush, L3 Fabric Flush and Depth Stall set at
+    ///     the end of the sequence suffices. This assumes the output of the fast
     ///     clears are used only post this PIPE_CONTROL command. 
     ///     
+    ///       
     ///     
+    ///       
+    ///     - For a sequence of depth fast clears
+    ///       
     ///     
+    ///       
+    ///       <li style="margin: 0in 0in 8pt 0.5in;">A single PIPE_CONTROL command
+    ///     with Depth Cache Flush, L3 Fabric Flush and Depth Stall set at the end
+    ///     of the sequence suffices. This assumes the output of the depth fast
+    ///     clears are used only post this PIPE_CONTROL command. 
+    ///     
+    ///       
+    ///     
+    ///       
     ///     - For a sequence of mixed color/depth fast clears.
+    ///       
     ///     
-    ///     
-    ///     <li style="margin: 0in 0in 8pt 0.5in;">A single PIPE_CONTROL command
-    ///     with “Depth Cache Flush”, “Render Target Cache Flush”,“L3 Fabric Flush”
-    ///     and “Depth Stall” set at the end of the sequence suffices. This assumes
-    ///     the output of the color/depth fast clears are used only post this
+    ///       
+    ///       <li style="margin: 0in 0in 8pt 0.5in;">A single PIPE_CONTROL command
+    ///     with Depth Cache Flush, Render Target Cache Flush,L3 Fabric Flush and
+    ///     Depth Stall set at the end of the sequence suffices. This assumes the
+    ///     output of the color/depth fast clears are used only post this
     ///     PIPE_CONTROL command.
-    ///     
     ///     
     ///     
 
@@ -2042,7 +2056,7 @@ struct PIPE_CONTROL
     /// @brief Write AddressHigh
     /// @details 
     ///     This field specifies the 4GB aligned base address of gfx 4GB virtual
-    ///     address space within the host's 64-bit virtual address space. This field
+    ///     address space within the host's 64-bit virtual address space.This field
     ///     is valid only if the post-sync operation is not 0 and the LRI Post-Sync
     ///     Operation is clear.
     ///     
@@ -2063,11 +2077,9 @@ struct PIPE_CONTROL
     /// @brief Write ImmediateData
     /// @details 
     ///     This field specifies the QWord value to be written to the targeted
-    ///     location.
-    ///     Only valid when Post-Sync Operation is 1h (Write Immediate Data) or LRI
-    ///     Post-Sync Operation is set.
-    ///     Ignored if Post-Sync Operation is "No write", "Write PS_DEPTH_COUNT" or
-    ///     "Write TIMESTAMP".
+    ///     location.Only valid when Post-Sync Operation is 1h (Write Immediate
+    ///     Data) or LRI Post-Sync Operation is set.Ignored if Post-Sync Operation
+    ///     is "No write", "Write PS_DEPTH_COUNT" or "Write TIMESTAMP".
     ///     
 
     __CODEGEN_INLINE void SetImmediateData( const __CODEGEN_UINT64 value )
@@ -2099,23 +2111,25 @@ __CODEGEN_C_ASSERT( 24 == sizeof( PIPE_CONTROL ) );
 ///     This command supports writing to multiple consecutive dwords or qwords
 ///     memory locations from the starting address.
 ///     
-///      This command should not be used within a "non-privilege" batch buffer
-///     to access global virtual space, doing so will be treated as privilege
+///     
+///     This command should not be used within a "non-privilege" batch buffer to
+///     access global virtual space, doing so will be treated as privilege
 ///     access violation. Refer "User Mode Privilege Command" in
 ///     MI_BATCH_BUFFER_START command section to know HW behavior on
 ///     encountering privilege access violation. This command can be used within
 ///     ring buffers and/or privilege batch buffers to access global virtual
 ///     space.
-///      This command can be used for general software synchronization through
+///     
+///     This command can be used for general software synchronization through
 ///     variables in cacheable memory (i.e., where software does not need to
 ///     poll un-cached memory or device registers).
-///      This command simply initiates the write operation with command
-///     execution proceeding normally. Although the write operation is
-///     guaranteed to complete eventually, there is no mechanism to synchronize
-///     command execution with the completion (or even initiation) of these
-///     operations.
 ///     
+///     This command simply initiates the write operation with command execution
+///     proceeding normally. Although the write operation is guaranteed to
+///     complete eventually, there is no mechanism to synchronize command
+///     execution with the completion (or even initiation) of these operations.
 ///     
+///       
 ///     
 struct MI_STORE_DATA_IMM
 {
@@ -2136,8 +2150,7 @@ struct MI_STORE_DATA_IMM
             /// DWORD 1..2
             __CODEGEN_UINT64         CoreModeEnable                                   : __CODEGEN_BITFIELD( 0,  0)    ; ///< U1
             __CODEGEN_UINT64         Reserved_33                                      : __CODEGEN_BITFIELD( 1,  1)    ; ///< U1
-            __CODEGEN_UINT64         Address                                          : __CODEGEN_BITFIELD( 2, 47)    ; ///< U46, Sub-structure
-            __CODEGEN_UINT64         Address_Reserved_80                              : __CODEGEN_BITFIELD(48, 63)    ; ///< U16, Sub-structure
+            __CODEGEN_UINT64         Address                                          : __CODEGEN_BITFIELD( 2, 63)    ; ///< U62
 
             /// DWORD 3
             __CODEGEN_UINT32         DataDWord0                                                                       ; ///< U32
@@ -2164,7 +2177,7 @@ struct MI_STORE_DATA_IMM
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandType                                 , 29, 31, COMMAND_TYPE );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.CoreModeEnable                              ,  0,  0 );
-        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.Address                                     ,  2, 47 );
+        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.Address                                     ,  2, 63 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.DataDWord0                                  ,  0, 31 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.DataDWord1                                  ,  0, 31 );
     }
@@ -2310,7 +2323,7 @@ struct MI_STORE_DATA_IMM
     ///     are paired to form a Qword. Number of qwords generated depends upon the
     ///     number of "Data Dword" programmed in the command. If 'x' number of "Data
     ///     Dwords" are programmed in this command it results in "x/2" qword writes
-    ///     to memory.  If reset this command generates Dwords writes to memory.
+    ///     to memory. If reset this command generates Dwords writes to memory.
     ///     Number of dwords generated depends upon the number of "Data Dword"
     ///     programmed in the command. If 'x' number of "Data Dwords" are programmed
     ///     in this command it results in "x" dword writes to memory.
@@ -2353,8 +2366,8 @@ struct MI_STORE_DATA_IMM
 
     /// @brief Write CoreModeEnable
     /// @details 
-    ///     This bit is set then the address will be offset by the Core ID: If Core
-    ///     ID 0, then there is no offset If Core ID 1, then the Memory is offset by
+    ///     This bit is set then the address will be offset by the Core ID:If Core
+    ///     ID 0, then there is no offsetIf Core ID 1, then the Memory is offset by
     ///     the size of the data(32b or 64b based off number of DW length).
     ///     
 
@@ -2373,8 +2386,13 @@ struct MI_STORE_DATA_IMM
 
     /// @brief Write Address
     /// @details 
-    ///     Bits 47:2 of a 48-bit GraphicsAddress. Look for the definition of bits
-    ///     1:0 in the referring register.
+    ///     
+    ///       GraphicsAddress is 64-bit value [63:0], but only a portion of it is
+    ///     used by hardware. The uppermost bits are ignored and MBZ. This field
+    ///     specifies Bits 47:2 of the Address where the DWord will be stored. As
+    ///     the store address must be DWord-aligned, Bits 1:0 of that address MBZ.
+    ///     This address must be 8B aligned for a store "QW" command.
+    ///       
     ///     
 
     typedef enum tagADDRESS
@@ -2446,9 +2464,9 @@ __CODEGEN_C_ASSERT( 20 == sizeof( MI_STORE_DATA_IMM ) );
 ///     The MI_LOAD_REGISTER_IMM command requests a write of up to a DWord
 ///     constant supplied in the command to the specified Register Offset (i.e.,
 ///     offset into Memory-Mapped Register Range).
-///     Any offset that is to a destination outside of the GT core will allow
-///     the parser to continue once the cycle is at the GT boundary and not
-///     destination. Any other address will ensure the destination is updated
+///       Any offset that is to a destination outside of the GT core will allow
+///     the parser to continue once the cycle is at the GT boundry and not
+///     destination.  Any other address will ensure the destination is updated
 ///     prior to parsing the next command
 ///     
 ///     Many MMIO bits require the engine to be IDLE prior to updating the
@@ -2465,41 +2483,28 @@ __CODEGEN_C_ASSERT( 20 == sizeof( MI_STORE_DATA_IMM ) );
 ///     command to a NOOP.
 ///     
 ///     The following addresses should NOT be used for LRIs:
-///     
-///     0x8800 - 0x88FF
-///     
+///       0x8800 - 0x88FF
 ///     >= 0xC0000
 ///     
-///     
-///     
-///     Limited LRI cycles to the Display Engine (0x40000-0xBFFFF) are allowed,
-///     but must be spaced to allow only one pending at a time. This can be done
-///     by issuing an SRM to the same address immediately after each LRI.
+///       Limited LRI cycles to the Display Engine (0x40000-0xBFFFF) are
+///     allowed, but must be spaced to allow only one pending at a time. This
+///     can be done by issuing an SRM to the same address immediately after each
+///     LRI.
 ///     
 ///     Programming an MMIO register is equivalent to programming a non-pipeline
 ///     state to the hardware and hence an explicit stalling flush needs to be
 ///     programmed prior to programming this command. However for certain MMIO
 ///     registers based on their functionality doing an explicit stalling flush
 ///     is exempted. Listed below are the exempted registers.
-///     
-///     3DPRIM_END_OFFSET - Auto Draw End Offset
-///     
+///       3DPRIM_END_OFFSET - Auto Draw End Offset
 ///     3DPRIM_START_VERTEX - Load Indirect Start Vertex
-///     
 ///     3DPRIM_VERTEX_COUNT - Load Indirect Vertex Count
-///     
 ///     3DPRIM_INSTANCE_COUNT - Load Indirect Instance Count
-///     
 ///     3DPRIM_START_INSTANCE - Load Indirect Start Instance
-///     
 ///     3DPRIM_BASE_VERTEX - Load Indirect Base Vertex
-///     
 ///     3DPRIM_XP0 - Load Indirect Extended Parameter 0
-///     
 ///     3DPRIM_XP1 - Load Indirect Extended Parameter 1
-///     
 ///     3DPRIM_XP2 - Load Indirect Extended Parameter 2
-///     
 ///     
 ///     
 struct MI_LOAD_REGISTER_IMM
@@ -2644,8 +2649,8 @@ struct MI_LOAD_REGISTER_IMM
     /// @details 
     ///     Range: Must specify a valid register write operation
     ///     
-    ///     If [11:8] is '1111b', then this command will behave as a NOOP.
-    ///     Otherwise, the value is forwarded to the destination register.
+    ///     If [11:8] is '1111b', then this command will behave as a NOOP.Otherwise,
+    ///     the value is forwarded to the destination register.
     ///     
 
     __CODEGEN_INLINE void SetByteWriteDisables( const __CODEGEN_UINT32 value )
@@ -2691,32 +2696,31 @@ struct MI_LOAD_REGISTER_IMM
     ///     Compute engine share a common remapping table to facilitate remapping
     ///     across engines, where as a dedicated remap table for each of Video
     ///     Decode and Video Enhancement engine class.
-    ///     A MMIO remapping table per engine class is created with MMIO address
+    ///       A MMIO remapping table per engine class is created with MMIO address
     ///     belonging to multiple instances of an engine within an engine class.
     ///     However Render and Compute engine share a common remapping table to
     ///     facilitate remapping across engines, where as a dedicated remap table
     ///     for each of Video Decode and Video Enhancement engine class.
-    ///     This mode provides mechanism for SW to always use MMIO address belonging
-    ///     to fixed instance (instance zero) with in an engine class during command
-    ///     buffer creation agnostic to the instance on which it will get scheduled.
-    ///     This will also allow context interoperability across instances with in
-    ///     an engine class and extends to across engines in case of Render and
-    ///     Compute.
-    ///     
+    ///       This mode provides mechanism for SW to always use MMIO address
+    ///     belonging to fixed instance (instance zero) with in an engine class
+    ///     during command buffer creation agnostic to the instance on which it will
+    ///     get scheduled. This willalso allow context interoperability across
+    ///     instances with in an engine class and extends to across engines in case
+    ///     of Render and Compute.
     ///     
     ///     SW must always use MMIO address belonging to Instance-0 of an engine
     ///     while enabling "MMIO Remap" in MI commands.
-    ///     
-    ///     MMIO Remapping will be done by HW prior to doing any other functionality
-    ///     associated with the MI command or the privilege checks.
-    ///     
+    ///     MMIO Remapping will be done by HW prior to doing any other functionaliy
+    ///     associated with the MI command or the privilge checks.
     ///     "Add CS MMIO Start Offset" must not be enabled when "MMIO Remap" is
     ///     Enabled and Vice-versa.
-    ///     
     ///     When remapping is not found in the remap table, HW will use the MMIO
     ///     address directly without any modification.
     ///     
     ///     
+    ///      "MMIO Remap Enable" can be enabled only for the "Register Offsets"
+    ///     mentioned in the "MMIO remap table" of a given engine on which the
+    ///     command is getting executed.
     ///     
 
     __CODEGEN_INLINE void SetMMIORemapEnable( const __CODEGEN_UINT32 value )
@@ -2813,7 +2817,7 @@ __CODEGEN_C_ASSERT( 12 == sizeof( MI_LOAD_REGISTER_IMM ) );
 ///     access violation. Refer to the "User Mode Privilege Command" in
 ///     MI_BATCH_BUFFER_START command section to learn more about HW behavior on
 ///     encountering a privilege access violation.
-///     This command can be used within ring buffers and/or privilege batch
+///       This command can be used within ring buffers and/or privilege batch
 ///     buffers to access global virtual space.
 ///     
 struct MI_COPY_MEM_MEM
@@ -2833,13 +2837,11 @@ struct MI_COPY_MEM_MEM
 
             /// DWORD 1..2
             __CODEGEN_UINT64         Reserved_32                                      : __CODEGEN_BITFIELD( 0,  1)    ; ///< U2
-            __CODEGEN_UINT64         DestinationMemoryAddress                         : __CODEGEN_BITFIELD( 2, 47)    ; ///< U46, Sub-structure
-            __CODEGEN_UINT64         DestinationMemoryAddress_Reserved_80             : __CODEGEN_BITFIELD(48, 63)    ; ///< U16
+            __CODEGEN_UINT64         DestinationMemoryAddress                         : __CODEGEN_BITFIELD( 2, 63)    ; ///< U62
 
             /// DWORD 3..4
             __CODEGEN_UINT64         Reserved_96                                      : __CODEGEN_BITFIELD( 0,  1)    ; ///< U2
-            __CODEGEN_UINT64         SourceMemoryAddress                              : __CODEGEN_BITFIELD( 2, 47)    ; ///< U46, Sub-structure
-            __CODEGEN_UINT64         SourceMemoryAddress_Reserved_144                 : __CODEGEN_BITFIELD(48, 63)    ; ///< U16, Sub-structure
+            __CODEGEN_UINT64         SourceMemoryAddress                              : __CODEGEN_BITFIELD( 2, 63)    ; ///< U62
 
         } Common;
         __CODEGEN_UINT32            RawData[ 5 ];
@@ -2858,8 +2860,8 @@ struct MI_COPY_MEM_MEM
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.UseGlobalGTTSource                          , 22, 22, USE_GLOBAL_GTT_SOURCE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandType                                 , 29, 31, COMMAND_TYPE );
-        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.DestinationMemoryAddress                    ,  2, 47 );
-        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.SourceMemoryAddress                         ,  2, 47 );
+        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.DestinationMemoryAddress                    ,  2, 63 );
+        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.SourceMemoryAddress                         ,  2, 63 );
     }
     /// @}
 
@@ -3024,8 +3026,7 @@ struct MI_COPY_MEM_MEM
 
     /// @brief Write DestinationMemoryAddress
     /// @details 
-    ///     Bits 47:2 of a 48-bit GraphicsAddress. Look for the definition of bits
-    ///     1:0 in the referring register.
+    ///     Surface Type: MMIO Register
     ///     
 
     typedef enum tagDESTINATIONMEMORYADDRESS
@@ -3049,8 +3050,7 @@ struct MI_COPY_MEM_MEM
 
     /// @brief Write SourceMemoryAddress
     /// @details 
-    ///     Bits 47:2 of a 48-bit GraphicsAddress. Look for the definition of bits
-    ///     1:0 in the referring register.
+    ///     Surface Type: MMIO Register
     ///     
 
     typedef enum tagSOURCEMEMORYADDRESS
@@ -3434,6 +3434,164 @@ struct MI_LOAD_REGISTER_REG
 } __CODEGEN_ATTRIBUTES_STRUCTURE;
 
 __CODEGEN_C_ASSERT( 12 == sizeof( MI_LOAD_REGISTER_REG ) );
+        
+//////////////////////////////////////////////////////////////////////////
+/// @brief MI_NOOP
+/// @details
+///     The MI_NOOP command basically performs a "no operation" in the command
+///     stream and is typically used to pad the command stream (e.g., in order
+///     to pad out a batch buffer to a QWord boundary). However, there is one
+///     minor (optional) function this command can perform - a 22-bit value can
+///     be loaded into the MI NOPID register. This provides a general-purpose
+///     command stream tagging ("breadcrumb") mechanism (e.g., to provide
+///     sequencing information for a subsequent breakpoint interrupt).
+///     
+struct MI_NOOP
+{
+    __CODEGEN_ACCESS_SPECIFIER_DEFINITION
+    union tagTheStructure
+    {
+        struct tagCommon
+        {
+            /// DWORD 0
+            __CODEGEN_UINT32         IdentificationNumber                             : __CODEGEN_BITFIELD( 0, 21)    ; ///< U22
+            __CODEGEN_UINT32         IdentificationNumberRegisterWriteEnable          : __CODEGEN_BITFIELD(22, 22)    ; ///< U1
+            __CODEGEN_UINT32         MICommandOpcode                                  : __CODEGEN_BITFIELD(23, 28)    ; ///< U6
+            __CODEGEN_UINT32         CommandType                                      : __CODEGEN_BITFIELD(29, 31)    ; ///< U3
+
+        } Common;
+        __CODEGEN_UINT32            RawData[ 1 ];
+    } TheStructure;
+
+    __CODEGEN_ACCESS_SPECIFIER_METHODS
+    //////////////////////////////////////////////////////////////////////////
+    /// @name STRUCTURE DEBUG
+    /// @{
+
+    /// @brief User-defined debug function for structure
+    __CODEGEN_DebugType( MI_NOOP )
+    {
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.IdentificationNumber                        ,  0, 21 );
+        __CODEGEN_DebugAttributeBool(   TheStructure.Common.IdentificationNumberRegisterWriteEnable     , 22, 22 );
+        __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
+        __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandType                                 , 29, 31, COMMAND_TYPE );
+    }
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name LOCAL ENUMERATIONS
+    /// @{
+
+    /// @brief U6
+    typedef enum tagMI_COMMAND_OPCODE
+    {
+        MI_COMMAND_OPCODE_MI_NOOP                                        = 0, ///< 
+    } MI_COMMAND_OPCODE;
+
+    /// @brief U3
+    typedef enum tagCOMMAND_TYPE
+    {
+        COMMAND_TYPE_MI_COMMAND                                          = 0, ///< 
+    } COMMAND_TYPE;
+
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name ENUMERATION DEBUG
+    /// @{
+
+    /// @brief User-defined debug function for enumeration
+    __CODEGEN_DebugEnum( MI_COMMAND_OPCODE )
+    {
+        __CODEGEN_DebugEnumValue( MI_COMMAND_OPCODE_MI_NOOP );
+    }
+
+    /// @brief User-defined debug function for enumeration
+    __CODEGEN_DebugEnum( COMMAND_TYPE )
+    {
+        __CODEGEN_DebugEnumValue( COMMAND_TYPE_MI_COMMAND );
+    }
+
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name INITIALIZATION
+    /// @{
+
+    /// @brief Explicit member initialization function
+    __CODEGEN_INLINE void Init( void )
+    {
+        TheStructure.RawData[ 0 ]                                    = 0x0;
+        //TheStructure.Common.IdentificationNumber                   = 0x0;
+        //TheStructure.Common.IdentificationNumberRegisterWriteEnable = 0;
+        //TheStructure.Common.MICommandOpcode                        = MI_COMMAND_OPCODE_MI_NOOP;
+        //TheStructure.Common.CommandType                            = COMMAND_TYPE_MI_COMMAND;
+    }
+
+    /// @brief Explicit static initialization function
+    static MI_NOOP sInit( void ) 
+    {
+        MI_NOOP state;
+        state.Init();
+        return state;
+    }
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name ACCESSORS
+    /// @{
+
+    /// @brief Raw Data Access
+    __CODEGEN_INLINE __CODEGEN_UINT32& GetRawData( const __CODEGEN_UINT index )
+    {
+        __CODEGEN_ASSERT( index < 1 );
+        return TheStructure.RawData[ index ];
+    }
+
+    /// @brief Write IdentificationNumber
+    /// @details 
+    ///     This field contains a 22-bit number which can be written to the MI NOPID
+    ///     register.
+    ///     
+
+    __CODEGEN_INLINE void SetIdentificationNumber( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.IdentificationNumber = value;
+    }
+
+    /// @brief Read IdentificationNumber
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetIdentificationNumber( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.IdentificationNumber );
+    }
+
+    /// @brief Write IdentificationNumberRegisterWriteEnable
+    /// @details 
+    ///     This field enables the value in the Identification Number field to be
+    ///     written into the MI NOPID register. If disabled, that register is
+    ///     unmodified - making this command an effective "no operation" function.
+    ///     
+    ///     Format: Enable
+
+    __CODEGEN_INLINE void SetIdentificationNumberRegisterWriteEnable( const __CODEGEN_BOOL value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.IdentificationNumberRegisterWriteEnable = value;
+    }
+
+    /// @brief Read IdentificationNumberRegisterWriteEnable
+    __CODEGEN_INLINE __CODEGEN_BOOL GetIdentificationNumberRegisterWriteEnable( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.IdentificationNumberRegisterWriteEnable );
+    }
+
+    /// @}
+} __CODEGEN_ATTRIBUTES_STRUCTURE;
+
+__CODEGEN_C_ASSERT( 4 == sizeof( MI_NOOP ) );
         
 __CODEGEN_NAMESPACE_CLOSE
 __CODEGEN_FILE_DIRECTIVES_CLOSE

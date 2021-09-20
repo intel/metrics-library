@@ -106,15 +106,15 @@ namespace ML
         using DdiQuery = GEN9::DdiQuery<T>;
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief GEN12-specific functions for DdiQuery.
+        /// @brief XE_LP-specific functions for DdiQuery.
         ///        These should ONLY be used for MAJOR algorithm changes.
         //////////////////////////////////////////////////////////////////////////
         template <typename T>
         using DdiQuery = GEN11::DdiQuery<T>;
-    } // namespace GEN12
+    } // namespace XE_LP
 
 #pragma endregion
 } // namespace ML

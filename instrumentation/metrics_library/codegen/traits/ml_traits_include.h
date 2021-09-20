@@ -53,6 +53,7 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 //////////////////////////////////////////////////////////////////////////
 #include "ml_context.h"
 #include "ml_client_options.h"
+#include "ml_ddi_objects.h"
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief SubDevice:
@@ -146,9 +147,7 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 /// @brief Hw Counters:
 //////////////////////////////////////////////////////////////////////////
 #include "ml_query_hw_counters.h"
-#if 1
-    #include "ml_query_hw_counters_calculator.h"
-#endif
+#include "ml_query_hw_counters_calculator.h"
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Pipeline timestamps:

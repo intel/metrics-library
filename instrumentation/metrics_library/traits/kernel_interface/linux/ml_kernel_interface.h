@@ -168,7 +168,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns activated by metrics discovery oa configuration
         ///         from the kernel.
-        /// @param  oaConfiguration     activated oa configuration.
+        /// @return oaConfiguration     activated oa configuration.
         /// @return                     operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetOaConfiguration( TT::Layouts::Configuration::PerformanceMonitoringRegisters& oaConfiguration ) const

@@ -297,7 +297,8 @@ namespace ML
             TT::Layouts::HwCounters::ReportOa       m_ReportCopy[2];      // Buffer for begin & end reports.
             uint8_t                                 m_ReportCopyIndex;
 
-            bool                                    m_Valid;
+            bool                                    m_ConfigurationValid;
+            bool                                    m_ContextValid;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief State constructor.
@@ -312,7 +313,8 @@ namespace ML
                 , m_LogEndIndex( 0 )
                 , m_ReportCopy{}
                 , m_ReportCopyIndex( 0 )
-                , m_Valid( true )
+                , m_ConfigurationValid( true )
+                , m_ContextValid( true )
             {
             }
 
@@ -324,7 +326,8 @@ namespace ML
                 m_FirstIndex            = Constants::OaBuffer::m_InvalidIndex;
                 m_CurrentIndex          = Constants::OaBuffer::m_InvalidIndex;
                 m_NextAfterLastIndex    = Constants::OaBuffer::m_InvalidIndex;
-                m_Valid                 = true;
+                m_ConfigurationValid    = true;
+                m_ContextValid          = true;
             }
         };
 

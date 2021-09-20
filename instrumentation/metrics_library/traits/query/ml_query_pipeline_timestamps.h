@@ -36,11 +36,11 @@ namespace ML
             using Base::Allocate;
             using Base::Delete;
             using Base::Derived;
+            using Base::m_Context;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief Members.
             //////////////////////////////////////////////////////////////////////////
-            TT::Context&                                m_Context;
             TT::Layouts::PipelineTimestamps::ReportGpu* m_GpuReport;
             GpuMemory_1_0                               m_GpuMemory;
             uint64_t                                    m_EndTag;
@@ -51,8 +51,7 @@ namespace ML
             /// @param context a reference to library context object.
             //////////////////////////////////////////////////////////////////////////
             QueryPipelineTimestampsTrait( TT::Context& context )
-                : Base( context.m_ClientType )
-                , m_Context( context )
+                : Base( context )
                 , m_GpuReport( nullptr )
                 , m_GpuMemory{}
                 , m_EndTag( 0 )
@@ -150,6 +149,20 @@ namespace ML
 
         protected:
             //////////////////////////////////////////////////////////////////////////
+            /// @brief  Clears gpu memory.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE void ClearReportGpu()
+            {
+                if( T::Policy::QueryHwCounters::Begin::m_ClearGpuMemory )
+                {
+                    if( m_GpuReport != nullptr )
+                    {
+                        *m_GpuReport = {};
+                    }
+                }
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Sets gpu memory for gpu report.
             /// @param  memory  gpu memory data.
             /// @return         operation status.
@@ -177,11 +190,22 @@ namespace ML
                 CommandBuffer& buffer,
                 const uint64_t offset )
             {
+                // Clear gpu memory.
+                if( !buffer.IsCalculateSizePhase() )
+                {
+                    ClearReportGpu();
+                }
+
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 // Srm timestamp gathered on begin query.
                 return T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_TimestampLow,
-                    m_GpuMemory.GpuAddress + offset + offsetof( TT::Layouts::PipelineTimestamps::Timestamps, m_Begin ) );
+                    m_GpuMemory.GpuAddress + offset + offsetof( TT::Layouts::PipelineTimestamps::Timestamps, m_Begin ),
+                    flags );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -204,28 +228,36 @@ namespace ML
                 const uint64_t memoryAddressEndExit       = m_GpuMemory.GpuAddress + offset + offsetof( TT::Layouts::PipelineTimestamps::Timestamps, m_EndExit );
                 const uint64_t memoryAddressEndTag        = m_GpuMemory.GpuAddress + offset + offsetof( TT::Layouts::PipelineTimestamps::Timestamps, m_EndTag );
 
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
+
                 // End timestamp enter.
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_TimestampLow,
-                    memoryAddressEndEnter ) );
+                    memoryAddressEndEnter,
+                    flags ) );
 
                 // End of pipeline timestamp (64-bit).
                 ML_FUNCTION_CHECK( T::GpuCommands::StorePipelineTimestamp(
                     buffer,
-                    memoryAddressEndOfPipeline ) );
+                    memoryAddressEndOfPipeline,
+                    flags ) );
 
                 // End timestamp exit.
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
                     T::GpuRegisters::m_TimestampLow,
-                    memoryAddressEndExit ) );
+                    memoryAddressEndExit,
+                    flags ) );
 
                 // End tag.
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory64(
                     buffer,
                     m_EndTag = data.EndTag,
-                    memoryAddressEndTag ) );
+                    memoryAddressEndTag,
+                    flags | T::GpuCommands::Flags::EnablePostSync ) );
 
                 return log.m_Result;
             }
@@ -368,12 +400,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct QueryPipelineTimestampsTrait : GEN11::QueryPipelineTimestampsTrait<T>
         {
             ML_DECLARE_TRAIT( QueryPipelineTimestampsTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

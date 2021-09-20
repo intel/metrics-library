@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 */
 
 #pragma once
+
 #include <stdint.h>
 
 #ifdef _MSC_VER
@@ -119,6 +120,7 @@ enum class ClientOptionsType : uint32_t
     SubDevice,
     SubDeviceIndex,
     SubDeviceCount,
+    WorkloadPartition,
     // ...
     Last
 };
@@ -148,6 +150,7 @@ enum class StatusCode : uint32_t
     ReportInconsistent,
     CannotOpenFile,
     ReportContextSwitchLost,
+    ReportWithoutWorkload,
     // ...
     Last
 };
@@ -650,7 +653,7 @@ struct ClientOptionsSubDeviceData_1_0
 //////////////////////////////////////////////////////////////////////////
 struct ClientOptionsSubDeviceIndexData_1_0
 {
-    uint8_t Index;
+    uint8_t    Index;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -658,7 +661,15 @@ struct ClientOptionsSubDeviceIndexData_1_0
 //////////////////////////////////////////////////////////////////////////
 struct ClientOptionsSubDeviceCountData_1_0
 {
-    uint8_t Count;
+    uint8_t    Count;
+};
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Client options workload partition data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientOptionsWorkloadPartition_1_0
+{
+    bool    Enabled;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -670,13 +681,14 @@ struct ClientOptionsData_1_0
 
     union
     {
-        ClientOptionsPoshData_1_0           Posh;
-        ClientOptionsPtbrData_1_0           Ptbr;
-        ClientOptionsComputeData_1_0        Compute;
-        ClientOptionsTbsData_1_0            Tbs;
-        ClientOptionsSubDeviceData_1_0      SubDevice;
-        ClientOptionsSubDeviceIndexData_1_0 SubDeviceIndex;
-        ClientOptionsSubDeviceCountData_1_0 SubDeviceCount;
+        ClientOptionsPoshData_1_0              Posh;
+        ClientOptionsPtbrData_1_0              Ptbr;
+        ClientOptionsComputeData_1_0           Compute;
+        ClientOptionsTbsData_1_0               Tbs;
+        ClientOptionsSubDeviceData_1_0         SubDevice;
+        ClientOptionsSubDeviceIndexData_1_0    SubDeviceIndex;
+        ClientOptionsSubDeviceCountData_1_0    SubDeviceCount;
+        ClientOptionsWorkloadPartition_1_0     WorkloadPartition;
     };
 };
 
@@ -721,6 +733,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 44
+#define METRICS_LIBRARY_BUILD_NUMBER 66
 
 } // namespace MetricsLibraryApi

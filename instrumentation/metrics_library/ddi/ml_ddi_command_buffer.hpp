@@ -171,15 +171,15 @@ namespace ML
         using DdiCommandBuffer = GEN9::DdiCommandBuffer<T>;
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief GEN12-specific functions for DdiCommandBuffer.
+        /// @brief XE_LP-specific functions for DdiCommandBuffer.
         ///        These should ONLY be used for MAJOR algorithm changes.
         //////////////////////////////////////////////////////////////////////////
         template <typename T>
         using DdiCommandBuffer = GEN11::DdiCommandBuffer<T>;
-    } // namespace GEN12
+    } // namespace XE_LP
 
 #pragma endregion
 } // namespace ML

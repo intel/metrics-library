@@ -47,16 +47,6 @@ namespace ML
                 struct Common
                 {
                     static constexpr bool m_PatchGpuMemory = false;
-
-                    //////////////////////////////////////////////////////////////////////////
-                    /// @brief  Checks oa triggered reports usage.
-                    /// @param  kernel kernel interface.
-                    /// @return        true if triggered oa reports can be used.
-                    //////////////////////////////////////////////////////////////////////////
-                    ML_INLINE static bool UseTriggeredOaReport( const TT::KernelInterface& /*kernel*/ )
-                    {
-                        return false;
-                    }
                 };
 
                 //////////////////////////////////////////////////////////////////////////
@@ -74,6 +64,7 @@ namespace ML
                 struct Begin
                 {
                     static constexpr bool m_FlushCommandBuffer = false;
+                    static constexpr bool m_ClearGpuMemory     = true;
                 };
 
                 //////////////////////////////////////////////////////////////////////////
@@ -131,7 +122,7 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct PolicyOneApiTrait : GEN11::PolicyOneApiTrait<T>
@@ -149,17 +140,6 @@ namespace ML
                 struct Common
                 {
                     static constexpr bool m_PatchGpuMemory = false;
-
-                    //////////////////////////////////////////////////////////////////////////
-                    /// @brief  Checks oa triggered reports usage.
-                    /// @param  kernel kernel interface.
-                    /// @return        true if triggered oa reports can be used.
-                    //////////////////////////////////////////////////////////////////////////
-                    ML_INLINE static bool UseTriggeredOaReport( const TT::KernelInterface& kernel )
-                    {
-                        bool supported = kernel.m_Tbs.m_Stream.m_OaBufferMapped.IsMapped();
-                        return supported;
-                    }
                 };
             };
 
@@ -177,5 +157,5 @@ namespace ML
                 };
             };
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

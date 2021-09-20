@@ -89,14 +89,14 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct GpuRegistersLayoutsTrait : GEN11::GpuRegistersLayoutsTrait<T>
         {
             ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML
 
 ML_STRUCTURE_PACK_END();

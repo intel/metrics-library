@@ -103,14 +103,14 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct PipelineTimestampsLayoutsTrait : GEN11::PipelineTimestampsLayoutsTrait<T>
         {
             ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML
 
 ML_STRUCTURE_PACK_END();

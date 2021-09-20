@@ -96,12 +96,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct SubDeviceCommonTrait : GEN11::SubDeviceCommonTrait<T>
         {
             ML_DECLARE_TRAIT( SubDeviceCommonTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

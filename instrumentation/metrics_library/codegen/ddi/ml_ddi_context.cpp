@@ -54,7 +54,7 @@ namespace ML
                 // Print traits properties.
                 T::PrintBuildNumber();
                 T::PrintClient();
-                T::PrintGen();
+                T::PrintGpuType();
                 T::PrintTraits();
 
                 // Print input values.
@@ -143,7 +143,7 @@ namespace ML
                 // Print traits properties.
                 T::PrintBuildNumber();
                 T::PrintClient();
-                T::PrintGen();
+                T::PrintGpuType();
                 T::PrintTraits();
 
                 // Print input values.
@@ -252,7 +252,7 @@ namespace ML
                 // Print traits properties.
                 T::PrintBuildNumber();
                 T::PrintClient();
-                T::PrintGen();
+                T::PrintGpuType();
                 T::PrintTraits();
 
                 // Print input values.
@@ -341,7 +341,7 @@ namespace ML
                 // Print traits properties.
                 T::PrintBuildNumber();
                 T::PrintClient();
-                T::PrintGen();
+                T::PrintGpuType();
                 T::PrintTraits();
 
                 // Print input values.
@@ -418,9 +418,9 @@ namespace ML
 } // namespace ML
 #endif // ML_ENABLE_GEN11
 
-#if ML_ENABLE_GEN12
+#if ML_ENABLE_XE_LP
 
-#include "ml_traits_gen12.h"
+#include "ml_traits_xe_lp.h"
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief T is not available in this file.
@@ -432,7 +432,7 @@ namespace ML
 //////////////////////////////////////////////////////////////////////////
 namespace ML
 {
-    namespace GEN12
+    namespace XE_LP
     {
         #if ML_ENABLE_OPENCL
         namespace OpenCL
@@ -450,7 +450,7 @@ namespace ML
                 // Print traits properties.
                 T::PrintBuildNumber();
                 T::PrintClient();
-                T::PrintGen();
+                T::PrintGpuType();
                 T::PrintTraits();
 
                 // Print input values.
@@ -539,7 +539,7 @@ namespace ML
                 // Print traits properties.
                 T::PrintBuildNumber();
                 T::PrintClient();
-                T::PrintGen();
+                T::PrintGpuType();
                 T::PrintTraits();
 
                 // Print input values.
@@ -612,7 +612,7 @@ namespace ML
         } // namespace OneApi
         #endif // ML_ENABLE_ONEAPI
 
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML
-#endif // ML_ENABLE_GEN12
+#endif // ML_ENABLE_XE_LP
 

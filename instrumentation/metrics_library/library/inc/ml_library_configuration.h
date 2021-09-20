@@ -36,7 +36,7 @@ namespace ML
         static void OverrideClientType( ClientType_1_0& clientType )
         {
             GetApiOverride( clientType.Api );
-            GetGenOverride( clientType.Gen );
+            GetGpuOverride( clientType.Gen );
         }
 
     private:
@@ -58,19 +58,19 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns overridden gen type.
+        /// @brief  Returns overridden gpu type.
         /// @return overridden gen type.
         //////////////////////////////////////////////////////////////////////////
-        static void GetGenOverride( ClientGen& clientGen )
+        static void GetGpuOverride( ClientGen& clientGpu )
         {
-            ClientGen gen = ClientGen::Unknown;
+            ClientGen gpu = ClientGen::Unknown;
 
-            const bool validGenVariable = ML_SUCCESS( BASE::ToolsOsTrait<ML_TRAITS_DUMMY>::GetSystemVariable( Constants::Library::m_GenOverride, gen ) );
-            const bool validGen         = ( gen > ClientGen::Unknown && gen < ClientGen::Last );
+            const bool validGpuVariable = ML_SUCCESS( BASE::ToolsOsTrait<ML_TRAITS_DUMMY>::GetSystemVariable( Constants::Library::m_GpuOverride, gpu ) );
+            const bool validGpu         = ( gpu > ClientGen::Unknown && gpu < ClientGen::Last );
 
-            if( validGenVariable && validGen )
+            if( validGpuVariable && validGpu )
             {
-                clientGen = gen;
+                clientGpu = gpu;
             }
         }
     };

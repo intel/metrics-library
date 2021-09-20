@@ -2971,6 +2971,164 @@ struct MI_LOAD_REGISTER_REG
 } __CODEGEN_ATTRIBUTES_STRUCTURE;
 
 __CODEGEN_C_ASSERT( 12 == sizeof( MI_LOAD_REGISTER_REG ) );
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief MI_NOOP
+/// @details
+///     The MI_NOOP command basically performs a "no operation" in the command
+///     stream and is typically used to pad the command stream (e.g., in order
+///     to pad out a batch buffer to a QWord boundary). However, there is one
+///     minor (optional) function this command can perform - a 22-bit value can
+///     be loaded into the MI NOPID register. This provides a general-purpose
+///     command stream tagging ("breadcrumb") mechanism (e.g., to provide
+///     sequencing information for a subsequent breakpoint interrupt).
+///     
+struct MI_NOOP
+{
+    __CODEGEN_ACCESS_SPECIFIER_DEFINITION
+    union tagTheStructure
+    {
+        struct tagCommon
+        {
+            /// DWORD 0
+            __CODEGEN_UINT32         IdentificationNumber                             : __CODEGEN_BITFIELD( 0, 21)    ; ///< U22
+            __CODEGEN_UINT32         IdentificationNumberRegisterWriteEnable          : __CODEGEN_BITFIELD(22, 22)    ; ///< U1
+            __CODEGEN_UINT32         MICommandOpcode                                  : __CODEGEN_BITFIELD(23, 28)    ; ///< U6
+            __CODEGEN_UINT32         CommandType                                      : __CODEGEN_BITFIELD(29, 31)    ; ///< U3
+
+        } Common;
+        __CODEGEN_UINT32            RawData[ 1 ];
+    } TheStructure;
+
+    __CODEGEN_ACCESS_SPECIFIER_METHODS
+    //////////////////////////////////////////////////////////////////////////
+    /// @name STRUCTURE DEBUG
+    /// @{
+
+    /// @brief User-defined debug function for structure
+    __CODEGEN_DebugType( MI_NOOP )
+    {
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.IdentificationNumber                        ,  0, 21 );
+        __CODEGEN_DebugAttributeBool(   TheStructure.Common.IdentificationNumberRegisterWriteEnable     , 22, 22 );
+        __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
+        __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandType                                 , 29, 31, COMMAND_TYPE );
+    }
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name LOCAL ENUMERATIONS
+    /// @{
+
+    /// @brief U6
+    typedef enum tagMI_COMMAND_OPCODE
+    {
+        MI_COMMAND_OPCODE_MI_NOOP                                        = 0, ///<
+    } MI_COMMAND_OPCODE;
+
+    /// @brief U3
+    typedef enum tagCOMMAND_TYPE
+    {
+        COMMAND_TYPE_MI_COMMAND                                          = 0, ///<
+    } COMMAND_TYPE;
+
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name ENUMERATION DEBUG
+    /// @{
+
+    /// @brief User-defined debug function for enumeration
+    __CODEGEN_DebugEnum( MI_COMMAND_OPCODE )
+    {
+        __CODEGEN_DebugEnumValue( MI_COMMAND_OPCODE_MI_NOOP );
+    }
+
+    /// @brief User-defined debug function for enumeration
+    __CODEGEN_DebugEnum( COMMAND_TYPE )
+    {
+        __CODEGEN_DebugEnumValue( COMMAND_TYPE_MI_COMMAND );
+    }
+
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name INITIALIZATION
+    /// @{
+
+    /// @brief Explicit member initialization function
+    __CODEGEN_INLINE void Init( void )
+    {
+        TheStructure.RawData[ 0 ]                                    = 0x0;
+        //TheStructure.Common.IdentificationNumber                   = 0x0;
+        //TheStructure.Common.IdentificationNumberRegisterWriteEnable = 0;
+        //TheStructure.Common.MICommandOpcode                        = MI_COMMAND_OPCODE_MI_NOOP;
+        //TheStructure.Common.CommandType                            = COMMAND_TYPE_MI_COMMAND;
+    }
+
+    /// @brief Explicit static initialization function
+    static MI_NOOP sInit( void )
+    {
+        MI_NOOP state;
+        state.Init();
+        return state;
+    }
+    /// @}
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @name ACCESSORS
+    /// @{
+
+    /// @brief Raw Data Access
+    __CODEGEN_INLINE __CODEGEN_UINT32& GetRawData( const __CODEGEN_UINT index )
+    {
+        __CODEGEN_ASSERT( index < 1 );
+        return TheStructure.RawData[ index ];
+    }
+
+    /// @brief Write IdentificationNumber
+    /// @details
+    ///     This field contains a 22-bit number which can be written to the MI NOPID
+    ///     register.
+    ///
+
+    __CODEGEN_INLINE void SetIdentificationNumber( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.IdentificationNumber = value;
+    }
+
+    /// @brief Read IdentificationNumber
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetIdentificationNumber( void ) const
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.IdentificationNumber );
+    }
+
+    /// @brief Write IdentificationNumberRegisterWriteEnable
+    /// @details
+    ///     This field enables the value in the Identification Number field to be
+    ///     written into the MI NOPID register. If disabled, that register is
+    ///     unmodified, making this command an effective "no operation" function.
+    ///
+    ///     Format: Enable
+
+    __CODEGEN_INLINE void SetIdentificationNumberRegisterWriteEnable( const __CODEGEN_BOOL value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.IdentificationNumberRegisterWriteEnable = value;
+    }
+
+    /// @brief Read IdentificationNumberRegisterWriteEnable
+    __CODEGEN_INLINE __CODEGEN_BOOL GetIdentificationNumberRegisterWriteEnable( void ) const
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.IdentificationNumberRegisterWriteEnable );
+    }
+
+    /// @}
+} __CODEGEN_ATTRIBUTES_STRUCTURE;
+
+__CODEGEN_C_ASSERT( 4 == sizeof( MI_NOOP ) );
         
 __CODEGEN_NAMESPACE_CLOSE
 __CODEGEN_FILE_DIRECTIVES_CLOSE

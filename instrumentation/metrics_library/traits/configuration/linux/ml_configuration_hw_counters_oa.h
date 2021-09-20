@@ -31,12 +31,12 @@ namespace ML
         using Base = DdiObject<T, TT::Configurations::HwCountersOa, ConfigurationHandle_1_0, ObjectType::ConfigurationHwCountersOa>;
         using Base::Allocate;
         using Base::Delete;
+        using Base::m_Context;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
         TT::KernelInterface&                                       m_Kernel;
-        TT::Context&                                               m_Context;
         TT::Layouts::Configuration::PerformanceMonitoringRegisters m_OaRegisters;
 
         //////////////////////////////////////////////////////////////////////////
@@ -44,9 +44,8 @@ namespace ML
         /// @param context  library context.
         //////////////////////////////////////////////////////////////////////////
         ConfigurationHwCountersOaTrait( TT::Context& context )
-            : Base( context.m_ClientType )
+            : Base( context )
             , m_Kernel{ context.m_Kernel }
-            , m_Context( context )
             , m_OaRegisters{}
         {
         }

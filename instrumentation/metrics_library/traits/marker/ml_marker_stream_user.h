@@ -92,12 +92,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct MarkerStreamUserTrait : GEN11::MarkerStreamUserTrait<T>
         {
             ML_DECLARE_TRAIT( MarkerStreamUserTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

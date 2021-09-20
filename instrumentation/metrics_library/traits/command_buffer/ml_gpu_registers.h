@@ -37,21 +37,21 @@ namespace ML
             }
 
             // Common registers.
-            static constexpr uint32_t m_ContextId            = 0x2364;
-            static constexpr uint32_t m_NopId                = 0x2094;
-            static constexpr uint32_t m_GpuTicks             = 0x2910;
-            static constexpr uint32_t m_CoreFrequency        = 0xA01C;
-            static constexpr uint32_t m_TimestampLow         = 0x2358;
-            static constexpr uint32_t m_TimestampHigh        = 0x235C;
-            static constexpr uint32_t m_OaContextControl     = 0x2360;
-            static constexpr uint32_t m_OaStatus             = 0x2B08;
-            static constexpr uint32_t m_OaHead               = 0x2B0C;
-            static constexpr uint32_t m_OaTail               = 0x2B10;
-            static constexpr uint32_t m_OaBuffer             = 0x2B14;
-            static constexpr uint32_t m_GpCounter            = 0x91b8;
-            static constexpr uint32_t m_OaTrigger2           = 0x2744;
-            static constexpr uint32_t m_OaTrigger6           = 0x2754;
-            static constexpr uint32_t m_RpstatFrequencyMask  = 0xFF800000;
+            static constexpr uint32_t m_ContextId           = 0x2364;
+            static constexpr uint32_t m_NopId               = 0x2094;
+            static constexpr uint32_t m_GpuTicks            = 0x2910;
+            static constexpr uint32_t m_CoreFrequency       = 0xA01C;
+            static constexpr uint32_t m_TimestampLow        = 0x2358;
+            static constexpr uint32_t m_TimestampHigh       = 0x235C;
+            static constexpr uint32_t m_OaContextControl    = 0x2360;
+            static constexpr uint32_t m_OaStatus            = 0x2B08;
+            static constexpr uint32_t m_OaHead              = 0x2B0C;
+            static constexpr uint32_t m_OaTail              = 0x2B10;
+            static constexpr uint32_t m_OaBuffer            = 0x2B14;
+            static constexpr uint32_t m_GpCounter           = 0x91b8;
+            static constexpr uint32_t m_OaTrigger2          = 0x2744;
+            static constexpr uint32_t m_OaTrigger6          = 0x2754;
+            static constexpr uint32_t m_RpstatFrequencyMask = 0xFF800000;
 
             // Oa counters low.
             static constexpr uint32_t m_OaPerfA0  = 0x2800;
@@ -1321,7 +1321,7 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct GpuRegistersTrait : GEN11::GpuRegistersTrait<T>
@@ -1988,5 +1988,5 @@ namespace ML
                 return cullAtSfDisable;
             }
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

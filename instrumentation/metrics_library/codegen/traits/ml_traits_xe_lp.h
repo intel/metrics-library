@@ -1,13 +1,13 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright © 2020-2021 Intel Corporation
+Copyright (C) 2020-2021 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_traits_gen12.h
+@file ml_traits_xe_lp.h
 
 @brief Auto-generated file. Creates Traits structures for a given gen / os / api.
 
@@ -20,17 +20,17 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits.h
 
 #pragma once
 
-#if ML_ENABLE_GEN12
-#define ML_GEN12 1
+#if ML_ENABLE_XE_LP
+#define ML_XE_LP 1
 
-#include "ml_ddi_gen12.h"
+#include "ml_ddi_xe_lp.h"
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Instantiates ML traits for GEN12.
+/// @brief Instantiates ML traits for XE_LP.
 //////////////////////////////////////////////////////////////////////////
 namespace ML
 {
-    namespace GEN12
+    namespace XE_LP
     {
         #if ML_ENABLE_OPENCL
         namespace OpenCL
@@ -83,6 +83,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 using Context                       = ContextTrait<Traits>;                         //  ml_context.h
                 using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
+                using DdiObjects                    = DdiObjectsTrait<Traits>;                      //  ml_ddi_objects.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief SubDevice.
@@ -191,12 +192,7 @@ namespace ML
                 /// @brief Hw Counters.
                 //////////////////////////////////////////////////////////////////////////
                     using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
-                #if 1
-                    using HwCountersCalculatorMain    = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
-                #endif
-                #if 1
-                    using HwCountersCalculator        = HwCountersCalculatorMain;
-                #endif
+                    using HwCountersCalculator        = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Pipeline timestamps.
@@ -218,10 +214,10 @@ namespace ML
                     FunctionLogStatic::Traits( "Client", "OpenCL" );
                 #endif
                 }
-                static void PrintGen()
+                static void PrintGpuType()
                 {
                 #if ML_DEBUG || ML_INTERNAL
-                    FunctionLogStatic::Traits( "Gen", "GEN12" );
+                    FunctionLogStatic::Traits( "Gpu type", "XE_LP" );
                 #endif
                 }
                 static void PrintTraits()
@@ -237,6 +233,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using FunctionLogStatic", FunctionLogStatic::GetDescription() );
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
                     FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
+                    FunctionLogStatic::Traits( "using DdiObjects", DdiObjects::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
@@ -287,12 +284,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
-                #if 1
-                    FunctionLogStatic::Traits( "using Queries::HwCountersCalculatorMain", Queries::HwCountersCalculatorMain::GetDescription() );
-                #endif
-                #if 1
                     FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
-                #endif
                     FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Policy", Policy::GetDescription() );
@@ -354,6 +346,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 using Context                       = ContextTrait<Traits>;                         //  ml_context.h
                 using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
+                using DdiObjects                    = DdiObjectsTrait<Traits>;                      //  ml_ddi_objects.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief SubDevice.
@@ -462,12 +455,7 @@ namespace ML
                 /// @brief Hw Counters.
                 //////////////////////////////////////////////////////////////////////////
                     using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
-                #if 1
-                    using HwCountersCalculatorMain    = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
-                #endif
-                #if 1
-                    using HwCountersCalculator        = HwCountersCalculatorMain;
-                #endif
+                    using HwCountersCalculator        = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Pipeline timestamps.
@@ -489,10 +477,10 @@ namespace ML
                     FunctionLogStatic::Traits( "Client", "OneApi" );
                 #endif
                 }
-                static void PrintGen()
+                static void PrintGpuType()
                 {
                 #if ML_DEBUG || ML_INTERNAL
-                    FunctionLogStatic::Traits( "Gen", "GEN12" );
+                    FunctionLogStatic::Traits( "Gpu type", "XE_LP" );
                 #endif
                 }
                 static void PrintTraits()
@@ -508,6 +496,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using FunctionLogStatic", FunctionLogStatic::GetDescription() );
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
                     FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
+                    FunctionLogStatic::Traits( "using DdiObjects", DdiObjects::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
@@ -558,12 +547,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
                 #endif
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
-                #if 1
-                    FunctionLogStatic::Traits( "using Queries::HwCountersCalculatorMain", Queries::HwCountersCalculatorMain::GetDescription() );
-                #endif
-                #if 1
                     FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
-                #endif
                     FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Policy", Policy::GetDescription() );
@@ -574,7 +558,7 @@ namespace ML
         } // namespace OneApi
         #endif //ML_ENABLE_ONEAPI
 
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML
-#undef ML_GEN12
-#endif // ML_ENABLE_GEN12
+#undef ML_XE_LP
+#endif // ML_ENABLE_XE_LP

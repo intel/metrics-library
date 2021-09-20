@@ -145,7 +145,9 @@ namespace ML
     /// @param Type     object type to validate object type.
     //////////////////////////////////////////////////////////////////////////
     template <typename T, typename Object, typename Handle, ObjectType Type>
-    struct DdiObject : BaseObject, TraitObject<T, Object>
+    struct DdiObject
+        : BaseObject
+        , TraitObject<T, Object>
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( DdiObject );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( DdiObject );
@@ -157,12 +159,35 @@ namespace ML
         using BaseTraitObject::Derived;
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief Members.
+        //////////////////////////////////////////////////////////////////////////
+        TT::Context& m_Context;
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief Ddi object constructor.
+        /// @param context a reference to context object.
         /// @param clientType client api/gen information.
         //////////////////////////////////////////////////////////////////////////
-        DdiObject( const ClientType_1_0& clientType )
+        DdiObject(
+            const ClientType_1_0& clientType,
+            TT::Context&          context )
             : BaseObject( Type, clientType )
+            , m_Context( context )
         {
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Ddi object constructor.
+        /// @param context a reference to context object.
+        //////////////////////////////////////////////////////////////////////////
+        DdiObject( TT::Context& context )
+            : BaseObject( Type, context.m_ClientType )
+            , m_Context( context )
+        {
+            if( m_ObjectType != ObjectType::Context )
+            {
+                m_Context.m_DdiObjects.AddObject( this );
+            }
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -170,6 +195,10 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         virtual ~DdiObject()
         {
+            if( m_ObjectType != ObjectType::Context )
+            {
+                m_Context.m_DdiObjects.RemoveObject( this );
+            }
         }
 
         //////////////////////////////////////////////////////////////////////////

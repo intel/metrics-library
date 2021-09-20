@@ -38,17 +38,11 @@ namespace ML
             using Base::Derived;
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Members.
-            //////////////////////////////////////////////////////////////////////////
-            TT::Context& m_Context;
-
-            //////////////////////////////////////////////////////////////////////////
             /// @brief Override posh query constructor.
             /// @param context library context.
             //////////////////////////////////////////////////////////////////////////
             OverridePoshQueryTrait( TT::Context& context )
-                : Base( context.m_ClientType )
-                , m_Context( context )
+                : Base( context )
             {
             }
 
@@ -121,12 +115,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct OverridePoshQueryTrait : GEN11::OverridePoshQueryTrait<T>
         {
             ML_DECLARE_TRAIT( OverridePoshQueryTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

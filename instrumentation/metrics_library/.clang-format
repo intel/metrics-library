@@ -15,6 +15,7 @@ AccessModifierOffset: -4
 
 AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveAssignments: true
+AlignConsecutiveBitFields: true
 AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: true
 AlignEscapedNewlinesLeft: Right
@@ -26,7 +27,7 @@ AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
-#AllowShortEnumsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLambdasOnASingleLine: None
@@ -40,6 +41,8 @@ AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: false
 BinPackParameters: false
 
+#BitFieldColonSpacing: Both
+
 BraceWrapping:
     AfterCaseLabel: true
     AfterClass: true
@@ -52,7 +55,8 @@ BraceWrapping:
     AfterExternBlock: true
     BeforeCatch: true
     BeforeElse: true
-    #BeforeLambdaBody: true
+    BeforeLambdaBody: true
+    BeforeWhile: true
     IndentBraces: false
     SplitEmptyFunction: true
     SplitEmptyRecord: true
@@ -60,6 +64,7 @@ BraceWrapping:
 
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Custom
+#BreakBeforeConceptDeclarations: true
 BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeComma
@@ -77,12 +82,20 @@ ContinuationIndentWidth: 4
 
 Cpp11BracedListStyle: false
 
+DeriveLineEnding: false
+DerivePointerAlignment: false
+
+#EmptyLineBeforeAccessModifier: Always
+
 FixNamespaceComments: true
 
-#IndentCaseBlocks: true
+#IndentAccessModifiers: false
+IndentCaseBlocks: true
 IndentCaseLabels: true
-#IndentGotoLabels: true
-IndentPPDirectives: AfterHash
+IndentExternBlock: true
+IndentGotoLabels: true
+IndentPPDirectives: BeforeHash
+#IndentRequires: true
 IndentWidth: 4
 IndentWrappedFunctionNames: true
 
@@ -98,33 +111,37 @@ PointerAlignment: Left
 
 ReflowComments: true
 
+#ShortNamespaceLines: 0
+
 SortIncludes: false
 SortUsingDeclarations: false
 
 SpaceAfterCStyleCast: true
 SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: true
+#SpaceAroundPointerQualifiers: Default
 SpaceBeforeAssignmentOperators: true
+#SpaceBeforeCaseColon: false
 SpaceBeforeCpp11BracedList: false
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: Never
 SpaceBeforeRangeBasedForLoopColon: true
-#SpaceBeforeSquareBrackets: false
-#SpaceInEmptyBlock: false
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
 
 SpacesBeforeTrailingComments: 1
 SpacesInAngles: false
 SpacesInCStyleCastParentheses: false
-#SpacesInConditionalStatement: true
+SpacesInConditionalStatement: true
 SpacesInContainerLiterals: false
 SpacesInParentheses: true
 SpacesInSquareBrackets: false
 
-Standard: Cpp11
+Standard: Latest
 
 TabWidth: 4
 
-#UseCRLF: true
+UseCRLF: true
 UseTab: Never

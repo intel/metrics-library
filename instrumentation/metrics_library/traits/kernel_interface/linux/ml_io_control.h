@@ -875,12 +875,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct IoControlTrait : GEN11::IoControlTrait<T>
         {
             ML_DECLARE_TRAIT( IoControlTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

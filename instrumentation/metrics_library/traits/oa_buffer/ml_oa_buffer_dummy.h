@@ -127,7 +127,6 @@ namespace ML
                 return StatusCode::Failed;
             }
 
-
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns oa reports count within oa buffer.
             /// @return oa reports count within oa buffer.
@@ -140,13 +139,10 @@ namespace ML
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Dumps oa buffer reports between query begin / query end.
-            /// @param  beginIndex  triggered begin report index.
-            /// @param  endIndex    triggered end report index.
+            /// @param  reportGpu   gpu query report.
             /// @return operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode DumpReports(
-                const uint32_t /*beginIndex*/,
-                const uint32_t /*endIndex*/ )
+            ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu /*reportGpu*/ )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
                 return log.m_Result;
@@ -172,12 +168,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct OaBufferDummyTrait : GEN11::OaBufferDummyTrait<T>
         {
             ML_DECLARE_TRAIT( OaBufferDummyTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

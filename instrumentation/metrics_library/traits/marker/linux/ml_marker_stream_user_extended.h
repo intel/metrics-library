@@ -50,7 +50,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
             ML_INLINE static StatusCode Write(
-                CommandBuffer&                                   /*buffer*/,
+                CommandBuffer& /*buffer*/,
                 const CommandBufferMarkerStreamUserExtended_1_0& /*data*/ )
             {
                 ML_FUNCTION_LOG( StatusCode::NotImplemented );
@@ -77,12 +77,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct MarkerStreamUserExtendedTrait : GEN11::MarkerStreamUserExtendedTrait<T>
         {
             ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML

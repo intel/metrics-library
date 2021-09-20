@@ -311,14 +311,14 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct HwCountersLayoutsTrait : GEN11::HwCountersLayoutsTrait<T>
         {
             ML_DECLARE_TRAIT( HwCountersLayoutsTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML
 
 ML_STRUCTURE_PACK_END();

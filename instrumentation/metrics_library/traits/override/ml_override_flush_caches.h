@@ -75,12 +75,12 @@ namespace ML
         };
     } // namespace GEN11
 
-    namespace GEN12
+    namespace XE_LP
     {
         template <typename T>
         struct OverrideFlushCachesTrait : GEN11::OverrideFlushCachesTrait<T>
         {
             ML_DECLARE_TRAIT( OverrideFlushCachesTrait, GEN11 );
         };
-    } // namespace GEN12
+    } // namespace XE_LP
 } // namespace ML
