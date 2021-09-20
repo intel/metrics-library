@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 /*
 @file ml_configuration_gpu.h
 
-@brief Auto-generated file. Allows to compile a given gen platform.
+@brief Auto-generated file. Allows to compile a given gpu platform.
 
 DO NOT EDIT
 

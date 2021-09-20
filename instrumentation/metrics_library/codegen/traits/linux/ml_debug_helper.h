@@ -353,10 +353,6 @@ namespace ML
 
                 switch( value )
                 {
-                    case ClientGen::Gen10:
-                        output << "Gen10";
-                        break;
-
                 #if ML_ENABLE_GEN11
                     case ClientGen::Gen11:
                         output << "Gen11";
@@ -393,6 +389,10 @@ namespace ML
 
                     case ClientGen::Unknown:
                         output << "Unknown";
+                        break;
+
+                    case ClientGen::XeHP:
+                        output << "XeHP";
                         break;
 
                     default:
