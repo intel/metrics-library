@@ -114,6 +114,7 @@ extern "C"
     //
     ///////////////////////////////////////////////////////////////////////////////
     void IuOsLogGetSystemSettings(
+        void*     deviceContext,
         bool*     assertEnable,
         uint32_t* logLayerEnable,
         uint32_t* logLevel )

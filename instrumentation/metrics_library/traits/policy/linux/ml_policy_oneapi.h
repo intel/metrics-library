@@ -74,9 +74,10 @@ namespace ML
                 {
                     static constexpr bool m_AllowEmptyContextId               = true;
                     static constexpr bool m_ResetOaBufferState                = false;
-                    static constexpr bool m_IncludeAllHwContexts              = false;
+                    static constexpr bool m_AsyncCompute                      = false;
                     static constexpr bool m_RecoverContextId                  = false;
                     static constexpr bool m_IncludeRenderContextSwitchReports = true;
+                    static constexpr bool m_CheckConfigurationActivation      = true;
                 };
             };
 

@@ -99,6 +99,8 @@ namespace ML
             auto&      oaBuffer   = m_Kernel.m_Tbs.GetOaBufferMapped( T::Layouts::OaBuffer::Type::Oa );
             const bool restartTbs = T::Policy::ConfigurationOa::Activate::m_RestartTbs;
 
+            m_Kernel.m_OaConfigurationReferenceCounter++;
+
             return log.m_Result = ( restartTbs && !oaBuffer.m_Mapped )
                 ? m_Kernel.m_Tbs.m_Stream.Restart()
                 : m_Kernel.LoadOaConfigurationToGpu( m_OaRegisters );
@@ -114,6 +116,8 @@ namespace ML
         ML_INLINE StatusCode Deactivate() const
         {
             ML_FUNCTION_LOG( StatusCode::Success );
+
+            m_Kernel.m_OaConfigurationReferenceCounter--;
 
             return log.m_Result = T::Policy::ConfigurationOa::Activate::m_RestartTbs
                 ? StatusCode::Success

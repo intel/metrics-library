@@ -272,6 +272,17 @@ namespace ML
                 auto& kernel     = query.m_Context.m_Kernel;
                 auto  reportsApi = static_cast<TT::Layouts::HwCounters::Query::ReportApi*>( getData.Data );
 
+                // Check if a configuration was activated before executing query commands.
+                if( T::Policy::QueryHwCounters::GetData::m_CheckConfigurationActivation )
+                {
+                    if( kernel.m_OaConfigurationReferenceCounter <= 0 )
+                    {
+                        log.Error( "Empty configuration found" );
+                        log.m_Result = StatusCode::ReportWithEmptyConfiguration;
+                        return log.m_Result;
+                    }
+                }
+
                 // Skip report calculation for null query.
                 if( kernel.IsNullQueryOverride() )
                 {
@@ -338,13 +349,13 @@ namespace ML
             /// @param  slot    slot index.
             /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode UseTriggeredOaReport( const uint32_t slot )
+            ML_INLINE StatusCode GetTriggeredOaReports( const uint32_t slot )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
                 ML_FUNCTION_CHECK( m_Context.m_OaBuffer.IsValid() );
                 ML_FUNCTION_CHECK( m_Context.m_OaBuffer.DumpReports( GetReportGpu( slot ) ) );
-                ML_FUNCTION_CHECK( UseTriggeredOaReport( slot, true ) );
-                ML_FUNCTION_CHECK( UseTriggeredOaReport( slot, false ) );
+                ML_FUNCTION_CHECK( FindTriggeredOaReport( slot, true ) );
+                ML_FUNCTION_CHECK( FindTriggeredOaReport( slot, false ) );
 
                 return log.m_Result;
             }
@@ -767,9 +778,9 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                const uint32_t oaBufferOffset    = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaBuffer );
-                const uint32_t oaTailBeginOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailBegin );
-                const uint32_t oaTailEndOffset   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailEnd );
+                const uint32_t oaBufferOffset       = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaBuffer );
+                const uint32_t oaTailPreBeginOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPreBegin );
+                const uint32_t oaTailPostEndOffset  = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPostEnd );
 
                 const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
                     ? T::GpuCommands::Flags::WorkloadPartition
@@ -780,7 +791,7 @@ namespace ML
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         T::GpuRegisters::m_OaTail,
-                        address + oaTailBeginOffset,
+                        address + oaTailPreBeginOffset,
                         flags ) );
                 }
                 else
@@ -788,7 +799,7 @@ namespace ML
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         T::GpuRegisters::m_OaTail,
-                        address + oaTailEndOffset,
+                        address + oaTailPostEndOffset,
                         flags ) );
 
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
@@ -924,12 +935,11 @@ namespace ML
             /// @param  reportTriggered triggered oa report to validate.
             /// @return                 true if triggered oa report is valid.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE bool ValidateTriggeredOaReport(
+            ML_INLINE bool ValidateGpuTicks(
                 const TT::Layouts::HwCounters::Query::ReportGpu& reportQuery,
                 const TT::Layouts::HwCounters::ReportOa&         reportTriggered )
             {
                 ML_FUNCTION_LOG( false );
-                ML_FUNCTION_CHECK_ERROR( Derived().ValidateReportReason( reportTriggered.m_Header ), false );
 
                 const uint32_t queryThreshold  = 4000;                                                                                   // Threshold in ticks. Used to check whether obtained triggered reports were generated
                 const uint32_t queryBeginTicks = static_cast<uint32_t>( reportQuery.m_Begin.m_Oa.m_Header.m_GpuTicks ) - queryThreshold; // near the actual query begin/end execution. During tests, typical delta between ticks
@@ -960,7 +970,26 @@ namespace ML
                     log.m_Result = caseA || caseB;
                 }
 
+                if( !log.m_Result )
+                {
+                    log.Warning( "Invalid triggered oa report, tic:", triggerTicks );
+                }
+
                 return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Validates triggered oa report against queryId (put in contextId field)
+            /// @param  reportHeader    query report header.
+            /// @param  index           report index in oaBuffer.
+            /// @return                 success if triggered oa report reason is valid.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE bool ValidateQueryId(
+                const TT::Layouts::HwCounters::ReportHeader& /*reportHeader*/,
+                const uint32_t /*index*/ ) const
+            {
+                // queryId validation is not used before XeHP.
+                return true;
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -969,44 +998,56 @@ namespace ML
             /// @param  begin       begin/end indicator.
             /// @return             operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode UseTriggeredOaReport(
+            ML_INLINE StatusCode FindTriggeredOaReport(
                 const uint32_t slot,
                 const bool     begin )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
                 // Query data.
-                uint32_t tailIndex     = 0;
-                auto&    queryReport   = GetReportGpu( slot );
-                auto&    queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
+                auto& queryReport   = GetReportGpu( slot );
+                auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
 
-                // Tail data.
-                bool  tailIndexValid = ML_SUCCESS( m_Context.m_OaBuffer.GetTriggeredReportIndex( queryReport, begin, tailIndex ) );
-                auto  dummyReportOa  = TT::Layouts::HwCounters::ReportOa{};
-                auto& tailReportOa   = tailIndexValid ? m_Context.m_OaBuffer.GetReport( tailIndex ) : dummyReportOa;
-                bool  tailValid      = tailIndexValid && ValidateTriggeredOaReport( queryReport, tailReportOa );
+                // OaBuffer data.
+                uint32_t reportsCount      = m_Context.m_OaBuffer.GetReportsCount();
+                uint32_t reportOaIndex     = 0;
+                uint32_t reportOaIndexPost = 0;
+                bool     reportOaValid     = false;
 
-                // Set the contextId.
-                Derived().SetContextId( queryReportOa.m_Header.m_ContextId, tailReportOa );
-
-                // Triggered report debug information.
-                log.Debug( "Query report     " );
-                log.Debug( "  begin          ", begin );
-                log.Debug( "  ticks begin    ", queryReport.m_Begin.m_Oa.m_Header.m_GpuTicks );
-                log.Debug( "  ticks end      ", queryReport.m_End.m_Oa.m_Header.m_GpuTicks );
-                log.Debug( "  contextId      ", queryReportOa.m_Header.m_ContextId );
-                log.Debug( "Tail report:     " );
-                log.Debug( "  index          ", tailIndex );
-                log.Debug( "  tailIndexValid ", tailIndexValid );
-                log.Debug( "  valid          ", tailValid );
-                log.Debug( "  tailReportOa   ", tailReportOa );
-
-                // Recreate query report from triggered oa report or make it empty.
-                if( tailValid )
+                // Validate triggered oa report.
+                if( ML_SUCCESS( m_Context.m_OaBuffer.GetPreReportIndex( queryReport, begin, reportOaIndex ) ) &&
+                    ML_SUCCESS( m_Context.m_OaBuffer.GetPostReportIndex( queryReport, begin, reportOaIndexPost ) ) )
                 {
-                    queryReportOa = tailReportOa;
+                    auto& derived = Derived();
+
+                    while( !reportOaValid && ( reportOaIndex != reportOaIndexPost ) )
+                    {
+                        auto& reportOa = m_Context.m_OaBuffer.GetReport( reportOaIndex );
+
+                        reportOaValid = derived.ValidateQueryId( reportOa.m_Header, reportOaIndex );
+
+                        if( !reportOaValid )
+                        {
+                            reportOaIndex = ( reportOaIndex < reportsCount ) ? ++reportOaIndex : 0;
+                        }
+                    }
+
+                    // Recreate query report from triggered oa report.
+                    if( reportOaValid )
+                    {
+                        auto& reportOa = m_Context.m_OaBuffer.GetReport( reportOaIndex );
+                        log.Info( "Used reportOa: ", 
+                                  "(", FormatFlag::Decimal, FormatFlag::SetWidth5, reportOaIndex, ")", reportOa );
+
+                        ML_ASSERT( derived.ValidateReportReason( reportOa.m_Header ) );
+                        ML_ASSERT( ValidateGpuTicks( queryReport, reportOa ) );
+
+                        // Copy triggered oa report into query oa report.
+                        derived.CopyTriggeredOaReport( queryReportOa, reportOa );
+                    }
                 }
-                else
+
+                if( !reportOaValid )
                 {
                     queryReport.m_Begin.m_Oa.m_Data = {};
                     queryReport.m_End.m_Oa.m_Data   = {};
@@ -1018,14 +1059,16 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Copies context id from cache into triggered report.
-            /// @param  contextId       hw context id from the cache.
-            /// @return reportTriggered triggered oa report.
+            /// @brief  Copies triggered oa report into query oa report.
+            /// @param  queryReportOa   query oa report
+            /// @param  reportTriggered triggered oa report.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE void SetContextId(
-                const uint32_t /*contextId*/,
-                TT::Layouts::HwCounters::ReportOa& /*reportTriggered*/ )
+            ML_INLINE void CopyTriggeredOaReport(
+                TT::Layouts::HwCounters::ReportOa& queryReportOa,
+                TT::Layouts::HwCounters::ReportOa& reportTriggered )
             {
+                // Copy report.
+                queryReportOa = reportTriggered;
             }
         };
     } // namespace BASE

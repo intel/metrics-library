@@ -94,19 +94,6 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns a derived object from a given base object. Run-time
-            ///         type information is disabled on Linux by driver, so
-            ///         static_cast is used here.
-            /// @param  base    base object.
-            /// @return         derived object.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename DerivedObject, typename BaseObject>
-            ML_INLINE static DerivedObject* DynamicCast( BaseObject* base )
-            {
-                return static_cast<DerivedObject*>( base );
-            }
-
-            //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns current time as string.
             /// @return current time.
             //////////////////////////////////////////////////////////////////////////

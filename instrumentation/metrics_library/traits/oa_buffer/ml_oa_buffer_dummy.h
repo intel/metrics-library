@@ -112,13 +112,29 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns triggered oa report associated with query begin/end report.
+            /// @brief  Returns first oa report associated with query begin/end report.
             /// @param  query   gpu report collected by query.
             /// @param  begin   query begin/end.
             /// @return index   oa tail index.
             /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode GetTriggeredReportIndex(
+            ML_INLINE StatusCode GetPreReportIndex(
+                const TT::Layouts::HwCounters::Query::ReportGpu& /*query*/,
+                const bool /*begin*/,
+                uint32_t& /*index*/ )
+            {
+                ML_ASSERT_ALWAYS();
+                return StatusCode::Failed;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns last oa report associated with query begin/end report.
+            /// @param  query   gpu report collected by query.
+            /// @param  begin   query begin/end.
+            /// @return index   oa tail index.
+            /// @return         operation status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode GetPostReportIndex(
                 const TT::Layouts::HwCounters::Query::ReportGpu& /*query*/,
                 const bool /*begin*/,
                 uint32_t& /*index*/ )

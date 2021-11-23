@@ -160,8 +160,8 @@ namespace ML
                         break;
 
                     case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
-                        ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailBegin.All.m_Tail != m_ReportGpu.m_OaTailEnd.All.m_Tail, StatusCode::ReportLost );
-                        ML_FUNCTION_CHECK_ERROR( m_Query.UseTriggeredOaReport( m_QuerySlotIndex ), StatusCode::ReportLost );
+                        ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailPreBegin.All.m_Tail != m_ReportGpu.m_OaTailPostEnd.All.m_Tail, StatusCode::ReportLost );
+                        ML_FUNCTION_CHECK_ERROR( m_Query.GetTriggeredOaReports( m_QuerySlotIndex ), StatusCode::ReportLost );
                         break;
 
                     default:
@@ -182,22 +182,24 @@ namespace ML
             {
                 ML_FUNCTION_LOG( true );
 
-                auto& calculatorDerived = Derived();
+                auto& derived = Derived();
+
+                // Check if gpu report is ready.
+                status = derived.ValidateReportGpu();
 
                 // Show what has been collected.
-                calculatorDerived.PrintReportGpu();
+                status = ML_SUCCESS( status ) ? derived.PrintReportGpu() : status;
 
                 // Validate gpu report.
-                status = ValidateReportGpu();
-                status = ML_SUCCESS( status ) ? calculatorDerived.PrepareReportGpu() : status;
-                status = ML_SUCCESS( status ) ? calculatorDerived.ValidateReportGpuContexts() : status;
+                status = ML_SUCCESS( status ) ? derived.PrepareReportGpu() : status;
+                status = ML_SUCCESS( status ) ? derived.ValidateReportGpuContexts() : status;
                 status = ML_SUCCESS( status ) ? ValidateReportGpuWorkload() : status;
 
                 // Validate gpu report status.
                 log.m_Result = ValidateReportGpuStatus( status );
 
                 // Print debug information.
-                calculatorDerived.PrintReportGpuDebugInformation();
+                derived.PrintReportGpuDebugInformation();
 
                 // Print report gpu status.
                 log.Info( "Status      ", status );
@@ -257,6 +259,12 @@ namespace ML
                         status                        = StatusCode::Success; // Returns success to avoid subsequent get data request.
                         break;
 
+                    case StatusCode::ContextMismatch:
+                        flags.m_ContextMismatch = 1;                   // ContextIds in begin / end are different.
+                        log.m_Result            = false;               // Do not process this gpu report.
+                        status                  = StatusCode::Success; // Returns success to avoid subsequent get data request.
+                        break;
+
                     default:
                         ML_ASSERT_ALWAYS();
                         log.m_Result = false;
@@ -303,9 +311,17 @@ namespace ML
                 const bool equalContexts  = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
                 const bool validContexts  = ( validBegin && validEnd ) || isSrmOag || useNullContext;
 
-                return log.m_Result = ( validContexts && equalContexts )
-                    ? StatusCode::Success
-                    : StatusCode::ReportNotReady;
+                if( !( validContexts && equalContexts ) )
+                {
+                    log.Error( "validContexts =", validContexts,
+                               ", equalContexts =", equalContexts,
+                               ", begin.contextId =", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId,
+                               ", end.contextId =", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId );
+
+                    log.m_Result = StatusCode::ContextMismatch;
+                }
+
+                return log.m_Result;
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -345,6 +361,7 @@ namespace ML
                 TT::Layouts::HwCounters::ReportId        frequency = {};
                 bool                                     overrun   = false;
                 TT::Layouts::OaBuffer::ReportReason      events    = {};
+                auto&                                    derived   = Derived();
 
                 // Clear api report data.
                 reportApi = {};
@@ -365,7 +382,7 @@ namespace ML
                             overrun,
                             events );
                     }
-                    while( ML_SUCCESS( log.m_Result ) && !Derived().IsValidOaReport( *oaBegin ) && !overrun );
+                    while( ML_SUCCESS( log.m_Result ) && !derived.IsValidOaReport( *oaBegin ) && !overrun );
                 }
                 else
                 {
@@ -649,8 +666,8 @@ namespace ML
                 // Noa counters.
                 T::Queries::HwCountersCalculator::NoaCountersDelta( begin, end, reportApi );
 
-                log.Info( "Report oa begin:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogBeginIndex, FormatFlag::AdjustRight, begin );
-                log.Info( "Report oa end:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndIndex, FormatFlag::AdjustRight, end );
+                log.Debug( "Report oa begin:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogBeginIndex, FormatFlag::AdjustRight, begin );
+                log.Debug( "Report oa end:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndIndex, FormatFlag::AdjustRight, end );
 
 #if 0 // Debug only.
                 if( report.m_GpuTicks != report.m_NoaCounter[1] )
@@ -866,7 +883,7 @@ namespace ML
                     const uint32_t reason = reportOa.m_Header.m_ReportId.m_ReportReason;
 
                     // 1. Check allowed contexts.
-                    log.m_Result = reportOa.m_Header.m_ReportId.m_ContextValid && IsMeasuredContextId( static_cast<uint32_t>( reportOa.m_Header.m_ContextId ) ); // TODO: remove the cast
+                    log.m_Result = reportOa.m_Header.m_ReportId.m_ContextValid && Derived().IsMeasuredContextId( reportOa.m_Header.m_ContextId );
 
                     // 2. Now check the report reason:
                     if( reason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::C6 ) )
@@ -900,24 +917,6 @@ namespace ML
             {
                 // Check matching with the contextId used in begin report.
                 bool valid = contextId == m_ReportBegin.m_Oa.m_Header.m_ContextId;
-
-                // Check alternate valid contextIds if needed.
-                if( !valid )
-                {
-                    for( uint32_t i = 0; i < m_HwContextIds.m_Count; ++i )
-                    {
-                        // Used to get pure hw context id, only 20 lsb bits
-                        // in context id are used for that purpose.
-                        TT::Layouts::HwCounters::ReportId reportId = {};
-                        reportId.m_ContextId                       = contextId;
-
-                        if( reportId.m_ContextId == m_HwContextIds.m_Context[i].m_Id )
-                        {
-                            valid = true;
-                            break;
-                        }
-                    }
-                }
 
                 return valid;
             }
@@ -1008,13 +1007,17 @@ namespace ML
                         if( derivedCalculator.CompareTimestamps( oaReport.m_Header.m_Timestamp, reportBegin->m_Header.m_Timestamp ) <= 0 )
                         {
                             frequency = oaReport.m_Header.m_ReportId;
-                            log.Info( "oaReport (skip begin):", FormatFlag::Decimal, oaReportIndex, oaReport );
+                            log.Info( "oaReport (skip begin): ", "(", FormatFlag::Decimal, oaReportIndex, ")", oaReport );
                         }
                         else if( derivedCalculator.CompareTimestamps( oaReport.m_Header.m_Timestamp, reportEnd->m_Header.m_Timestamp ) >= 0 )
                         {
                             // All next reports in the oa buffer are too new, so ignore subsequent reports.
                             frequency = oaReport.m_Header.m_ReportId;
-                            log.Info( "oaReport (skip end):", FormatFlag::Decimal, oaReportIndex, oaReport );
+                            log.Info( "oaReport (skip end): ", "(", FormatFlag::Decimal, oaReportIndex, ")", oaReport );
+
+                            const uint32_t                           oaReportPostEndIndex = ( m_OaBufferState.m_TailBeginIndex + i + 1 ) % m_OaBuffer.GetReportsCount();
+                            const TT::Layouts::HwCounters::ReportOa& oaReportPostEnd      = m_OaBuffer.GetReport( oaReportPostEndIndex );
+                            log.Debug( "oaReport (post end): ", "(", FormatFlag::Decimal, oaReportPostEndIndex, ")", oaReportPostEnd );
                             break;
                         }
                         else
@@ -1036,11 +1039,11 @@ namespace ML
                             if( Derived().IsValidOaReport( oaReport ) )
                             {
                                 m_QuerySlot.m_ApiReportsCount++;
-                                log.Info( "oaReport (valid):", FormatFlag::Decimal, oaReportIndex, oaReport );
+                                log.Info( "oaReport (valid): ", "(", FormatFlag::Decimal, oaReportIndex, ")", oaReport );
                             }
                             else
                             {
-                                log.Info( "oaReport (tm-ok):", FormatFlag::Decimal, oaReportIndex, oaReport );
+                                log.Info( "oaReport (tm-ok): ", "(", FormatFlag::Decimal, oaReportIndex, ")", oaReport );
                             }
                         }
                     }
@@ -1051,8 +1054,8 @@ namespace ML
                     m_OaBufferState.m_ContextValid       = true;
                 }
 
-                log.Info( "m_OaBufferState.m_FirstIndex:", FormatFlag::Decimal, FormatFlag::ShowBase, m_OaBufferState.m_FirstIndex );
-                log.Info( "m_OaBufferState.m_NextAfterLastIndex:", FormatFlag::Decimal, FormatFlag::ShowBase, m_OaBufferState.m_NextAfterLastIndex );
+                log.Debug( "m_OaBufferState.m_FirstIndex:", FormatFlag::Decimal, FormatFlag::ShowBase, m_OaBufferState.m_FirstIndex );
+                log.Debug( "m_OaBufferState.m_NextAfterLastIndex:", FormatFlag::Decimal, FormatFlag::ShowBase, m_OaBufferState.m_NextAfterLastIndex );
 
                 return log.m_Result;
             }
@@ -1262,7 +1265,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Prints platform specific report gpu information.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE void PrintReportGpu()
+            ML_INLINE StatusCode PrintReportGpu()
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
@@ -1273,13 +1276,16 @@ namespace ML
                 log.Debug( "    m_DmaFenceIdBegin   ", m_ReportGpu.m_DmaFenceIdBegin );
                 log.Debug( "    m_DmaFenceIdEnd     ", m_ReportGpu.m_DmaFenceIdEnd );
                 log.Debug( "    m_OaBuffer          ", m_ReportGpu.m_OaBuffer.All.m_ReportBufferOffset );
-                log.Debug( "    m_OaTailBegin       ", m_ReportGpu.m_OaTailBegin.All.m_Tail );
-                log.Debug( "    m_OaTailTriggerEnd  ", m_ReportGpu.m_OaTailTriggerEnd.All.m_Tail );
-                log.Debug( "    m_OaTailEnd         ", m_ReportGpu.m_OaTailEnd.All.m_Tail );
+                log.Debug( "    m_OaTailPreBegin    ", m_ReportGpu.m_OaTailPreBegin.All.m_Tail );
+                log.Debug( "    m_OaTailPostBegin   ", m_ReportGpu.m_OaTailPostBegin.All.m_Tail );
+                log.Debug( "    m_OaTailPreEnd      ", m_ReportGpu.m_OaTailPreEnd.All.m_Tail );
+                log.Debug( "    m_OaTailPostEnd     ", m_ReportGpu.m_OaTailPostEnd.All.m_Tail );
                 log.Debug( "    m_CoreFrequencyBegin", m_ReportGpu.m_CoreFrequencyBegin );
                 log.Debug( "    m_CoreFrequencyEnd  ", m_ReportGpu.m_CoreFrequencyEnd );
                 log.Debug( "    m_MarkerUser        ", m_ReportGpu.m_MarkerUser );
                 log.Debug( "    m_MarkerDriver      ", m_ReportGpu.m_MarkerDriver );
+
+                return log.m_Result;
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -1289,11 +1295,11 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 
-                log.Info( "Query begin ", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, 0, FormatFlag::AdjustRight, m_ReportGpu.m_Begin.m_Oa, m_ReportGpu.m_Begin.m_Gp );
-                log.Info( "Query end   ", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, 0, FormatFlag::AdjustRight, m_ReportGpu.m_End.m_Oa, m_ReportGpu.m_End.m_Gp );
-                log.Info( "Fence       ", m_ReportGpu.m_DmaFenceIdBegin, m_ReportGpu.m_DmaFenceIdEnd );
-                log.Info( "End tag     ", m_ReportGpu.m_EndTag );
-                log.Info( "Marker      ", m_ReportGpu.m_MarkerUser );
+                log.Debug( "Query begin ", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, 0, FormatFlag::AdjustRight, m_ReportGpu.m_Begin.m_Oa, m_ReportGpu.m_Begin.m_Gp );
+                log.Debug( "Query end   ", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, 0, FormatFlag::AdjustRight, m_ReportGpu.m_End.m_Oa, m_ReportGpu.m_End.m_Gp );
+                log.Debug( "Fence       ", m_ReportGpu.m_DmaFenceIdBegin, m_ReportGpu.m_DmaFenceIdEnd );
+                log.Debug( "End tag     ", m_ReportGpu.m_EndTag );
+                log.Debug( "Marker      ", m_ReportGpu.m_MarkerUser );
             }
         };
     } // namespace BASE

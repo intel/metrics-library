@@ -32,9 +32,14 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             const TT::KernelInterface& m_Kernel;
             std::string                m_KernelMetricSet;
-            int32_t                    m_DrmFile;
-            int32_t                    m_DrmCard;
             bool                       m_DrmOpenedByUmd;
+            int32_t                    m_DrmCard;
+
+        protected:
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Members.
+            //////////////////////////////////////////////////////////////////////////
+            int32_t m_DrmFile;
 
         public:
             //////////////////////////////////////////////////////////////////////////
@@ -44,9 +49,9 @@ namespace ML
             IoControlTrait( const TT::KernelInterface& kernel )
                 : m_Kernel( kernel )
                 , m_KernelMetricSet( "" )
-                , m_DrmFile( T::ConstantsOs::Drm::m_Invalid )
-                , m_DrmCard( T::ConstantsOs::Drm::m_Invalid )
                 , m_DrmOpenedByUmd( false )
+                , m_DrmCard( T::ConstantsOs::Drm::m_Invalid )
+                , m_DrmFile( T::ConstantsOs::Drm::m_Invalid )
             {
             }
 

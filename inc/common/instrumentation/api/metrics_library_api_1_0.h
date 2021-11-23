@@ -70,6 +70,8 @@ enum class ClientGen : uint32_t
     Gen11LP = 5,
     Gen12   = 6,
     XeHP    = 9,
+    XeHPG   = 10,
+    XeHPC   = 11,
     // ...
     Last
 };
@@ -151,6 +153,8 @@ enum class StatusCode : uint32_t
     CannotOpenFile,
     ReportContextSwitchLost,
     ReportWithoutWorkload,
+    ContextMismatch,
+    ReportWithEmptyConfiguration,
     // ...
     Last
 };
@@ -733,6 +737,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 66
+#define METRICS_LIBRARY_BUILD_NUMBER 76
 
 } // namespace MetricsLibraryApi

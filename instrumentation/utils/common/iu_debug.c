@@ -244,11 +244,14 @@ void __IuLogPrint(
 //
 // Description: Overrides default (complied) log settings
 ///////////////////////////////////////////////////////////////////////////////
-void IuLogGetSettings( const uint32_t adapterId )
+void IuLogGetSettings(
+    void*          deviceContext,
+    const uint32_t adapterId )
 {
     g_IuLogsControl.AdapterId = adapterId;
 
     IuOsLogGetSystemSettings(
+        deviceContext,
         &g_IuLogsControl.AssertEnable,
         &g_IuLogsControl.LogLayerEnable,
         &g_IuLogsControl.LogLevel );

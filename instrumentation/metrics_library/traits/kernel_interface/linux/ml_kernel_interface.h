@@ -32,6 +32,7 @@ namespace ML
         int32_t                        m_DeviceId;
         TT::IoControl                  m_IoControl;
         TT::TbsInterface               m_Tbs;
+        int32_t                        m_OaConfigurationReferenceCounter;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief KernelInterfaceTrait constructor.
@@ -43,6 +44,7 @@ namespace ML
             , m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
             , m_IoControl( *this )
             , m_Tbs( *this )
+            , m_OaConfigurationReferenceCounter( 0 )
         {
         }
 

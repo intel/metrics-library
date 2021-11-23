@@ -131,9 +131,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE Object& Derived()
         {
-            Object* object = T::ToolsOs::template DynamicCast<Object>( this );
-            ML_ASSERT( object );
-            return *object;
+            return *static_cast<Object*>( this );
         }
     };
 
@@ -251,7 +249,7 @@ namespace ML
         ML_INLINE Handle GetHandle()
         {
             Handle handle = {};
-            handle.data   = T::ToolsOs::template DynamicCast<Object>( this );
+            handle.data   = static_cast<Object*>( this );
 
             ML_ASSERT( handle.data );
             return handle;
@@ -265,7 +263,7 @@ namespace ML
         ML_INLINE static Object& FromHandle( const Handle& handle )
         {
             BaseObject* base   = static_cast<BaseObject*>( handle.data );
-            Object*     object = T::ToolsOs::template DynamicCast<Object>( base );
+            Object*     object = static_cast<Object*>( base );
 
             ML_ASSERT( object );
             ML_ASSERT( IsValidType( *object ) );
@@ -280,7 +278,7 @@ namespace ML
         ML_INLINE static Object* FromHandleUnsafe( const Handle& handle )
         {
             BaseObject* base   = static_cast<BaseObject*>( handle.data );
-            Object*     object = T::ToolsOs::template DynamicCast<Object>( base );
+            Object*     object = static_cast<Object*>( base );
             const bool  valid  = object && IsValidType( *object );
 
             return valid
@@ -295,7 +293,7 @@ namespace ML
         ML_INLINE static bool IsValid( const Handle& handle )
         {
             BaseObject* base   = static_cast<BaseObject*>( handle.data );
-            Object*     object = T::ToolsOs::template DynamicCast<Object>( base );
+            Object*     object = static_cast<Object*>( base );
 
             return object && IsValidType( *object );
         }

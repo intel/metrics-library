@@ -395,6 +395,14 @@ namespace ML
                         output << "XeHP";
                         break;
 
+                    case ClientGen::XeHPC:
+                        output << "XeHPC";
+                        break;
+
+                    case ClientGen::XeHPG:
+                        output << "XeHPG";
+                        break;
+
                     default:
                         output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
                         output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
@@ -799,6 +807,10 @@ namespace ML
                         output << "CannotOpenFile";
                         break;
 
+                    case StatusCode::ContextMismatch:
+                        output << "ContextMismatch";
+                        break;
+
                     case StatusCode::Failed:
                         output << "Failed";
                         break;
@@ -861,6 +873,10 @@ namespace ML
 
                     case StatusCode::ReportNotReady:
                         output << "ReportNotReady";
+                        break;
+
+                    case StatusCode::ReportWithEmptyConfiguration:
+                        output << "ReportWithEmptyConfiguration";
                         break;
 
                     case StatusCode::ReportWithoutWorkload:
@@ -1230,7 +1246,8 @@ namespace ML
                 flags += userReport.m_Flags.m_ReportInconsistent      ? " inconsistent"      : "";
                 flags += userReport.m_Flags.m_ReportNotReady          ? " not_ready"         : "";
                 flags += userReport.m_Flags.m_ReportContextSwitchLost ? " no_context_switch" : "";
-                flags += userReport.m_Flags.m_ReportWithoutWorkload   ? " no_workload      " : "";
+                flags += userReport.m_Flags.m_ReportWithoutWorkload   ? " no_workload"       : "";
+                flags += userReport.m_Flags.m_ContextMismatch         ? " context_mismatch"  : "";
                 flags  = flags.length() ? flags : "none";
 
                 output << "QUERY: ";
@@ -1305,6 +1322,10 @@ namespace ML
 
                     case T::Layouts::OaBuffer::ReportReason::DmaSampling:
                         output << "DmaSampling";
+                        break;
+
+                    case T::Layouts::OaBuffer::ReportReason::Empty:
+                        output << "Empty";
                         break;
 
                     default:

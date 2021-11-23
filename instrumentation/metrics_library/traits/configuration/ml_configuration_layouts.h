@@ -178,6 +178,22 @@ namespace ML
         };
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief NodeType enumeration.
+        //////////////////////////////////////////////////////////////////////////
+        enum class NodeType : uint32_t
+        {
+            Rcs = 0,
+            Vcs,
+            Bcs,
+            Ve,
+            Vcs2,
+            Ccs0,
+            Gsc,
+            // ...
+            Count
+        };
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief Base type for HwContextIds structure.
         //////////////////////////////////////////////////////////////////////////
         struct HwContextIds
@@ -190,6 +206,7 @@ namespace ML
                 uint32_t      m_Pid;
                 uint32_t      m_Id;
                 HwContextType m_Type;
+                NodeType      m_Node;
             } m_Context[m_Max];
         };
 

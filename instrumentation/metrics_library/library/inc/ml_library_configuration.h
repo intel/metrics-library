@@ -26,7 +26,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         static void IntializeLogger()
         {
-            IuLogGetSettings( IU_ADAPTER_ID_DEFAULT );
+            IuLogGetSettings( nullptr, IU_ADAPTER_ID_DEFAULT );
         }
 
         //////////////////////////////////////////////////////////////////////////

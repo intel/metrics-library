@@ -7,9 +7,9 @@ SPDX-License-Identifier: MIT
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file iu_debug.c
+@file iu_debug.h
 
-@brief Instrumentation Utils common debug routines and structures.
+@brief Instrumentation Utils debug macros and structures definitions.
 */
 
 #pragma once
@@ -81,7 +81,7 @@ extern "C"
     ///////////////////////////////////////////////////////////////////////////////
     // FUNCTION: IuLogGetSettings (to override default log settings)
     ///////////////////////////////////////////////////////////////////////////////
-    void IuLogGetSettings( const uint32_t adapterId );
+    void IuLogGetSettings( void* deviceContext, const uint32_t adapterId );
 
     ///////////////////////////////////////////////////////////////////////////////
     // FUNCTION: __IuLogPrint (for internal use only)
@@ -116,7 +116,7 @@ extern "C"
 #define IU_DBG_ALL 0x000007FF
 #define IU_DBG_OFF 0x00000000
 
-#define IU_DBG_SEV_CRITICAL 0x00000001 // unexpected unrecoverable errors, user for asserts only
+#define IU_DBG_SEV_CRITICAL 0x00000001 // unexpected unrecoverable errors, used for asserts only
 #define IU_DBG_SEV_ERROR    0x00000002 // unexpected recoverable errors
 #define IU_DBG_SEV_WARNING  0x00000004 // expected errors & warnings
 #define IU_DBG_SEV_INFO     0x00000008 // information messages

@@ -523,6 +523,8 @@ namespace ML
                 const uint32_t oaReportOffset = begin
                     ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa )
                     : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
+                const uint32_t oaTailPostBeginOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPostBegin );
+                const uint32_t oaTailPreEndOffset  = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPreEnd );
 
                 // Ticks before triggered report.
                 if( begin )
@@ -538,26 +540,33 @@ namespace ML
                         address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
                         flags ) );
                 }
-                // OaTail before triggered report.
                 else
                 {
+                    // OaTail before triggered report.
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                         buffer,
                         T::GpuRegisters::m_OaTail,
-                        address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailTriggerEnd ),
+                        address + oaTailPreEndOffset,
                         flags ) );
                 }
 
                 // Trigger report in oa buffer.
                 ML_FUNCTION_CHECK( T::GpuCommands::TriggerQueryReport(
                     buffer,
-                    queryId,
-                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ContextId ),
-                    flags ) );
+                    queryId ) );
 
-                // Ticks after triggered report.
-                if( !begin )
+                if( begin )
                 {
+                    // OaTail after triggered report.
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
+                        buffer,
+                        T::GpuRegisters::m_OaTail,
+                        address + oaTailPostBeginOffset,
+                        flags ) );
+                }
+                else
+                {
+                    // Ticks after triggered report.
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreTicks(
                         buffer,
                         address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_GpuTicks ),
@@ -579,16 +588,12 @@ namespace ML
             /// @param  buffer              target command buffer.
             /// @param  queryId             query id associated with context id field
             ///                             within a generated report.
-            /// @param  contextIdAddress    context id address
-            /// @param  flags               gpu command flags.
             /// @return                     operation status.
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
             ML_INLINE static StatusCode TriggerQueryReport(
                 CommandBuffer& buffer,
-                const uint32_t /*queryId*/,
-                const uint64_t /*contextIdAddress*/,
-                const Flags /*flags*/ )
+                const uint32_t /*queryId*/ )
             {
                 ML_FUNCTION_LOG( StatusCode::Success );
 

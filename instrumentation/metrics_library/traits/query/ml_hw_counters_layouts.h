@@ -180,7 +180,8 @@ namespace ML
                         uint32_t    m_ReportNotReady            : 1;
                         uint32_t    m_ReportContextSwitchLost   : 1;
                         uint32_t    m_ReportWithoutWorkload     : 1;
-                        uint32_t    m_Reserved                  : 27;
+                        uint32_t    m_ContextMismatch           : 1;
+                        uint32_t    m_Reserved                  : 26;
                     };
                 };
 
@@ -263,13 +264,14 @@ namespace ML
                             uint32_t    m_DmaFenceIdEnd;
 
                             // Oa buffer data related.
-                            TT::Layouts::OaBuffer::Register                 m_OaBuffer;
-                            TT::Layouts::OaBuffer::TailRegister             m_OaTailBegin;          // Oa window begin & triggered mode.
-                            TT::Layouts::OaBuffer::TailRegister             m_OaTailTriggerEnd;     // Triggered mode only.
-                            TT::Layouts::OaBuffer::TailRegister             m_OaTailEnd;            // Oa window end.
+                            TT::Layouts::OaBuffer::Register          m_OaBuffer;
+                            TT::Layouts::OaBuffer::TailRegister      m_OaTailPreBegin;
+                            TT::Layouts::OaBuffer::TailRegister      m_OaTailPostBegin;
+                            TT::Layouts::OaBuffer::TailRegister      m_OaTailPreEnd;
+                            TT::Layouts::OaBuffer::TailRegister      m_OaTailPostEnd;
 
-                            // Temporary data.
-                            uint64_t    m_Scratch;
+                            // Unused.
+                            uint32_t    m_Reserved;
 
                             // Frequency change indicators.
                             uint32_t    m_CoreFrequencyBegin;

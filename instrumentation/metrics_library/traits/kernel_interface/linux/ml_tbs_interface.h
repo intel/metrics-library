@@ -72,7 +72,12 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ~OaBufferMapped()
                 {
-                    ML_ASSERT( m_Mapped == false );
+                    ML_FUNCTION_LOG( true );
+
+                    if( m_Mapped )
+                    {
+                        log.Warning( "Oa Buffer is still mapped." );
+                    }
                 }
 
                 //////////////////////////////////////////////////////////////////////////

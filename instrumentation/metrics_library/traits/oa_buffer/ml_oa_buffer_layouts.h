@@ -32,6 +32,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         enum class ReportReason : uint32_t
         {
+            Empty               = 0b0000000,
             Timer               = 0b0000001,
             User1               = 0b0000010,
             User2               = 0b0000100,

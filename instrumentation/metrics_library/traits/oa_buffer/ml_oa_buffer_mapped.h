@@ -96,20 +96,20 @@ namespace ML
                 auto& reportGpu = query.GetReportGpu();
 
                 const uint32_t base      = reportGpu.m_OaBuffer.GetAllocationOffset();
-                const uint32_t tailBegin = reportGpu.m_OaTailBegin.GetOffset();
-                const uint32_t tailEnd   = reportGpu.m_OaTailEnd.GetOffset();
+                const uint32_t tailBegin = reportGpu.m_OaTailPreBegin.GetOffset();
+                const uint32_t tailEnd   = reportGpu.m_OaTailPostEnd.GetOffset();
 
                 const bool validBegin = tailBegin >= base;
                 const bool validEnd   = tailEnd >= base;
 
-                state.m_TailBeginIndex = reportGpu.m_OaTailBegin.GetIndex( reportGpu.m_OaBuffer );
-                state.m_TailEndIndex   = reportGpu.m_OaTailEnd.GetIndex( reportGpu.m_OaBuffer );
+                state.m_TailBeginIndex = reportGpu.m_OaTailPreBegin.GetIndex( reportGpu.m_OaBuffer );
+                state.m_TailEndIndex   = reportGpu.m_OaTailPostEnd.GetIndex( reportGpu.m_OaBuffer );
                 log.m_Result           = ML_STATUS( validBegin && validEnd );
 
-                log.Debug( "Base address  ", base );
-                log.Debug( "Tail begin    ", tailBegin, state.m_TailBeginIndex );
-                log.Debug( "Tail end      ", tailEnd, state.m_TailEndIndex );
-                log.Debug( "Valid         ", log.m_Result );
+                log.Debug( "Base address   ", base );
+                log.Debug( "Tail pre begin ", tailBegin, state.m_TailBeginIndex );
+                log.Debug( "Tail post end  ", tailEnd, state.m_TailEndIndex );
+                log.Debug( "Valid          ", log.m_Result );
 
                 return log.m_Result;
             }
@@ -182,13 +182,13 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns triggered oa report associated with query begin/end report.
+            /// @brief  Returns first oa report associated with query begin/end report.
             /// @param  reportGpu   gpu report collected by query.
             /// @param  begin       query begin/end.
             /// @return index       oa tail index.
             /// @return             operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode GetTriggeredReportIndex(
+            ML_INLINE StatusCode GetPreReportIndex(
                 const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
                 const bool                                       begin,
                 uint32_t&                                        index )
@@ -196,7 +196,29 @@ namespace ML
                 ML_FUNCTION_LOG( StatusCode::Success );
                 ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
 
-                const auto&    oaTail = begin ? reportGpu.m_OaTailBegin : reportGpu.m_OaTailTriggerEnd;
+                const auto&    oaTail = begin ? reportGpu.m_OaTailPreBegin : reportGpu.m_OaTailPreEnd;
+                const uint32_t count  = GetReportsCount();
+                index                 = oaTail.GetIndex( reportGpu.m_OaBuffer );
+
+                return log.m_Result = ML_STATUS( index < count );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns last oa report associated with query begin/end report.
+            /// @param  query   gpu report collected by query.
+            /// @param  begin   query begin/end.
+            /// @return index   oa tail index.
+            /// @return         operation status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode GetPostReportIndex(
+                const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
+                const bool                                       begin,
+                uint32_t&                                        index )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
+
+                const auto&    oaTail = begin ? reportGpu.m_OaTailPostBegin : reportGpu.m_OaTailPostEnd;
                 const uint32_t count  = GetReportsCount();
                 index                 = oaTail.GetIndex( reportGpu.m_OaBuffer );
 
@@ -223,19 +245,26 @@ namespace ML
 
                 if( T::Tools::CheckLogLevel( LogType::Csv ) )
                 {
-                    const auto emptyReportOa  = TT::Layouts::HwCounters::ReportOa{};
-                    uint32_t   beginTailIndex = 0;
-                    uint32_t   endTailIndex   = 0;
-
-                    ML_FUNCTION_CHECK( GetTriggeredReportIndex( reportGpu, true, beginTailIndex ) );
-                    ML_FUNCTION_CHECK( GetTriggeredReportIndex( reportGpu, false, endTailIndex ) );
+                    const auto emptyReportOa = TT::Layouts::HwCounters::ReportOa{};
+                    uint32_t   beginIndex    = reportGpu.m_OaTailPreBegin.GetIndex( reportGpu.m_OaBuffer );
+                    uint32_t   endIndex      = reportGpu.m_OaTailPostEnd.GetIndex( reportGpu.m_OaBuffer );
 
                     // Print empty report first to distinguish oa buffer reports for different queries.
                     log.Csv( emptyReportOa );
 
-                    for( uint32_t i = beginTailIndex; i <= endTailIndex; ++i )
+                    if( beginIndex != endIndex )
                     {
-                        log.Csv( GetReport( i ) );
+                        uint32_t reportsCount = GetReportsCount();
+                        uint32_t index        = beginIndex;
+
+                        ML_ASSERT( ( beginIndex < reportsCount ) && ( endIndex < reportsCount ) );
+
+                        do
+                        {
+                            log.Csv( GetReport( index ) );
+                            index = ( index < reportsCount ) ? ++index : 0;
+                        }
+                        while( index != endIndex );
                     }
                 }
 
