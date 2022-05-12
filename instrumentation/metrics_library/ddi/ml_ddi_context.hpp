@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -40,9 +40,20 @@ namespace ML
                 ContextCreateData_1_0* createData,
                 ContextHandle_1_0*     handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG_STATIC( StatusCode::Success );
                 ML_FUNCTION_CHECK( createData != nullptr );
                 ML_FUNCTION_CHECK( handle != nullptr );
+
+                // Print traits properties.
+                T::PrintBuildNumber();
+                T::PrintClient();
+                T::PrintGpuType();
+                T::PrintTraits();
+
+                // Print input values.
+                log.Input( clientType );
+                log.Input( createData );
+                log.Input( handle );
 
                 return log.m_Result = T::Context::Create( clientType, *createData, *handle );
             }
@@ -54,7 +65,20 @@ namespace ML
             ML_INLINE static StatusCode ML_STDCALL ContextDelete_1_0(
                 const ContextHandle_1_0 handle )
             {
-                return T::Context::Delete( handle );
+                ML_FUNCTION_CHECK_STATIC( T::Context::IsValid( handle ) );
+
+                auto& context = T::Context::FromHandle( handle );
+                ML_FUNCTION_LOG( StatusCode::Success, &context );
+
+                // Print input values.
+                log.Input( handle );
+
+                log.m_Result  = T::Context::Delete( handle );
+                log.m_Context = nullptr;
+
+                ML_ASSERT( log.m_Result == StatusCode::Success );
+
+                return log.m_Result;
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -68,9 +92,12 @@ namespace ML
                 ValueType*          type,
                 TypedValue_1_0*     value )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG_STATIC( StatusCode::Success );
                 ML_FUNCTION_CHECK( type != nullptr );
                 ML_FUNCTION_CHECK( value != nullptr );
+
+                // Print input values.
+                log.Input( parameter );
 
                 switch( parameter )
                 {
@@ -106,6 +133,12 @@ namespace ML
                 }
 
                 value->Type = *type;
+
+                // Print output values.
+                log.Output( type );
+                log.Output( value );
+
+                ML_ASSERT( log.m_Result == StatusCode::Success );
 
                 return log.m_Result;
             }

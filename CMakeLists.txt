@@ -1,6 +1,6 @@
 #=========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -449,7 +449,6 @@ if (${PLATFORM} STREQUAL Windows) # windows
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
-        ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_i915_perf.h
     )
 elseif (${PLATFORM} STREQUAL linux) # linux
     source_group (codegen\\traits\\linux             ${BS_DIR_INSTRUMENTATION}/metrics_library/codegen/traits/linux/.*h)
@@ -469,7 +468,6 @@ elseif (${PLATFORM} STREQUAL linux) # linux
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
-        ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_i915_perf.h
     )
 else()
     message("-- Using platform is ${PLATFORM}")
@@ -562,6 +560,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         /WX         # treat warnings as errors
         /Zp8        # struct member alignment - 8 bytes
         /bigobj     # increase number of sections in .obj
+        /GR-        # run-time type information disabled
         /wd4127     # conditional expression is constant
         /wd4201     # nonstandard extension used : nameless struct/union
         /wd4324     # structure was padded due to alignment specifier

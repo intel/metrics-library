@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -75,7 +75,6 @@ namespace ML
                 #if ML_RELEASE
                 template <typename ResultT> using FunctionLog       = FunctionLogReleaseTrait<Traits, ResultT>; //  ml_function_log_release.h
                 #endif
-                template <typename ResultT> using FunctionLogCommon = FunctionLogCommonTrait<Traits,  ResultT>; //  ml_function_log_common.h
                                             using FunctionLogStatic = FunctionLog<StatusCode>;
 
                 //////////////////////////////////////////////////////////////////////////
@@ -84,6 +83,7 @@ namespace ML
                 using Context                       = ContextTrait<Traits>;                         //  ml_context.h
                 using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
                 using DdiObjects                    = DdiObjectsTrait<Traits>;                      //  ml_ddi_objects.h
+                using State                         = StateTrait<Traits>;                           //  ml_state.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief SubDevice.
@@ -234,6 +234,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
                     FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
                     FunctionLogStatic::Traits( "using DdiObjects", DdiObjects::GetDescription() );
+                    FunctionLogStatic::Traits( "using State", State::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
@@ -338,7 +339,6 @@ namespace ML
                 #if ML_RELEASE
                 template <typename ResultT> using FunctionLog       = FunctionLogReleaseTrait<Traits, ResultT>; //  ml_function_log_release.h
                 #endif
-                template <typename ResultT> using FunctionLogCommon = FunctionLogCommonTrait<Traits,  ResultT>; //  ml_function_log_common.h
                                             using FunctionLogStatic = FunctionLog<StatusCode>;
 
                 //////////////////////////////////////////////////////////////////////////
@@ -347,6 +347,7 @@ namespace ML
                 using Context                       = ContextTrait<Traits>;                         //  ml_context.h
                 using ClientOptions                 = ClientOptionsTrait<Traits>;                   //  ml_client_options.h
                 using DdiObjects                    = DdiObjectsTrait<Traits>;                      //  ml_ddi_objects.h
+                using State                         = StateTrait<Traits>;                           //  ml_state.h
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief SubDevice.
@@ -497,6 +498,7 @@ namespace ML
                     FunctionLogStatic::Traits( "using Context", Context::GetDescription() );
                     FunctionLogStatic::Traits( "using ClientOptions", ClientOptions::GetDescription() );
                     FunctionLogStatic::Traits( "using DdiObjects", DdiObjects::GetDescription() );
+                    FunctionLogStatic::Traits( "using State", State::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );

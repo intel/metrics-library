@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -76,7 +76,7 @@ namespace ML
         {
             uint32_t m_Handle;                                                  // range(0x100-...) - for dynamic configurations id is incremented by each change.
                                                                                 // range(1-0x10)    - for static configurations id is constant INSTR_PM_REGS_CFG_INVALID.
-            Register m_Registers[Constants::Configuration::m_MaxUserRegisters];
+            Register m_Registers[Constants::Configuration::m_MaxUserRegisters]; //
             uint32_t m_RegistersCount;
             uint32_t m_StoreRegisterMemoryCount;
         };
@@ -88,7 +88,7 @@ namespace ML
         {
             uint32_t m_Handle;                                              // range(0x100-...) - for dynamic configurations id is incremented by each change.
                                                                             // range(1-0x10)    - for static configurations id is constant INSTR_PM_REGS_CFG_INVALID.
-            Register m_Registers[Constants::Configuration::m_MaxRegisters];
+            Register m_Registers[Constants::Configuration::m_MaxRegisters]; //
             uint32_t m_RegistersCount;
             uint32_t m_PendingRegistersCount;
         };
@@ -100,7 +100,7 @@ namespace ML
         {
             uint32_t m_Handle;                                              // range(0x100-...) - for dynamic configurations id is incremented by each change.
                                                                             // range(1-0x10)    - for static configurations id is constant INSTR_PM_REGS_CFG_INVALID.
-            Register m_Registers[Constants::Configuration::m_MaxRegisters];
+            Register m_Registers[Constants::Configuration::m_MaxRegisters]; //
             uint32_t m_RegistersCount;
             uint32_t m_PendingRegistersCount;
         };
@@ -216,7 +216,7 @@ namespace ML
         struct OverridesState
         {
             uint32_t m_Global[T::Layouts::Override::Type::Last];
-            uint32_t m_Query [T::Layouts::Override::Type::Last];
+            uint32_t m_Query[T::Layouts::Override::Type::Last];
         };
 
         ML_STRUCTURE_PACK_END();

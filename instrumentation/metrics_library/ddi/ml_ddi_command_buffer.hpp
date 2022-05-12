@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -36,12 +36,16 @@ namespace ML
             ML_INLINE static StatusCode ML_STDCALL CommandBufferGet_1_0(
                 const CommandBufferData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( data != nullptr );
-                ML_FUNCTION_CHECK( T::Context::IsValid( data->HandleContext ) );
+                ML_FUNCTION_CHECK_STATIC( data != nullptr );
+                ML_FUNCTION_CHECK_STATIC( T::Context::IsValid( data->HandleContext ) );
 
-                TT::Context&         context = T::Context::FromHandle( data->HandleContext );
-                TT::GpuCommandBuffer buffer  = { data->Data, data->Size, data->Type, data->Allocation, context };
+                auto& context = T::Context::FromHandle( data->HandleContext );
+                ML_FUNCTION_LOG( StatusCode::Success, &context );
+
+                // Print input values.
+                log.Input( data );
+
+                TT::GpuCommandBuffer buffer = { data->Data, data->Size, data->Type, data->Allocation, context };
 
                 switch( data->CommandsType )
                 {
@@ -82,6 +86,8 @@ namespace ML
                         log.m_Result = StatusCode::IncorrectObject;
                         break;
                 }
+
+                ML_ASSERT( log.m_Result == StatusCode::Success );
 
                 return log.m_Result;
             }
@@ -95,13 +101,17 @@ namespace ML
                 const CommandBufferData_1_0* data,
                 CommandBufferSize_1_0*       size )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( data != nullptr );
-                ML_FUNCTION_CHECK( size != nullptr );
-                ML_FUNCTION_CHECK( T::Context::IsValid( data->HandleContext ) );
+                ML_FUNCTION_CHECK_STATIC( data != nullptr );
+                ML_FUNCTION_CHECK_STATIC( size != nullptr );
+                ML_FUNCTION_CHECK_STATIC( T::Context::IsValid( data->HandleContext ) );
 
-                TT::Context&                   context = T::Context::FromHandle( data->HandleContext );
-                TT::GpuCommandBufferCalculator buffer  = { data->Type, context };
+                auto& context = T::Context::FromHandle( data->HandleContext );
+                ML_FUNCTION_LOG( StatusCode::Success, &context );
+
+                // Print input values.
+                log.Input( data );
+
+                TT::GpuCommandBufferCalculator buffer = { data->Type, context };
 
                 switch( data->CommandsType )
                 {
@@ -142,6 +152,11 @@ namespace ML
                         log.m_Result = StatusCode::IncorrectObject;
                         break;
                 }
+
+                // Print output values.
+                log.Output( size );
+
+                ML_ASSERT( log.m_Result == StatusCode::Success );
 
                 return ML_SUCCESS( log.m_Result )
                     ? buffer.GetSizeRequirements( *size )

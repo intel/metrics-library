@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -41,6 +41,7 @@ using namespace MetricsLibraryApi;
 #include <atomic>
 #include <cmath>
 #include <fstream>
+#include <memory>
 #include <mutex>
 #include <iomanip>
 #include <sstream>

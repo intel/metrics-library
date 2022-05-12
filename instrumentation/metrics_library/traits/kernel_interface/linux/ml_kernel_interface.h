@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -33,6 +33,9 @@ namespace ML
         TT::IoControl                  m_IoControl;
         TT::TbsInterface               m_Tbs;
         int32_t                        m_OaConfigurationReferenceCounter;
+        uint64_t                       m_OaFrequency;
+        uint64_t                       m_CsFrequency;
+        uint64_t                       m_GpuTimestampTickValue;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief KernelInterfaceTrait constructor.
@@ -45,6 +48,9 @@ namespace ML
             , m_IoControl( *this )
             , m_Tbs( *this )
             , m_OaConfigurationReferenceCounter( 0 )
+            , m_OaFrequency( 0 )
+            , m_CsFrequency( 0 )
+            , m_GpuTimestampTickValue( 0 )
         {
         }
 
@@ -64,7 +70,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Initialize( const ClientData_1_0& clientData )
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( CheckParanoidMode() );
             ML_FUNCTION_CHECK( m_IoControl.Initialize( clientData, m_Revision ) );
             ML_FUNCTION_CHECK( InitializeDevice() );
@@ -75,29 +81,83 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief  Gets adapter id value.
+        /// @return adapterId  adapter id.
+        /// @return            operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetAdapterId( uint32_t& adapterId )
+        {
+            ML_FUNCTION_LOG_STATIC( StatusCode::Success );
+
+            log.m_Result = m_IoControl.m_DrmCard != T::ConstantsOs::Drm::m_Invalid
+                ? StatusCode::Success
+                : StatusCode::Failed;
+
+            adapterId = ML_SUCCESS( log.m_Result )
+                ? static_cast<uint32_t>( m_IoControl.m_DrmCard )
+                : IU_ADAPTER_ID_UNKNOWN;
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns gpu oa timestamp frequency.
+        /// @return gpu oa timestamp frequency.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint64_t GetGpuOaTimestampFrequency()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            if( m_OaFrequency == 0 )
+            {
+                m_OaFrequency = m_IoControl.GetGpuTimestampFrequency( T::Layouts::Configuration::TimestampType::Oa );
+
+                if( m_OaFrequency == 0 )
+                {
+                    ML_ASSERT_ALWAYS();
+                    m_OaFrequency = 12000000; // Default, one tick per 83.333ns.
+                    log.Warning( "Predefined default gpu oa timestamp frequency used", m_CsFrequency );
+                }
+            }
+
+            return m_OaFrequency;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns gpu cs timestamp frequency.
+        /// @return gpu cs timestamp frequency.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint64_t GetGpuCsTimestampFrequency()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            if( m_CsFrequency == 0 )
+            {
+                m_CsFrequency = m_IoControl.GetGpuTimestampFrequency( T::Layouts::Configuration::TimestampType::Cs );
+
+                if( m_CsFrequency == 0 )
+                {
+                    ML_ASSERT_ALWAYS();
+                    m_CsFrequency = 12000000; // Default, one tick per 83.333ns.
+                    log.Warning( "Predefined default gpu cs timestamp frequency used", m_CsFrequency );
+                }
+            }
+
+            return m_CsFrequency;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Gets exact gpu timestamp frequency.
         /// @param  timestampType  select timestamp domain - oa or cs.
         /// @return                gpu timestamp frequency.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint64_t GetGpuTimestampFrequency( const TT::Layouts::Configuration::TimestampType timestampType ) const
+        ML_INLINE uint64_t GetGpuTimestampFrequency( const TT::Layouts::Configuration::TimestampType timestampType )
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            static uint64_t frequency = 0;
-
-            if( frequency == 0 )
-            {
-                frequency = m_IoControl.GetGpuTimestampFrequency( timestampType );
-
-                if( frequency == 0 )
-                {
-                    ML_ASSERT_ALWAYS();
-                    frequency = 12000000; // Default, one tick per 83.333ns.
-                    log.Warning( "Predefined default gpu timestamp frequency used", frequency );
-                }
-            }
-
-            return frequency;
+            return timestampType == T::Layouts::Configuration::TimestampType::Oa
+                ? GetGpuOaTimestampFrequency()
+                : GetGpuCsTimestampFrequency();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -105,25 +165,23 @@ namespace ML
         /// @param  timestampType  select timestamp domain - oa or cs.
         /// @return                gpu timestamp tick value.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint64_t GetGpuTimestampTick( const TT::Layouts::Configuration::TimestampType timestampType ) const
+        ML_INLINE uint64_t GetGpuTimestampTick( const TT::Layouts::Configuration::TimestampType timestampType )
         {
-            static uint64_t gpuTimestampTickValue = 0;
-
-            if( gpuTimestampTickValue == 0 )
+            if( m_GpuTimestampTickValue == 0 )
             {
-                gpuTimestampTickValue = Constants::Time::m_SecondInNanoseconds / GetGpuTimestampFrequency( timestampType );
+                m_GpuTimestampTickValue = Constants::Time::m_SecondInNanoseconds / GetGpuTimestampFrequency( timestampType );
             }
 
-            return gpuTimestampTickValue;
+            return m_GpuTimestampTickValue;
         }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns hw context ids for current process.
         /// @return allowed hw contexts ids and their count.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE TT::Layouts::Configuration::HwContextIds GetHwContextIds() const
+        ML_INLINE TT::Layouts::Configuration::HwContextIds GetHwContextIds()
         {
-            static TT::Layouts::Configuration::HwContextIds contexts = {};
+            const TT::Layouts::Configuration::HwContextIds contexts = {};
 
             return contexts;
         }
@@ -134,7 +192,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE bool TbsIsEnabled() const
         {
-            ML_FUNCTION_LOG( false );
+            ML_FUNCTION_LOG( false, &m_Context );
 
             return log.m_Result = m_Tbs.IsEnabled();
         }
@@ -146,7 +204,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode LoadOaConfigurationToGpu( const TT::Layouts::Configuration::PerformanceMonitoringRegisters& oaConfiguration )
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfiguration.m_Id ) );
 
             return log.m_Result;
@@ -161,7 +219,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode UnloadOaConfigurationFromGpu( const TT::Layouts::Configuration::PerformanceMonitoringRegisters& oaConfiguration )
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( m_Tbs.m_Stream.ReleaseMetricSet( oaConfiguration.m_Id ) );
 
             return log.m_Result;
@@ -175,7 +233,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetOaConfiguration( TT::Layouts::Configuration::PerformanceMonitoringRegisters& oaConfiguration ) const
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             oaConfiguration.m_Id = m_IoControl.GetKernelMetricSet();
 
@@ -193,7 +251,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetUserConfiguration( TT::Layouts::Configuration::UserRegisters& /*userConfiguration*/ ) const
         {
-            ML_FUNCTION_LOG( StatusCode::NotSupported );
+            ML_FUNCTION_LOG( StatusCode::NotSupported, &m_Context );
 
             ML_ASSERT_ALWAYS();
 
@@ -215,7 +273,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE bool IsNullBeginOverride() const
         {
-            ML_FUNCTION_LOG( false );
+            ML_FUNCTION_LOG( false, &m_Context );
 
             return log.m_Result;
         }
@@ -226,7 +284,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE bool IsNullQueryOverride() const
         {
-            ML_FUNCTION_LOG( false );
+            ML_FUNCTION_LOG( false, &m_Context );
 
             return log.m_Result;
         }
@@ -237,7 +295,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE bool IsPoshQueryOverride() const
         {
-            ML_FUNCTION_LOG( false );
+            ML_FUNCTION_LOG( false, &m_Context );
 
             return log.m_Result;
         }
@@ -249,7 +307,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode InitializeDevice()
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             // Chipset.
             ML_FUNCTION_CHECK( m_IoControl.GetChipsetId( m_DeviceId ) );
@@ -264,18 +322,19 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode InitializeSubDevice()
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             return log.m_Result = m_Context.m_SubDevice.Initialize();
         }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Checks i915 paranoid mode required by query to work.
-        /// @return success if paranoid mode is available.
+        ///         Logs a warning if check fails.
+        /// @return always success.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode CheckParanoidMode()
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             auto file      = fopen( T::ConstantsOs::Drm::m_ParanoidPath, "r" );
             char flag[256] = "";
@@ -290,13 +349,21 @@ namespace ML
                 fclose( file );
             }
 
-            // Log each step.
-            ML_FUNCTION_CHECK( validFile );
-            ML_FUNCTION_CHECK( validRead );
-            ML_FUNCTION_CHECK( validFlag );
+            if( !validFile )
+            {
+                log.Warning( "Paranoid mode check failed: Unable to open the file" );
+            }
+            else if( !validRead )
+            {
+                log.Warning( "Paranoid mode check failed: Unable to read the file" );
+            }
+            else if( !validFlag )
+            {
+                log.Warning( "Paranoid mode check failed: Paranoid mode is not available" );
+            }
 
-            // Return paranoid settings state.
-            return log.m_Result = ML_STATUS( validFlag );
+            // Always return success.
+            return log.m_Result = StatusCode::Success;
         }
     };
 } // namespace ML

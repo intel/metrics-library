@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -36,34 +36,74 @@ namespace ML
             ML_INLINE static StatusCode ML_STDCALL GetData_1_0(
                 GetReportData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( data != nullptr );
+                ML_FUNCTION_CHECK_STATIC( data != nullptr );
+                ML_FUNCTION_CHECK_STATIC( data != nullptr );
 
                 switch( data->Type )
                 {
                     case ObjectType::QueryHwCounters:
+                    {
+                        auto& context = T::Queries::HwCounters::FromHandle( data->Query.Handle ).m_Context;
+                        ML_FUNCTION_LOG( StatusCode::Success, &context );
+
+                        // Print input values.
+                        log.Input( data );
+
                         log.m_Result = T::Queries::HwCounters::GetData( data->Query );
-                        break;
+                        ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
 
+                        return log.m_Result;
+                    }
                     case ObjectType::QueryPipelineTimestamps:
+                    {
+                        auto& context = T::Queries::PipelineTimestamps::FromHandle( data->Query.Handle ).m_Context;
+                        ML_FUNCTION_LOG( StatusCode::Success, &context );
+
+                        // Print input values.
+                        log.Input( data );
+
                         log.m_Result = T::Queries::PipelineTimestamps::GetData( data->Query );
-                        break;
+                        ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
 
+                        return log.m_Result;
+                    }
                     case ObjectType::OverrideUser:
+                    {
+                        auto& context = T::Overrides::User::FromHandle( data->Override.Handle ).m_Context;
+                        ML_FUNCTION_LOG( StatusCode::Success, &context );
+
+                        // Print input values.
+                        log.Input( data );
+
                         log.m_Result = T::Overrides::User::GetData( data->Override );
-                        break;
+                        ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
 
+                        return log.m_Result;
+                    }
                     case ObjectType::OverridePoshQuery:
+                    {
+                        auto& context = T::Overrides::PoshQuery::FromHandle( data->Override.Handle ).m_Context;
+                        ML_FUNCTION_LOG( StatusCode::Success, &context );
+
+                        // Print input values.
+                        log.Input( data );
+
                         log.m_Result = T::Overrides::PoshQuery::GetData( data->Override );
-                        break;
+                        ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
 
+                        return log.m_Result;
+                    }
                     default:
+                    {
+                        ML_FUNCTION_LOG_STATIC( StatusCode::IncorrectObject );
                         ML_ASSERT_ALWAYS();
-                        log.m_Result = StatusCode::IncorrectObject;
-                        break;
-                }
 
-                return log.m_Result;
+                        // Print input values.
+                        log.Input( data );
+
+                        return log.m_Result;
+                    }
+                }
             }
         };
     } // namespace BASE

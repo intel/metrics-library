@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -31,6 +31,7 @@ namespace ML
             /// @brief Types.
             //////////////////////////////////////////////////////////////////////////
             using Base = DdiObject<T, TT::Overrides::NullHardware, OverrideHandle_1_0, ObjectType::OverrideNullHardware>;
+            using Base::m_Context;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns description about itself.
@@ -52,8 +53,7 @@ namespace ML
                 CommandBuffer& buffer,
                 const bool     enable )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
                 ML_FUNCTION_CHECK( buffer.m_Type == GpuCommandBufferType::Render );
 
                 return log.m_Result = enable
@@ -69,7 +69,7 @@ namespace ML
             template <typename CommandBuffer>
             ML_INLINE static StatusCode Activate( CommandBuffer& buffer )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 const auto&  registers     = T::GpuRegisters::GetNullHardwareEnablingRegisters();
                 const size_t registerCount = registers.size();
@@ -95,7 +95,7 @@ namespace ML
             template <typename CommandBuffer>
             ML_INLINE static StatusCode Deactivate( CommandBuffer& buffer )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 const auto&  registers     = T::GpuRegisters::GetNullHardwareDisablingRegisters();
                 const size_t registerCount = registers.size();
@@ -142,7 +142,7 @@ namespace ML
                 CommandBuffer& buffer,
                 const bool     enable )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 // Render command streamer.
                 if( buffer.m_Type == GpuCommandBufferType::Render )
@@ -166,7 +166,7 @@ namespace ML
             template <typename CommandBuffer>
             ML_INLINE static StatusCode Activate( CommandBuffer& buffer )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 const auto&  registers     = T::GpuRegisters::GetNullHardwareEnablingPoshRegisters();
                 const size_t registerCount = registers.size();
@@ -192,7 +192,7 @@ namespace ML
             template <typename CommandBuffer>
             ML_INLINE static StatusCode Deactivate( CommandBuffer& buffer )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 const auto&  registers     = T::GpuRegisters::GetNullHardwareDisablingPoshRegisters();
                 const size_t registerCount = registers.size();

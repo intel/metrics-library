@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -30,7 +30,8 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        Result m_Result;
+        Result       m_Result;
+        TT::Context* m_Context;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief FunctionLogReleaseTrait constructor.
@@ -39,8 +40,10 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         FunctionLogReleaseTrait(
             const char*  name,
-            const Result result )
+            const Result result,
+            TT::Context* context )
             : m_Result( result )
+            , m_Context( context )
         {
             (void) name;
         }
@@ -106,7 +109,7 @@ namespace ML
         template <typename... Values>
         ML_INLINE void Warning( const Values&... values ) const
         {
-            T::Tools::Log( LogType::Warning, "", values... );
+            T::Tools::Log( LogType::Warning, "", m_Context, values... );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -116,9 +119,18 @@ namespace ML
         template <typename... Values>
         ML_INLINE void Error( const Values&... values ) const
         {
-            T::Tools::Log( LogType::Error, "", values... );
+            T::Tools::Log( LogType::Error, "", m_Context, values... );
         }
 
+        ////////////////////////////////////////////////////////////////////////
+        /// @brief Logs an error message. Static implementation.
+        /// @param values        variable values to print out.
+        ////////////////////////////////////////////////////////////////////////
+        template <typename... Values>
+        ML_INLINE static void ErrorStatic( const Values&... values )
+        {
+            T::Tools::Log( LogType::Error, "", nullptr, values... );
+        }
         //////////////////////////////////////////////////////////////////////////
         /// @brief Logs a critical error message.
         /// @param values   variable values to print out.
@@ -126,15 +138,16 @@ namespace ML
         template <typename... Values>
         ML_INLINE void Critical( const Values&... values ) const
         {
-            T::Tools::Log( LogType::Critical, "", values... );
+            T::Tools::Log( LogType::Critical, "", m_Context, values... );
         }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Logs into a csv file.
+        /// @param context  context.
         /// @param values   variable values to print out.
         //////////////////////////////////////////////////////////////////////////
         template <typename... Values>
-        ML_INLINE void Csv( const Values&... ) const
+        ML_INLINE void Csv( TT::Context* /*context*/, const Values&... /*values*/ ) const
         {
         }
     };

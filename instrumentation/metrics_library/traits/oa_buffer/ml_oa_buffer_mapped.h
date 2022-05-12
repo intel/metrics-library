@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -31,7 +31,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief Members.
             //////////////////////////////////////////////////////////////////////////
-            const TT::KernelInterface&        m_Kernel;
+            TT::KernelInterface&              m_Kernel;
             const TT::Layouts::OaBuffer::Type m_OaBufferType;
             TT::TbsInterface::OaBufferMapped& m_OaBuffer;
             TT::Layouts::HwCounters::ReportOa m_ReportSplitted;
@@ -64,7 +64,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode Initialize()
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 // Some cases does not require mapped oa buffer.
                 // For example when tbs is used by metrics discovery.
@@ -89,7 +89,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode UpdateQuery( TT::Queries::HwCounters::Slot& query ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_ASSERT( IsValid() );
 
                 auto& state     = query.m_OaBufferState;
@@ -102,8 +102,8 @@ namespace ML
                 const bool validBegin = tailBegin >= base;
                 const bool validEnd   = tailEnd >= base;
 
-                state.m_TailBeginIndex = reportGpu.m_OaTailPreBegin.GetIndex( reportGpu.m_OaBuffer );
-                state.m_TailEndIndex   = reportGpu.m_OaTailPostEnd.GetIndex( reportGpu.m_OaBuffer );
+                state.m_TailBeginIndex = reportGpu.m_OaTailPreBegin.GetIndex( reportGpu.m_OaBuffer, m_Kernel.m_Context );
+                state.m_TailEndIndex   = reportGpu.m_OaTailPostEnd.GetIndex( reportGpu.m_OaBuffer, m_Kernel.m_Context );
                 log.m_Result           = ML_STATUS( validBegin && validEnd );
 
                 log.Debug( "Base address   ", base );
@@ -120,7 +120,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode Release()
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 return log.m_Result = m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled
                     ? StatusCode::Success
@@ -133,7 +133,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE bool IsValid() const
             {
-                ML_FUNCTION_LOG( false );
+                ML_FUNCTION_LOG( false, &m_Kernel.m_Context );
 
                 return log.m_Result = m_OaBuffer.IsMapped();
             }
@@ -145,7 +145,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint32_t FindOaWindow( const TT::Layouts::OaBuffer::State& oaBufferState ) const
             {
-                ML_FUNCTION_LOG( uint32_t{ 0 } );
+                ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
                 ML_ASSERT( m_OaBuffer.IsMapped() );
 
                 const uint32_t oaWindow       = oaBufferState.m_TailEndIndex - oaBufferState.m_TailBeginIndex;
@@ -165,7 +165,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t index )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_ASSERT( m_OaBuffer.IsMapped() )
 
                 const bool oaReportSplit = IsSplitted( index );
@@ -193,12 +193,12 @@ namespace ML
                 const bool                                       begin,
                 uint32_t&                                        index )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
 
                 const auto&    oaTail = begin ? reportGpu.m_OaTailPreBegin : reportGpu.m_OaTailPreEnd;
                 const uint32_t count  = GetReportsCount();
-                index                 = oaTail.GetIndex( reportGpu.m_OaBuffer );
+                index                 = oaTail.GetIndex( reportGpu.m_OaBuffer, m_Kernel.m_Context );
 
                 return log.m_Result = ML_STATUS( index < count );
             }
@@ -215,12 +215,12 @@ namespace ML
                 const bool                                       begin,
                 uint32_t&                                        index )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
 
                 const auto&    oaTail = begin ? reportGpu.m_OaTailPostBegin : reportGpu.m_OaTailPostEnd;
                 const uint32_t count  = GetReportsCount();
-                index                 = oaTail.GetIndex( reportGpu.m_OaBuffer );
+                index                 = oaTail.GetIndex( reportGpu.m_OaBuffer, m_Kernel.m_Context );
 
                 return log.m_Result = ML_STATUS( index < count );
             }
@@ -241,16 +241,16 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu reportGpu )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 if( T::Tools::CheckLogLevel( LogType::Csv ) )
                 {
                     const auto emptyReportOa = TT::Layouts::HwCounters::ReportOa{};
-                    uint32_t   beginIndex    = reportGpu.m_OaTailPreBegin.GetIndex( reportGpu.m_OaBuffer );
-                    uint32_t   endIndex      = reportGpu.m_OaTailPostEnd.GetIndex( reportGpu.m_OaBuffer );
+                    uint32_t   beginIndex    = reportGpu.m_OaTailPreBegin.GetIndex( reportGpu.m_OaBuffer, m_Kernel.m_Context );
+                    uint32_t   endIndex      = reportGpu.m_OaTailPostEnd.GetIndex( reportGpu.m_OaBuffer, m_Kernel.m_Context );
 
                     // Print empty report first to distinguish oa buffer reports for different queries.
-                    log.Csv( emptyReportOa );
+                    log.Csv( &m_Kernel.m_Context, emptyReportOa );
 
                     if( beginIndex != endIndex )
                     {
@@ -261,7 +261,7 @@ namespace ML
 
                         do
                         {
-                            log.Csv( GetReport( index ) );
+                            log.Csv( &m_Kernel.m_Context, GetReport( index ) );
                             index = ( index < reportsCount ) ? ++index : 0;
                         }
                         while( index != endIndex );
@@ -281,7 +281,7 @@ namespace ML
                 const uint32_t index,
                 const uint32_t count ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 for( uint32_t i = 0; i < count; ++i )
                 {
@@ -318,6 +318,8 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE TT::Layouts::HwCounters::ReportOa& GetSplittedReport( const uint32_t index )
             {
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
                 const uint32_t offset      = GetOffset( index );
                 const uint32_t reportSize  = m_OaBuffer.m_ReportSize;
                 uint8_t*       report      = reinterpret_cast<uint8_t*>( &m_ReportSplitted );
@@ -329,6 +331,7 @@ namespace ML
                 T::Tools::MemoryCopy( report + part1Length, reportSize - part1Length, cpuAddress, part2Length );
 
                 ML_ASSERT( ( offset + reportSize ) > m_OaBuffer.m_Size );
+
                 return m_ReportSplitted;
             }
         };

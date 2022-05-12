@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -199,17 +199,21 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief Returns oa head report index.
             /// @param base    oa buffer base address.
+            /// @param context context.
             /// @return        oa head report index.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetIndex( const Register base ) const
+            ML_INLINE uint32_t GetIndex( 
+                const Register     base, 
+                TT::Context&       context ) const
             {
+                ML_FUNCTION_LOG( uint32_t{ 0 }, &context );
+
                 const uint32_t address    = base.GetAllocationOffset();
                 const uint32_t offset     = GetOffset();
                 const uint32_t reportSize = sizeof( TT::Layouts::HwCounters::ReportOa );
 
-                ML_ASSERT( address > 0 );
                 ML_ASSERT( address <= offset );
-                return ( offset - address ) / reportSize;
+                return log.m_Result = ( ( offset - address ) / reportSize );
             }
         };
 
@@ -242,16 +246,21 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief Returns oa head report index.
             /// @param base    oa buffer base address.
+            /// @param context context.
             /// @return        oa head report index.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetIndex( const Register base ) const
+            ML_INLINE uint32_t GetIndex( 
+                const Register     base,
+                TT::Context&       context ) const
             {
+                ML_FUNCTION_LOG( uint32_t{ 0 }, &context );
+
                 const uint32_t address    = base.GetAllocationOffset();
                 const uint32_t offset     = GetOffset();
                 const uint32_t reportSize = sizeof( TT::Layouts::HwCounters::ReportOa );
 
                 ML_ASSERT( address <= offset );
-                return ( offset - address ) / reportSize;
+                return log.m_Result = ( ( offset - address ) / reportSize );
             }
         };
 

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 /*
 @file iu_os.h
 
-@brief Instrumentation Utils header with OS specific non-standard
+@brief Instrumentation Utils implementation with OS specific non-standard
        functions for Linux / Android.
 */
 
@@ -49,8 +49,7 @@ extern "C"
     uint64_t IuOsQueryPerformanceCounter(
         uint64_t* outFrequency );
 
-    void IuOsGetModuleInfo(
-        char** dlName,
+    const char* IuOsGetModuleInfo(
         char** processName );
 
     void IuOsLogGetSystemSettings(

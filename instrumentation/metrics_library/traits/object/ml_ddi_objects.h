@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021 Intel Corporation
+Copyright (C) 2021-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -28,14 +28,17 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
+        TT::Context&                    m_Context;
         std::unordered_set<BaseObject*> m_Objects;
         std::mutex                      m_Mutex;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief DdiObjectsTrait constructor.
+        /// @param context  context.
         //////////////////////////////////////////////////////////////////////////
-        DdiObjectsTrait()
-            : m_Objects{}
+        DdiObjectsTrait( TT::Context& context )
+            : m_Context( context )
+            , m_Objects{}
         {
         }
 
@@ -83,7 +86,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE void ValidateState()
         {
-            ML_FUNCTION_LOG( true );
+            ML_FUNCTION_LOG( true, &m_Context );
 
             if( !m_Objects.empty() )
             {

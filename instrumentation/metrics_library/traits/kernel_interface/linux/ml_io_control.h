@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -30,16 +30,21 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief Members.
             //////////////////////////////////////////////////////////////////////////
-            const TT::KernelInterface& m_Kernel;
-            std::string                m_KernelMetricSet;
-            bool                       m_DrmOpenedByUmd;
-            int32_t                    m_DrmCard;
+            std::string m_KernelMetricSet;
+            bool        m_DrmOpenedByUmd;
 
         protected:
             //////////////////////////////////////////////////////////////////////////
             /// @brief Members.
             //////////////////////////////////////////////////////////////////////////
-            int32_t m_DrmFile;
+            const TT::KernelInterface& m_Kernel;
+            int32_t                    m_DrmFile;
+
+        public:
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Members.
+            //////////////////////////////////////////////////////////////////////////
+            int32_t m_DrmCard;
 
         public:
             //////////////////////////////////////////////////////////////////////////
@@ -47,11 +52,11 @@ namespace ML
             /// @param kernel
             //////////////////////////////////////////////////////////////////////////
             IoControlTrait( const TT::KernelInterface& kernel )
-                : m_Kernel( kernel )
-                , m_KernelMetricSet( "" )
+                : m_KernelMetricSet( "" )
                 , m_DrmOpenedByUmd( false )
-                , m_DrmCard( T::ConstantsOs::Drm::m_Invalid )
+                , m_Kernel( kernel )
                 , m_DrmFile( T::ConstantsOs::Drm::m_Invalid )
+                , m_DrmCard( T::ConstantsOs::Drm::m_Invalid )
             {
             }
 
@@ -85,7 +90,7 @@ namespace ML
                 const ClientData_1_0&           clientData,
                 TT::ConstantsOs::Drm::Revision& revision )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_ASSERT( m_DrmFile == T::ConstantsOs::Drm::m_Invalid );
                 ML_ASSERT( m_DrmCard == T::ConstantsOs::Drm::m_Invalid );
 
@@ -147,7 +152,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint32_t QueryLength( const uint32_t id )
             {
-                ML_FUNCTION_LOG( uint32_t{ 0 } );
+                ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
 
                 auto query = drm_i915_query{};
                 auto item  = drm_i915_query_item{};
@@ -174,7 +179,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode Query( drm_i915_query& query )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 return log.m_Result = SendDrm( DRM_IOCTL_I915_QUERY, query );
             }
@@ -189,7 +194,7 @@ namespace ML
                 const uint32_t        id,
                 std::vector<uint8_t>& data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 auto query = drm_i915_query{};
                 auto item  = drm_i915_query_item{};
@@ -228,7 +233,7 @@ namespace ML
                 const uint32_t id,
                 Data&          data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 auto query = drm_i915_query{};
                 auto item  = drm_i915_query_item{};
@@ -260,7 +265,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE int32_t CreateMetricSet() const
             {
-                ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Tbs::m_Invalid } );
+                ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Tbs::m_Invalid }, &m_Kernel.m_Context );
 
                 const char*             guid                  = T::ConstantsOs::Tbs::m_ActiveMetricSetGuid;
                 uint32_t                guidLength            = strlen( T::ConstantsOs::Tbs::m_ActiveMetricSetGuid );
@@ -295,7 +300,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode RemoveMetricSet( int64_t set ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK( set != T::ConstantsOs::Tbs::m_Invalid );
 
                 return log.m_Result = SendDrm( DRM_IOCTL_I915_PERF_REMOVE_CONFIG, set );
@@ -311,12 +316,18 @@ namespace ML
                 std::vector<uint64_t>& properties,
                 int32_t&               stream )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 auto parameters           = drm_i915_perf_open_param{};
                 parameters.flags          = I915_PERF_FLAG_FD_CLOEXEC | I915_PERF_FLAG_FD_NONBLOCK;
                 parameters.num_properties = properties.size() / 2;
                 parameters.properties_ptr = reinterpret_cast<uintptr_t>( properties.data() );
+
+                // Print properties.
+                for( uint32_t i = 0; i < properties.size() / 2; ++i )
+                {
+                    log.Info( "Tbs properties: ", properties[i * 2], properties[i * 2 + 1] );
+                }
 
                 return log.m_Result = SendDrm( DRM_IOCTL_I915_PERF_OPEN, parameters, stream );
             }
@@ -331,7 +342,7 @@ namespace ML
                 const int32_t stream,
                 int32_t       set )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK( set != T::ConstantsOs::Tbs::m_Invalid );
                 ML_FUNCTION_CHECK( stream != T::ConstantsOs::Tbs::m_Invalid );
 
@@ -353,7 +364,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE int32_t GetKernelMetricSet() const
             {
-                ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Tbs::m_Invalid } );
+                ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Tbs::m_Invalid }, &m_Kernel.m_Context );
 
                 return ML_SUCCESS( ReadFile( m_KernelMetricSet, log.m_Result ) )
                     ? log.m_Result
@@ -371,7 +382,7 @@ namespace ML
                 const std::string& path,
                 Data&              data ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 Constants::String::Buffer buffer    = {};
                 int32_t                   file      = open( path.c_str(), O_RDONLY );
@@ -411,7 +422,7 @@ namespace ML
                 const uint32_t size,
                 Buffer&        buffer ) const
             {
-                ML_FUNCTION_LOG( uint32_t{ 0 } );
+                ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK_ERROR( stream != T::ConstantsOs::Tbs::m_Invalid, 0 );
 
                 return log.m_Result = read( stream, buffer.data(), size );
@@ -424,7 +435,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode CloseTbs( const int32_t stream )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK( stream != T::ConstantsOs::Tbs::m_Invalid );
 
                 close( stream );
@@ -444,7 +455,7 @@ namespace ML
                 const uint32_t size,
                 uint8_t*&      address ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 auto map   = drm_i915_gem_mmap{};
                 map.handle = handle;
@@ -469,7 +480,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode UnmapBuffer( const uint32_t handle ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 auto unmap   = drm_i915_gem_sw_finish{};
                 unmap.handle = handle;
@@ -484,7 +495,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode GetChipsetId( int32_t& id ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 return log.m_Result = GetDrmParameter( I915_PARAM_CHIPSET_ID, id );
             }
@@ -501,11 +512,11 @@ namespace ML
                 void*&        addressCpu,
                 uint32_t&     size ) const
             {
-                ML_FUNCTION_LOG( StatusCode::TbsUnableToRead );
+                ML_FUNCTION_LOG( StatusCode::TbsUnableToRead, &m_Kernel.m_Context );
 
                 // Obtain oa buffer size / offset.
-                auto properties = drm_i915_perf_oa_buffer_info{};
-                log.m_Result    = GetStreamParameter( stream, I915_PERF_IOCTL_GET_OA_BUFFER_INFO, properties );
+                auto properties = prelim_drm_i915_perf_oa_buffer_info{};
+                log.m_Result    = GetStreamParameter( stream, PRELIM_I915_PERF_IOCTL_GET_OA_BUFFER_INFO, properties );
 
                 if( ML_FAIL( log.m_Result ) )
                 {
@@ -527,7 +538,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode GetDrmRevision( TT::ConstantsOs::Drm::Revision& revision ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 int32_t output = static_cast<int32_t>( T::ConstantsOs::Drm::Revision::Unsupported );
                 log.m_Result   = GetDrmParameter( I915_PARAM_PERF_REVISION, output );
@@ -543,7 +554,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint64_t GetGpuTimestampFrequency( const TT::Layouts::Configuration::TimestampType /*timestampType*/ ) const
             {
-                ML_FUNCTION_LOG( uint64_t{ 0 } );
+                ML_FUNCTION_LOG( uint64_t{ 0 }, &m_Kernel.m_Context );
 
                 int32_t frequency = 0;
 
@@ -567,7 +578,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode OpenDrm()
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 m_DrmFile = drmOpenWithType( T::ConstantsOs::Drm::m_Name, NULL, DRM_NODE_RENDER );
 
@@ -592,7 +603,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE void CloseDrm()
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 if( m_DrmFile >= 0 )
                 {
@@ -609,7 +620,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE std::string GetDrmDirectoryPath() const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_ASSERT( m_DrmFile != T::ConstantsOs::Drm::m_Invalid );
 
                 struct stat             fileInfo = {};
@@ -636,7 +647,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode GetDrmCardNumber()
             {
-                ML_FUNCTION_LOG( StatusCode::Failed );
+                ML_FUNCTION_LOG( StatusCode::Failed, &m_Kernel.m_Context );
 
                 const std::string drmDirectoryPath = GetDrmDirectoryPath();
                 DIR*              drmDirectory     = opendir( drmDirectoryPath.c_str() );
@@ -677,7 +688,7 @@ namespace ML
                 const uint32_t parameter,
                 Result&        result ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_STATIC_ASSERT( sizeof( Result ) == sizeof( int32_t ), "Incorrect input size, expected 4 bytes." );
 
                 int32_t output     = 0;
@@ -717,13 +728,13 @@ namespace ML
                 const uint32_t request,
                 Result&        result ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK( stream != T::ConstantsOs::Tbs::m_Invalid );
 
                 // Check parameter availability.
                 switch( request )
                 {
-                    case I915_PERF_IOCTL_GET_OA_BUFFER_INFO:
+                    case PRELIM_I915_PERF_IOCTL_GET_OA_BUFFER_INFO:
                         break;
 
                     default:
@@ -755,7 +766,7 @@ namespace ML
                 const uint32_t& request,
                 Data&           parameters ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK( m_DrmFile != T::ConstantsOs::Drm::m_Invalid );
 
                 int32_t result = T::ConstantsOs::Drm::m_Invalid;
@@ -777,7 +788,7 @@ namespace ML
                 Data&          parameters,
                 int32_t&       result ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK( m_DrmFile != T::ConstantsOs::Drm::m_Invalid );
 
                 result       = drmIoctl( m_DrmFile, request, &parameters );
@@ -801,6 +812,8 @@ namespace ML
             ML_INLINE Type ReadRegister32( const uint32_t offset ) const
             {
                 ML_STATIC_ASSERT( sizeof( Type ) == sizeof( uint32_t ), "Incorrect input size, expected 4 bytes." );
+
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 auto output       = Type{};
                 auto parameters   = drm_i915_reg_read{};
@@ -835,6 +848,8 @@ namespace ML
             ML_INLINE Type ReadRegister64( const uint32_t offset ) const
             {
                 ML_STATIC_ASSERT( sizeof( Type ) == sizeof( uint64_t ), "Incorrect input size, expected 8 bytes." );
+
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 auto output       = Type{};
                 auto parameters   = drm_i915_reg_read{};

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -36,6 +36,7 @@ namespace ML
             using Base::Allocate;
             using Base::Delete;
             using Base::Derived;
+            using Base::m_Context;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief Override posh query constructor.
@@ -84,10 +85,12 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE static StatusCode GetData( GetReportOverride_1_0& getData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( getData.Data != nullptr );
-                ML_FUNCTION_CHECK( getData.DataSize == sizeof( TT::Layouts::Override::PoshQuery ) );
-                ML_FUNCTION_CHECK( IsValid( getData.Handle ) );
+                ML_FUNCTION_CHECK_STATIC( getData.Data != nullptr );
+                ML_FUNCTION_CHECK_STATIC( getData.DataSize == sizeof( TT::Layouts::Override::PoshQuery ) );
+                ML_FUNCTION_CHECK_STATIC( IsValid( getData.Handle ) );
+
+                auto& override = FromHandle( getData.Handle );
+                ML_FUNCTION_LOG( StatusCode::Success, &override.m_Context );
 
                 auto& report     = *static_cast<TT::Layouts::Override::PoshQuery*>( getData.Data );
                 report.m_Enabled = false;

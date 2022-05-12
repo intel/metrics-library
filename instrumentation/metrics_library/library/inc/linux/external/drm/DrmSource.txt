@@ -1,10 +1,14 @@
-https://github.com/intel-gpu/kernel
+https://github.com/intel-gpu/drm-uapi-helper/tree/master/drm-uapi
+https://gitlab.freedesktop.org/mesa/drm
 
 Base commit:
-commit 7319d2c492c819eafdd5a255e87dfc338fded8f5
-Author: Fei Yang <fei.yang@intel.com>
-Date:   Wed Jan 6 16:06:48 2021 -0800
+commit aea73597c31f5c318fff6ccfeacf95a020f64617
+Author: Ashutosh Dixit <ashutosh.dixit@intel.com>
+Date:   23 Apr 2022 03:55:41 +02:00
 
-    Merge pull request #1 from intel-gpu/jketreno-readme-updates
+	Identical to previous commit (499d67e06436) except minor change to revert a
+	manual change made to i915_drm.h.
 
-    Make README.md document stand alone
+	Signed-off-by: Ashutosh Dixit <ashutosh.dixit@intel.com>
+
+xf86drm.h updated to https://gitlab.freedesktop.org/mesa/drm/-/commit/57e0b0552e11b3f04e6d5704c1c7efea5f83ffe4

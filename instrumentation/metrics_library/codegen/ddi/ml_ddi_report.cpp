@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -47,19 +47,7 @@ namespace ML
             StatusCode ML_STDCALL GetData_1_0(
                 GetReportData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiReport<T>::GetData_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
-
-                return log.m_Result;
+                return DdiReport<T>::GetData_1_0( data );
             }
 
         } // namespace OpenCL
@@ -74,19 +62,7 @@ namespace ML
             StatusCode ML_STDCALL GetData_1_0(
                 GetReportData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiReport<T>::GetData_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
-
-                return log.m_Result;
+                return DdiReport<T>::GetData_1_0( data );
             }
 
         } // namespace OneApi
@@ -121,19 +97,7 @@ namespace ML
             StatusCode ML_STDCALL GetData_1_0(
                 GetReportData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiReport<T>::GetData_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
-
-                return log.m_Result;
+                return DdiReport<T>::GetData_1_0( data );
             }
 
         } // namespace OpenCL
@@ -148,19 +112,7 @@ namespace ML
             StatusCode ML_STDCALL GetData_1_0(
                 GetReportData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiReport<T>::GetData_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
-
-                return log.m_Result;
+                return DdiReport<T>::GetData_1_0( data );
             }
 
         } // namespace OneApi
@@ -195,19 +147,7 @@ namespace ML
             StatusCode ML_STDCALL GetData_1_0(
                 GetReportData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiReport<T>::GetData_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
-
-                return log.m_Result;
+                return DdiReport<T>::GetData_1_0( data );
             }
 
         } // namespace OpenCL
@@ -222,19 +162,7 @@ namespace ML
             StatusCode ML_STDCALL GetData_1_0(
                 GetReportData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiReport<T>::GetData_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
-
-                return log.m_Result;
+                return DdiReport<T>::GetData_1_0( data );
             }
 
         } // namespace OneApi

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -49,29 +49,7 @@ namespace ML
                 ContextCreateData_1_0* createData,
                 ContextHandle_1_0*     handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print traits properties.
-                T::PrintBuildNumber();
-                T::PrintClient();
-                T::PrintGpuType();
-                T::PrintTraits();
-
-                // Print input values.
-                log.Input( clientType );
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextCreate_1_0(
-                    clientType,
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -80,19 +58,7 @@ namespace ML
             StatusCode ML_STDCALL ContextDelete_1_0(
                 const ContextHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextDelete_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -103,25 +69,7 @@ namespace ML
                 ValueType*          type,
                 TypedValue_1_0*     value )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( parameter );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::GetParameter_1_0(
-                    parameter,
-                    type,
-                    value );
-
-                // Print output values.
-                log.Output( type );
-                log.Output( value );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
             }
 
         } // namespace OpenCL
@@ -138,29 +86,7 @@ namespace ML
                 ContextCreateData_1_0* createData,
                 ContextHandle_1_0*     handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print traits properties.
-                T::PrintBuildNumber();
-                T::PrintClient();
-                T::PrintGpuType();
-                T::PrintTraits();
-
-                // Print input values.
-                log.Input( clientType );
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextCreate_1_0(
-                    clientType,
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -169,19 +95,7 @@ namespace ML
             StatusCode ML_STDCALL ContextDelete_1_0(
                 const ContextHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextDelete_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -192,25 +106,7 @@ namespace ML
                 ValueType*          type,
                 TypedValue_1_0*     value )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( parameter );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::GetParameter_1_0(
-                    parameter,
-                    type,
-                    value );
-
-                // Print output values.
-                log.Output( type );
-                log.Output( value );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
             }
 
         } // namespace OneApi
@@ -247,29 +143,7 @@ namespace ML
                 ContextCreateData_1_0* createData,
                 ContextHandle_1_0*     handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print traits properties.
-                T::PrintBuildNumber();
-                T::PrintClient();
-                T::PrintGpuType();
-                T::PrintTraits();
-
-                // Print input values.
-                log.Input( clientType );
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextCreate_1_0(
-                    clientType,
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -278,19 +152,7 @@ namespace ML
             StatusCode ML_STDCALL ContextDelete_1_0(
                 const ContextHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextDelete_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -301,25 +163,7 @@ namespace ML
                 ValueType*          type,
                 TypedValue_1_0*     value )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( parameter );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::GetParameter_1_0(
-                    parameter,
-                    type,
-                    value );
-
-                // Print output values.
-                log.Output( type );
-                log.Output( value );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
             }
 
         } // namespace OpenCL
@@ -336,29 +180,7 @@ namespace ML
                 ContextCreateData_1_0* createData,
                 ContextHandle_1_0*     handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print traits properties.
-                T::PrintBuildNumber();
-                T::PrintClient();
-                T::PrintGpuType();
-                T::PrintTraits();
-
-                // Print input values.
-                log.Input( clientType );
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextCreate_1_0(
-                    clientType,
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -367,19 +189,7 @@ namespace ML
             StatusCode ML_STDCALL ContextDelete_1_0(
                 const ContextHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextDelete_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -390,25 +200,7 @@ namespace ML
                 ValueType*          type,
                 TypedValue_1_0*     value )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( parameter );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::GetParameter_1_0(
-                    parameter,
-                    type,
-                    value );
-
-                // Print output values.
-                log.Output( type );
-                log.Output( value );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
             }
 
         } // namespace OneApi
@@ -445,29 +237,7 @@ namespace ML
                 ContextCreateData_1_0* createData,
                 ContextHandle_1_0*     handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print traits properties.
-                T::PrintBuildNumber();
-                T::PrintClient();
-                T::PrintGpuType();
-                T::PrintTraits();
-
-                // Print input values.
-                log.Input( clientType );
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextCreate_1_0(
-                    clientType,
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -476,19 +246,7 @@ namespace ML
             StatusCode ML_STDCALL ContextDelete_1_0(
                 const ContextHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextDelete_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -499,25 +257,7 @@ namespace ML
                 ValueType*          type,
                 TypedValue_1_0*     value )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( parameter );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::GetParameter_1_0(
-                    parameter,
-                    type,
-                    value );
-
-                // Print output values.
-                log.Output( type );
-                log.Output( value );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
             }
 
         } // namespace OpenCL
@@ -534,29 +274,7 @@ namespace ML
                 ContextCreateData_1_0* createData,
                 ContextHandle_1_0*     handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print traits properties.
-                T::PrintBuildNumber();
-                T::PrintClient();
-                T::PrintGpuType();
-                T::PrintTraits();
-
-                // Print input values.
-                log.Input( clientType );
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextCreate_1_0(
-                    clientType,
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -565,19 +283,7 @@ namespace ML
             StatusCode ML_STDCALL ContextDelete_1_0(
                 const ContextHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::ContextDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::ContextDelete_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -588,25 +294,7 @@ namespace ML
                 ValueType*          type,
                 TypedValue_1_0*     value )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( parameter );
-
-                // Call entry point implementation.
-                log.m_Result = DdiContext<T>::GetParameter_1_0(
-                    parameter,
-                    type,
-                    value );
-
-                // Print output values.
-                log.Output( type );
-                log.Output( value );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
             }
 
         } // namespace OneApi

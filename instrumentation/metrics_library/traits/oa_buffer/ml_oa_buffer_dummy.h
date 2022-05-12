@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -31,14 +31,16 @@ namespace ML
             /// @brief  Members.
             //////////////////////////////////////////////////////////////////////////
             const TT::Layouts::HwCounters::ReportOa m_OaReportDummy;
+            TT::Context&                            m_Context;
 
         public:
             //////////////////////////////////////////////////////////////////////////
             /// @brief OaBufferDummyTrait constructor.
             /// @param kernel   kernel interface.
             //////////////////////////////////////////////////////////////////////////
-            OaBufferDummyTrait( const TT::KernelInterface& /*kernel*/ )
+            OaBufferDummyTrait( const TT::KernelInterface& kernel )
                 : m_OaReportDummy{}
+                , m_Context( kernel.m_Context )
             {
             }
 
@@ -57,7 +59,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode Initialize() const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
                 return log.m_Result;
             }
 
@@ -77,7 +79,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode Release() const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
                 return log.m_Result;
             }
 
@@ -87,7 +89,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE bool IsValid() const
             {
-                ML_FUNCTION_LOG( false );
+                ML_FUNCTION_LOG( false, &m_Context );
                 return log.m_Result;
             }
 
@@ -123,7 +125,7 @@ namespace ML
                 const bool /*begin*/,
                 uint32_t& /*index*/ )
             {
-                ML_ASSERT_ALWAYS();
+                ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
                 return StatusCode::Failed;
             }
 
@@ -139,7 +141,7 @@ namespace ML
                 const bool /*begin*/,
                 uint32_t& /*index*/ )
             {
-                ML_ASSERT_ALWAYS();
+                ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
                 return StatusCode::Failed;
             }
 
@@ -149,7 +151,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint32_t GetReportsCount() const
             {
-                ML_FUNCTION_LOG( uint32_t{ 0 } );
+                ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Context );
                 return log.m_Result;
             }
 
@@ -160,7 +162,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu /*reportGpu*/ )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
                 return log.m_Result;
             }
         };

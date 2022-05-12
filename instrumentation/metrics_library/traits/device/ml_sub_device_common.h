@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021 Intel Corporation
+Copyright (C) 2021-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -69,7 +69,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             StatusCode Initialize()
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
                 return log.m_Result;
             }
         };

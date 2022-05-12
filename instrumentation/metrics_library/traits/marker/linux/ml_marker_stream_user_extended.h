@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -50,10 +50,10 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             template <typename CommandBuffer>
             ML_INLINE static StatusCode Write(
-                CommandBuffer& /*buffer*/,
+                CommandBuffer& buffer,
                 const CommandBufferMarkerStreamUserExtended_1_0& /*data*/ )
             {
-                ML_FUNCTION_LOG( StatusCode::NotImplemented );
+                ML_FUNCTION_LOG( StatusCode::NotImplemented, &buffer.m_Context );
                 return log.m_Result;
             }
         };

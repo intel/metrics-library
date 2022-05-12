@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -93,7 +93,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Activate( const ConfigurationActivateData_1_0& activateData ) const
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
 
             auto&      oaBuffer   = m_Kernel.m_Tbs.GetOaBufferMapped( T::Layouts::OaBuffer::Type::Oa );
@@ -115,7 +115,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Deactivate() const
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             m_Kernel.m_OaConfigurationReferenceCounter--;
 
@@ -131,7 +131,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Initialize()
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             return log.m_Result = m_Kernel.GetOaConfiguration( m_OaRegisters );
         }
 

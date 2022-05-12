@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -47,19 +47,7 @@ namespace ML
             StatusCode ML_STDCALL CommandBufferGet_1_0(
                 const CommandBufferData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGet_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGet_1_0( data );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -69,23 +57,7 @@ namespace ML
                 const CommandBufferData_1_0* data,
                 CommandBufferSize_1_0*       size )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
-                    data,
-                    size );
-
-                // Print output values.
-                log.Output( size );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGetSize_1_0( data, size );
             }
 
         } // namespace OpenCL
@@ -100,19 +72,7 @@ namespace ML
             StatusCode ML_STDCALL CommandBufferGet_1_0(
                 const CommandBufferData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGet_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGet_1_0( data );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -122,23 +82,7 @@ namespace ML
                 const CommandBufferData_1_0* data,
                 CommandBufferSize_1_0*       size )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
-                    data,
-                    size );
-
-                // Print output values.
-                log.Output( size );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGetSize_1_0( data, size );
             }
 
         } // namespace OneApi
@@ -173,19 +117,7 @@ namespace ML
             StatusCode ML_STDCALL CommandBufferGet_1_0(
                 const CommandBufferData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGet_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGet_1_0( data );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -195,23 +127,7 @@ namespace ML
                 const CommandBufferData_1_0* data,
                 CommandBufferSize_1_0*       size )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
-                    data,
-                    size );
-
-                // Print output values.
-                log.Output( size );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGetSize_1_0( data, size );
             }
 
         } // namespace OpenCL
@@ -226,19 +142,7 @@ namespace ML
             StatusCode ML_STDCALL CommandBufferGet_1_0(
                 const CommandBufferData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGet_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGet_1_0( data );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -248,23 +152,7 @@ namespace ML
                 const CommandBufferData_1_0* data,
                 CommandBufferSize_1_0*       size )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
-                    data,
-                    size );
-
-                // Print output values.
-                log.Output( size );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGetSize_1_0( data, size );
             }
 
         } // namespace OneApi
@@ -299,19 +187,7 @@ namespace ML
             StatusCode ML_STDCALL CommandBufferGet_1_0(
                 const CommandBufferData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGet_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGet_1_0( data );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -321,23 +197,7 @@ namespace ML
                 const CommandBufferData_1_0* data,
                 CommandBufferSize_1_0*       size )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
-                    data,
-                    size );
-
-                // Print output values.
-                log.Output( size );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGetSize_1_0( data, size );
             }
 
         } // namespace OpenCL
@@ -352,19 +212,7 @@ namespace ML
             StatusCode ML_STDCALL CommandBufferGet_1_0(
                 const CommandBufferData_1_0* data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGet_1_0(
-                    data );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGet_1_0( data );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -374,23 +222,7 @@ namespace ML
                 const CommandBufferData_1_0* data,
                 CommandBufferSize_1_0*       size )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( data );
-
-                // Call entry point implementation.
-                log.m_Result = DdiCommandBuffer<T>::CommandBufferGetSize_1_0(
-                    data,
-                    size );
-
-                // Print output values.
-                log.Output( size );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiCommandBuffer<T>::CommandBufferGetSize_1_0( data, size );
             }
 
         } // namespace OneApi

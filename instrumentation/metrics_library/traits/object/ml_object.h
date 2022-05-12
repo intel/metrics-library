@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -93,7 +93,7 @@ namespace ML
             const bool        valid   = object && IsValidType( *object );
             ClientType_1_0    unknown = { ClientApi::Unknown, ClientGen::Unknown };
 
-            ML_ASSERT( valid );
+            ML_ASSERT_NO_ADAPTER( valid );
 
             return valid
                 ? object->m_ClientType
@@ -208,7 +208,7 @@ namespace ML
         ML_INLINE static Object* Allocate( Arguments&&... arguments )
         {
             Object* object = new( std::nothrow ) Object( std::forward<Arguments>( arguments )... );
-            ML_ASSERT( object );
+            ML_ASSERT_NO_ADAPTER( object );
             return object;
         }
 
@@ -218,7 +218,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static void Delete( Object*& object )
         {
-            ML_ASSERT( object );
+            ML_ASSERT_NO_ADAPTER( object );
             delete object;
             object = nullptr;
         }
@@ -251,7 +251,7 @@ namespace ML
             Handle handle = {};
             handle.data   = static_cast<Object*>( this );
 
-            ML_ASSERT( handle.data );
+            ML_ASSERT_ADAPTER( handle.data, m_Context.m_AdapterId );
             return handle;
         }
 
@@ -265,8 +265,9 @@ namespace ML
             BaseObject* base   = static_cast<BaseObject*>( handle.data );
             Object*     object = static_cast<Object*>( base );
 
-            ML_ASSERT( object );
-            ML_ASSERT( IsValidType( *object ) );
+            ML_ASSERT_NO_ADAPTER( object );
+            ML_ASSERT_ADAPTER( IsValidType( *object ), object->m_Context.m_AdapterId );
+
             return *object;
         }
 

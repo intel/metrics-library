@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -64,7 +64,7 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
             #endif
 
             default:
-                ML_ASSERT_ALWAYS();
+                ML_ASSERT_ALWAYS_NO_ADAPTER();
                 break;
         }
     }
@@ -86,7 +86,7 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
             #endif
 
             default:
-                ML_ASSERT_ALWAYS();
+                ML_ASSERT_ALWAYS_NO_ADAPTER();
                 break;
         }
     }
@@ -108,7 +108,7 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
             #endif
 
             default:
-                ML_ASSERT_ALWAYS();
+                ML_ASSERT_ALWAYS_NO_ADAPTER();
                 break;
         }
     }
@@ -125,6 +125,7 @@ namespace ML
     //////////////////////////////////////////////////////////////////////////
     ML_INLINE void TranslateToSupportedGpuType( ClientGen& clientGen )
     {
+    #if( ML_ENABLE_GEN9 || ML_ENABLE_GEN11 )
         switch( clientGen )
         {
         #if ML_ENABLE_GEN9
@@ -142,6 +143,9 @@ namespace ML
             default:
                 break;
         }
+    #else
+        (void) clientGen;
+    #endif
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -150,11 +154,7 @@ namespace ML
     //////////////////////////////////////////////////////////////////////////
     ML_INLINE void TranslateToSupportedApiType( ClientApi& clientApi )
     {
-        switch( clientApi )
-        {
-            default:
-                break;
-        }
+        (void) clientApi;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -226,7 +226,7 @@ extern "C" {
 
             // Obtain function table.
             auto functionTable = GetDdiFunctionTable( clientType );
-            ML_ASSERT( functionTable != nullptr );
+            ML_ASSERT_NO_ADAPTER( functionTable != nullptr );
 
             return functionTable
                 ? functionTable->pfnContextCreate_1_0( clientType, createData, handle )
@@ -254,7 +254,7 @@ extern "C" {
         {
             // Obtain function table.
             auto functionTable = GetDdiFunctionTable( handle );
-            ML_ASSERT( functionTable != nullptr );
+            ML_ASSERT_NO_ADAPTER( functionTable != nullptr );
 
             return functionTable
                 ? functionTable->pfnContextDelete_1_0( handle )

@@ -1,15 +1,15 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file iu_os.h
+@file iu_os.cpp
 
-@brief Instrumentation Utils header with OS specific non-standard
+@brief Instrumentation Utils implementation with OS specific non-standard
        functions for Linux / Android.
 */
 
@@ -87,13 +87,26 @@ extern "C"
     //     Returns information on current module. Used for debug logs.
     //
     // Input:
-    //     char** dlName      - (OUT)
     //     char** processName - (OUT)
     //
+    // Output:
+    //     char* dlName       - (OUT)
+    //
     ///////////////////////////////////////////////////////////////////////////////
-    void IuOsGetModuleInfo( char** dlName, char** processName )
+    const char* IuOsGetModuleInfo( char** processName )
     {
-        // To be implemented.
+        static char fullProcessName[IU_MODULE_NAME_SIZE_MAX] = { 0 };
+
+        // Get an executable path. If the function fails, it shall return a value of -1.
+        if( readlink( "/proc/self/exe", fullProcessName, IU_MODULE_NAME_SIZE_MAX ) == -1 )
+        {
+            IU_DBG_PRINT( IU_DBG_SEV_ERROR, "Couldn't find an executable, exiting" );
+            return NULL;
+        }
+
+        *processName = strrchr( fullProcessName, '/' ) + 1;
+
+        return NULL;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -108,6 +121,7 @@ extern "C"
     //     Reads system-wide instrumentation log settings.
     //
     // Input:
+    //     void*     deviceContext  - device context
     //     bool*     assertEnable   - (OUT) read AssertEnable value
     //     uint32_t* logLayerEnable - (OUT) read LogLayerEnable value
     //     uint32_t* logLevel       - (OUT) read LogLevel value

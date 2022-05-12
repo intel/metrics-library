@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -52,13 +52,13 @@ namespace ML
                 CommandBuffer&                           buffer,
                 const CommandBufferMarkerStreamUser_1_0& data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 const uint32_t marker = T::Policy::StreamMarker::m_Use32bitValue
                     ? data.Value | ( data.Reserved << Constants::StreamMarker::m_HighBitsShift )
                     : data.Value;
 
-                // Load a value to A19 counter.
+                // Load a value to A20 (gen 9) or A19 (gen11+) counter.
                 ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                     buffer,
                     T::GpuRegisters::m_StreamMarker,

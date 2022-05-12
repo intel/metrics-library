@@ -1,6 +1,6 @@
 #=========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,12 +14,13 @@
 AccessModifierOffset: -4
 
 AlignAfterOpenBracket: AlwaysBreak
-AlignConsecutiveAssignments: true
-AlignConsecutiveBitFields: true
-AlignConsecutiveDeclarations: true
-AlignConsecutiveMacros: true
+#AlignArrayOfStructures: Left
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveBitFields: AcrossEmptyLinesAndComments
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
 AlignEscapedNewlinesLeft: Right
-AlignOperands: false
+AlignOperands: DontAlign
 AlignTrailingComments: true
 
 AllowAllArgumentsOnNextLine: false
@@ -37,6 +38,8 @@ AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: Yes
+
+#AttributeMacros: ['']
 
 BinPackArguments: false
 BinPackParameters: false
@@ -85,12 +88,13 @@ Cpp11BracedListStyle: false
 DeriveLineEnding: false
 DerivePointerAlignment: false
 
-#EmptyLineBeforeAccessModifier: Always
+#EmptyLineAfterAccessModifier: Never
+#EmptyLineBeforeAccessModifier: LogicalBlock
 
 FixNamespaceComments: true
 
 #IndentAccessModifiers: false
-IndentCaseBlocks: true
+IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentExternBlock: true
 IndentGotoLabels: true
@@ -99,7 +103,11 @@ IndentPPDirectives: BeforeHash
 IndentWidth: 4
 IndentWrappedFunctionNames: true
 
+#InsertTrailingCommas: None
+
 KeepEmptyLinesAtTheStartOfBlocks: false
+
+#LambdaBodyIndentation: Signature
 
 Language: Cpp
 
@@ -107,7 +115,14 @@ MaxEmptyLinesToKeep: 1
 
 NamespaceIndentation: All
 
+#PPIndentWidth: -1
+
 PointerAlignment: Left
+
+#QualifierAlignment: Custom
+#QualifierOrder: ['volatile', 'inline', 'static', 'const', 'constexpr', 'type']
+
+#ReferenceAlignment: Left
 
 ReflowComments: true
 
@@ -121,7 +136,7 @@ SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: true
 #SpaceAroundPointerQualifiers: Default
 SpaceBeforeAssignmentOperators: true
-#SpaceBeforeCaseColon: false
+SpaceBeforeCaseColon: false
 SpaceBeforeCpp11BracedList: false
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
@@ -145,3 +160,5 @@ TabWidth: 4
 
 UseCRLF: true
 UseTab: Never
+
+#WhitespaceSensitiveMacros: ['']

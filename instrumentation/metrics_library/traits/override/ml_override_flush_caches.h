@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -31,6 +31,7 @@ namespace ML
             /// @brief Types.
             //////////////////////////////////////////////////////////////////////////
             using Base = DdiObject<T, TT::Overrides::FlushCaches, OverrideHandle_1_0, ObjectType::OverrideFlushCaches>;
+            using Base::m_Context;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns description about itself.
@@ -49,7 +50,7 @@ namespace ML
             template <typename CommandBuffer>
             ML_INLINE static StatusCode Write( CommandBuffer& buffer )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
                 ML_FUNCTION_CHECK( T::GpuCommands::FlushCaches( buffer ) );
 
                 return log.m_Result;

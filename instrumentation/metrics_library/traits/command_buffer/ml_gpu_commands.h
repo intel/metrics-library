@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -107,6 +107,11 @@ namespace ML
                 const uint64_t memoryAddress,
                 const Flags /*flags*/ )
             {
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "memoryAddress", memoryAddress );
+
                 TT::Layouts::GpuCommands::MI_STORE_REGISTER_MEM command = {};
 
                 command.Init();
@@ -114,7 +119,7 @@ namespace ML
                 command.SetRegisterAddress( registerAddress );
                 command.SetMemoryAddress( memoryAddress );
 
-                return buffer.Write( command, true );
+                return log.m_Result = buffer.Write( command, true );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -133,7 +138,7 @@ namespace ML
                 const uint64_t memoryAddress,
                 const Flags    flags )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
@@ -166,6 +171,11 @@ namespace ML
                 const uint64_t address,
                 const Flags /*flags*/ )
             {
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
+                log.Input( "data", data );
+                log.Input( "address", address );
+
                 TT::Layouts::GpuCommands::MI_STORE_DATA_IMM command = {};
 
                 command.Init();
@@ -174,7 +184,7 @@ namespace ML
                 command.SetDataDWord0( data );
                 command.SetAddress( address );
 
-                return buffer.Write( command, true );
+                return log.m_Result = buffer.Write( command, true );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -192,8 +202,12 @@ namespace ML
                 const uint64_t address,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
                 ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync ) );
+
+                log.Input( "data", data );
+                log.Input( "address", address );
+                log.Input( "flags", flags );
 
                 const bool isPostSyncEnabled = static_cast<uint32_t>( flags & Flags::EnablePostSync ) != 0;
 
@@ -247,8 +261,12 @@ namespace ML
                 const uint32_t data,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
                 ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync, Flags::EnableStall ) );
+
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "data", data );
+                log.Input( "flags", flags );
 
                 const bool isStallEnabled    = static_cast<uint32_t>( flags & Flags::EnableStall ) != 0;
                 const bool isPostSyncEnabled = static_cast<uint32_t>( flags & Flags::EnablePostSync ) != 0;
@@ -298,13 +316,18 @@ namespace ML
                 const uint32_t destinationRegisterAddress,
                 const Flags /*flags*/ )
             {
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
+                log.Input( "sourceRegisterAddress", sourceRegisterAddress );
+                log.Input( "destinationRegisterAddress", destinationRegisterAddress );
+
                 TT::Layouts::GpuCommands::MI_LOAD_REGISTER_REG command = {};
 
                 command.Init();
                 command.SetSourceRegisterAddress( sourceRegisterAddress );
                 command.SetDestinationRegisterAddress( destinationRegisterAddress );
 
-                return buffer.Write( command, false );
+                return log.m_Result = buffer.Write( command, false );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -355,7 +378,7 @@ namespace ML
                             flags );
 
                     default:
-                        ML_ASSERT_ALWAYS();
+                        ML_ASSERT_ALWAYS_ADAPTER( buffer.m_Context.m_AdapterId );
                         break;
                 }
 
@@ -378,6 +401,12 @@ namespace ML
                 const uint32_t reportId,
                 const bool     begin )
             {
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
+                log.Input( "address", address );
+                log.Input( "reportId", reportId );
+                log.Input( "begin", begin );
+
                 TT::Layouts::GpuCommands::MI_REPORT_PERF_COUNT command = {};
 
                 const uint32_t oaReportOffset = begin
@@ -389,7 +418,7 @@ namespace ML
                 command.SetReportID( reportId );
                 command.SetMemoryAddress( address + oaReportOffset );
 
-                return buffer.Write( command, true );
+                return log.m_Result = buffer.Write( command, true );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -410,7 +439,7 @@ namespace ML
                 const bool     begin,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 uint64_t       countersOffset = 0;
                 const auto&    oaCountersLow  = T::GpuRegisters::GetOaCountersLow();
@@ -518,13 +547,13 @@ namespace ML
                 const bool     begin,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-                const uint32_t oaReportOffset = begin
-                    ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa )
-                    : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
+                const uint32_t oaReportOffset        = begin
+                           ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa )
+                           : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
                 const uint32_t oaTailPostBeginOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPostBegin );
-                const uint32_t oaTailPreEndOffset  = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPreEnd );
+                const uint32_t oaTailPreEndOffset    = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPreEnd );
 
                 // Ticks before triggered report.
                 if( begin )
@@ -595,7 +624,7 @@ namespace ML
                 CommandBuffer& buffer,
                 const uint32_t /*queryId*/ )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 auto risingEdge  = TT::Layouts::GpuRegisters::OaReportTrigger( false );
                 auto fallingEdge = TT::Layouts::GpuRegisters::OaReportTrigger( true );
@@ -629,7 +658,7 @@ namespace ML
                 const uint32_t /*marker*/,
                 const Flags flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 auto risingEdge  = TT::Layouts::GpuRegisters::OaReportTrigger( false );
                 auto fallingEdge = TT::Layouts::GpuRegisters::OaReportTrigger( true );
@@ -665,7 +694,7 @@ namespace ML
                 const uint64_t memoryAddress,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
@@ -690,7 +719,7 @@ namespace ML
                 const uint64_t memoryAddress,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
@@ -715,6 +744,10 @@ namespace ML
                 const uint64_t memoryAddress,
                 const Flags /*flags*/ )
             {
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
+                log.Input( "memoryAddress", memoryAddress );
+
                 TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
 
                 const uint32_t addressLow  = static_cast<uint32_t>( memoryAddress );
@@ -725,7 +758,7 @@ namespace ML
                 command.SetAddress( addressLow );
                 command.SetAddressHigh( addressHigh );
 
-                return buffer.Write( command, true );
+                return log.m_Result = buffer.Write( command, true );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -744,8 +777,12 @@ namespace ML
                 const uint64_t addressTarget,
                 const uint32_t size )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
                 ML_ASSERT( ( size % sizeof( uint32_t ) ) == 0 );
+
+                log.Input( "addressSource", addressSource );
+                log.Input( "addressTarget", addressTarget );
+                log.Input( "size", size );
 
                 TT::Layouts::GpuCommands::MI_COPY_MEM_MEM command = {};
 
@@ -773,6 +810,15 @@ namespace ML
                 const Flags givenFlags,
                 const SupportedFlags... supportedFlags )
             {
+#if ML_RELEASE
+                // The flags are not validated in Release.
+                (void) givenFlags;
+                for( const auto supportedFlag : { supportedFlags... } )
+                {
+                    (void) supportedFlag;
+                }
+                return true;
+#else  // ML_RELEASE
                 if( ( givenFlags == ( Flags::EnableMmioRemap | Flags::EnablePostSync ) ) ||
                     ( givenFlags == ( Flags::EnableMmioRemap | Flags::EnableStall ) ) )
                 {
@@ -795,6 +841,7 @@ namespace ML
                 const bool supported = static_cast<uint32_t>( ( givenFlags ^ packedSupportedFlags ) & givenFlags ) == 0;
 
                 return supported;
+#endif // ML_RELEASE
             }
         };
     } // namespace BASE
@@ -846,8 +893,12 @@ namespace ML
                 const uint64_t memoryAddress,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
                 ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnableMmioRemap ) );
+
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "memoryAddress", memoryAddress );
+                log.Input( "flags", flags );
 
                 TT::Layouts::GpuCommands::MI_STORE_REGISTER_MEM command = {};
 
@@ -884,29 +935,29 @@ namespace ML
                 const uint32_t data,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
                 ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync, Flags::EnableStall, Flags::EnableMmioRemap ) );
+
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "data", data );
+                log.Input( "flags", flags );
+
+                TT::Layouts::GpuCommands::MI_LOAD_REGISTER_IMM command = {};
+
+                command.Init();
+                command.SetRegisterOffset( registerAddress );
+                command.SetDataDWord( data );
 
                 const bool isMmioRemapEnabled = static_cast<uint32_t>( flags & Flags::EnableMmioRemap ) != 0;
 
-                if( isMmioRemapEnabled )
+                if( isMmioRemapEnabled &&
+                    registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
+                    registerAddress <= T::GpuRegisters::m_RenderMmioRangeEnd )
                 {
-                    TT::Layouts::GpuCommands::MI_LOAD_REGISTER_IMM command = {};
-
-                    command.Init();
-                    command.SetRegisterOffset( registerAddress );
-                    command.SetDataDWord( data );
-
-                    if( registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
-                        registerAddress <= T::GpuRegisters::m_RenderMmioRangeEnd )
-                    {
-                        command.SetMMIORemapEnable( true );
-                    }
-
-                    return log.m_Result = buffer.Write( command, false );
+                    command.SetMMIORemapEnable( true );
                 }
 
-                return log.m_Result = Base::LoadRegisterImmediate32( buffer, registerAddress, data, flags );
+                return log.m_Result = buffer.Write( command, false );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -923,7 +974,7 @@ namespace ML
                 const uint64_t memoryAddress,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
@@ -995,7 +1046,7 @@ namespace ML
                 const bool     begin,
                 const Flags    flags = Flags::None )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 uint64_t       countersOffset  = 0;
                 const auto&    oagCountersLow  = T::GpuRegisters::GetOagCountersLow();

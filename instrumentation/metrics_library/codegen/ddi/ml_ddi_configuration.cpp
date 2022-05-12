@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -48,21 +48,7 @@ namespace ML
                 const ConfigurationCreateData_1_0* createData,
                 ConfigurationHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -72,21 +58,7 @@ namespace ML
                 const ConfigurationHandle_1_0        handle,
                 const ConfigurationActivateData_1_0* activateData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-                log.Input( activateData );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationActivate_1_0(
-                    handle,
-                    activateData );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -95,19 +67,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDeactivate_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -116,19 +76,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDelete_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
             }
 
         } // namespace OpenCL
@@ -144,21 +92,7 @@ namespace ML
                 const ConfigurationCreateData_1_0* createData,
                 ConfigurationHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -168,21 +102,7 @@ namespace ML
                 const ConfigurationHandle_1_0        handle,
                 const ConfigurationActivateData_1_0* activateData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-                log.Input( activateData );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationActivate_1_0(
-                    handle,
-                    activateData );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -191,19 +111,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDeactivate_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -212,19 +120,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDelete_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
             }
 
         } // namespace OneApi
@@ -260,21 +156,7 @@ namespace ML
                 const ConfigurationCreateData_1_0* createData,
                 ConfigurationHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -284,21 +166,7 @@ namespace ML
                 const ConfigurationHandle_1_0        handle,
                 const ConfigurationActivateData_1_0* activateData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-                log.Input( activateData );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationActivate_1_0(
-                    handle,
-                    activateData );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -307,19 +175,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDeactivate_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -328,19 +184,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDelete_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
             }
 
         } // namespace OpenCL
@@ -356,21 +200,7 @@ namespace ML
                 const ConfigurationCreateData_1_0* createData,
                 ConfigurationHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -380,21 +210,7 @@ namespace ML
                 const ConfigurationHandle_1_0        handle,
                 const ConfigurationActivateData_1_0* activateData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-                log.Input( activateData );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationActivate_1_0(
-                    handle,
-                    activateData );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -403,19 +219,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDeactivate_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -424,19 +228,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDelete_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
             }
 
         } // namespace OneApi
@@ -472,21 +264,7 @@ namespace ML
                 const ConfigurationCreateData_1_0* createData,
                 ConfigurationHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -496,21 +274,7 @@ namespace ML
                 const ConfigurationHandle_1_0        handle,
                 const ConfigurationActivateData_1_0* activateData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-                log.Input( activateData );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationActivate_1_0(
-                    handle,
-                    activateData );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -519,19 +283,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDeactivate_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -540,19 +292,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDelete_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
             }
 
         } // namespace OpenCL
@@ -568,21 +308,7 @@ namespace ML
                 const ConfigurationCreateData_1_0* createData,
                 ConfigurationHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -592,21 +318,7 @@ namespace ML
                 const ConfigurationHandle_1_0        handle,
                 const ConfigurationActivateData_1_0* activateData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-                log.Input( activateData );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationActivate_1_0(
-                    handle,
-                    activateData );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -615,19 +327,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDeactivate_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -636,19 +336,7 @@ namespace ML
             StatusCode ML_STDCALL ConfigurationDelete_1_0(
                 const ConfigurationHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiConfiguration<T>::ConfigurationDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
             }
 
         } // namespace OneApi

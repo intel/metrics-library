@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -45,6 +45,8 @@ namespace ML
             GpuMemory_1_0                               m_GpuMemory;
             uint64_t                                    m_EndTag;
             uint32_t                                    m_ReportIndex;
+            uint64_t                                    m_OaTimestampFrequency;
+            uint64_t                                    m_CsTimestampFrequency;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief QueryPipelineTimestampsTrait constructor.
@@ -56,6 +58,8 @@ namespace ML
                 , m_GpuMemory{}
                 , m_EndTag( 0 )
                 , m_ReportIndex( 1 )
+                , m_OaTimestampFrequency( m_Context.m_Kernel.GetGpuTimestampFrequency( T::Layouts::Configuration::TimestampType::Oa ) )
+                , m_CsTimestampFrequency( m_Context.m_Kernel.GetGpuTimestampFrequency( T::Layouts::Configuration::TimestampType::Cs ) )
             {
             }
 
@@ -104,7 +108,7 @@ namespace ML
                 const GpuMemory_1_0&         gpuMemory,
                 const CommandBufferData_1_0& data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
                 ML_FUNCTION_CHECK( IsValid( data.QueryPipelineTimestamps.Handle ) );
 
                 auto&          queryData = data.QueryPipelineTimestamps;
@@ -128,12 +132,13 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE static StatusCode GetData( GetReportQuery_1_0& getData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( getData.Data != nullptr );
-                ML_FUNCTION_CHECK( getData.DataSize % sizeof( TT::Layouts::PipelineTimestamps::ReportApi ) == 0 );
-                ML_FUNCTION_CHECK( IsValid( getData.Handle ) );
+                ML_FUNCTION_CHECK_STATIC( getData.Data != nullptr );
+                ML_FUNCTION_CHECK_STATIC( getData.DataSize % sizeof( TT::Layouts::PipelineTimestamps::ReportApi ) == 0 );
+                ML_FUNCTION_CHECK_STATIC( IsValid( getData.Handle ) );
 
-                auto& query     = FromHandle( getData.Handle );
+                auto& query = FromHandle( getData.Handle );
+                ML_FUNCTION_LOG( StatusCode::Success, &query.m_Context );
+
                 auto& reportApi = *reinterpret_cast<TT::Layouts::PipelineTimestamps::ReportApi*>( getData.Data );
                 auto& reportGpu = query.m_GpuReport->m_TimestampsRender;
 
@@ -169,7 +174,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode SetGpuMemory( const GpuMemory_1_0& memory )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
                 ML_FUNCTION_CHECK( memory.CpuAddress != nullptr );
                 ML_FUNCTION_CHECK( memory.GpuAddress != 0 );
 
@@ -221,7 +226,7 @@ namespace ML
                 const uint64_t                                  offset,
                 const CommandBufferQueryPipelineTimestamps_1_0& data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
                 const uint64_t memoryAddressEndOfPipeline = m_GpuMemory.GpuAddress + offset + offsetof( TT::Layouts::PipelineTimestamps::Timestamps, m_EndOfPipeline );
                 const uint64_t memoryAddressEndEnter      = m_GpuMemory.GpuAddress + offset + offsetof( TT::Layouts::PipelineTimestamps::Timestamps, m_EndEnter );
@@ -272,17 +277,21 @@ namespace ML
                 const TT::Layouts::PipelineTimestamps::Timestamps& reportGpu,
                 TT::Layouts::PipelineTimestamps::ReportApi&        reportApi )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( reportGpu.m_EndTag == m_EndTag );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+                if( reportGpu.m_EndTag != m_EndTag )
+                {
+                    return log.m_Result = StatusCode::ReportNotReady;
+                }
 
                 // All timestamps are 32 bit.
-                reportApi.m_BeginTimestamp    = reportGpu.m_Begin;
-                reportApi.m_EndTimestampEnter = reportGpu.m_EndEnter;
-                reportApi.m_EndTimestampExit  = reportGpu.m_EndExit;
+                reportApi.m_BeginTimestamp    = static_cast<uint32_t>( reportGpu.m_Begin * m_OaTimestampFrequency / m_CsTimestampFrequency );
+                reportApi.m_EndTimestampEnter = static_cast<uint32_t>( reportGpu.m_EndEnter * m_OaTimestampFrequency / m_CsTimestampFrequency );
+                reportApi.m_EndTimestampExit  = static_cast<uint32_t>( reportGpu.m_EndExit * m_OaTimestampFrequency / m_CsTimestampFrequency );
                 reportApi.m_QueryInfo         = reportGpu.m_Info;
 
                 // Convert to 32-bit to match timestamps from other instrumentation reports.
-                reportApi.m_EopTimestamp = static_cast<uint32_t>( reportGpu.m_EndOfPipeline );
+                reportApi.m_EopTimestamp = static_cast<uint32_t>( reportGpu.m_EndOfPipeline * m_OaTimestampFrequency / m_CsTimestampFrequency );
 
                 return log.m_Result;
             }
@@ -325,7 +334,7 @@ namespace ML
                 const GpuMemory_1_0&         gpuMemory,
                 const CommandBufferData_1_0& data )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
                 ML_FUNCTION_CHECK( IsValid( data.QueryPipelineTimestamps.Handle ) );
 
                 auto&    queryData = data.QueryPipelineTimestamps;
@@ -364,12 +373,13 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE static StatusCode GetData( GetReportQuery_1_0& getData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( getData.Data != nullptr );
-                ML_FUNCTION_CHECK( getData.DataSize % sizeof( TT::Layouts::PipelineTimestamps::ReportApi ) == 0 );
-                ML_FUNCTION_CHECK( IsValid( getData.Handle ) );
+                ML_FUNCTION_CHECK_STATIC( getData.Data != nullptr );
+                ML_FUNCTION_CHECK_STATIC( getData.DataSize % sizeof( TT::Layouts::PipelineTimestamps::ReportApi ) == 0 );
+                ML_FUNCTION_CHECK_STATIC( IsValid( getData.Handle ) );
 
-                auto& query     = FromHandle( getData.Handle );
+                auto& query = FromHandle( getData.Handle );
+                ML_FUNCTION_LOG( StatusCode::Success, &query.m_Context );
+
                 auto& reportApi = *reinterpret_cast<TT::Layouts::PipelineTimestamps::ReportApi*>( getData.Data );
 
                 // Report index / count.

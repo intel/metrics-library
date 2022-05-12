@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -47,7 +47,7 @@ namespace ML
                 uint64_t m_EndTimestampEnter; // Store register memory timestamp gathered on query end enter.
                 uint64_t m_EopTimestamp;      // End of pipe timestamp.
                 uint64_t m_EndTimestampExit;  // Store register memory timestamp gathered on query end exit.
-
+                                              //
                 uint64_t m_QueryInfo;         // Query execution information flags.
                 uint32_t m_ReportId;
                 uint32_t m_ReportsCount;

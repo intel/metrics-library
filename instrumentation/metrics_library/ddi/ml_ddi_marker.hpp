@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -38,10 +38,16 @@ namespace ML
                 const MarkerCreateData_1_0* createData,
                 MarkerHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( handle != nullptr );
-                ML_FUNCTION_CHECK( createData != nullptr );
-                ML_FUNCTION_CHECK( T::Context::IsValid( createData->HandleContext ) );
+                ML_FUNCTION_CHECK_STATIC( handle != nullptr );
+                ML_FUNCTION_CHECK_STATIC( createData != nullptr );
+                ML_FUNCTION_CHECK_STATIC( T::Context::IsValid( createData->HandleContext ) );
+
+                auto& context = T::Context::FromHandle( createData->HandleContext );
+                ML_FUNCTION_LOG( StatusCode::Success, &context )
+
+                // Print input values.
+                log.Input( createData );
+                log.Input( handle );
 
                 switch( createData->Type )
                 {
@@ -55,6 +61,8 @@ namespace ML
                         break;
                 }
 
+                ML_ASSERT( log.m_Result == StatusCode::Success );
+
                 return log.m_Result;
             }
 
@@ -65,15 +73,26 @@ namespace ML
             ML_INLINE static StatusCode ML_STDCALL MarkerDelete_1_0(
                 const MarkerHandle_1_0 handle )
             {
+                ML_FUNCTION_LOG_STATIC( StatusCode::Success );
+
+                // Print input values.
+                log.Input( handle );
+
                 switch( BaseObject::GetType( handle ) )
                 {
                     case ObjectType::MarkerStreamUser:
-                        return StatusCode::NotImplemented;
+                        log.m_Result = StatusCode::NotImplemented;
+                        break;
 
                     default:
                         ML_ASSERT_ALWAYS();
-                        return StatusCode::IncorrectObject;
+                        log.m_Result = StatusCode::IncorrectObject;
+                        break;
                 }
+
+                ML_ASSERT( log.m_Result == StatusCode::Success );
+
+                return log.m_Result;
             }
         };
     } // namespace BASE

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -48,21 +48,7 @@ namespace ML
                 const OverrideCreateData_1_0* createData,
                 OverrideHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -71,19 +57,7 @@ namespace ML
             StatusCode ML_STDCALL OverrideDelete_1_0(
                 const OverrideHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideDelete_1_0( handle );
             }
 
         } // namespace OpenCL
@@ -99,21 +73,7 @@ namespace ML
                 const OverrideCreateData_1_0* createData,
                 OverrideHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -122,19 +82,7 @@ namespace ML
             StatusCode ML_STDCALL OverrideDelete_1_0(
                 const OverrideHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideDelete_1_0( handle );
             }
 
         } // namespace OneApi
@@ -170,21 +118,7 @@ namespace ML
                 const OverrideCreateData_1_0* createData,
                 OverrideHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -193,19 +127,7 @@ namespace ML
             StatusCode ML_STDCALL OverrideDelete_1_0(
                 const OverrideHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideDelete_1_0( handle );
             }
 
         } // namespace OpenCL
@@ -221,21 +143,7 @@ namespace ML
                 const OverrideCreateData_1_0* createData,
                 OverrideHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -244,19 +152,7 @@ namespace ML
             StatusCode ML_STDCALL OverrideDelete_1_0(
                 const OverrideHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideDelete_1_0( handle );
             }
 
         } // namespace OneApi
@@ -292,21 +188,7 @@ namespace ML
                 const OverrideCreateData_1_0* createData,
                 OverrideHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -315,19 +197,7 @@ namespace ML
             StatusCode ML_STDCALL OverrideDelete_1_0(
                 const OverrideHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideDelete_1_0( handle );
             }
 
         } // namespace OpenCL
@@ -343,21 +213,7 @@ namespace ML
                 const OverrideCreateData_1_0* createData,
                 OverrideHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( createData );
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideCreate_1_0(
-                    createData,
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideCreate_1_0( createData, handle );
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -366,19 +222,7 @@ namespace ML
             StatusCode ML_STDCALL OverrideDelete_1_0(
                 const OverrideHandle_1_0 handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-
-                // Print input values.
-                log.Input( handle );
-
-                // Call entry point implementation.
-                log.m_Result = DdiOverride<T>::OverrideDelete_1_0(
-                    handle );
-
-                // Validate function result.
-                ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                return log.m_Result;
+                return DdiOverride<T>::OverrideDelete_1_0( handle );
             }
 
         } // namespace OneApi

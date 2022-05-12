@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -34,7 +34,7 @@ namespace ML
         uint32_t                   m_MemoryPatchesCount;
         const GpuCommandBufferType m_Type;
         const GpuMemory_1_0&       m_GpuMemory;
-        const TT::Context&         m_Context;
+        TT::Context&               m_Context;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief GpuCommandBufferTrait constructor.
@@ -50,7 +50,7 @@ namespace ML
             const uint32_t             size,
             const GpuCommandBufferType type,
             const GpuMemory_1_0&       memory,
-            const TT::Context&         context )
+            TT::Context&               context )
             : m_Buffer( buffer )
             , m_Size( size )
             , m_Usage( 0 )
@@ -59,6 +59,7 @@ namespace ML
             , m_GpuMemory( memory )
             , m_Context( context )
         {
+            ML_FUNCTION_LOG( StatusCode::Success, &context );
             ML_ASSERT( buffer && size );
         }
 
@@ -106,7 +107,7 @@ namespace ML
             const GpuCommand& command,
             const bool        patchMemory )
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             const uint32_t commandSize = sizeof( command );
             const bool     validSpace  = m_Usage + commandSize <= m_Size;
@@ -256,7 +257,7 @@ namespace ML
         uint32_t                   m_Usage;
         uint32_t                   m_MemoryPatchesCount;
         const GpuCommandBufferType m_Type;
-        const TT::Context&         m_Context;
+        TT::Context&               m_Context;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief GpuCommandBufferCalculatorTrait constructor.
@@ -265,7 +266,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         GpuCommandBufferCalculatorTrait(
             const GpuCommandBufferType type,
-            const TT::Context&         context )
+            TT::Context&               context )
             : m_Usage( 0 )
             , m_MemoryPatchesCount( 0 )
             , m_Type( type )

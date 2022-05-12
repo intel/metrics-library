@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 @brief Gpu registers.
 */
+
+// clang-format off
 
 #pragma once
 
@@ -144,7 +146,7 @@ namespace ML
             static constexpr uint32_t m_OaPerfC7 = 0x295C;
 
             // Stream markers registers.
-            static constexpr uint32_t m_StreamMarker        = m_OaPerfA19;
+            static constexpr uint32_t m_StreamMarker        = m_OaPerfA20;
             static constexpr uint32_t m_StreamMarkerRender  = m_OaPerfA20;
             static constexpr uint32_t m_StreamMarkerPosh    = m_OaPerfA19;
             static constexpr uint32_t m_StreamMarkerCompute = m_OaPerfA18;
@@ -1282,6 +1284,7 @@ namespace ML
 
             // Overrides registers.
             static constexpr uint32_t m_NullHardwarePoshRegister = 0x180D8;
+            static constexpr uint32_t m_StreamMarker             = Base::m_OaPerfA19;
 
             // Overrides array.
             using NullHardwarePoshEnable  = std::array<uint32_t, 2>;
@@ -1990,3 +1993,5 @@ namespace ML
         };
     } // namespace XE_LP
 } // namespace ML
+
+// clang-format on

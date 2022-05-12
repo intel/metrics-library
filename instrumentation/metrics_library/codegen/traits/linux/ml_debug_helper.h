@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -74,10 +74,42 @@ namespace ML
         /// @brief Base type for DebugTrait object.
         //////////////////////////////////////////////////////////////////////////
         template <typename T>
-        struct DebugTrait
+        struct DebugTrait : TraitObject<T, TT::Debug>
         {
-            ML_DELETE_DEFAULT_CONSTRUCTOR( DebugTrait );
             ML_DELETE_DEFAULT_COPY_AND_MOVE( DebugTrait );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Types.
+            //////////////////////////////////////////////////////////////////////////
+            using Base = TraitObject<T, TT::Debug>;
+            using Base::Derived;
+            
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Members.
+            //////////////////////////////////////////////////////////////////////////
+            bool                                         m_Aligned;
+            bool                                         m_InitializeCsvOutputFile;
+            bool                                         m_UseDefaultFormat;
+            uint32_t                                     m_FilteredLines;
+            uint32_t                                     m_IndentLevel;
+            uint32_t                                     m_Length;
+            std::ofstream                                m_CsvOutputFile;
+            std::ostringstream                           m_Format;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief DebugTrait constructor.
+            //////////////////////////////////////////////////////////////////////////
+            DebugTrait()
+                : m_Aligned( false )
+                , m_InitializeCsvOutputFile( true )
+                , m_UseDefaultFormat( true )
+                , m_FilteredLines( 0 )
+                , m_IndentLevel( 0 )
+                , m_Length( 0 )
+                , m_CsvOutputFile{}
+                , m_Format{}
+            {
+            }
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns description about itself.
@@ -89,69 +121,13 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns the length of the name of the current function.
-            /// @return function name length.
+            /// @brief  Returns mutex.
+            /// @return mutex.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static uint32_t& GetFunctionNameLength()
+            ML_INLINE static std::mutex& GetMutex()
             {
-                static uint32_t length = 0;
-                return length;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns the string formatting state.
-            /// @return formatting state.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::ostringstream& GetFormat()
-            {
-                static std::ostringstream format;
-                return format;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns the indicator of default format usage.
-            /// @return indicator of default format usage.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static bool& UseDefaultFormat()
-            {
-                static bool useDefault = true;
-                return useDefault;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns an indent level.
-            /// @return current level of indent.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static uint32_t& GetIndentLevel()
-            {
-                static uint32_t indentLevel = 0;
-                return indentLevel;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Increments an indent level.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static void IncrementIndentLevel()
-            {
-                uint32_t& indent = GetIndentLevel();
-
-                if( ( ++indent ) > Constants::Log::m_MaxIndent )
-                {
-                    indent = Constants::Log::m_MaxIndent;
-                }
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Decrements an indent level.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static void DecrementIndentLevel()
-            {
-                uint32_t& indent = GetIndentLevel();
-
-                if( indent > 0 )
-                {
-                    --indent;
-                }
+                static std::mutex mutex;
+                return mutex;
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -165,6 +141,34 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief Increments an indent level.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE void IncrementIndentLevel()
+            {
+                ++m_IndentLevel;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns an indent level.
+            /// @return current level of indent.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint32_t GetIndentLevel()
+            {
+                return ( m_IndentLevel > Constants::Log::m_MaxIndent ) ? Constants::Log::m_MaxIndent : m_IndentLevel;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Decrements an indent level.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE void DecrementIndentLevel()
+            {
+                if( m_IndentLevel > 0 )
+                {
+                    --m_IndentLevel;
+                }
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief Enumerations.
             //////////////////////////////////////////////////////////////////////////
 
@@ -173,129 +177,127 @@ namespace ML
             /// @param  flag    a given flag to set.
             /// @return         the string formatting state.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const FormatFlag flag )
+            ML_INLINE std::string ToString( const FormatFlag flag )
             {
-                std::ostringstream& format = GetFormat();
-
                 switch( flag )
                 {
                     case FormatFlag::BoolAlpha:
-                        format << std::boolalpha;
+                        m_Format << std::boolalpha;
                         break;
 
                     case FormatFlag::ShowBase:
-                        format << std::showbase;
+                        m_Format << std::showbase;
                         break;
 
                     case FormatFlag::ShowDecimalPoint:
-                        format << std::showpoint;
+                        m_Format << std::showpoint;
                         break;
 
                     case FormatFlag::ShowPositiveSigns:
-                        format << std::showpos;
+                        m_Format << std::showpos;
                         break;
 
                     case FormatFlag::SkipWhitespaces:
-                        format << std::skipws;
+                        m_Format << std::skipws;
                         break;
 
                     case FormatFlag::FlushAfterInsertions:
-                        format << std::unitbuf;
+                        m_Format << std::unitbuf;
                         break;
 
                     case FormatFlag::UpperCase:
-                        format << std::uppercase;
+                        m_Format << std::uppercase;
                         break;
 
                     case FormatFlag::NoBoolAlpha:
-                        format << std::noboolalpha;
+                        m_Format << std::noboolalpha;
                         break;
 
                     case FormatFlag::NoBase:
-                        format << std::noshowbase;
+                        m_Format << std::noshowbase;
                         break;
 
                     case FormatFlag::NoDecimalPoint:
-                        format << std::noshowpoint;
+                        m_Format << std::noshowpoint;
                         break;
 
                     case FormatFlag::NoPositiveSigns:
-                        format << std::noshowpos;
+                        m_Format << std::noshowpos;
                         break;
 
                     case FormatFlag::NoSkipWhitespaces:
-                        format << std::noskipws;
+                        m_Format << std::noskipws;
                         break;
 
                     case FormatFlag::NoForceFlush:
-                        format << std::nounitbuf;
+                        m_Format << std::nounitbuf;
                         break;
 
                     case FormatFlag::NoUpperCase:
-                        format << std::nouppercase;
+                        m_Format << std::nouppercase;
                         break;
 
                     case FormatFlag::Decimal:
-                        format << std::dec;
+                        m_Format << std::dec;
                         break;
 
                     case FormatFlag::Hexadecimal:
-                        format << std::hex;
+                        m_Format << std::hex;
                         break;
 
                     case FormatFlag::Octal:
-                        format << std::oct;
+                        m_Format << std::oct;
                         break;
 
                     case FormatFlag::Fixed:
-                        format << std::fixed;
+                        m_Format << std::fixed;
                         break;
 
                     case FormatFlag::Scientific:
-                        format << std::scientific;
+                        m_Format << std::scientific;
                         break;
 
                     case FormatFlag::AdjustInternal:
-                        format << std::internal;
+                        m_Format << std::internal;
                         break;
 
                     case FormatFlag::AdjustLeft:
-                        format << std::left;
+                        m_Format << std::left;
                         break;
 
                     case FormatFlag::AdjustRight:
-                        format << std::right;
+                        m_Format << std::right;
                         break;
 
                     case FormatFlag::SetWidth2:
-                        format << std::setw( 2 );
+                        m_Format << std::setw( 2 );
                         break;
 
                     case FormatFlag::SetWidth3:
-                        format << std::setw( 3 );
+                        m_Format << std::setw( 3 );
                         break;
 
                     case FormatFlag::SetWidth4:
-                        format << std::setw( 4 );
+                        m_Format << std::setw( 4 );
                         break;
 
                     case FormatFlag::SetWidth5:
-                        format << std::setw( 5 );
+                        m_Format << std::setw( 5 );
                         break;
 
                     case FormatFlag::Default:
-                        format << std::noboolalpha << std::noshowbase << std::noshowpoint
-                               << std::noshowpos << std::noskipws << std::nounitbuf
-                               << std::nouppercase << std::right << std::dec
-                               << std::defaultfloat << std::setw( 1 );
-                        UseDefaultFormat() = true;
+                        m_Format << std::noboolalpha << std::noshowbase << std::noshowpoint
+                                 << std::noshowpos << std::noskipws << std::nounitbuf
+                                 << std::nouppercase << std::right << std::dec
+                                 << std::defaultfloat << std::setw( 1 );
+                        m_UseDefaultFormat = true;
                         break;
 
                     default:
                         break;
                 }
 
-                UseDefaultFormat() = ( flag == FormatFlag::Default );
+                m_UseDefaultFormat = ( flag == FormatFlag::Default );
                 return "";
             }
 
@@ -305,7 +307,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientApi value )
+            ML_INLINE std::string ToString( const ClientApi value )
             {
                 std::ostringstream output;
                 output << "ClientApi"
@@ -345,7 +347,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientGen value )
+            ML_INLINE std::string ToString( const ClientGen value )
             {
                 std::ostringstream output;
                 output << "ClientGen"
@@ -419,7 +421,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsType value )
+            ML_INLINE std::string ToString( const ClientOptionsType value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsType"
@@ -479,7 +481,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const GpuCommandBufferType value )
+            ML_INLINE std::string ToString( const GpuCommandBufferType value )
             {
                 std::ostringstream output;
                 output << "GpuCommandBufferType"
@@ -523,7 +525,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const GpuConfigurationActivationType value )
+            ML_INLINE std::string ToString( const GpuConfigurationActivationType value )
             {
                 std::ostringstream output;
                 output << "GpuConfigurationActivationType"
@@ -559,7 +561,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const LinuxAdapterType value )
+            ML_INLINE std::string ToString( const LinuxAdapterType value )
             {
                 std::ostringstream output;
                 output << "LinuxAdapterType"
@@ -591,7 +593,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const MemoryFlags value )
+            ML_INLINE std::string ToString( const MemoryFlags value )
             {
                 std::ostringstream output;
                 output << "MemoryFlags"
@@ -623,7 +625,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const MemoryType value )
+            ML_INLINE std::string ToString( const MemoryType value )
             {
                 std::ostringstream output;
                 output << "MemoryType"
@@ -663,7 +665,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ObjectType value )
+            ML_INLINE std::string ToString( const ObjectType value )
             {
                 std::ostringstream output;
                 output << "ObjectType"
@@ -747,7 +749,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ParameterType value )
+            ML_INLINE std::string ToString( const ParameterType value )
             {
                 std::ostringstream output;
                 output << "ParameterType"
@@ -795,7 +797,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const StatusCode value )
+            ML_INLINE std::string ToString( const StatusCode value )
             {
                 std::ostringstream output;
                 output << "StatusCode"
@@ -915,7 +917,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ValueType value )
+            ML_INLINE std::string ToString( const ValueType value )
             {
                 std::ostringstream output;
                 output << "ValueType"
@@ -985,13 +987,54 @@ namespace ML
                 return output.str();
             }
 
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Converts an enumerator to a string that contains the
+            ///         enumerator name.
+            /// @param  value   a given enumerator to convert.
+            /// @return         converted enumerator name to string.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE std::string ToString( const TT::GpuCommands::Flags value )
+            {
+                if( value == T::GpuCommands::Flags::None )
+                {
+                    return "None";
+                }
+
+                const uint32_t     flag = static_cast<uint32_t>( value );
+                std::ostringstream output;
+
+                if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnableMmioRemap ) )
+                {
+                    output << "EnableMmioRemap || ";
+                }
+
+                if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnableStall ) )
+                {
+                    output << "EnableStall || ";
+                }
+
+                if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnablePostSync ) )
+                {
+                    output << "EnablePostSync || ";
+                }
+
+                if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::WorkloadPartition ) )
+                {
+                    output << "WorkloadPartition || ";
+                }
+
+                std::string outputString = output.str();
+                return outputString.substr( 0, outputString.size() - 4 );
+            }
+
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Converts an enumerator of oa buffer type enumeration to
             ///         a string that contains the enumerator name.
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const TT::Layouts::OaBuffer::Type value )
+            ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::Type value )
             {
                 std::ostringstream output;
                 output << "OaBufferType"
@@ -1023,7 +1066,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( TT::Layouts::HwCounters::Query::GetDataMode value )
+            ML_INLINE std::string ToString( TT::Layouts::HwCounters::Query::GetDataMode value )
             {
                 std::ostringstream output;
                 output << "HwCounters::Query::GetDataMode"
@@ -1059,7 +1102,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const TT::Layouts::OaBuffer::SamplingType& value )
+            ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::SamplingType& value )
             {
                 std::ostringstream output;
                 output << "Layouts::OaBuffer::SamplingType"
@@ -1099,7 +1142,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const TT::Layouts::HwCounters::Query::ReportCollectingMode value )
+            ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::ReportCollectingMode value )
             {
                 std::ostringstream output;
                 output << "HwCounters::Query::ReportCollectingMode"
@@ -1139,7 +1182,7 @@ namespace ML
             /// @param  value   a given enumerator to convert.
             /// @return         converted enumerator name to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const LogType value )
+            ML_INLINE std::string ToString( const LogType value )
             {
                 std::ostringstream output;
                 output << "LogType"
@@ -1206,7 +1249,7 @@ namespace ML
             /// @param  oaReport    a given oa report.
             /// @return             string that contains formatted oa report log.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const TT::Layouts::HwCounters::ReportOa& oaReport )
+            ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportOa& oaReport )
             {
                 std::ostringstream output;
                 output << "OA: ";
@@ -1237,7 +1280,7 @@ namespace ML
             /// @param  userReport  a given api report.
             /// @return             string that contains formatted api report log.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const TT::Layouts::HwCounters::Query::ReportApi& userReport )
+            ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::ReportApi& userReport )
             {
                 std::ostringstream output;
                 std::string        flags;
@@ -1273,7 +1316,7 @@ namespace ML
             /// @return             string that contains formatted global purpose
             ///                     counters report log.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const TT::Layouts::HwCounters::ReportGp& gpReport )
+            ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportGp& gpReport )
             {
                 std::ostringstream output;
                 output << "GP: ";
@@ -1290,7 +1333,7 @@ namespace ML
             /// @param  reportReason    a given report reason.
             /// @return                 string that contains formatted report reason.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const TT::Layouts::OaBuffer::ReportReason reportReason )
+            ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::ReportReason reportReason )
             {
                 std::ostringstream output;
 
@@ -1342,7 +1385,7 @@ namespace ML
             /// @param  value   a given boolean value to convert.
             /// @return         converted boolean value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const bool value )
+            ML_INLINE std::string ToString( const bool value )
             {
                 return value ? "true" : "false";
             }
@@ -1352,7 +1395,7 @@ namespace ML
             /// @param  value   a given floating-point value to convert.
             /// @return         converted floating-point value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const float value )
+            ML_INLINE std::string ToString( const float value )
             {
                 return std::to_string( value );
             }
@@ -1361,7 +1404,7 @@ namespace ML
             /// @brief  Creates a empty string.
             /// @return empty string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString()
+            ML_INLINE std::string ToString()
             {
                 std::string output = "";
                 return output;
@@ -1372,18 +1415,18 @@ namespace ML
             /// @param  value   a given pointer value to convert.
             /// @return         converted pointer value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const void* value )
+            ML_INLINE std::string ToString( const void* value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     output << "0x" << std::setfill( '0' ) << std::setw( sizeof( void* ) * 2 ) << std::hex << reinterpret_cast<uintptr_t>( value );
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << reinterpret_cast<uintptr_t>( value );
                 }
 
@@ -1395,7 +1438,7 @@ namespace ML
             /// @param  value   a given array of characters to convert.
             /// @return         converted array of characters to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const char* value )
+            ML_INLINE std::string ToString( const char* value )
             {
                 std::ostringstream output;
 
@@ -1416,7 +1459,7 @@ namespace ML
             /// @param  value   a given array of characters to convert.
             /// @return         converted array of characters to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const unsigned char* value )
+            ML_INLINE std::string ToString( const unsigned char* value )
             {
                 std::ostringstream output;
 
@@ -1437,11 +1480,11 @@ namespace ML
             /// @param  value   a given numeric value to convert.
             /// @return         converted numeric value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const uint8_t value )
+            ML_INLINE std::string ToString( const uint8_t value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     if( Constants::Log::m_ShowHexadecimal )
                     {
@@ -1456,8 +1499,8 @@ namespace ML
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << value;
                 }
 
@@ -1469,11 +1512,11 @@ namespace ML
             /// @param  value   a given numeric value to convert.
             /// @return         converted numeric value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const uint16_t value )
+            ML_INLINE std::string ToString( const uint16_t value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     if( Constants::Log::m_ShowHexadecimal )
                     {
@@ -1488,8 +1531,8 @@ namespace ML
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << value;
                 }
 
@@ -1501,11 +1544,11 @@ namespace ML
             /// @param  value   a given numeric value to convert.
             /// @return         converted numeric value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const uint32_t value )
+            ML_INLINE std::string ToString( const uint32_t value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     if( Constants::Log::m_ShowHexadecimal )
                     {
@@ -1520,8 +1563,8 @@ namespace ML
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << value;
                 }
 
@@ -1533,11 +1576,11 @@ namespace ML
             /// @param  value   a given numeric value to convert.
             /// @return         converted numeric value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const uint64_t value )
+            ML_INLINE std::string ToString( const uint64_t value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     if( Constants::Log::m_ShowHexadecimal )
                     {
@@ -1552,8 +1595,8 @@ namespace ML
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << value;
                 }
 
@@ -1565,11 +1608,11 @@ namespace ML
             /// @param  value   a given numeric value to convert.
             /// @return         converted numeric value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const int8_t value )
+            ML_INLINE std::string ToString( const int8_t value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     if( Constants::Log::m_ShowHexadecimal )
                     {
@@ -1584,8 +1627,8 @@ namespace ML
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << value;
                 }
 
@@ -1597,11 +1640,11 @@ namespace ML
             /// @param  value   a given numeric value to convert.
             /// @return         converted numeric value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const int16_t value )
+            ML_INLINE std::string ToString( const int16_t value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     if( Constants::Log::m_ShowHexadecimal )
                     {
@@ -1616,8 +1659,8 @@ namespace ML
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << value;
                 }
 
@@ -1629,11 +1672,11 @@ namespace ML
             /// @param  value   a given numeric value to convert.
             /// @return         converted numeric value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const int32_t value )
+            ML_INLINE std::string ToString( const int32_t value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     if( Constants::Log::m_ShowHexadecimal )
                     {
@@ -1648,8 +1691,8 @@ namespace ML
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << value;
                 }
 
@@ -1661,11 +1704,11 @@ namespace ML
             /// @param  value   a given numeric value to convert.
             /// @return         converted numeric value to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const int64_t value )
+            ML_INLINE std::string ToString( const int64_t value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     if( Constants::Log::m_ShowHexadecimal )
                     {
@@ -1680,8 +1723,8 @@ namespace ML
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << value;
                 }
 
@@ -1693,7 +1736,7 @@ namespace ML
             /// @param  value   a given string.
             /// @return         passed through string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const std::string& value )
+            ML_INLINE std::string ToString( const std::string& value )
             {
                 return value;
             }
@@ -1707,7 +1750,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientCallbacks_1_0& value )
+            ML_INLINE std::string ToString( const ClientCallbacks_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientCallbacks_1_0:" << '\n';
@@ -1729,7 +1772,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientDataLinuxAdapter_1_0& value )
+            ML_INLINE std::string ToString( const ClientDataLinuxAdapter_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientDataLinuxAdapter_1_0:" << '\n';
@@ -1745,7 +1788,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientDataLinux_1_0& value )
+            ML_INLINE std::string ToString( const ClientDataLinux_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientDataLinux_1_0:" << '\n';
@@ -1761,7 +1804,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientDataWindows_1_0& )
+            ML_INLINE std::string ToString( const ClientDataWindows_1_0& )
             {
                 return "";
             }
@@ -1771,7 +1814,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientData_1_0& value )
+            ML_INLINE std::string ToString( const ClientData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientData_1_0:" << '\n';
@@ -1790,7 +1833,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientHandle_1_0& value )
+            ML_INLINE std::string ToString( const ClientHandle_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientHandle_1_0:" << '\n';
@@ -1805,7 +1848,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientMemoryHandle_1_0& value )
+            ML_INLINE std::string ToString( const ClientMemoryHandle_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientMemoryHandle_1_0:" << '\n';
@@ -1820,7 +1863,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsComputeData_1_0& value )
+            ML_INLINE std::string ToString( const ClientOptionsComputeData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsComputeData_1_0:" << '\n';
@@ -1835,7 +1878,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsData_1_0& value )
+            ML_INLINE std::string ToString( const ClientOptionsData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsData_1_0:" << '\n';
@@ -1890,7 +1933,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsPoshData_1_0& value )
+            ML_INLINE std::string ToString( const ClientOptionsPoshData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsPoshData_1_0:" << '\n';
@@ -1905,7 +1948,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsPtbrData_1_0& value )
+            ML_INLINE std::string ToString( const ClientOptionsPtbrData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsPtbrData_1_0:" << '\n';
@@ -1920,7 +1963,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsSubDeviceCountData_1_0& value )
+            ML_INLINE std::string ToString( const ClientOptionsSubDeviceCountData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsSubDeviceCountData_1_0:" << '\n';
@@ -1935,7 +1978,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsSubDeviceData_1_0& value )
+            ML_INLINE std::string ToString( const ClientOptionsSubDeviceData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsSubDeviceData_1_0:" << '\n';
@@ -1950,7 +1993,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsSubDeviceIndexData_1_0& value )
+            ML_INLINE std::string ToString( const ClientOptionsSubDeviceIndexData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsSubDeviceIndexData_1_0:" << '\n';
@@ -1965,7 +2008,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsTbsData_1_0& value )
+            ML_INLINE std::string ToString( const ClientOptionsTbsData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsTbsData_1_0:" << '\n';
@@ -1980,7 +2023,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientOptionsWorkloadPartition_1_0& value )
+            ML_INLINE std::string ToString( const ClientOptionsWorkloadPartition_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientOptionsWorkloadPartition_1_0:" << '\n';
@@ -1995,7 +2038,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ClientType_1_0& value )
+            ML_INLINE std::string ToString( const ClientType_1_0& value )
             {
                 std::ostringstream output;
                 output << "ClientType_1_0:" << '\n';
@@ -2011,7 +2054,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const CommandBufferData_1_0& value )
+            ML_INLINE std::string ToString( const CommandBufferData_1_0& value )
             {
                 std::ostringstream output;
                 output << "CommandBufferData_1_0:" << '\n';
@@ -2080,7 +2123,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const CommandBufferMarkerStreamUserExtended_1_0& value )
+            ML_INLINE std::string ToString( const CommandBufferMarkerStreamUserExtended_1_0& value )
             {
                 std::ostringstream output;
                 output << "CommandBufferMarkerStreamUserExtended_1_0:" << '\n';
@@ -2094,7 +2137,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const CommandBufferMarkerStreamUser_1_0& value )
+            ML_INLINE std::string ToString( const CommandBufferMarkerStreamUser_1_0& value )
             {
                 std::ostringstream output;
                 output << "CommandBufferMarkerStreamUser_1_0:" << '\n';
@@ -2110,7 +2153,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const CommandBufferOverride_1_0& value )
+            ML_INLINE std::string ToString( const CommandBufferOverride_1_0& value )
             {
                 std::ostringstream output;
                 output << "CommandBufferOverride_1_0:" << '\n';
@@ -2126,7 +2169,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const CommandBufferQueryHwCountersCopyReports_1_0& value )
+            ML_INLINE std::string ToString( const CommandBufferQueryHwCountersCopyReports_1_0& value )
             {
                 std::ostringstream output;
                 output << "CommandBufferQueryHwCountersCopyReports_1_0:" << '\n';
@@ -2147,7 +2190,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const CommandBufferQueryHwCounters_1_0& value )
+            ML_INLINE std::string ToString( const CommandBufferQueryHwCounters_1_0& value )
             {
                 std::ostringstream output;
                 output << "CommandBufferQueryHwCounters_1_0:" << '\n';
@@ -2168,7 +2211,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const CommandBufferQueryPipelineTimestamps_1_0& value )
+            ML_INLINE std::string ToString( const CommandBufferQueryPipelineTimestamps_1_0& value )
             {
                 std::ostringstream output;
                 output << "CommandBufferQueryPipelineTimestamps_1_0:" << '\n';
@@ -2185,7 +2228,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const CommandBufferSize_1_0& value )
+            ML_INLINE std::string ToString( const CommandBufferSize_1_0& value )
             {
                 std::ostringstream output;
                 output << "CommandBufferSize_1_0:" << '\n';
@@ -2201,7 +2244,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ConfigurationActivateData_1_0& value )
+            ML_INLINE std::string ToString( const ConfigurationActivateData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ConfigurationActivateData_1_0:" << '\n';
@@ -2216,7 +2259,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ConfigurationCreateData_1_0& value )
+            ML_INLINE std::string ToString( const ConfigurationCreateData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ConfigurationCreateData_1_0:" << '\n';
@@ -2232,7 +2275,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ConfigurationHandle_1_0& value )
+            ML_INLINE std::string ToString( const ConfigurationHandle_1_0& value )
             {
                 std::ostringstream output;
                 output << "ConfigurationHandle_1_0:" << '\n';
@@ -2247,7 +2290,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ContextCreateData_1_0& value )
+            ML_INLINE std::string ToString( const ContextCreateData_1_0& value )
             {
                 std::ostringstream output;
                 output << "ContextCreateData_1_0:" << '\n';
@@ -2264,7 +2307,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const ContextHandle_1_0& value )
+            ML_INLINE std::string ToString( const ContextHandle_1_0& value )
             {
                 std::ostringstream output;
                 output << "ContextHandle_1_0:" << '\n';
@@ -2279,7 +2322,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const CpuMemoryAllocateData_1_0& value )
+            ML_INLINE std::string ToString( const CpuMemoryAllocateData_1_0& value )
             {
                 std::ostringstream output;
                 output << "CpuMemoryAllocateData_1_0:" << '\n';
@@ -2295,7 +2338,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const GetReportData_1_0& value )
+            ML_INLINE std::string ToString( const GetReportData_1_0& value )
             {
                 std::ostringstream output;
                 output << "GetReportData_1_0:" << '\n';
@@ -2350,7 +2393,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const GetReportOverride_1_0& value )
+            ML_INLINE std::string ToString( const GetReportOverride_1_0& value )
             {
                 std::ostringstream output;
                 output << "GetReportOverride_1_0:" << '\n';
@@ -2367,7 +2410,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const GetReportQuery_1_0& value )
+            ML_INLINE std::string ToString( const GetReportQuery_1_0& value )
             {
                 std::ostringstream output;
                 output << "GetReportQuery_1_0:" << '\n';
@@ -2386,7 +2429,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const GpuMemoryAllocateData_1_0& value )
+            ML_INLINE std::string ToString( const GpuMemoryAllocateData_1_0& value )
             {
                 std::ostringstream output;
                 output << "GpuMemoryAllocateData_1_0:" << '\n';
@@ -2404,7 +2447,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const GpuMemory_1_0& value )
+            ML_INLINE std::string ToString( const GpuMemory_1_0& value )
             {
                 std::ostringstream output;
                 output << "GpuMemory_1_0:" << '\n';
@@ -2421,7 +2464,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const Interface_1_0& value )
+            ML_INLINE std::string ToString( const Interface_1_0& value )
             {
                 std::ostringstream output;
                 output << "Interface_1_0:" << '\n';
@@ -2449,7 +2492,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const MarkerCreateData_1_0& value )
+            ML_INLINE std::string ToString( const MarkerCreateData_1_0& value )
             {
                 std::ostringstream output;
                 output << "MarkerCreateData_1_0:" << '\n';
@@ -2465,7 +2508,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const MarkerHandle_1_0& value )
+            ML_INLINE std::string ToString( const MarkerHandle_1_0& value )
             {
                 std::ostringstream output;
                 output << "MarkerHandle_1_0:" << '\n';
@@ -2480,7 +2523,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const OverrideCreateData_1_0& value )
+            ML_INLINE std::string ToString( const OverrideCreateData_1_0& value )
             {
                 std::ostringstream output;
                 output << "OverrideCreateData_1_0:" << '\n';
@@ -2496,7 +2539,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const OverrideHandle_1_0& value )
+            ML_INLINE std::string ToString( const OverrideHandle_1_0& value )
             {
                 std::ostringstream output;
                 output << "OverrideHandle_1_0:" << '\n';
@@ -2511,7 +2554,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const QueryCreateData_1_0& value )
+            ML_INLINE std::string ToString( const QueryCreateData_1_0& value )
             {
                 std::ostringstream output;
                 output << "QueryCreateData_1_0:" << '\n';
@@ -2528,7 +2571,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const QueryHandle_1_0& value )
+            ML_INLINE std::string ToString( const QueryHandle_1_0& value )
             {
                 std::ostringstream output;
                 output << "QueryHandle_1_0:" << '\n';
@@ -2543,7 +2586,7 @@ namespace ML
             /// @param  value   a given structure to convert.
             /// @return         converted all members values to string.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string ToString( const TypedValue_1_0& value )
+            ML_INLINE std::string ToString( const TypedValue_1_0& value )
             {
                 std::ostringstream output;
                 output << "TypedValue_1_0:" << '\n';
@@ -2613,15 +2656,15 @@ namespace ML
             /// @return         true if the pointer is not null, false otherwise.
             //////////////////////////////////////////////////////////////////////////
             template <typename ValueT>
-            ML_INLINE static std::string ToString( const ValueT* value )
+            ML_INLINE std::string ToString( const ValueT* value )
             {
                 std::ostringstream output;
 
-                if( UseDefaultFormat() )
+                if( m_UseDefaultFormat )
                 {
                     if( value != nullptr && !std::is_void<ValueT>::value && !std::is_function<ValueT>::value )
                     {
-                        output << T::Debug::ToString( *value );
+                        output << Derived().ToString( *value );
                     }
                     else
                     {
@@ -2630,8 +2673,8 @@ namespace ML
                 }
                 else
                 {
-                    output.flags( GetFormat().flags() );
-                    output.width( GetFormat().width() );
+                    output.flags( m_Format.flags() );
+                    output.width( m_Format.width() );
                     output << reinterpret_cast<uintptr_t>( value );
                 }
 
@@ -2646,33 +2689,36 @@ namespace ML
             /// @return                 created string.
             //////////////////////////////////////////////////////////////////////////
             template <typename ValueT>
-            ML_INLINE static std::string MemberToString( const char* parameterName, const ValueT value )
+            ML_INLINE std::string MemberToString( const char* parameterName, const ValueT value )
             {
                 std::ostringstream output;
-                const uint32_t     indent                = GetIndentLevel();
-                const uint32_t     parameterNameLength   = static_cast<uint32_t>( strlen( parameterName ) );
-                const uint32_t     functionNameLength    = GetFunctionNameLength();
-                const uint32_t     functionNameLengthMax = Constants::Log::m_MaxFunctionNameLength;
-                const uint32_t     functionNameAlignment = std::max<uint32_t>( functionNameLength, functionNameLengthMax );
-                const uint32_t     messageLength         = Constants::Log::m_IndentSize * indent + functionNameAlignment + parameterNameLength;
+                const uint32_t     parameterNameLength = static_cast<uint32_t>( strlen( parameterName ) );
+                const uint32_t     indent              = GetIndentLevel();
+                const uint32_t     messageLength       = Constants::Log::m_IndentSize * indent + parameterNameLength;
 
-                // Apply indentation.
-                for( uint32_t i = 0; i < indent; ++i )
+                if( m_Aligned )
                 {
-                    output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
+                    // Apply indentation.
+                    for( uint32_t i = 0; i < indent; ++i )
+                    {
+                        output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
+                    }
                 }
 
                 // Print the parameter name and add a single space to avoid arguments concatenation.
                 output << parameterName << ' ';
 
-                // Apply alignment.
-                if( messageLength < Constants::Log::m_MaxMessageLength )
+                if( m_Aligned )
                 {
-                    output << std::setw( Constants::Log::m_MaxMessageLength - messageLength ) << ' ';
+                    // Apply alignment.
+                    if( messageLength < Constants::Log::m_MaxMessageLength )
+                    {
+                        output << std::setw( Constants::Log::m_MaxMessageLength - messageLength ) << ' ';
+                    }
                 }
 
                 // Print value.
-                output << T::Debug::ToString( value );
+                output << Derived().ToString( value );
 
                 // Add a new line if needed.
                 if( output.str().back() != '\n' )
@@ -2691,7 +2737,7 @@ namespace ML
             /// @return         true if the pointer is not null, false otherwise.
             //////////////////////////////////////////////////////////////////////////
             template <typename ValueT>
-            ML_INLINE static bool ValidatePointer( ValueT value, std::ostringstream& output )
+            ML_INLINE bool ValidatePointer( ValueT value, std::ostringstream& output )
             {
                 if( value == nullptr )
                 {
@@ -2712,19 +2758,22 @@ namespace ML
             /// @return             created string.
             //////////////////////////////////////////////////////////////////////////
             template <typename ValueT>
-            ML_INLINE static std::string MemberToStringArray( const char* arrayName, const ValueT value, const char* padding, const int arraySize )
+            ML_INLINE std::string MemberToStringArray( const char* arrayName, const ValueT value, const char* padding, const int arraySize )
             {
                 std::ostringstream output;
                 const uint32_t     indent = GetIndentLevel();
 
-                for( uint32_t i = 0; i < indent; ++i )
+                if( m_Aligned )
                 {
-                    output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
+                    for( uint32_t i = 0; i < indent; ++i )
+                    {
+                        output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
+                    }
                 }
 
                 output << arrayName << padding;
-                output << "0x" << std::setfill( '0' ) << std::setw( sizeof( void* ) * 2 ) << std::hex << ( uintptr_t )( value );
-                output << " (" << std::dec << ( uintptr_t )( value ) << ")";
+                output << "0x" << std::setfill( '0' ) << std::setw( sizeof( void* ) * 2 ) << std::hex << (uintptr_t) ( value );
+                output << " (" << std::dec << (uintptr_t) ( value ) << ")";
                 output << " --> \n";
 
                 if( arraySize > 0 )
@@ -2733,11 +2782,14 @@ namespace ML
                     {
                         for( int i = 0; i < arraySize; i++ )
                         {
-                            for( uint32_t i = 0; i < indent; ++i )
+                            if( m_Aligned )
                             {
-                                output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
+                                for( uint32_t i = 0; i < indent; ++i )
+                                {
+                                    output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
+                                }
                             }
-                            output << arrayName << "[" << i << "]" << padding << T::Debug::ToString( value[i] );
+                            output << arrayName << "[" << i << "]" << padding << Derived().ToString( value[i] );
                         }
                     }
                 }
@@ -2760,34 +2812,34 @@ namespace ML
             /// @return         formatted string.
             //////////////////////////////////////////////////////////////////////////
             template <typename... Values>
-            ML_INLINE static std::string Format( const Values&... values )
+            ML_INLINE std::string Format( const Values&... values )
             {
-                uint32_t                 index  = 0;
+                uint32_t                 index = 0;
                 const uint32_t           indent = GetIndentLevel();
                 std::vector<std::string> unpackedValues( sizeof...( values ) );
                 std::ostringstream       output;
 
-                (void) std::initializer_list<int>{ ( unpackedValues[index++] = T::Debug::ToString( values ), 0 )... };
+                (void) std::initializer_list<int>{ ( unpackedValues[index++] = Derived().ToString( values ), 0 )... };
 
                 if( index > 0 )
                 {
-                    auto           value                 = unpackedValues.begin();
-                    const uint32_t functionNameLength    = GetFunctionNameLength();
-                    const uint32_t functionNameLengthMax = Constants::Log::m_MaxFunctionNameLength;
-                    const uint32_t functionNameAlignment = std::max<uint32_t>( functionNameLength, functionNameLengthMax );
-                    const uint32_t messageLength         = static_cast<uint32_t>( value->size() ) + Constants::Log::m_IndentSize * indent + functionNameAlignment;
+                    auto           value         = unpackedValues.begin();
+                    const uint32_t messageLength = static_cast<uint32_t>( value->size() ) + Constants::Log::m_IndentSize * indent;
 
-                    // Apply indentation.
-                    for( uint32_t i = 0; i < indent; ++i )
+                    if( m_Aligned )
                     {
-                        output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
+                        // Apply indentation.
+                        for( uint32_t i = 0; i < indent; ++i )
+                        {
+                            output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
+                        }
                     }
 
-                    // Print the first argument (usually it is a name).
+                    // Print the first argument - usually a variable name
                     output << *value;
 
                     // Apply alignment (before printing the next arguments).
-                    if( index > 1 )
+                    if( m_Aligned && index > 1 )
                     {
                         if( messageLength < Constants::Log::m_MaxMessageLength )
                         {
@@ -2807,7 +2859,7 @@ namespace ML
                     }
 
                     // Restore default ML format.
-                    T::Debug::ToString( FormatFlag::Default );
+                    Derived().ToString( FormatFlag::Default );
                 }
 
                 return output.str();
@@ -2815,73 +2867,72 @@ namespace ML
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief Prints oa report csv log.
-            /// @param oaReport a given oa report.
+            /// @param context      context.
+            /// @param oaReport     a given oa report.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static void ToCsv( const TT::Layouts::HwCounters::ReportOa& oaReport )
+            ML_INLINE void ToCsv( TT::Context* context, const TT::Layouts::HwCounters::ReportOa& oaReport )
             {
-                static bool          initialize = true;
-                static std::ofstream file       = {};
-
-                if( initialize )
+                if( m_InitializeCsvOutputFile )
                 {
-                    if( ML_SUCCESS( T::Tools::OpenCsv( "ReportOa", file ) ) )
+                    if( ML_SUCCESS( T::Tools::OpenCsv( "ReportOa", m_CsvOutputFile, context ) ) )
                     {
-                        file << "ReportId,ReportReason,ContextValid,Timestamp,ContextId,GpuTicks,";
+                        m_CsvOutputFile << "ReportId,ReportReason,ContextValid,Timestamp,ContextId,GpuTicks,";
 
                         for( uint32_t i = 0; i < T::Layouts::HwCounters::m_OaCountersCount; ++i )
                         {
-                            file << "OaCounter" << i << ',';
+                            m_CsvOutputFile << "OaCounter" << i << ',';
                         }
 
                         for( uint32_t i = 0; i < T::Layouts::HwCounters::m_NoaCountersCount; ++i )
                         {
-                            file << "NoaCounter" << i << ',';
+                            m_CsvOutputFile << "NoaCounter" << i << ',';
                         }
 
-                        file << '\n';
+                        m_CsvOutputFile << '\n';
 
-                        initialize = false;
+                        m_InitializeCsvOutputFile = false;
                     }
                 }
 
-                if( file.is_open() )
+                if( m_CsvOutputFile.is_open() )
                 {
-                    file << oaReport.m_Header.m_ReportId.m_Value << ',';
-                    file << oaReport.m_Header.m_ReportId.m_ReportReason << ',';
-                    file << oaReport.m_Header.m_ReportId.m_ContextValid << ',';
-                    file << oaReport.m_Header.m_Timestamp << ',';
-                    file << oaReport.m_Header.m_ContextId << ',';
-                    file << oaReport.m_Header.m_GpuTicks << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_Value << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ReportReason << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ContextValid << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_Timestamp << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_ContextId << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_GpuTicks << ',';
 
                     for( uint32_t i = 0; i < T::Layouts::HwCounters::m_OaCountersCount; ++i )
                     {
                         if( i < T::Layouts::HwCounters::m_OaCounters40bitsCount )
                         {
-                            file << static_cast<uint64_t>( oaReport.m_Data.m_OaCounter[i] ) + ( static_cast<uint64_t>( oaReport.m_Data.m_OaCounterHB[i] ) << 32 ) << ',';
+                            m_CsvOutputFile << static_cast<uint64_t>( oaReport.m_Data.m_OaCounter[i] ) + ( static_cast<uint64_t>( oaReport.m_Data.m_OaCounterHB[i] ) << 32 ) << ',';
                         }
                         else
                         {
-                            file << oaReport.m_Data.m_OaCounter[i] << ',';
+                            m_CsvOutputFile << oaReport.m_Data.m_OaCounter[i] << ',';
                         }
                     }
 
                     for( uint32_t i = 0; i < T::Layouts::HwCounters::m_NoaCountersCount; ++i )
                     {
-                        file << oaReport.m_Data.m_NoaCounter[i] << ',';
+                        m_CsvOutputFile << oaReport.m_Data.m_NoaCounter[i] << ',';
                     }
 
-                    file << '\n';
+                    m_CsvOutputFile << '\n';
                 }
             }
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief Prints csv logs.
+            /// @param context context.
             /// @param values  a given values to print.
             //////////////////////////////////////////////////////////////////////////
             template <typename... Values>
-            ML_INLINE static void PrintCsv( const Values&... values )
+            ML_INLINE void PrintCsv( TT::Context* context, const Values&... values)
             {
-                (void) std::initializer_list<int>{ ( T::Debug::ToCsv( values ), 0 )... };
+                (void) std::initializer_list<int>{ ( Derived().ToCsv( context, values ), 0 )... };
             }
         };
     } // namespace BASE

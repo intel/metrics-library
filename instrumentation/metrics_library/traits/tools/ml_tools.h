@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -131,9 +131,9 @@ namespace ML
             const Source*  source,
             const uint32_t sourceSize )
         {
-            ML_ASSERT( target != nullptr );
-            ML_ASSERT( source != nullptr );
-            ML_ASSERT( sourceSize <= targetSize );
+            ML_ASSERT_NO_ADAPTER( target != nullptr );
+            ML_ASSERT_NO_ADAPTER( source != nullptr );
+            ML_ASSERT_NO_ADAPTER( sourceSize <= targetSize );
 
             iu_memcpy_s( target, targetSize, static_cast<const void*>( source ), sourceSize );
         }
@@ -186,7 +186,7 @@ namespace ML
                 MemoryCopy( targetMemory0, size0, sourceMemory0, size0 );
                 MemoryCopy( targetMemory1, size1, sourceMemory1, size1 );
 
-                ML_ASSERT( count1 < target.size() );
+                ML_ASSERT_NO_ADAPTER( count1 < target.size() );
             }
         }
 
@@ -228,18 +228,17 @@ namespace ML
             const uint32_t value1,
             const uint32_t value2 )
         {
-            ML_FUNCTION_LOG( int32_t{ 0 } );
-
+            int32_t result = 0;
             if( value1 < value2 )
             {
-                log.m_Result = ( ( value2 - value1 ) < 0x80000000 ) ? -1 : 1;
+                result = ( ( value2 - value1 ) < 0x80000000 ) ? -1 : 1;
             }
             else if( value1 > value2 )
             {
-                log.m_Result = ( ( value1 - value2 ) < 0x80000000 ) ? 1 : -1;
+                result = ( ( value1 - value2 ) < 0x80000000 ) ? 1 : -1;
             }
 
-            return log.m_Result;
+            return result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -254,18 +253,18 @@ namespace ML
             const uint64_t value1,
             const uint64_t value2 )
         {
-            ML_FUNCTION_LOG( int32_t{ 0 } );
+            int32_t result = 0;
 
             if( value1 < value2 )
             {
-                log.m_Result = ( ( value2 - value1 ) < 0x8000000000000000 ) ? -1 : 1;
+                result = ( ( value2 - value1 ) < 0x8000000000000000 ) ? -1 : 1;
             }
             else if( value1 > value2 )
             {
-                log.m_Result = ( ( value1 - value2 ) < 0x8000000000000000 ) ? 1 : -1;
+                result = ( ( value1 - value2 ) < 0x8000000000000000 ) ? 1 : -1;
             }
 
-            return log.m_Result;
+            return result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -295,7 +294,7 @@ namespace ML
             const uint32_t maxBitsize = 64;
             const uint64_t mask       = ( bitsize != maxBitsize ) ? ( ( ML_BIT( bitsize ) ) - 1 ) : -1;
 
-            ML_ASSERT( bitsize <= maxBitsize );
+            ML_ASSERT_NO_ADAPTER( bitsize <= maxBitsize );
 
             end &= mask;
             begin &= mask;
@@ -338,7 +337,8 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static void GetLines(
             std::istringstream&       stream,
-            std::vector<std::string>& lines )
+            std::vector<std::string>& lines,
+            TT::Debug&                debug )
         {
             std::string line;
 
@@ -346,7 +346,7 @@ namespace ML
             {
                 if( Constants::Log::m_FilterEnabled )
                 {
-                    FilterLine( line, lines );
+                    FilterLine( line, lines, debug );
                 }
                 else
                 {
@@ -359,32 +359,76 @@ namespace ML
         /// @brief Logs user's message to console.
         /// @param type         log type.
         /// @param functionName function name.
+        /// @param context      context.
         /// @param values       user's message.
         //////////////////////////////////////////////////////////////////////////
         template <typename... Values>
         ML_INLINE static void Log(
             const LogType      type,
             const std::string& functionName,
+            TT::Context*       context,
             const Values&... values )
         {
             if( CheckLogLevel( type ) )
             {
-                if( IuLogCheckShowMode( IU_DBG_SHOW_FUNCTION ) )
+                if( context == nullptr )
                 {
-                    T::Debug::GetFunctionNameLength() = static_cast<uint32_t>( functionName.length() );
+                    LogWithoutContext( type, functionName, values... );
+                    return;
                 }
 
+                TT::Debug& debug = context->m_Debug;
+
+                debug.m_Aligned = IuLogCheckShowMode( IU_DBG_ALIGNED );
+                debug.m_Length  = IuLogCheckShowMode( IU_DBG_SHOW_FUNCTION )
+                     ? static_cast<uint32_t>( functionName.length() )
+                     : 0;
+
                 std::vector<std::string> lines;
-                std::istringstream       stream( T::Debug::Format( values... ) );
+                std::istringstream       stream( debug.Format( values... ) );
 
                 // Split message into a separate lines.
-                GetLines( stream, lines );
+                GetLines( stream, lines, debug );
 
                 // Print out each line.
                 for( size_t i = 0; i < lines.size(); ++i )
                 {
-                    Print( type, functionName, lines[i] );
+                    Print( type, functionName, lines[i], context->m_AdapterId );
                 }
+            }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Logs user's message to console.
+        ///        Conceptual function name: Log.
+        ///        Allows to use Log() function without context param.
+        /// @param type         log type.
+        /// @param functionName function name.
+        /// @param values       user's message.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename... Values>
+        ML_INLINE static void LogWithoutContext(
+            const LogType      type,
+            const std::string& functionName,
+            const Values&... values )
+        {
+            TT::Debug debug;
+
+            debug.m_Aligned = IuLogCheckShowMode( IU_DBG_ALIGNED );
+            debug.m_Length  = IuLogCheckShowMode( IU_DBG_SHOW_FUNCTION )
+                 ? static_cast<uint32_t>( functionName.length() )
+                 : 0;
+
+            std::vector<std::string> lines;
+            std::istringstream       stream( debug.Format( values... ) );
+
+            // Split message into a separate lines.
+            GetLines( stream, lines, debug );
+
+            // Print out each line.
+            for( size_t i = 0; i < lines.size(); ++i )
+            {
+                Print( type, functionName, lines[i], IU_ADAPTER_ID_UNKNOWN );
             }
         }
 
@@ -392,13 +436,15 @@ namespace ML
         /// @brief  Opens csv file.
         /// @param  name    identification of the csv file.
         /// @param  file    output file stream.
+        /// @param  context context.
         /// @return success if the file has been opened properly.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static StatusCode OpenCsv(
             const std::string& name,
-            std::ofstream&     file )
+            std::ofstream&     file,
+            TT::Context*       context = nullptr )
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, context );
 
             std::string fileName = Constants::Library::m_Name;
 
@@ -417,13 +463,23 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Writes user's message to a csv file.
+        /// @param context context.
         /// @param values  user's message.
         //////////////////////////////////////////////////////////////////////////
         template <typename... Values>
         ML_INLINE static void WriteToCsv(
+            TT::Context* context,
             const Values&... values )
         {
-            T::Debug::PrintCsv( values... );
+            if( context == nullptr )
+            {
+                TT::Debug debug;
+                debug.PrintCsv( nullptr, values... );
+            }
+            else
+            {
+                context->m_Debug.PrintCsv( context, values... );
+            }
         }
 
     private:
@@ -432,56 +488,58 @@ namespace ML
         /// @param type         debug log type.
         /// @param functionName function name.
         /// @param message      user's message.
+        /// @param adapterId    adapter id.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static void Print(
             const LogType      type,
             const std::string& functionName,
-            const std::string& message )
+            const std::string& message,
+            const uint32_t     adapterId )
         {
             switch( type )
             {
                 case LogType::Critical:
-                    ML_LOG( LOG_CRITICAL, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_CRITICAL, functionName.c_str(), message.c_str() );
                     break;
 
                 case LogType::Error:
-                    ML_LOG( LOG_ERROR, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_ERROR, functionName.c_str(), message.c_str() );
                     break;
 
                 case LogType::Warning:
-                    ML_LOG( LOG_WARNING, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_WARNING, functionName.c_str(), message.c_str() );
                     break;
 
                 case LogType::Debug:
-                    ML_LOG( LOG_DEBUG, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_DEBUG, functionName.c_str(), message.c_str() );
                     break;
 
                 case LogType::Info:
-                    ML_LOG( LOG_INFO, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_INFO, functionName.c_str(), message.c_str() );
                     break;
 
                 case LogType::Traits:
-                    ML_LOG( LOG_TRAITS, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_TRAITS, functionName.c_str(), message.c_str() );
                     break;
 
                 case LogType::Entered:
-                    ML_LOG( LOG_ENTERED, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_ENTERED, functionName.c_str(), message.c_str() );
                     break;
 
                 case LogType::Exiting:
-                    ML_LOG( LOG_EXITING, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_EXITING, functionName.c_str(), message.c_str() );
                     break;
 
                 case LogType::Input:
-                    ML_LOG( LOG_INPUT, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_INPUT, functionName.c_str(), message.c_str() );
                     break;
 
                 case LogType::Output:
-                    ML_LOG( LOG_OUTPUT, functionName.c_str(), message.c_str() );
+                    ML_LOG( adapterId, LOG_OUTPUT, functionName.c_str(), message.c_str() );
                     break;
 
                 default:
-                    ML_ASSERT_ALWAYS();
+                    ML_ASSERT_ALWAYS_ADAPTER( adapterId );
                     break;
             }
 
@@ -499,9 +557,10 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static void FilterLine(
             const std::string&        line,
-            std::vector<std::string>& lines )
+            std::vector<std::string>& lines,
+            TT::Debug&                debug )
         {
-            static uint32_t filteredLines = 0;
+            uint32_t& filteredLines = debug.m_FilteredLines;
 
             if( line.find( Constants::Log::m_FilteredString ) != std::string::npos )
             {

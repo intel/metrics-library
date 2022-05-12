@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -86,10 +86,12 @@ namespace ML
                 }
 
                 //////////////////////////////////////////////////////////////////////////
+                /// @brief  Returns an instance of DdiFunctionTable object.
                 /// @return singleton DdiFunctionTable object.
                 //////////////////////////////////////////////////////////////////////////
                 static const DdiFunctionTable<T>& GetInstance()
                 {
+                    // Instance of ddi function table must be static.
                     static const DdiFunctionTable<T> instance;
                     return instance;
                 }
@@ -155,10 +157,12 @@ namespace ML
                 }
 
                 //////////////////////////////////////////////////////////////////////////
+                /// @brief  Returns an instance of DdiFunctionTable object.
                 /// @return singleton DdiFunctionTable object.
                 //////////////////////////////////////////////////////////////////////////
                 static const DdiFunctionTable<T>& GetInstance()
                 {
+                    // Instance of ddi function table must be static.
                     static const DdiFunctionTable<T> instance;
                     return instance;
                 }

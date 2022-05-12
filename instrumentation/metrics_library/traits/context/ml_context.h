@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -38,6 +38,8 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
+        uint32_t                  m_AdapterId;
+        TT::Debug                 m_Debug;
         TT::KernelInterface       m_Kernel;
         TT::OaBuffer              m_OaBuffer;
         TT::ClientOptions         m_ClientOptions;
@@ -46,6 +48,7 @@ namespace ML
         ClientData_1_0            m_ClientData;
         TT::SubDevice             m_SubDevice;
         TT::DdiObjects            m_DdiObjects;
+        TT::State                 m_State;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief ContextTrait constructor.
@@ -56,14 +59,17 @@ namespace ML
             const ClientType_1_0&        clientType,
             const ContextCreateData_1_0& createData )
             : Base( clientType, *this )
+            , m_AdapterId( IU_ADAPTER_ID_UNKNOWN )
+            , m_Debug{}
             , m_Kernel( *this )
             , m_OaBuffer( m_Kernel )
-            , m_ClientOptions( *createData.ClientData )
+            , m_ClientOptions( *createData.ClientData, *this )
             , m_ClientHandle( createData.ClientData->Handle )
             , m_ClientCallbacks{ *createData.ClientCallbacks }
             , m_ClientData{ *createData.ClientData }
             , m_SubDevice( *this )
-            , m_DdiObjects{}
+            , m_DdiObjects( *this )
+            , m_State{}
         {
         }
 
@@ -97,14 +103,15 @@ namespace ML
             ContextCreateData_1_0& createData,
             ContextHandle_1_0&     handle )
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
-            ML_FUNCTION_CHECK( createData.Api != nullptr );
-            ML_FUNCTION_CHECK( createData.ClientData != nullptr );
-            ML_FUNCTION_CHECK( createData.ClientCallbacks != nullptr );
+            ML_FUNCTION_CHECK_STATIC( createData.Api != nullptr );
+            ML_FUNCTION_CHECK_STATIC( createData.ClientData != nullptr );
+            ML_FUNCTION_CHECK_STATIC( createData.ClientCallbacks != nullptr );
 
-            auto       context        = Allocate( clientType, createData );
+            auto       context      = Allocate( clientType, createData );
+            const bool validContext = context && ML_SUCCESS( context->Initialize() );
+            ML_FUNCTION_LOG( StatusCode::Success, validContext ? context : nullptr );
+
             auto       functionTable  = GetFunctionTable( clientType );
-            const bool validContext   = context && ML_SUCCESS( context->Initialize() );
             const bool validInterface = functionTable != nullptr;
 
             // Validate context and library interface.
@@ -133,8 +140,10 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Initialize()
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, this );
+
             ML_FUNCTION_CHECK( m_Kernel.Initialize( m_ClientData ) );
+            ML_FUNCTION_CHECK( m_Kernel.GetAdapterId( m_AdapterId ) );
             ML_FUNCTION_CHECK( m_OaBuffer.Initialize() );
 
             return log.m_Result;

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -26,7 +26,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         static void IntializeLogger()
         {
-            IuLogGetSettings( nullptr, IU_ADAPTER_ID_DEFAULT );
+            IuLogGetSettings( nullptr );
         }
 
         //////////////////////////////////////////////////////////////////////////

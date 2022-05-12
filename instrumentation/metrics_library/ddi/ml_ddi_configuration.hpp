@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -38,12 +38,16 @@ namespace ML
                 const ConfigurationCreateData_1_0* createData,
                 ConfigurationHandle_1_0*           handle )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( handle != nullptr );
-                ML_FUNCTION_CHECK( createData != nullptr );
-                ML_FUNCTION_CHECK( T::Context::IsValid( createData->HandleContext ) );
+                ML_FUNCTION_CHECK_STATIC( handle != nullptr );
+                ML_FUNCTION_CHECK_STATIC( createData != nullptr );
+                ML_FUNCTION_CHECK_STATIC( T::Context::IsValid( createData->HandleContext ) );
 
                 auto& context = T::Context::FromHandle( createData->HandleContext );
+                ML_FUNCTION_LOG( StatusCode::Success, &context );
+
+                // Print input values.
+                log.Input( createData );
+                log.Input( handle );
 
                 switch( createData->Type )
                 {
@@ -61,6 +65,8 @@ namespace ML
                         break;
                 }
 
+                ML_ASSERT( log.m_Result == StatusCode::Success );
+
                 return log.m_Result;
             }
 
@@ -73,26 +79,48 @@ namespace ML
                 const ConfigurationHandle_1_0        handle,
                 const ConfigurationActivateData_1_0* activateData )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
-                ML_FUNCTION_CHECK( activateData != nullptr );
+                ML_FUNCTION_CHECK_STATIC( activateData != nullptr );
 
                 switch( BaseObject::GetType( handle ) )
                 {
                     case ObjectType::ConfigurationHwCountersOa:
-                        log.m_Result = T::Configurations::HwCountersOa::FromHandle( handle ).Activate( *activateData );
-                        break;
+                    {
+                        auto& config = T::Configurations::HwCountersOa::FromHandle( handle );
+                        ML_FUNCTION_LOG( StatusCode::Success, &config.m_Context );
 
+                        // Print input values.
+                        log.Input( handle );
+                        log.Input( activateData );
+
+                        log.m_Result = config.Activate( *activateData );
+                        ML_ASSERT( log.m_Result == StatusCode::Success );
+
+                        return log.m_Result;
+                    }
                     case ObjectType::ConfigurationHwCountersUser:
-                        log.m_Result = StatusCode::Failed;
-                        break;
+                    {
+                        ML_FUNCTION_LOG_STATIC( StatusCode::Failed );
 
+                        // Print input values.
+                        log.Input( handle );
+                        log.Input( activateData );
+
+                        ML_ASSERT( log.m_Result == StatusCode::Success );
+
+                        return log.m_Result;
+                    }
                     default:
+                    {
+                        ML_FUNCTION_LOG_STATIC( StatusCode::IncorrectObject );
                         ML_ASSERT_ALWAYS();
-                        log.m_Result = StatusCode::IncorrectObject;
-                        break;
-                }
 
-                return log.m_Result;
+                        // Print input values.
+                        log.Input( handle );
+                        log.Input( activateData );
+
+                        return log.m_Result;
+                    }
+                }
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -105,14 +133,39 @@ namespace ML
                 switch( BaseObject::GetType( handle ) )
                 {
                     case ObjectType::ConfigurationHwCountersOa:
-                        return T::Configurations::HwCountersOa::FromHandle( handle ).Deactivate();
+                    {
+                        auto& config = T::Configurations::HwCountersOa::FromHandle( handle );
+                        ML_FUNCTION_LOG( StatusCode::Success, &config.m_Context );
 
+                        // Print input values.
+                        log.Input( handle );
+
+                        log.m_Result = config.Deactivate();
+                        ML_ASSERT( log.m_Result == StatusCode::Success );
+
+                        return log.m_Result;
+                    }
                     case ObjectType::ConfigurationHwCountersUser:
-                        return StatusCode::Failed;
+                    {
+                        ML_FUNCTION_LOG_STATIC( StatusCode::Failed );
 
+                        // Print input values.
+                        log.Input( handle );
+
+                        ML_ASSERT( log.m_Result == StatusCode::Success );
+
+                        return log.m_Result;
+                    }
                     default:
+                    {
+                        ML_FUNCTION_LOG_STATIC( StatusCode::IncorrectObject );
                         ML_ASSERT_ALWAYS();
-                        return StatusCode::IncorrectObject;
+
+                        // Print input values.
+                        log.Input( handle );
+
+                        return log.m_Result;
+                    }
                 }
             }
 
@@ -126,14 +179,41 @@ namespace ML
                 switch( BaseObject::GetType( handle ) )
                 {
                     case ObjectType::ConfigurationHwCountersOa:
-                        return T::Configurations::HwCountersOa::Delete( handle );
+                    {
+                        auto& context = T::Configurations::HwCountersOa::FromHandle( handle ).m_Context;
+                        ML_FUNCTION_LOG( StatusCode::Success, &context );
 
+                        // Print input values.
+                        log.Input( handle );
+
+                        log.m_Result = T::Configurations::HwCountersOa::Delete( handle );
+                        ML_ASSERT( log.m_Result == StatusCode::Success );
+
+                        return log.m_Result;
+                    }
                     case ObjectType::ConfigurationHwCountersUser:
-                        return T::Configurations::HwCountersUser::Delete( handle );
+                    {
+                        auto& context = T::Configurations::HwCountersUser::FromHandle( handle ).m_Context;
+                        ML_FUNCTION_LOG( StatusCode::Success, &context );
 
+                        // Print input values.
+                        log.Input( handle );
+
+                        log.m_Result = T::Configurations::HwCountersUser::Delete( handle );
+                        ML_ASSERT( log.m_Result == StatusCode::Success );
+
+                        return log.m_Result;
+                    }
                     default:
+                    {
+                        ML_FUNCTION_LOG_STATIC( StatusCode::IncorrectObject );
                         ML_ASSERT_ALWAYS();
-                        return StatusCode::IncorrectObject;
+
+                        // Print input values.
+                        log.Input( handle );
+
+                        return log.m_Result;
+                    }
                 }
             }
         };

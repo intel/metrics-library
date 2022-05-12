@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -34,7 +34,7 @@ struct TraitsDummy {};
 //////////////////////////////////////////////////////////////////////////
 /// @brief ML_LOG
 //////////////////////////////////////////////////////////////////////////
-#define ML_LOG( level, functionName, message )      IU_DBG_PRINT_TAGGED( _##level, IU_DBG_LAYER_ML, ML_LOG_TAG, functionName, message )
+#define ML_LOG( adapter, level, functionName, message )      IU_DBG_PRINT_TAGGED( adapter, _##level, IU_DBG_LAYER_ML, ML_LOG_TAG, functionName, message )
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief ML_FUNCTION_NAME_PRETTY
@@ -55,6 +55,15 @@ struct TraitsDummy {};
 #endif
 
 //////////////////////////////////////////////////////////////////////////
+/// @brief ML_LOG_ERROR_STATIC
+//////////////////////////////////////////////////////////////////////////
+#if ML_DEBUG || ML_INTERNAL
+    #define ML_LOG_ERROR_STATIC( condition, result ) T::FunctionLogStatic::ErrorStatic( ML_FUNCTION_NAME, result, "Invalid condition", #condition );
+#else
+    #define ML_LOG_ERROR_STATIC( condition, result ) T::FunctionLogStatic::ErrorStatic( "Invalid condition", #condition );
+#endif
+
+//////////////////////////////////////////////////////////////////////////
 /// @brief Enter/exit tracking for functions that returns a result.
 ///        Macro will create a local variable called "result"
 ///        and will assign provided "value".
@@ -62,44 +71,75 @@ struct TraitsDummy {};
 ///
 ///        bool Function()
 ///        {
-///             ML_FUNCTION_LOG( true );     -> bool log.m_Result = true;
+///             ML_FUNCTION_LOG( true, context );     -> bool log.m_Result = true;
 ///
 ///             if( true )
 ///             {
-///                 return log.m_Result;     -> will log "result = true"
+///                 return log.m_Result;              -> will log "result = true"
 ///             }
 ///
-///             return log.m_Result = false; -> will log "result = false"
+///             return log.m_Result = false;          -> will log "result = false"
 ///        }
 //////////////////////////////////////////////////////////////////////////
-#define ML_FUNCTION_LOG( value )                    using FunctionResult = decltype( value );                                \
-                                                    TT::template FunctionLog<FunctionResult> log( ML_FUNCTION_NAME, value );
+#define ML_FUNCTION_LOG( value, context )                    using FunctionResult = decltype( value );                                \
+                                                             TT::template FunctionLog<FunctionResult> log( ML_FUNCTION_NAME, value, context );
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Static implementation of ML_FUNCTION_LOG.
+//////////////////////////////////////////////////////////////////////////
+#define ML_FUNCTION_LOG_STATIC( value )                       using FunctionResult = decltype( value );                                \
+                                                              TT::template FunctionLog<FunctionResult> log( ML_FUNCTION_NAME, value, nullptr );
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Condition (bool/StatusCode) sanity check.
+///        Can be used only with ML_FUNCTION_LOG or ML_FUNCTION_LOG_STATIC.
 //////////////////////////////////////////////////////////////////////////
-#define ML_FUNCTION_CHECK( condition )              log.m_Result = Validation::CheckResult( ( condition ) );    \
-                                                    if( log.m_Result != StatusCode::Success )                   \
-                                                    {                                                           \
-                                                        log.Error( "Invalid condition", #condition);            \
-                                                        return log.m_Result;                                    \
-                                                    }
+#define ML_FUNCTION_CHECK( condition )                        log.m_Result = Validation::CheckResult( ( condition ) );    \
+                                                              if( log.m_Result != StatusCode::Success )                   \
+                                                              {                                                           \
+                                                                  log.Error( "Invalid condition", #condition);            \
+                                                                  return log.m_Result;                                    \
+                                                              }
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Condition (bool/StatusCode) sanity check with custom error code.
+///        Can be used only with ML_FUNCTION_LOG or ML_FUNCTION_LOG_STATIC.
 //////////////////////////////////////////////////////////////////////////
-#define ML_FUNCTION_CHECK_ERROR( condition, error ) if( Validation::CheckResult( ( condition ) ) != StatusCode::Success )    \
-                                                    {                                                                        \
-                                                        log.Error( "Invalid condition", #condition);                         \
-                                                        return log.m_Result = error;                                         \
-                                                    }
+#define ML_FUNCTION_CHECK_ERROR( condition, error )            if( Validation::CheckResult( ( condition ) ) != StatusCode::Success )    \
+                                                               {                                                                        \
+                                                                   log.Error( "Invalid condition", #condition);                         \
+                                                                   return log.m_Result = error;                                         \
+                                                               }
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Static implementation of ML_FUNCTION_CHECK.
+///        Can be used as standalone macro.
+//////////////////////////////////////////////////////////////////////////
+#define ML_FUNCTION_CHECK_STATIC( condition )                 {                                                                 \
+                                                                  StatusCode ret = Validation::CheckResult( ( condition ) );    \
+                                                                  if ( ret != StatusCode::Success )                             \
+                                                                  {                                                             \
+                                                                      ML_LOG_ERROR_STATIC( condition, ret )                     \
+                                                                      return ret;                                               \
+                                                                  }                                                             \
+                                                               }
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Static implementation of ML_FUNCTION_CHECK_ERROR.
+///        Can be used as standalone macro.
+//////////////////////////////////////////////////////////////////////////
+#define ML_FUNCTION_CHECK_ERROR_STATIC( condition, error )      if ( Validation::CheckResult( ( condition ) ) != StatusCode::Success )  \
+                                                                {                                                                       \
+                                                                    ML_LOG_ERROR_STATIC( condition, error )                             \
+                                                                    return error;                                                       \
+                                                                }
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Success / Failed macros.
 //////////////////////////////////////////////////////////////////////////
 #define ML_SUCCESS( result )                        ( ( result ) == StatusCode::Success )
 #define ML_FAIL( result )                           ( ( result ) != StatusCode::Success )
-#define ML_STATUS( result )                         ( ( result ) ? StatusCode::Success : StatusCode::Failed )
+#define ML_STATUS( result )                         ( ( result ) ?  StatusCode::Success : StatusCode::Failed )
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Size32 macro.
@@ -122,7 +162,13 @@ struct TraitsDummy {};
 //////////////////////////////////////////////////////////////////////////
 /// @brief Assert definition.
 //////////////////////////////////////////////////////////////////////////
-#define ML_ASSERT( condition )                      IU_ASSERT_TAGGED( ( condition ), IU_DBG_LAYER_ML, ML_LOG_TAG )
+#define ML_ASSERT_ADAPTER( condition, adapterId )   IU_ASSERT_TAGGED( adapterId, ( condition ), IU_DBG_LAYER_ML, ML_LOG_TAG )
+#define ML_ASSERT_ALWAYS_ADAPTER( adapterId )       ML_ASSERT_ADAPTER( false, adapterId )
+
+#define ML_ASSERT_NO_ADAPTER( condition )           ML_ASSERT_ADAPTER( ( condition ), IU_ADAPTER_ID_UNKNOWN )
+#define ML_ASSERT_ALWAYS_NO_ADAPTER()               ML_ASSERT_NO_ADAPTER( false )
+
+#define ML_ASSERT( condition )                      ML_ASSERT_ADAPTER( ( condition ), log.m_Context ? log.m_Context->m_AdapterId : IU_ADAPTER_ID_UNKNOWN )
 #define ML_ASSERT_ALWAYS()                          ML_ASSERT( false )
 
 //////////////////////////////////////////////////////////////////////////
@@ -185,26 +231,26 @@ struct TraitsDummy {};
 #define __LOG_INPUT                                 IU_DBG_SEV_INPUT
 #define __LOG_OUTPUT                                IU_DBG_SEV_OUTPUT
 
-#define F__LOG_CRITICAL( level, layer, ... )        F_IU_DBG_SEV_CRITICAL( level, layer, __VA_ARGS__ )
-#define F__LOG_ERROR( level, layer, ... )           F_IU_DBG_SEV_ERROR( level, layer, __VA_ARGS__ )
-#define F__LOG_WARNING( level, layer, ... )         F_IU_DBG_SEV_WARNING( level, layer, __VA_ARGS__ )
-#define F__LOG_INFO( level, layer, ... )            F_IU_DBG_SEV_INFO( level, layer, __VA_ARGS__ )
-#define F__LOG_DEBUG( level, layer, ... )           F_IU_DBG_SEV_DEBUG( level, layer, __VA_ARGS__ )
-#define F__LOG_TRAITS( level, layer, ... )          F_IU_DBG_SEV_TRAITS( level, layer, __VA_ARGS__ )
-#define F__LOG_ENTERED( level, layer, ... )         F_IU_DBG_SEV_ENTERED( level, layer, __VA_ARGS__ )
-#define F__LOG_EXITING( level, layer, ... )         F_IU_DBG_SEV_EXITING( level, layer, __VA_ARGS__ )
-#define F__LOG_INPUT( level, layer, ... )           F_IU_DBG_SEV_INPUT( level, layer, __VA_ARGS__ )
-#define F__LOG_OUTPUT( level, layer, ... )          F_IU_DBG_SEV_OUTPUT( level, layer, __VA_ARGS__ )
+#define F__LOG_CRITICAL( adapter, level, layer, ... )        F_IU_DBG_SEV_CRITICAL( adapter, level, layer, __VA_ARGS__ )
+#define F__LOG_ERROR( adapter, level, layer, ... )           F_IU_DBG_SEV_ERROR( adapter, level, layer, __VA_ARGS__ )
+#define F__LOG_WARNING( adapter, level, layer, ... )         F_IU_DBG_SEV_WARNING( adapter, level, layer, __VA_ARGS__ )
+#define F__LOG_INFO( adapter, level, layer, ... )            F_IU_DBG_SEV_INFO( adapter, level, layer, __VA_ARGS__ )
+#define F__LOG_DEBUG( adapter, level, layer, ... )           F_IU_DBG_SEV_DEBUG( adapter, level, layer, __VA_ARGS__ )
+#define F__LOG_TRAITS( adapter, level, layer, ... )          F_IU_DBG_SEV_TRAITS( adapter, level, layer, __VA_ARGS__ )
+#define F__LOG_ENTERED( adapter, level, layer, ... )         F_IU_DBG_SEV_ENTERED( adapter, level, layer, __VA_ARGS__ )
+#define F__LOG_EXITING( adapter, level, layer, ... )         F_IU_DBG_SEV_EXITING( adapter, level, layer, __VA_ARGS__ )
+#define F__LOG_INPUT( adapter, level, layer, ... )           F_IU_DBG_SEV_INPUT( adapter, level, layer, __VA_ARGS__ )
+#define F__LOG_OUTPUT( adapter, level, layer, ... )          F_IU_DBG_SEV_OUTPUT( adapter, level, layer, __VA_ARGS__ )
 
-#define F___LOG_CRITICAL( level, layer, ... )       F_IU_DBG_SEV_CRITICAL( level, layer, __VA_ARGS__ )
-#define F___LOG_ERROR( level, layer, ... )          F_IU_DBG_SEV_ERROR( level, layer, __VA_ARGS__ )
-#define F___LOG_WARNING( level, layer, ... )        F_IU_DBG_SEV_WARNING( level, layer, __VA_ARGS__ )
-#define F___LOG_INFO( level, layer, ... )           F_IU_DBG_SEV_INFO( level, layer, __VA_ARGS__ )
-#define F___LOG_DEBUG( level, layer, ... )          F_IU_DBG_SEV_DEBUG( level, layer, __VA_ARGS__ )
-#define F___LOG_TRAITS( level, layer, ... )         F_IU_DBG_SEV_TRAITS( level, layer, __VA_ARGS__ )
-#define F___LOG_ENTERED( level, layer, ... )        F_IU_DBG_SEV_ENTERED( level, layer, __VA_ARGS__ )
-#define F___LOG_EXITING( level, layer, ... )        F_IU_DBG_SEV_EXITING( level, layer, __VA_ARGS__ )
-#define F___LOG_INPUT( level, layer, ... )          F_IU_DBG_SEV_INPUT( level, layer, __VA_ARGS__ )
-#define F___LOG_OUTPUT( level, layer, ... )         F_IU_DBG_SEV_OUTPUT( level, layer, __VA_ARGS__ )
+#define F___LOG_CRITICAL( adapter, level, layer, ... )       F_IU_DBG_SEV_CRITICAL( adapter, level, layer, __VA_ARGS__ )
+#define F___LOG_ERROR( adapter, level, layer, ... )          F_IU_DBG_SEV_ERROR( adapter, level, layer, __VA_ARGS__ )
+#define F___LOG_WARNING( adapter, level, layer, ... )        F_IU_DBG_SEV_WARNING( adapter, level, layer, __VA_ARGS__ )
+#define F___LOG_INFO( adapter, level, layer, ... )           F_IU_DBG_SEV_INFO( adapter, level, layer, __VA_ARGS__ )
+#define F___LOG_DEBUG( adapter, level, layer, ... )          F_IU_DBG_SEV_DEBUG( adapter, level, layer, __VA_ARGS__ )
+#define F___LOG_TRAITS( adapter, level, layer, ... )         F_IU_DBG_SEV_TRAITS( adapter, level, layer, __VA_ARGS__ )
+#define F___LOG_ENTERED( adapter, level, layer, ... )        F_IU_DBG_SEV_ENTERED( adapter, level, layer, __VA_ARGS__ )
+#define F___LOG_EXITING( adapter, level, layer, ... )        F_IU_DBG_SEV_EXITING( adapter, level, layer, __VA_ARGS__ )
+#define F___LOG_INPUT( adapter, level, layer, ... )          F_IU_DBG_SEV_INPUT( adapter, level, layer, __VA_ARGS__ )
+#define F___LOG_OUTPUT( adapter, level, layer, ... )         F_IU_DBG_SEV_OUTPUT( adapter, level, layer, __VA_ARGS__ )
 
 // clang-format on

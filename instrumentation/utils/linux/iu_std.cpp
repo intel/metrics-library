@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -9,8 +9,7 @@ SPDX-License-Identifier: MIT
 /*
 @file iu_std.cpp
 
-@brief Instrumentation Utils implementation with
-       Linux/Android specific functions
+@brief Instrumentation Utils implementation with Linux/Android specific functions.
 
 @note Some functions from the header may be unimplemented - they weren't
       needed in Linux version at the moment.
@@ -617,18 +616,26 @@ extern "C"
     //     Instrumentation Utils Standard OS Specific Functions
     //
     // Function:
-    //     iu_printfln
+    //     iu_printf
     //
     // Description:
-    //     Debug log printf with new line at the end.
+    //     Debug log printf.
     //
     // Input:
-    //     const char* msg - message to print
+    //     const char* msg    - message to print
+    //     const bool  addEOL - add a new line sign at the end of the message
     //
     ///////////////////////////////////////////////////////////////////////////////
-    void iu_printfln( const char* msg )
+    void iu_printf( const char* msg, const bool addEOL )
     {
-        printf( "%s\n", msg );
+        if( addEOL )
+        {
+            printf( "%s\n", msg );
+        }
+        else
+        {
+            printf( "%s", msg );
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////

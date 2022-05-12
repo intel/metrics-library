@@ -1,16 +1,15 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file iu_debug.c
+@file iu_std.h
 
-@brief Instrumentation Utils header with OS specific standard
-       functions and macros.
+@brief Instrumentation Utils header with OS specific standard functions and macros.
 */
 
 #pragma once
@@ -60,7 +59,7 @@ extern "C"
 
     // Debug printing
     void iu_log( const char* msg );
-    void iu_printfln( const char* msg );
+    void iu_printf( const char* msg, const bool addEOL );
 
     // Files
     bool   iu_fopen_s( FILE** pFile, const char* filename, const char* mode );

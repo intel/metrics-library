@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -61,7 +61,7 @@ extern "C"
 ///////////////////////////////////////////////////////////////////////////////
 // MACRO: Default adapter id
 ///////////////////////////////////////////////////////////////////////////////
-#define IU_ADAPTER_ID_DEFAULT 0
+#define IU_ADAPTER_ID_UNKNOWN 0xFFFFFFFF
 
     ///////////////////////////////////////////////////////////////////////////////
     // FUNCTION: IuLogCheckLayer (compares an incoming layer to IU settings)
@@ -81,12 +81,12 @@ extern "C"
     ///////////////////////////////////////////////////////////////////////////////
     // FUNCTION: IuLogGetSettings (to override default log settings)
     ///////////////////////////////////////////////////////////////////////////////
-    void IuLogGetSettings( void* deviceContext, const uint32_t adapterId );
+    void IuLogGetSettings( void* deviceContext );
 
     ///////////////////////////////////////////////////////////////////////////////
     // FUNCTION: __IuLogPrint (for internal use only)
     ///////////////////////////////////////////////////////////////////////////////
-    void __IuLogPrint( const char* sevTag, const uint32_t level, const char* layerTag, const char* fncName, const char* formatString, ... );
+    void __IuLogPrint( const uint32_t adapterId, const char* sevTag, const uint32_t level, const char* layerTag, const char* fncName, const char* formatString, ... );
 
     ///////////////////////////////////////////////////////////////////////////////
     // STRUCT: IU_LOGS_CONTROL
@@ -103,9 +103,6 @@ extern "C"
         // &
         // selecting which log fields are shown (tag, moduleName, functionName)
         uint32_t LogLevel;
-
-        // adapter id
-        uint32_t AdapterId;
     } IU_LOGS_CONTROL;
     extern IU_LOGS_CONTROL g_IuLogsControl;
 
@@ -144,6 +141,9 @@ extern "C"
 // if following flag is set, logs will be additionally printed on console
 #define IU_DBG_CONSOLE_DUMP 0x80000000
 
+// if following flag is set, a new line sign will be inserted at the end of each log
+#define IU_DBG_EOL 0x40000000
+
 // layers
 #define IU_DBG_LAYER_INSTR 0x00000001
 #define IU_DBG_LAYER_MD    0x00000002
@@ -156,51 +156,51 @@ extern "C"
 // MACROS: related to logs printing
 ///////////////////////////////////////////////////////////////////////////////
 // error & warning logs are available in any driver
-#define F_IU_DBG_SEV_CRITICAL( level, layer, ... ) \
-    if( IuLogCheckLevel( level, layer ) )          \
-    __IuLogPrint( "C", level, __VA_ARGS__ )
-#define F_IU_DBG_SEV_ERROR( level, layer, ... ) \
-    if( IuLogCheckLevel( level, layer ) )       \
-    __IuLogPrint( "E", level, __VA_ARGS__ )
-#define F_IU_DBG_SEV_WARNING( level, layer, ... ) \
-    if( IuLogCheckLevel( level, layer ) )         \
-    __IuLogPrint( "W", level, __VA_ARGS__ )
+#define F_IU_DBG_SEV_CRITICAL( adapter, level, layer, ... ) \
+    if( IuLogCheckLevel( level, layer ) )                   \
+    __IuLogPrint( adapter, "C", level, __VA_ARGS__ )
+#define F_IU_DBG_SEV_ERROR( adapter, level, layer, ... ) \
+    if( IuLogCheckLevel( level, layer ) )                \
+    __IuLogPrint( adapter, "E", level, __VA_ARGS__ )
+#define F_IU_DBG_SEV_WARNING( adapter, level, layer, ... ) \
+    if( IuLogCheckLevel( level, layer ) )                  \
+    __IuLogPrint( adapter, "W", level, __VA_ARGS__ )
 // debug logs are not available in release driver
 #if IU_DEBUG_LOGS
-    #define F_IU_DBG_SEV_INFO( level, layer, ... ) \
-        if( IuLogCheckLevel( level, layer ) )      \
-        __IuLogPrint( "I", level, __VA_ARGS__ )
-    #define F_IU_DBG_SEV_DEBUG( level, layer, ... ) \
-        if( IuLogCheckLevel( level, layer ) )       \
-        __IuLogPrint( "D", level, __VA_ARGS__ )
-    #define F_IU_DBG_SEV_TRAITS( level, layer, ... ) \
-        if( IuLogCheckLevel( level, layer ) )        \
-        __IuLogPrint( "T", level, __VA_ARGS__ )
-    #define F_IU_DBG_SEV_ENTERED( level, layer, ... ) \
-        if( IuLogCheckLevel( level, layer ) )         \
-        __IuLogPrint( ">", level, __VA_ARGS__ )
-    #define F_IU_DBG_SEV_EXITING( level, layer, ... ) \
-        if( IuLogCheckLevel( level, layer ) )         \
-        __IuLogPrint( "<", level, __VA_ARGS__ )
-    #define F_IU_DBG_SEV_INPUT( level, layer, ... ) \
-        if( IuLogCheckLevel( level, layer ) )       \
-        __IuLogPrint( ">", level, __VA_ARGS__ )
-    #define F_IU_DBG_SEV_OUTPUT( level, layer, ... ) \
-        if( IuLogCheckLevel( level, layer ) )        \
-        __IuLogPrint( "<", level, __VA_ARGS__ )
+    #define F_IU_DBG_SEV_INFO( adapter, level, layer, ... ) \
+        if( IuLogCheckLevel( level, layer ) )               \
+        __IuLogPrint( adapter, "I", level, __VA_ARGS__ )
+    #define F_IU_DBG_SEV_DEBUG( adapter, level, layer, ... ) \
+        if( IuLogCheckLevel( level, layer ) )                \
+        __IuLogPrint( adapter, "D", level, __VA_ARGS__ )
+    #define F_IU_DBG_SEV_TRAITS( adapter, level, layer, ... ) \
+        if( IuLogCheckLevel( level, layer ) )                 \
+        __IuLogPrint( adapter, "T", level, __VA_ARGS__ )
+    #define F_IU_DBG_SEV_ENTERED( adapter, level, layer, ... ) \
+        if( IuLogCheckLevel( level, layer ) )                  \
+        __IuLogPrint( adapter, ">", level, __VA_ARGS__ )
+    #define F_IU_DBG_SEV_EXITING( adapter, level, layer, ... ) \
+        if( IuLogCheckLevel( level, layer ) )                  \
+        __IuLogPrint( adapter, "<", level, __VA_ARGS__ )
+    #define F_IU_DBG_SEV_INPUT( adapter, level, layer, ... ) \
+        if( IuLogCheckLevel( level, layer ) )                \
+        __IuLogPrint( adapter, ">", level, __VA_ARGS__ )
+    #define F_IU_DBG_SEV_OUTPUT( adapter, level, layer, ... ) \
+        if( IuLogCheckLevel( level, layer ) )                 \
+        __IuLogPrint( adapter, "<", level, __VA_ARGS__ )
 #else
-    #define F_IU_DBG_SEV_INFO( level, layer, ... )
-    #define F_IU_DBG_SEV_DEBUG( level, layer, ... )
-    #define F_IU_DBG_SEV_TRAITS( level, layer, ... )
-    #define F_IU_DBG_SEV_ENTERED( level, layer, ... )
-    #define F_IU_DBG_SEV_EXITING( level, layer, ... )
-    #define F_IU_DBG_SEV_INPUT( level, layer, ... )
-    #define F_IU_DBG_SEV_OUTPUT( level, layer, ... )
+    #define F_IU_DBG_SEV_INFO( adapter, level, layer, ... )
+    #define F_IU_DBG_SEV_DEBUG( adapter, level, layer, ... )
+    #define F_IU_DBG_SEV_TRAITS( adapter, level, layer, ... )
+    #define F_IU_DBG_SEV_ENTERED( adapter, level, layer, ... )
+    #define F_IU_DBG_SEV_EXITING( adapter, level, layer, ... )
+    #define F_IU_DBG_SEV_INPUT( adapter, level, layer, ... )
+    #define F_IU_DBG_SEV_OUTPUT( adapter, level, layer, ... )
 #endif
 
 // generic
-#define _IU_LOG( F, level, layer, ... )                         F( level, layer, __VA_ARGS__ )
-#define IU_DBG_PRINT_TAGGED( level, layer, tag, function, ... ) _IU_LOG( F_##level, level, layer, tag, function, __VA_ARGS__, "" )
+#define _IU_LOG( F, adapter, level, layer, tag, function, ... )          F( adapter, level, layer, tag, function, __VA_ARGS__ )
+#define IU_DBG_PRINT_TAGGED( adapter, level, layer, tag, function, ... ) _IU_LOG( F_##level, adapter, level, layer, tag, function, __VA_ARGS__ )
 
 ///////////////////////////////////////////////////////////////////////////////
 // compiler-dependent definitions for debug macros
@@ -225,26 +225,26 @@ extern "C"
 ///////////////////////////////////////////////////////////////////////////////
 // generic
 #if IU_DEBUG_LOGS
-    #define IU_ASSERT_TAGGED( expr, layer, tag )                                                                                                   \
-        if( !( expr ) )                                                                                                                            \
-        {                                                                                                                                          \
-            IU_DBG_PRINT_TAGGED( IU_DBG_SEV_CRITICAL, layer, tag, __FUNCTION__, "!!! ASSERTION FAILURE: !!! -> %s:%d", __FILE__, __LINE__ );       \
-            IU_DBG_PRINT_TAGGED( IU_DBG_SEV_CRITICAL, layer, tag, __FUNCTION__, "!!! ASSERTION DETAILS: !!! -> %s(): (" #expr ")", __FUNCTION__ ); \
-            if( IU_IS_ASSERT_ENABLED )                                                                                                             \
-            {                                                                                                                                      \
-                IU_DBG_BREAK;                                                                                                                      \
-            }                                                                                                                                      \
+    #define IU_ASSERT_TAGGED( adapter, expr, layer, tag )                                                                                                   \
+        if( !( expr ) )                                                                                                                                     \
+        {                                                                                                                                                   \
+            IU_DBG_PRINT_TAGGED( adapter, IU_DBG_SEV_CRITICAL, layer, tag, __FUNCTION__, "!!! ASSERTION FAILURE: !!! -> %s:%d", __FILE__, __LINE__ );       \
+            IU_DBG_PRINT_TAGGED( adapter, IU_DBG_SEV_CRITICAL, layer, tag, __FUNCTION__, "!!! ASSERTION DETAILS: !!! -> %s(): (" #expr ")", __FUNCTION__ ); \
+            if( IU_IS_ASSERT_ENABLED )                                                                                                                      \
+            {                                                                                                                                               \
+                IU_DBG_BREAK;                                                                                                                               \
+            }                                                                                                                                               \
         }
 #else
-    #define IU_ASSERT_TAGGED( expr, layer, tag )
+    #define IU_ASSERT_TAGGED( adapter, expr, layer, tag )
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // MACROS: print function enter/exit
 ///////////////////////////////////////////////////////////////////////////////
 // generic
-#define IU_DBG_FUNCTION_ENTER_TAGGED( level, layer, tag ) IU_DBG_PRINT_TAGGED( _##level, layer, tag, __FUNCTION__, "ENTERED >>>" )
-#define IU_DBG_FUNCTION_EXIT_TAGGED( level, layer, tag )  IU_DBG_PRINT_TAGGED( _##level, layer, tag, __FUNCTION__, "EXITING <<<" );
+#define IU_DBG_FUNCTION_ENTER_TAGGED( adapter, level, layer, tag ) IU_DBG_PRINT_TAGGED( adapter, _##level, layer, tag, __FUNCTION__, "ENTERED >>>" )
+#define IU_DBG_FUNCTION_EXIT_TAGGED( adapter, level, layer, tag )  IU_DBG_PRINT_TAGGED( adapter, _##level, layer, tag, __FUNCTION__, "EXITING <<<" );
 
 ///////////////////////////////////////////////////////////////////////////////
 //  INSTRUMENTATION UTILS LAYER LOGS
@@ -254,10 +254,11 @@ extern "C"
     #define IU_LOG_TAG "[IU]"
 #endif
 
-#define IU_ASSERT( expr )                    IU_ASSERT_TAGGED( expr, IU_DBG_LAYER_IU, IU_LOG_TAG )
-#define IU_DBG_PRINT( level, ... )           IU_DBG_PRINT_TAGGED( _##level, IU_DBG_LAYER_IU, IU_LOG_TAG, __FUNCTION__, __VA_ARGS__ )
-#define IU_DBG_FUNCTION_ENTER( level )       IU_DBG_FUNCTION_ENTER_TAGGED( _##level, IU_DBG_LAYER_IU, IU_LOG_TAG );
-#define IU_DBG_FUNCTION_EXIT( level )        IU_DBG_FUNCTION_EXIT_TAGGED( _##level, IU_DBG_LAYER_IU, IU_LOG_TAG );
+#define IU_ASSERT( expr )          IU_ASSERT_TAGGED( IU_ADAPTER_ID_UNKNOWN, expr, IU_DBG_LAYER_IU, IU_LOG_TAG )
+#define IU_DBG_PRINT( level, ... ) IU_DBG_PRINT_TAGGED( IU_ADAPTER_ID_UNKNOWN, _##level, IU_DBG_LAYER_IU, IU_LOG_TAG, __FUNCTION__, __VA_ARGS__ )
+//#define IU_DBG_PRINTA( adapter, level, ... ) IU_DBG_PRINT_TAGGED( adapter, _##level, IU_DBG_LAYER_IU, IU_LOG_TAG, __FUNCTION__, __VA_ARGS__ )
+#define IU_DBG_FUNCTION_ENTER( level )       IU_DBG_FUNCTION_ENTER_TAGGED( IU_ADAPTER_ID_UNKNOWN, _##level, IU_DBG_LAYER_IU, IU_LOG_TAG );
+#define IU_DBG_FUNCTION_EXIT( level )        IU_DBG_FUNCTION_EXIT_TAGGED( IU_ADAPTER_ID_UNKNOWN, _##level, IU_DBG_LAYER_IU, IU_LOG_TAG );
 #define IU_DBG_FUNCTION_INPUT( level, x )    IU_DBG_PRINT( _##level, "IN: %s = %#010x = %u", #x, x, x );
 #define IU_DBG_FUNCTION_INPUT64( level, x )  IU_DBG_PRINT( _##level, "IN: %s = %#018llx = %llu", #x, x, x );
 #define IU_DBG_FUNCTION_OUTPUT( level, x )   IU_DBG_PRINT( _##level, "OUT: %s = %#010x = %u", #x, x, x );
@@ -293,29 +294,29 @@ extern "C"
 #define __IU_DBG_SEV_OUTPUT   IU_DBG_SEV_OUTPUT
 #define __IU_DBG_CONSOLE_DUMP IU_DBG_CONSOLE_DUMP
 
-#define F__IU_DBG_SEV_CRITICAL( level, layer, ... ) F_IU_DBG_SEV_CRITICAL( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_SEV_ERROR( level, layer, ... )    F_IU_DBG_SEV_ERROR( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_SEV_WARNING( level, layer, ... )  F_IU_DBG_SEV_WARNING( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_SEV_INFO( level, layer, ... )     F_IU_DBG_SEV_INFO( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_SEV_DEBUG( level, layer, ... )    F_IU_DBG_SEV_DEBUG( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_SEV_TRAITS( level, layer, ... )   F_IU_DBG_SEV_TRAITS( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_SEV_ENTERED( level, layer, ... )  F_IU_DBG_SEV_ENTERED( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_SEV_EXITING( level, layer, ... )  F_IU_DBG_SEV_EXITING( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_SEV_INPUT( level, layer, ... )    F_IU_DBG_SEV_INPUT( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_SEV_OUTPUT( level, layer, ... )   F_IU_DBG_SEV_OUTPUT( level, layer, __VA_ARGS__ )
-#define F__IU_DBG_CONSOLE_DUMP( level, layer, ... ) F_IU_DBG_SEV_DEBUG( level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_CRITICAL( adapter, level, layer, ... ) F_IU_DBG_SEV_CRITICAL( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_ERROR( adapter, level, layer, ... )    F_IU_DBG_SEV_ERROR( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_WARNING( adapter, level, layer, ... )  F_IU_DBG_SEV_WARNING( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_INFO( adapter, level, layer, ... )     F_IU_DBG_SEV_INFO( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_DEBUG( adapter, level, layer, ... )    F_IU_DBG_SEV_DEBUG( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_TRAITS( adapter, level, layer, ... )   F_IU_DBG_SEV_TRAITS( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_ENTERED( adapter, level, layer, ... )  F_IU_DBG_SEV_ENTERED( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_EXITING( adapter, level, layer, ... )  F_IU_DBG_SEV_EXITING( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_INPUT( adapter, level, layer, ... )    F_IU_DBG_SEV_INPUT( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_SEV_OUTPUT( adapter, level, layer, ... )   F_IU_DBG_SEV_OUTPUT( adapter, level, layer, __VA_ARGS__ )
+#define F__IU_DBG_CONSOLE_DUMP( adapter, level, layer, ... ) F_IU_DBG_SEV_DEBUG( adapter, level, layer, __VA_ARGS__ )
 
-#define F___IU_DBG_SEV_CRITICAL( level, layer, ... ) F_IU_DBG_SEV_CRITICAL( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_SEV_ERROR( level, layer, ... )    F_IU_DBG_SEV_ERROR( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_SEV_WARNING( level, layer, ... )  F_IU_DBG_SEV_WARNING( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_SEV_INFO( level, layer, ... )     F_IU_DBG_SEV_INFO( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_SEV_DEBUG( level, layer, ... )    F_IU_DBG_SEV_DEBUG( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_SEV_TRAITS( level, layer, ... )   F_IU_DBG_SEV_TRAITS( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_SEV_ENTERED( level, layer, ... )  F_IU_DBG_SEV_ENTERED( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_SEV_EXITING( level, layer, ... )  F_IU_DBG_SEV_EXITING( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_SEV_INPUT( level, layer, ... )    F_IU_DBG_SEV_INPUT( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_SEV_OUTPUT( level, layer, ... )   F_IU_DBG_SEV_OUTPUT( level, layer, __VA_ARGS__ )
-#define F___IU_DBG_CONSOLE_DUMP( level, layer, ... ) F_IU_DBG_SEV_DEBUG( level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_CRITICAL( adapter, level, layer, ... ) F_IU_DBG_SEV_CRITICAL( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_ERROR( adapter, level, layer, ... )    F_IU_DBG_SEV_ERROR( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_WARNING( adapter, level, layer, ... )  F_IU_DBG_SEV_WARNING( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_INFO( adapter, level, layer, ... )     F_IU_DBG_SEV_INFO( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_DEBUG( adapter, level, layer, ... )    F_IU_DBG_SEV_DEBUG( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_TRAITS( adapter, level, layer, ... )   F_IU_DBG_SEV_TRAITS( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_ENTERED( adapter, level, layer, ... )  F_IU_DBG_SEV_ENTERED( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_EXITING( adapter, level, layer, ... )  F_IU_DBG_SEV_EXITING( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_INPUT( adapter, level, layer, ... )    F_IU_DBG_SEV_INPUT( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_SEV_OUTPUT( adapter, level, layer, ... )   F_IU_DBG_SEV_OUTPUT( adapter, level, layer, __VA_ARGS__ )
+#define F___IU_DBG_CONSOLE_DUMP( adapter, level, layer, ... ) F_IU_DBG_SEV_DEBUG( adapter, level, layer, __VA_ARGS__ )
 
 #if defined( __cplusplus )
 }

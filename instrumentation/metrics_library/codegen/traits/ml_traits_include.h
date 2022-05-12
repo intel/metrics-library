@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -46,7 +46,6 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 #if ML_RELEASE
     #include "ml_function_log_release.h"
 #endif
-#include "ml_function_log_common.h"
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Library context:
@@ -54,6 +53,7 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 #include "ml_context.h"
 #include "ml_client_options.h"
 #include "ml_ddi_objects.h"
+#include "ml_state.h"
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief SubDevice:

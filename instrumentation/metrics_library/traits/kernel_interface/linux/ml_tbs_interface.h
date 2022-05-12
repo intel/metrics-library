@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -72,7 +72,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ~OaBufferMapped()
                 {
-                    ML_FUNCTION_LOG( true );
+                    ML_FUNCTION_LOG( true, &m_Kernel.m_Context );
 
                     if( m_Mapped )
                     {
@@ -87,7 +87,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE StatusCode Initialize( const int32_t stream )
                 {
-                    ML_FUNCTION_LOG( StatusCode::Success );
+                    ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                     ML_FUNCTION_CHECK( stream != T::ConstantsOs::Tbs::m_Invalid );
 
                     m_Stream = stream;
@@ -101,9 +101,9 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE bool IsSupported() const
                 {
-                    const uint32_t    revision  = static_cast<uint32_t>( m_Kernel.m_Revision );
-                    const uint32_t    expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::OaBufferMapping );
-                    const static bool supported = revision >= expected;
+                    const uint32_t revision  = static_cast<uint32_t>( m_Kernel.m_Revision );
+                    const uint32_t expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::OaBufferMapping );
+                    bool           supported = revision >= expected;
 
                     return supported;
                 }
@@ -123,7 +123,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE StatusCode Map()
                 {
-                    ML_FUNCTION_LOG( StatusCode::Success );
+                    ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                     ML_FUNCTION_CHECK( m_Stream != T::ConstantsOs::Tbs::m_Invalid );
 
                     // Obtain oa buffer properties.
@@ -153,7 +153,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE StatusCode Unmap()
                 {
-                    ML_FUNCTION_LOG( StatusCode::Success );
+                    ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                     if( m_CpuAddress )
                     {
@@ -201,7 +201,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE StatusCode Initialize()
                 {
-                    ML_FUNCTION_LOG( StatusCode::Success );
+                    ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                     if( m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled )
                     {
@@ -244,7 +244,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE StatusCode SetMetricSet( int32_t set )
                 {
-                    ML_FUNCTION_LOG( StatusCode::Success );
+                    ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                     ML_FUNCTION_CHECK( IsEnabled() );
 
                     log.Debug( "Used set ", m_MetricSet );
@@ -265,7 +265,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE StatusCode ReleaseMetricSet( const int32_t set )
                 {
-                    ML_FUNCTION_LOG( StatusCode::Success );
+                    ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                     ML_ASSERT( m_MetricSet == set );
 
                     if( m_MetricSetInternal )
@@ -285,7 +285,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE StatusCode Disable()
                 {
-                    ML_FUNCTION_LOG( StatusCode::Success );
+                    ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                     if( !m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled )
                     {
@@ -308,7 +308,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 ML_INLINE StatusCode Restart()
                 {
-                    ML_FUNCTION_LOG( StatusCode::Success );
+                    ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                     // Disable stream.
                     Disable();
@@ -329,7 +329,7 @@ namespace ML
                 {
                     std::vector<uint64_t> properties;
 
-                    ML_FUNCTION_LOG( StatusCode::Success );
+                    ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                     ML_FUNCTION_CHECK( IsEnabled() == false );
                     ML_FUNCTION_CHECK( m_MetricSet != T::ConstantsOs::Tbs::m_Invalid );
                     ML_FUNCTION_CHECK( m_Kernel.m_Tbs.GetStreamProperties( properties, m_MetricSet ) );
@@ -405,7 +405,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode Initialize()
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 return log.m_Result = m_Stream.Initialize();
             }
@@ -424,7 +424,7 @@ namespace ML
                         return m_Stream.m_OaBufferMapped;
 
                     default:
-                        ML_ASSERT_ALWAYS();
+                        ML_ASSERT_ALWAYS_ADAPTER( m_Kernel.m_Context.m_AdapterId );
                         break;
                 }
 
@@ -450,7 +450,7 @@ namespace ML
                 std::vector<uint64_t>& properties,
                 const int32_t          metricSet ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 auto addProperty = [&]( const uint64_t key, const uint64_t value )
                 {
@@ -475,7 +475,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE StatusCode GetOaReports( OaReports& oaReports )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 const int32_t readBytes = ReadReports( oaReports.capacity() );
 
@@ -502,7 +502,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint32_t ReadReports( const uint32_t count )
             {
-                ML_FUNCTION_LOG( uint32_t{ 0 } );
+                ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
                 ML_FUNCTION_CHECK_ERROR( m_IoControl.IsTbsEnabled(), 0 );
 
                 const size_t reportSize = sizeof( TbsOaReport );
@@ -528,7 +528,7 @@ namespace ML
                 const uint32_t tbsDataSize,
                 OaReports&     oaReports )
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
                 ML_ASSERT( tbsDataSize > 0 );
 
                 uint32_t tbsDataOffset = 0;
@@ -593,7 +593,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint64_t GetTimerPeriodExponent( const uint64_t timerPeriod ) const
             {
-                ML_FUNCTION_LOG( StatusCode::Success );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 // Get minimum gpu timestamp period in ns.
                 const uint64_t timestampPeriod = GetGpuTimestampPeriod();

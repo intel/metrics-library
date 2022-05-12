@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -41,8 +41,9 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief ClientOptionsTrait constructor.
         /// @param clientData   client's data.
+        /// @param context      context.
         //////////////////////////////////////////////////////////////////////////
-        ClientOptionsTrait( const ClientData_1_0& clientData )
+        ClientOptionsTrait( const ClientData_1_0& clientData, TT::Context& context )
             : m_PoshEnabled( false )
             , m_PtbrEnabled( false )
             , m_TbsEnabled( false )
@@ -53,7 +54,7 @@ namespace ML
             , m_SubDeviceCount( 0 )
             , m_SubDeviceIndex( 0 )
         {
-            ML_FUNCTION_LOG( StatusCode::Success );
+            ML_FUNCTION_LOG( StatusCode::Success, &context );
 
             // Copy client's options from the pointer provided by the user.
             if( clientData.ClientOptions != nullptr )
