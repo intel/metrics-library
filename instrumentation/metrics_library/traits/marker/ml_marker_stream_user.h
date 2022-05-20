@@ -100,4 +100,58 @@ namespace ML
             ML_DECLARE_TRAIT( MarkerStreamUserTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct MarkerStreamUserTrait : XE_LP::MarkerStreamUserTrait<T>
+        {
+            ML_DECLARE_TRAIT( MarkerStreamUserTrait, XE_LP );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Writes marker stream user commands to command buffer.
+            /// @param  buffer  target command buffer.
+            /// @param  data    marker stream user data.
+            /// @return         operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode Write(
+                CommandBuffer&                           buffer,
+                const CommandBufferMarkerStreamUser_1_0& data )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
+                const uint32_t marker = T::Policy::StreamMarker::m_Use32bitValue
+                    ? data.Value | ( data.Reserved << Constants::StreamMarker::m_HighBitsShift )
+                    : data.Value;
+
+                // Trigger report, which will be stored in oa buffer, in oag.
+                // A given marker value will be inserted into the context id field
+                // of the generated report.
+                ML_FUNCTION_CHECK( T::GpuCommands::TriggerStreamReport(
+                    buffer,
+                    marker ) );
+
+                return log.m_Result;
+            }
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct MarkerStreamUserTrait : XE_HP::MarkerStreamUserTrait<T>
+        {
+            ML_DECLARE_TRAIT( MarkerStreamUserTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct MarkerStreamUserTrait : XE_HPG::MarkerStreamUserTrait<T>
+        {
+            ML_DECLARE_TRAIT( MarkerStreamUserTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

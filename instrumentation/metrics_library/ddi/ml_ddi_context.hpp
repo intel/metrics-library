@@ -176,5 +176,35 @@ namespace ML
         using DdiContext = GEN11::DdiContext<T>;
     } // namespace XE_LP
 
+    namespace XE_HP
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HP-specific functions for DdiContext.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiContext = XE_LP::DdiContext<T>;
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPG-specific functions for DdiContext.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiContext = XE_HP::DdiContext<T>;
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPC-specific functions for DdiContext.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiContext = XE_HPG::DdiContext<T>;
+    } // namespace XE_HPC
+
 #pragma endregion
 } // namespace ML

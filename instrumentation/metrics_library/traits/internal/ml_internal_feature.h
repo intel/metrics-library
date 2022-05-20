@@ -1,16 +1,15 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_example_gen.h
+@file ml_internal_feature.h
 
-@brief Example file for creating a new trait that is gen specific.
-       Make sure to change DdiObject template arguments and update description.
+@brief A file describing a trait that's intended for internal use (for example debugging) only.
 */
 
 #pragma once
@@ -20,13 +19,19 @@ namespace ML
     namespace BASE
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for ExampleGenTrait object.
+        /// @brief Base type for InternalFeatureTrait object.
         //////////////////////////////////////////////////////////////////////////
         template <typename T>
-        struct ExampleGenTrait : DdiObject<T, TT::ExampleGen, ExampleGenHandle, ObjectType::ExampleGen>
+        struct InternalFeatureTrait
         {
-            ML_DELETE_DEFAULT_CONSTRUCTOR( ExampleGenTrait );
-            ML_DELETE_DEFAULT_COPY_AND_MOVE( ExampleGenTrait );
+            ML_DELETE_DEFAULT_COPY_AND_MOVE( InternalFeatureTrait );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief InternalFeatureOsTrait constructor.
+            //////////////////////////////////////////////////////////////////////////
+            InternalFeatureTrait()
+            {
+            };
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns description about itself.
@@ -34,8 +39,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE static const std::string GetDescription()
             {
-                ML_STATIC_ASSERT_ALWAYS( "Add trait's description" );
-                return "ExampleGenTrait<Traits>";
+                return "InternalFeatureTrait<Traits>";
             }
         };
     } // namespace BASE
@@ -43,54 +47,54 @@ namespace ML
     namespace GEN9
     {
         template <typename T>
-        struct ExampleGenTrait : BASE::ExampleGenTrait<T>
+        struct InternalFeatureTrait : BASE::InternalFeatureTrait<T>
         {
-            ML_DECLARE_TRAIT( ExampleGenTrait, BASE );
+            ML_DECLARE_TRAIT( InternalFeatureTrait, BASE );
         };
     } // namespace GEN9
 
     namespace GEN11
     {
         template <typename T>
-        struct ExampleGenTrait : GEN9::ExampleGenTrait<T>
+        struct InternalFeatureTrait : GEN9::InternalFeatureTrait<T>
         {
-            ML_DECLARE_TRAIT( ExampleGenTrait, GEN9 );
+            ML_DECLARE_TRAIT( InternalFeatureTrait, GEN9 );
         };
     } // namespace GEN11
 
     namespace XE_LP
     {
         template <typename T>
-        struct ExampleGenTrait : GEN11::ExampleGenTrait<T>
+        struct InternalFeatureTrait : GEN11::InternalFeatureTrait<T>
         {
-            ML_DECLARE_TRAIT( ExampleGenTrait, GEN11 );
+            ML_DECLARE_TRAIT( InternalFeatureTrait, GEN11 );
         };
     } // namespace XE_LP
 
     namespace XE_HP
     {
         template <typename T>
-        struct ExampleGenTrait : XE_LP::ExampleGenTrait<T>
+        struct InternalFeatureTrait : XE_LP::InternalFeatureTrait<T>
         {
-            ML_DECLARE_TRAIT( ExampleGenTrait, XE_LP );
+            ML_DECLARE_TRAIT( InternalFeatureTrait, XE_LP );
         };
     } // namespace XE_HP
 
     namespace XE_HPG
     {
         template <typename T>
-        struct ExampleGenTrait : XE_HP::ExampleGenTrait<T>
+        struct InternalFeatureTrait : XE_HP::InternalFeatureTrait<T>
         {
-            ML_DECLARE_TRAIT( ExampleGenTrait, XE_HP );
+            ML_DECLARE_TRAIT( InternalFeatureTrait, XE_HP );
         };
     } // namespace XE_HPG
 
     namespace XE_HPC
     {
         template <typename T>
-        struct ExampleGenTrait : XE_HPG::ExampleGenTrait<T>
+        struct InternalFeatureTrait : XE_HPG::InternalFeatureTrait<T>
         {
-            ML_DECLARE_TRAIT( ExampleGenTrait, XE_HPG );
+            ML_DECLARE_TRAIT( InternalFeatureTrait, XE_HPG );
         };
     } // namespace XE_HPC
 } // namespace ML

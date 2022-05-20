@@ -220,4 +220,31 @@ namespace ML
             ML_DECLARE_TRAIT( OverrideNullHardwareTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct OverrideNullHardwareTrait : XE_LP::OverrideNullHardwareTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideNullHardwareTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct OverrideNullHardwareTrait : XE_HP::OverrideNullHardwareTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideNullHardwareTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct OverrideNullHardwareTrait : XE_HPG::OverrideNullHardwareTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideNullHardwareTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

@@ -1203,4 +1203,151 @@ namespace ML
             }
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct QueryHwCountersTrait : XE_LP::QueryHwCountersTrait<T>
+        {
+            ML_DECLARE_TRAIT( QueryHwCountersTrait, XE_LP );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Types.
+            //////////////////////////////////////////////////////////////////////////
+            using Base::Derived;
+            using Base::GetReportGpu;
+            using Base::m_Context;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Validates triggered oa report against its reason.
+            /// @param  reportHeader    query report header.
+            /// @return                 success if triggered oa report reason is valid.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE bool ValidateReportReason( const TT::Layouts::HwCounters::ReportHeader& reportHeader ) const
+            {
+                ML_FUNCTION_LOG( true, &m_Context );
+
+                const bool validReportReason =
+                    ( reportHeader.m_ReportId.m_ReportReason == static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::Empty ) ) ||
+                    ( reportHeader.m_ReportId.m_ReportReason == static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger ) );
+
+                if( !validReportReason )
+                {
+                    log.Error( "report reason", reportHeader.m_ReportId.m_ReportReason );
+                }
+
+                return log.m_Result = ( validReportReason );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Validates triggered oa report against query id (put in contextId field)
+            /// @param  reportHeader    report header.
+            /// @param  index           report index in oaBuffer.
+            /// @return                 success if triggered oa report reason is valid.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE bool ValidateQueryId(
+                const TT::Layouts::HwCounters::ReportHeader& reportHeader,
+                const uint32_t                               index ) const
+            {
+                ML_FUNCTION_LOG( true, &m_Context );
+
+                // Only context switch and mmio trigger reports have non-zero context id on XeHP_SDV+ platforms.
+                const uint32_t queryIdExpected = static_cast<const uint32_t>( T::Tools::GetHash( reinterpret_cast<const uintptr_t>( this ) ) );
+                const bool     validQueryId    = ( reportHeader.m_ContextId == queryIdExpected ) || m_Context.m_ClientOptions.m_WorkloadPartitionEnabled;
+
+                if( !validQueryId )
+                {
+                    log.Warning(
+                        "query id",
+                        "(",
+                        FormatFlag::Decimal,
+                        FormatFlag::SetWidth5,
+                        index,
+                        ")",
+                        "found =",
+                        FormatFlag::Hexadecimal,
+                        FormatFlag::ShowBase,
+                        reportHeader.m_ContextId,
+                        ", expected =",
+                        FormatFlag::Hexadecimal,
+                        FormatFlag::ShowBase,
+                        queryIdExpected );
+                }
+
+                return log.m_Result = ( validQueryId );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Recreates oag report from srm reports.
+            /// @param  slot    slot index.
+            /// @return         operation status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE void UseSrmOagReport( const uint32_t slot )
+            {
+                auto& report = GetReportGpu( slot );
+
+                const uint32_t oagCounters40bitsOffset = T::Layouts::HwCounters::m_OagCounters40bitsCount - 4;
+
+                // High bytes of A4 - A23 counters.
+                for( uint32_t i = 0; i < oagCounters40bitsOffset; ++i )
+                {
+                    report.m_Begin.m_Oa.m_Data.m_OaCounterHB_4_23[i] = static_cast<uint8_t>( report.m_WaBeginOag[i] );
+                    report.m_End.m_Oa.m_Data.m_OaCounterHB_4_23[i]   = static_cast<uint8_t>( report.m_WaEndOag[i] );
+                }
+
+                // High bytes of A28 - A31 counters.
+                for( uint32_t i = 0; i < 4; ++i )
+                {
+                    report.m_Begin.m_Oa.m_Data.m_OaCounterHB_28_31[i] = static_cast<uint8_t>( report.m_WaBeginOag[i + oagCounters40bitsOffset] );
+                    report.m_End.m_Oa.m_Data.m_OaCounterHB_28_31[i]   = static_cast<uint8_t>( report.m_WaEndOag[i + oagCounters40bitsOffset] );
+                }
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Copies triggered oa report into query oa report.
+            /// @param  queryReportOa   query oa report
+            /// @param  reportTriggered triggered oa report.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE void CopyTriggeredOaReport(
+                TT::Layouts::HwCounters::ReportOa& queryReportOa,
+                TT::Layouts::HwCounters::ReportOa& reportTriggered )
+            {
+                ML_FUNCTION_LOG( true, &m_Context );
+
+                // Store real context id.
+                auto contextId = queryReportOa.m_Header.m_ContextId;
+                // Copy report (with queryId instead of contextId).
+                queryReportOa = reportTriggered;
+                // Restore real context id.
+                queryReportOa.m_Header.m_ContextId = contextId;
+
+                if( T::Policy::QueryHwCounters::GetData::m_RecoverContextId )
+                {
+                    log.Info( "trigger query id ", reportTriggered.m_Header.m_ContextId );
+                    log.Info( "query context id   ", contextId );
+
+                    // (intentionally disabled - only useful for debugging)
+                    // reportTriggered.m_Header.m_ContextId = contextId;
+                }
+            }
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct QueryHwCountersTrait : XE_HP::QueryHwCountersTrait<T>
+        {
+            ML_DECLARE_TRAIT( QueryHwCountersTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct QueryHwCountersTrait : XE_HPG::QueryHwCountersTrait<T>
+        {
+            ML_DECLARE_TRAIT( QueryHwCountersTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

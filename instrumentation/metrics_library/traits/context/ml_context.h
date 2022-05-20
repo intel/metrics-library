@@ -49,6 +49,7 @@ namespace ML
         TT::SubDevice             m_SubDevice;
         TT::DdiObjects            m_DdiObjects;
         TT::State                 m_State;
+        TT::InternalFeature       m_Internal;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief ContextTrait constructor.
@@ -70,6 +71,7 @@ namespace ML
             , m_SubDevice( *this )
             , m_DdiObjects( *this )
             , m_State{}
+            , m_Internal()
         {
         }
 

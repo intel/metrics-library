@@ -126,4 +126,31 @@ namespace ML
             ML_DECLARE_TRAIT( OverridePoshQueryTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct OverridePoshQueryTrait : XE_LP::OverridePoshQueryTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverridePoshQueryTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct OverridePoshQueryTrait : XE_HP::OverridePoshQueryTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverridePoshQueryTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct OverridePoshQueryTrait : XE_HPG::OverridePoshQueryTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverridePoshQueryTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

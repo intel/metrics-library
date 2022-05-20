@@ -363,4 +363,31 @@ namespace ML
             ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct OaBufferMappedTrait : XE_LP::OaBufferMappedTrait<T>
+        {
+            ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct OaBufferMappedTrait : XE_HP::OaBufferMappedTrait<T>
+        {
+            ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct OaBufferMappedTrait : XE_HPG::OaBufferMappedTrait<T>
+        {
+            ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

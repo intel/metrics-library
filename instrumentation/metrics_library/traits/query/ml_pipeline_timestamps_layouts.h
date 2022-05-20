@@ -111,6 +111,33 @@ namespace ML
             ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct PipelineTimestampsLayoutsTrait : XE_LP::PipelineTimestampsLayoutsTrait<T>
+        {
+            ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct PipelineTimestampsLayoutsTrait : XE_HP::PipelineTimestampsLayoutsTrait<T>
+        {
+            ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct PipelineTimestampsLayoutsTrait : XE_HPG::PipelineTimestampsLayoutsTrait<T>
+        {
+            ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML
 
 ML_STRUCTURE_PACK_END();

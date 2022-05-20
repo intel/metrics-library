@@ -393,17 +393,23 @@ namespace ML
                         output << "Unknown";
                         break;
 
+                #if ML_ENABLE_XE_HP
                     case ClientGen::XeHP:
                         output << "XeHP";
                         break;
+                #endif
 
+                #if ML_ENABLE_XE_HPC
                     case ClientGen::XeHPC:
                         output << "XeHPC";
                         break;
+                #endif
 
+                #if ML_ENABLE_XE_HPG
                     case ClientGen::XeHPG:
                         output << "XeHPG";
                         break;
+                #endif
 
                     default:
                         output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
@@ -2963,5 +2969,147 @@ namespace ML
             ML_DECLARE_TRAIT( DebugTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct DebugTrait : XE_LP::DebugTrait<T>
+        {
+            ML_DECLARE_TRAIT( DebugTrait, XE_LP );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Types.
+            //////////////////////////////////////////////////////////////////////////
+            using Base::ToCsv;
+            using Base::ToString;
+            using Base::m_InitializeCsvOutputFile;
+            using Base::m_CsvOutputFile;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Reports.
+            //////////////////////////////////////////////////////////////////////////
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Creates oa report log.
+            /// @param  oaReport    a given oa report.
+            /// @return             string that contains formatted oa report log.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportOa& oaReport )
+            {
+                std::ostringstream output;
+                output << "OA: ";
+                output << "rsn = " << std::setw( Constants::Log::m_MaxReportReasonLength ) << oaReport.m_Header.m_ReportId.m_ReportReason;
+                output << std::hex << std::showbase;
+                output << ", rid = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_ReportId.m_Value;
+                output << ", tsp = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_Timestamp;
+                output << ", cid = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_ContextId;
+                output << ", tic = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_GpuTicks;
+                output << ", oa0 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter_0_36[0];
+                output << ", oa1 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter_0_36[1];
+                output << ", oa6 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter_0_36[6];
+                output << ", noa0 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[0];
+                output << ", noa1 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[1];
+                output << ", noa2 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[2];
+                output << ", noa3 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[3];
+                output << ", noa11 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[11];
+                output << ", noa12 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[12];
+                output << ", noa13 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[13];
+                output << ", noa14 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[14];
+                output << ", noa15 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[15];
+                output << "; ";
+
+                return output.str();
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Prints oa report csv log.
+            /// @param context      context.
+            /// @param oaReport     a given oa report.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE void ToCsv( TT::Context* context, const TT::Layouts::HwCounters::ReportOa& oaReport )
+            {
+                if( m_InitializeCsvOutputFile )
+                {
+                    if( ML_SUCCESS( T::Tools::OpenCsv( "ReportOa", m_CsvOutputFile, context ) ) )
+                    {
+                        m_CsvOutputFile << "ReportId,ReportReason,ContextValid,Timestamp,ContextId,GpuTicks,";
+
+                        for( uint32_t i = 0; i < T::Layouts::HwCounters::m_OagCountersCount; ++i )
+                        {
+                            m_CsvOutputFile << "OaCounter" << i << ',';
+                        }
+
+                        for( uint32_t i = 0; i < T::Layouts::HwCounters::m_NoaCountersCount; ++i )
+                        {
+                            m_CsvOutputFile << "NoaCounter" << i << ',';
+                        }
+
+                        m_CsvOutputFile << '\n';
+
+                        m_InitializeCsvOutputFile = false;
+                    }
+                }
+
+                if( m_CsvOutputFile.is_open() )
+                {
+                    m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_Value << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ReportReason << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ContextValid << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_Timestamp << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_ContextId << ',';
+                    m_CsvOutputFile << oaReport.m_Header.m_GpuTicks << ',';
+
+                    for( uint32_t i = 0; i < T::Layouts::HwCounters::m_OagCountersCount; ++i )
+                    {
+                        if( i >= T::Layouts::HwCounters::m_OaCounter4 && i <= T::Layouts::HwCounters::m_OaCounter23 )
+                        {
+                            const uint32_t highBitsIndex = i - T::Layouts::HwCounters::m_OaCounter4;
+
+                            m_CsvOutputFile << static_cast<uint64_t>( oaReport.m_Data.m_OaCounter_0_36[i] ) + ( static_cast<uint64_t>( oaReport.m_Data.m_OaCounterHB_4_23[highBitsIndex] ) << 32 ) << ',';
+                        }
+                        else if( i >= T::Layouts::HwCounters::m_OaCounter28 && i <= T::Layouts::HwCounters::m_OaCounter31 )
+                        {
+                            const uint32_t highBitsIndex = i - T::Layouts::HwCounters::m_OaCounter28;
+
+                            m_CsvOutputFile << static_cast<uint64_t>( oaReport.m_Data.m_OaCounter_0_36[i] ) + ( static_cast<uint64_t>( oaReport.m_Data.m_OaCounterHB_28_31[highBitsIndex] ) << 32 ) << ',';
+                        }
+                        else if( i <= T::Layouts::HwCounters::m_OaCounter36 )
+                        {
+                            m_CsvOutputFile << oaReport.m_Data.m_OaCounter_0_36[i] << ',';
+                        }
+                        else
+                        {
+                            m_CsvOutputFile << oaReport.m_Data.m_OaCounter_37 << ',';
+                        }
+                    }
+
+                    for( uint32_t i = 0; i < T::Layouts::HwCounters::m_NoaCountersCount; ++i )
+                    {
+                        m_CsvOutputFile << oaReport.m_Data.m_NoaCounter[i] << ',';
+                    }
+
+                    m_CsvOutputFile << '\n';
+                }
+            }
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct DebugTrait : XE_HP::DebugTrait<T>
+        {
+            ML_DECLARE_TRAIT( DebugTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct DebugTrait : XE_HPG::DebugTrait<T>
+        {
+            ML_DECLARE_TRAIT( DebugTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 
 } // namespace ML

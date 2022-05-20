@@ -103,6 +103,12 @@ macro (ml_add_headers _platform)
         )
     set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
+    # internal feature headers
+    file (GLOB _TRAITS_HEADERS
+        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/internal/${_platform}/*.h
+        )
+    set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
     # kernel interface traits headers
     file (GLOB _TRAITS_HEADERS
         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/${_platform}/*.h
@@ -286,6 +292,12 @@ file (GLOB _TRAITS_HEADERS
     )
 set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
 
+# internal feature headers
+file (GLOB _TRAITS_HEADERS
+    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/internal/*.h
+    )
+set (_HEADERS ${_HEADERS} ${_TRAITS_HEADERS})
+
 # kernel interface traits headers
 file (GLOB _TRAITS_HEADERS
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/*.h
@@ -399,6 +411,7 @@ source_group (traits\\context               ${BS_DIR_INSTRUMENTATION}/metrics_li
 source_group (traits\\device                ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device/.*h)
 source_group (traits\\example               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/example/.*h)
 source_group (traits\\function_log          ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/function_log/.*h)
+source_group (traits\\internal              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/internal/.*h)
 source_group (traits\\kernel_interface      ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/.*h)
 source_group (traits\\marker                ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/.*h)
 source_group (traits\\oa_buffer             ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/oa_buffer/.*h)
@@ -421,6 +434,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
     source_group (library\\inc\\windows             ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/windows/.*h)
     source_group (traits\\configuration\\windows    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/windows/.*h)
     source_group (traits\\constants\\windows        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/windows/.*h)
+    source_group (traits\\internal\\windows         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/internal/windows/.*h)
     source_group (traits\\kernel_interface\\windows ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/windows/.*h)
     source_group (traits\\marker\\windows           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/windows/.*h)
     source_group (traits\\override\\windows         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/windows/.*h)
@@ -520,6 +534,7 @@ set (COMMON_TARGET_INCLUDE_DIRECTORIES
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/example
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/function_log
+    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/internal
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker
     ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/oa_buffer

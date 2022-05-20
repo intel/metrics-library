@@ -72,4 +72,31 @@ namespace ML
             ML_DECLARE_TRAIT( OverrideLayoutsTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct OverrideLayoutsTrait : XE_LP::OverrideLayoutsTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideLayoutsTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct OverrideLayoutsTrait : XE_HP::OverrideLayoutsTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideLayoutsTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct OverrideLayoutsTrait : XE_HPG::OverrideLayoutsTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideLayoutsTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

@@ -84,4 +84,31 @@ namespace ML
             ML_DECLARE_TRAIT( OverrideFlushCachesTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct OverrideFlushCachesTrait : XE_LP::OverrideFlushCachesTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideFlushCachesTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct OverrideFlushCachesTrait : XE_HP::OverrideFlushCachesTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideFlushCachesTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct OverrideFlushCachesTrait : XE_HPG::OverrideFlushCachesTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideFlushCachesTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

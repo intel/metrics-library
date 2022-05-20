@@ -304,3 +304,285 @@ namespace ML
 } // namespace ML
 #endif // ML_ENABLE_XE_LP
 
+#if ML_ENABLE_XE_HP
+
+#include "ml_traits_xe_hp.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief T is not available in this file.
+//////////////////////////////////////////////////////////////////////////
+#define T Traits
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiContext.
+//////////////////////////////////////////////////////////////////////////
+namespace ML
+{
+    namespace XE_HP
+    {
+        #if ML_ENABLE_OPENCL
+        namespace OpenCL
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextCreate_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextCreate_1_0(
+                ClientType_1_0         clientType,
+                ContextCreateData_1_0* createData,
+                ContextHandle_1_0*     handle )
+            {
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextDelete_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextDelete_1_0(
+                const ContextHandle_1_0 handle )
+            {
+                return DdiContext<T>::ContextDelete_1_0( handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for GetParameter_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL GetParameter_1_0(
+                const ParameterType parameter,
+                ValueType*          type,
+                TypedValue_1_0*     value )
+            {
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
+            }
+
+        } // namespace OpenCL
+        #endif // ML_ENABLE_OPENCL
+
+        #if ML_ENABLE_ONEAPI
+        namespace OneApi
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextCreate_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextCreate_1_0(
+                ClientType_1_0         clientType,
+                ContextCreateData_1_0* createData,
+                ContextHandle_1_0*     handle )
+            {
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextDelete_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextDelete_1_0(
+                const ContextHandle_1_0 handle )
+            {
+                return DdiContext<T>::ContextDelete_1_0( handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for GetParameter_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL GetParameter_1_0(
+                const ParameterType parameter,
+                ValueType*          type,
+                TypedValue_1_0*     value )
+            {
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
+            }
+
+        } // namespace OneApi
+        #endif // ML_ENABLE_ONEAPI
+
+    } // namespace XE_HP
+} // namespace ML
+#endif // ML_ENABLE_XE_HP
+
+#if ML_ENABLE_XE_HPG
+
+#include "ml_traits_xe_hpg.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief T is not available in this file.
+//////////////////////////////////////////////////////////////////////////
+#define T Traits
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiContext.
+//////////////////////////////////////////////////////////////////////////
+namespace ML
+{
+    namespace XE_HPG
+    {
+        #if ML_ENABLE_OPENCL
+        namespace OpenCL
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextCreate_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextCreate_1_0(
+                ClientType_1_0         clientType,
+                ContextCreateData_1_0* createData,
+                ContextHandle_1_0*     handle )
+            {
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextDelete_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextDelete_1_0(
+                const ContextHandle_1_0 handle )
+            {
+                return DdiContext<T>::ContextDelete_1_0( handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for GetParameter_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL GetParameter_1_0(
+                const ParameterType parameter,
+                ValueType*          type,
+                TypedValue_1_0*     value )
+            {
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
+            }
+
+        } // namespace OpenCL
+        #endif // ML_ENABLE_OPENCL
+
+        #if ML_ENABLE_ONEAPI
+        namespace OneApi
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextCreate_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextCreate_1_0(
+                ClientType_1_0         clientType,
+                ContextCreateData_1_0* createData,
+                ContextHandle_1_0*     handle )
+            {
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextDelete_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextDelete_1_0(
+                const ContextHandle_1_0 handle )
+            {
+                return DdiContext<T>::ContextDelete_1_0( handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for GetParameter_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL GetParameter_1_0(
+                const ParameterType parameter,
+                ValueType*          type,
+                TypedValue_1_0*     value )
+            {
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
+            }
+
+        } // namespace OneApi
+        #endif // ML_ENABLE_ONEAPI
+
+    } // namespace XE_HPG
+} // namespace ML
+#endif // ML_ENABLE_XE_HPG
+
+#if ML_ENABLE_XE_HPC
+
+#include "ml_traits_xe_hpc.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief T is not available in this file.
+//////////////////////////////////////////////////////////////////////////
+#define T Traits
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiContext.
+//////////////////////////////////////////////////////////////////////////
+namespace ML
+{
+    namespace XE_HPC
+    {
+        #if ML_ENABLE_OPENCL
+        namespace OpenCL
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextCreate_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextCreate_1_0(
+                ClientType_1_0         clientType,
+                ContextCreateData_1_0* createData,
+                ContextHandle_1_0*     handle )
+            {
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextDelete_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextDelete_1_0(
+                const ContextHandle_1_0 handle )
+            {
+                return DdiContext<T>::ContextDelete_1_0( handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for GetParameter_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL GetParameter_1_0(
+                const ParameterType parameter,
+                ValueType*          type,
+                TypedValue_1_0*     value )
+            {
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
+            }
+
+        } // namespace OpenCL
+        #endif // ML_ENABLE_OPENCL
+
+        #if ML_ENABLE_ONEAPI
+        namespace OneApi
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextCreate_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextCreate_1_0(
+                ClientType_1_0         clientType,
+                ContextCreateData_1_0* createData,
+                ContextHandle_1_0*     handle )
+            {
+                return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for ContextDelete_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL ContextDelete_1_0(
+                const ContextHandle_1_0 handle )
+            {
+                return DdiContext<T>::ContextDelete_1_0( handle );
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Instantiates template function for GetParameter_1_0.
+            //////////////////////////////////////////////////////////////////////////
+            StatusCode ML_STDCALL GetParameter_1_0(
+                const ParameterType parameter,
+                ValueType*          type,
+                TypedValue_1_0*     value )
+            {
+                return DdiContext<T>::GetParameter_1_0( parameter, type, value );
+            }
+
+        } // namespace OneApi
+        #endif // ML_ENABLE_ONEAPI
+
+    } // namespace XE_HPC
+} // namespace ML
+#endif // ML_ENABLE_XE_HPC
+

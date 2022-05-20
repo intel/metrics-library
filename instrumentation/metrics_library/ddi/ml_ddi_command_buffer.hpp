@@ -196,5 +196,35 @@ namespace ML
         using DdiCommandBuffer = GEN11::DdiCommandBuffer<T>;
     } // namespace XE_LP
 
+    namespace XE_HP
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HP-specific functions for DdiCommandBuffer.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiCommandBuffer = XE_LP::DdiCommandBuffer<T>;
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPG-specific functions for DdiCommandBuffer.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiCommandBuffer = XE_HP::DdiCommandBuffer<T>;
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPC-specific functions for DdiCommandBuffer.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiCommandBuffer = XE_HPG::DdiCommandBuffer<T>;
+    } // namespace XE_HPC
+
 #pragma endregion
 } // namespace ML

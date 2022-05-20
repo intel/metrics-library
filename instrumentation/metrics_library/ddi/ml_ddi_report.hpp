@@ -139,5 +139,35 @@ namespace ML
         using DdiReport = GEN11::DdiReport<T>;
     } // namespace XE_LP
 
+    namespace XE_HP
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HP-specific functions for DdiReport.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiReport = XE_LP::DdiReport<T>;
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPG-specific functions for DdiReport.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiReport = XE_HP::DdiReport<T>;
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPC-specific functions for DdiReport.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiReport = XE_HPG::DdiReport<T>;
+    } // namespace XE_HPC
+
 #pragma endregion
 } // namespace ML

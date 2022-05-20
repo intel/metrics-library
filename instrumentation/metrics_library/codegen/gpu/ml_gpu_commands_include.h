@@ -57,3 +57,39 @@ Template:           Tools/MetricsLibraryGenerator/templates/gfx.h
 #undef __CODEGEN_PLATFORM
 #endif // ML_ENABLE_XE_LP
 
+#if ML_ENABLE_XE_HP
+// XE_HP IGFX Commands
+#define __CODEGEN_NAMESPACE_CLOSE }; } }
+#define __CODEGEN_PLATFORM "XE_HP"
+#define __CODEGEN_NAMESPACE_OPEN namespace ML { namespace XE_HP { template<typename T> struct GpuCommandsLayoutsTrait {
+#define __CODEGEN_FILE_DIRECTIVES_OPEN ML_STRUCTURE_PACK_BEGIN( 1 )
+#define __CODEGEN_FILE_DIRECTIVES_CLOSE ML_STRUCTURE_PACK_END()
+#include "ml_gpu_commands_xe_hp.h"
+#undef __CODEGEN_NAMESPACE_OPEN
+#undef __CODEGEN_PLATFORM
+#endif // ML_ENABLE_XE_HP
+
+#if ML_ENABLE_XE_HPG
+// XE_HPG IGFX Commands
+#define __CODEGEN_NAMESPACE_CLOSE }; } }
+#define __CODEGEN_PLATFORM "XE_HPG"
+#define __CODEGEN_NAMESPACE_OPEN namespace ML { namespace XE_HPG { template<typename T> struct GpuCommandsLayoutsTrait {
+#define __CODEGEN_FILE_DIRECTIVES_OPEN ML_STRUCTURE_PACK_BEGIN( 1 )
+#define __CODEGEN_FILE_DIRECTIVES_CLOSE ML_STRUCTURE_PACK_END()
+#include "ml_gpu_commands_xe_hpg.h"
+#undef __CODEGEN_NAMESPACE_OPEN
+#undef __CODEGEN_PLATFORM
+#endif // ML_ENABLE_XE_HPG
+
+#if ML_ENABLE_XE_HPC
+// XE_HPC IGFX Commands
+#define __CODEGEN_NAMESPACE_CLOSE }; } }
+#define __CODEGEN_PLATFORM "XE_HPC"
+#define __CODEGEN_NAMESPACE_OPEN namespace ML { namespace XE_HPC { template<typename T> struct GpuCommandsLayoutsTrait {
+#define __CODEGEN_FILE_DIRECTIVES_OPEN ML_STRUCTURE_PACK_BEGIN( 1 )
+#define __CODEGEN_FILE_DIRECTIVES_CLOSE ML_STRUCTURE_PACK_END()
+#include "ml_gpu_commands_xe_hpc.h"
+#undef __CODEGEN_NAMESPACE_OPEN
+#undef __CODEGEN_PLATFORM
+#endif // ML_ENABLE_XE_HPC
+

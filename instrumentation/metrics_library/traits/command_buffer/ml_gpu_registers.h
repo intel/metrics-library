@@ -1992,6 +1992,361 @@ namespace ML
             }
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct GpuRegistersTrait : XE_LP::GpuRegistersTrait<T>
+        {
+            ML_DECLARE_TRAIT( GpuRegistersTrait, XE_LP );
+
+            // Oar A0 used as render context id cache
+            static constexpr uint32_t m_ContextId = Base::m_OaPerfA0;
+
+            // Oac A0 used as compute context id cache
+            static constexpr uint32_t m_ContextIdCompute = 0x15000;
+
+            // Oag mmio trigger.
+            static constexpr uint32_t m_OagTrigger = 0xDB1C;
+
+            // Oag counters low.
+            static constexpr uint32_t m_OagPerfA36 = 0xDB20;
+            static constexpr uint32_t m_OagPerfA37 = 0xDB28;
+
+            // Oag counters high.
+            // A32 - A35 upper registers are missing on XeHP_SDV.
+            static constexpr uint32_t m_OagPerfA36Upper = 0xDB24;
+            static constexpr uint32_t m_OagPerfA37Upper = 0xDB2C;
+
+            // General purpose registers per command streamer (typically used for math).
+            static constexpr uint32_t m_GeneralPurposeRegisterRender   = 0x2600;
+            static constexpr uint32_t m_GeneralPurposeRegisterCompute0 = 0x1A600;
+            static constexpr uint32_t m_GeneralPurposeRegisterCompute1 = 0x1C600;
+            static constexpr uint32_t m_GeneralPurposeRegisterCompute2 = 0x1E600;
+            static constexpr uint32_t m_GeneralPurposeRegisterCompute3 = 0x26600;
+
+            // Registers used to identity command streamers.
+            static constexpr uint32_t m_IdentityRCS  = m_GeneralPurposeRegisterRender;
+            static constexpr uint32_t m_IdentityCCS0 = m_GeneralPurposeRegisterCompute0;
+            static constexpr uint32_t m_IdentityCCS1 = m_GeneralPurposeRegisterCompute1;
+            static constexpr uint32_t m_IdentityCCS2 = m_GeneralPurposeRegisterCompute2;
+            static constexpr uint32_t m_IdentityCCS3 = m_GeneralPurposeRegisterCompute3;
+
+            // Oag counters array.
+            using OagCountersLow = std::array<uint32_t, 38>;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oag counters registers (lower bits).
+            /// @return oag counters registers (lower bits).
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static const OagCountersLow& GetOagCountersLow()
+            {
+                static constexpr OagCountersLow oagCountersLow =
+                {
+                    Base::m_OagPerfA0,
+                    Base::m_OagPerfA1,
+                    Base::m_OagPerfA2,
+                    Base::m_OagPerfA3,
+                    Base::m_OagPerfA4,
+                    Base::m_OagPerfA5,
+                    Base::m_OagPerfA6,
+                    Base::m_OagPerfA7,
+                    Base::m_OagPerfA8,
+                    Base::m_OagPerfA9,
+                    Base::m_OagPerfA10,
+                    Base::m_OagPerfA11,
+                    Base::m_OagPerfA12,
+                    Base::m_OagPerfA13,
+                    Base::m_OagPerfA14,
+                    Base::m_OagPerfA15,
+                    Base::m_OagPerfA16,
+                    Base::m_OagPerfA17,
+                    Base::m_OagPerfA18,
+                    Base::m_OagPerfA19,
+                    Base::m_OagPerfA20,
+                    Base::m_OagPerfA21,
+                    Base::m_OagPerfA22,
+                    Base::m_OagPerfA23,
+                    Base::m_OagPerfA24,
+                    Base::m_OagPerfA25,
+                    Base::m_OagPerfA26,
+                    Base::m_OagPerfA27,
+                    Base::m_OagPerfA28,
+                    Base::m_OagPerfA29,
+                    Base::m_OagPerfA30,
+                    Base::m_OagPerfA31,
+                    Base::m_OagPerfA32,
+                    Base::m_OagPerfA33,
+                    Base::m_OagPerfA34,
+                    Base::m_OagPerfA35,
+                    m_OagPerfA36,
+                    m_OagPerfA37
+                };
+
+                return oagCountersLow;
+            }
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct GpuRegistersTrait : XE_HP::GpuRegistersTrait<T>
+        {
+            ML_DECLARE_TRAIT( GpuRegistersTrait, XE_HP );
+
+            // Oag registers.
+            static constexpr uint32_t m_OagGpuTicks      = 0xDB70;
+            static constexpr uint32_t m_OagGpuTicksUpper = 0xDB74;
+
+            // Oag counters low.
+            // Different offsets than previous gens.
+            static constexpr uint32_t m_OagPerfA33 = 0xDA88;
+            static constexpr uint32_t m_OagPerfA34 = 0xDB60;
+            static constexpr uint32_t m_OagPerfA35 = 0xDB68;
+
+            // Oag counters high.
+            static constexpr uint32_t m_OagPerfA32Upper = 0xDA84;
+            static constexpr uint32_t m_OagPerfA33Upper = 0xDA8C;
+            static constexpr uint32_t m_OagPerfA34Upper = 0xDB64;
+            static constexpr uint32_t m_OagPerfA35Upper = 0xDB6C;
+
+            // Oar registers.
+            static constexpr uint32_t m_OarGpuTicks      = 0x29C0;
+            static constexpr uint32_t m_OarGpuTicksUpper = 0x29C4;
+
+            // Oar counters low.
+            // Different offsets than previous gens.
+            static constexpr uint32_t m_OarPerfA33 = 0x2908;
+            static constexpr uint32_t m_OarPerfA34 = 0x29B0;
+            static constexpr uint32_t m_OarPerfA35 = 0x29B8;
+
+            // Oar counters high.
+            // Different offsets than previous gens.
+            static constexpr uint32_t m_OarPerfA32Upper = 0x2904;
+            static constexpr uint32_t m_OarPerfA33Upper = 0x290C;
+            static constexpr uint32_t m_OarPerfA34Upper = 0x29B4;
+            static constexpr uint32_t m_OarPerfA35Upper = 0x29BC;
+
+            // Oar / Oag counters array.
+            using OarCountersLow  = std::array<uint32_t, 36>;
+            using OarCountersHigh = std::array<uint32_t, 36>;
+            using OagCountersLow  = std::array<uint32_t, 38>;
+            using OagCountersHigh = std::array<uint32_t, 38>;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oar counters registers (lower bits).
+            /// @return oar counters registers (lower bits).
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static const OarCountersLow& GetOarCountersLow()
+            {
+                static constexpr OarCountersLow oarCountersLow =
+                {
+                    Base::m_OaPerfA0,
+                    Base::m_OaPerfA1,
+                    Base::m_OaPerfA2,
+                    Base::m_OaPerfA3,
+                    Base::m_OaPerfA4,
+                    Base::m_OaPerfA5,
+                    Base::m_OaPerfA6,
+                    Base::m_OaPerfA7,
+                    Base::m_OaPerfA8,
+                    Base::m_OaPerfA9,
+                    Base::m_OaPerfA10,
+                    Base::m_OaPerfA11,
+                    Base::m_OaPerfA12,
+                    Base::m_OaPerfA13,
+                    Base::m_OaPerfA14,
+                    Base::m_OaPerfA15,
+                    Base::m_OaPerfA16,
+                    Base::m_OaPerfA17,
+                    Base::m_OaPerfA18,
+                    Base::m_OaPerfA19,
+                    Base::m_OaPerfA20,
+                    Base::m_OaPerfA21,
+                    Base::m_OaPerfA22,
+                    Base::m_OaPerfA23,
+                    Base::m_OaPerfA24,
+                    Base::m_OaPerfA25,
+                    Base::m_OaPerfA26,
+                    Base::m_OaPerfA27,
+                    Base::m_OaPerfA28,
+                    Base::m_OaPerfA29,
+                    Base::m_OaPerfA30,
+                    Base::m_OaPerfA31,
+                    Base::m_OaPerfA32,
+                    m_OarPerfA33,
+                    m_OarPerfA34,
+                    m_OarPerfA35
+                };
+
+                return oarCountersLow;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oar counters registers (upper bits).
+            /// @return oar counters registers (upper bits).
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static const OarCountersHigh& GetOarCountersHigh()
+            {
+                static constexpr OarCountersHigh oarCountersHigh =
+                {
+                    Base::m_OaPerfA0Upper,
+                    Base::m_OaPerfA1Upper,
+                    Base::m_OaPerfA2Upper,
+                    Base::m_OaPerfA3Upper,
+                    Base::m_OaPerfA4Upper,
+                    Base::m_OaPerfA5Upper,
+                    Base::m_OaPerfA6Upper,
+                    Base::m_OaPerfA7Upper,
+                    Base::m_OaPerfA8Upper,
+                    Base::m_OaPerfA9Upper,
+                    Base::m_OaPerfA10Upper,
+                    Base::m_OaPerfA11Upper,
+                    Base::m_OaPerfA12Upper,
+                    Base::m_OaPerfA13Upper,
+                    Base::m_OaPerfA14Upper,
+                    Base::m_OaPerfA15Upper,
+                    Base::m_OaPerfA16Upper,
+                    Base::m_OaPerfA17Upper,
+                    Base::m_OaPerfA18Upper,
+                    Base::m_OaPerfA19Upper,
+                    Base::m_OaPerfA20Upper,
+                    Base::m_OaPerfA21Upper,
+                    Base::m_OaPerfA22Upper,
+                    Base::m_OaPerfA23Upper,
+                    Base::m_OaPerfA24Upper,
+                    Base::m_OaPerfA25Upper,
+                    Base::m_OaPerfA26Upper,
+                    Base::m_OaPerfA27Upper,
+                    Base::m_OaPerfA28Upper,
+                    Base::m_OaPerfA29Upper,
+                    Base::m_OaPerfA30Upper,
+                    Base::m_OaPerfA31Upper,
+                    m_OarPerfA32Upper,
+                    m_OarPerfA33Upper,
+                    m_OarPerfA34Upper,
+                    m_OarPerfA35Upper
+                };
+
+                return oarCountersHigh;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oag counters registers (lower bits).
+            /// @return oag counters registers (lower bits).
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static const OagCountersLow& GetOagCountersLow()
+            {
+                static constexpr OagCountersLow oagCountersLow =
+                {
+                    Base::m_OagPerfA0,
+                    Base::m_OagPerfA1,
+                    Base::m_OagPerfA2,
+                    Base::m_OagPerfA3,
+                    Base::m_OagPerfA4,
+                    Base::m_OagPerfA5,
+                    Base::m_OagPerfA6,
+                    Base::m_OagPerfA7,
+                    Base::m_OagPerfA8,
+                    Base::m_OagPerfA9,
+                    Base::m_OagPerfA10,
+                    Base::m_OagPerfA11,
+                    Base::m_OagPerfA12,
+                    Base::m_OagPerfA13,
+                    Base::m_OagPerfA14,
+                    Base::m_OagPerfA15,
+                    Base::m_OagPerfA16,
+                    Base::m_OagPerfA17,
+                    Base::m_OagPerfA18,
+                    Base::m_OagPerfA19,
+                    Base::m_OagPerfA20,
+                    Base::m_OagPerfA21,
+                    Base::m_OagPerfA22,
+                    Base::m_OagPerfA23,
+                    Base::m_OagPerfA24,
+                    Base::m_OagPerfA25,
+                    Base::m_OagPerfA26,
+                    Base::m_OagPerfA27,
+                    Base::m_OagPerfA28,
+                    Base::m_OagPerfA29,
+                    Base::m_OagPerfA30,
+                    Base::m_OagPerfA31,
+                    Base::m_OagPerfA32,
+                    m_OagPerfA33,
+                    m_OagPerfA34,
+                    m_OagPerfA35,
+                    Base::m_OagPerfA36,
+                    Base::m_OagPerfA37
+                };
+
+                return oagCountersLow;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oag counters registers (upper bits).
+            /// @return oag counters registers (upper bits).
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static const OagCountersHigh& GetOagCountersHigh()
+            {
+                static constexpr OagCountersHigh oagCountersHigh =
+                {
+                    Base::m_OagPerfA0Upper,
+                    Base::m_OagPerfA1Upper,
+                    Base::m_OagPerfA2Upper,
+                    Base::m_OagPerfA3Upper,
+                    Base::m_OagPerfA4Upper,
+                    Base::m_OagPerfA5Upper,
+                    Base::m_OagPerfA6Upper,
+                    Base::m_OagPerfA7Upper,
+                    Base::m_OagPerfA8Upper,
+                    Base::m_OagPerfA9Upper,
+                    Base::m_OagPerfA10Upper,
+                    Base::m_OagPerfA11Upper,
+                    Base::m_OagPerfA12Upper,
+                    Base::m_OagPerfA13Upper,
+                    Base::m_OagPerfA14Upper,
+                    Base::m_OagPerfA15Upper,
+                    Base::m_OagPerfA16Upper,
+                    Base::m_OagPerfA17Upper,
+                    Base::m_OagPerfA18Upper,
+                    Base::m_OagPerfA19Upper,
+                    Base::m_OagPerfA20Upper,
+                    Base::m_OagPerfA21Upper,
+                    Base::m_OagPerfA22Upper,
+                    Base::m_OagPerfA23Upper,
+                    Base::m_OagPerfA24Upper,
+                    Base::m_OagPerfA25Upper,
+                    Base::m_OagPerfA26Upper,
+                    Base::m_OagPerfA27Upper,
+                    Base::m_OagPerfA28Upper,
+                    Base::m_OagPerfA29Upper,
+                    Base::m_OagPerfA30Upper,
+                    Base::m_OagPerfA31Upper,
+                    m_OagPerfA32Upper,
+                    m_OagPerfA33Upper,
+                    m_OagPerfA34Upper,
+                    m_OagPerfA35Upper,
+                    Base::m_OagPerfA36Upper,
+                    Base::m_OagPerfA37Upper
+                };
+
+                return oagCountersHigh;
+            }
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct GpuRegistersTrait : XE_HPG::GpuRegistersTrait<T>
+        {
+            ML_DECLARE_TRAIT( GpuRegistersTrait, XE_HPG );
+
+            // Oac registers.
+            static constexpr uint32_t m_OacControl = 0x15114;
+        };
+    } // namespace XE_HPC
 } // namespace ML
 
 // clang-format on

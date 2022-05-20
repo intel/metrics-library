@@ -137,4 +137,31 @@ namespace ML
             ML_DECLARE_TRAIT( ToolsOsTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct ToolsOsTrait : XE_LP::ToolsOsTrait<T>
+        {
+            ML_DECLARE_TRAIT( ToolsOsTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct ToolsOsTrait : XE_HP::ToolsOsTrait<T>
+        {
+            ML_DECLARE_TRAIT( ToolsOsTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct ToolsOsTrait : XE_HPG::ToolsOsTrait<T>
+        {
+            ML_DECLARE_TRAIT( ToolsOsTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

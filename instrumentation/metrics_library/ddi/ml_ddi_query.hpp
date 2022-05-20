@@ -149,5 +149,35 @@ namespace ML
         using DdiQuery = GEN11::DdiQuery<T>;
     } // namespace XE_LP
 
+    namespace XE_HP
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HP-specific functions for DdiQuery.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiQuery = XE_LP::DdiQuery<T>;
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPG-specific functions for DdiQuery.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiQuery = XE_HP::DdiQuery<T>;
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPC-specific functions for DdiQuery.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiQuery = XE_HPG::DdiQuery<T>;
+    } // namespace XE_HPC
+
 #pragma endregion
 } // namespace ML

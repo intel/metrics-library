@@ -85,4 +85,31 @@ namespace ML
             ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct MarkerStreamUserExtendedTrait : XE_LP::MarkerStreamUserExtendedTrait<T>
+        {
+            ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct MarkerStreamUserExtendedTrait : XE_HP::MarkerStreamUserExtendedTrait<T>
+        {
+            ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct MarkerStreamUserExtendedTrait : XE_HPG::MarkerStreamUserExtendedTrait<T>
+        {
+            ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

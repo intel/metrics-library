@@ -104,4 +104,31 @@ namespace ML
             ML_DECLARE_TRAIT( SubDeviceCommonTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct SubDeviceCommonTrait : XE_LP::SubDeviceCommonTrait<T>
+        {
+            ML_DECLARE_TRAIT( SubDeviceCommonTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct SubDeviceCommonTrait : XE_HP::SubDeviceCommonTrait<T>
+        {
+            ML_DECLARE_TRAIT( SubDeviceCommonTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct SubDeviceCommonTrait : XE_HPG::SubDeviceCommonTrait<T>
+        {
+            ML_DECLARE_TRAIT( SubDeviceCommonTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

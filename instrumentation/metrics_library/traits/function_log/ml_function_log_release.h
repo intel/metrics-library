@@ -39,13 +39,12 @@ namespace ML
         /// @param result   function initial result value.
         //////////////////////////////////////////////////////////////////////////
         FunctionLogReleaseTrait(
-            const char*  name,
+            const char* /*name*/,
             const Result result,
             TT::Context* context )
             : m_Result( result )
             , m_Context( context )
         {
-            (void) name;
         }
 
         //////////////////////////////////////////////////////////////////////////

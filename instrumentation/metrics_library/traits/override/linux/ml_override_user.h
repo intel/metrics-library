@@ -107,4 +107,31 @@ namespace ML
             ML_DECLARE_TRAIT( OverrideUserTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct OverrideUserTrait : XE_LP::OverrideUserTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideUserTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct OverrideUserTrait : XE_HP::OverrideUserTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideUserTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct OverrideUserTrait : XE_HPG::OverrideUserTrait<T>
+        {
+            ML_DECLARE_TRAIT( OverrideUserTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

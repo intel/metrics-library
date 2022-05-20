@@ -181,5 +181,35 @@ namespace ML
         using DdiOverride = GEN11::DdiOverride<T>;
     } // namespace XE_LP
 
+    namespace XE_HP
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HP-specific functions for DdiOverride.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiOverride = XE_LP::DdiOverride<T>;
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPG-specific functions for DdiOverride.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiOverride = XE_HP::DdiOverride<T>;
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief XE_HPC-specific functions for DdiOverride.
+        ///        These should ONLY be used for MAJOR algorithm changes.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename T>
+        using DdiOverride = XE_HPG::DdiOverride<T>;
+    } // namespace XE_HPC
+
 #pragma endregion
 } // namespace ML

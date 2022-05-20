@@ -903,4 +903,112 @@ namespace ML
             ML_DECLARE_TRAIT( IoControlTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct IoControlTrait : XE_LP::IoControlTrait<T>
+        {
+            ML_DECLARE_TRAIT( IoControlTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct IoControlTrait : XE_HP::IoControlTrait<T>
+        {
+            ML_DECLARE_TRAIT( IoControlTrait, XE_HP );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Types.
+            //////////////////////////////////////////////////////////////////////////
+            using Base::SendDrm;
+            using Base::m_Kernel;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns parameter from the drm.
+            /// @param  parameter   drm parameter type.
+            /// @return result      result value.
+            /// @return             operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename Result>
+            ML_INLINE StatusCode GetDrmParameter(
+                const uint32_t parameter,
+                Result&        result ) const
+            {
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+                ML_STATIC_ASSERT( sizeof( Result ) == sizeof( int32_t ), "Incorrect input size, expected 4 bytes." );
+
+                int32_t output     = 0;
+                auto    parameters = drm_i915_getparam_t{};
+                parameters.param   = parameter;
+                parameters.value   = &output;
+
+                // Check parameter availability.
+                switch( parameter )
+                {
+                    case PRELIM_I915_PARAM_OA_TIMESTAMP_FREQUENCY:
+                        break;
+
+                    default:
+                        return log.m_Result = Base::GetDrmParameter( parameter, result );
+                }
+
+                log.m_Result = SendDrm( DRM_IOCTL_I915_GETPARAM, parameters );
+                result       = static_cast<Result>( output );
+
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Gets exact gpu timestamp frequency.
+            /// @param  timestampType  select timestamp domain - oa or cs.
+            /// @return                gpu timestamp frequency.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint64_t GetGpuTimestampFrequency( const TT::Layouts::Configuration::TimestampType timestampType ) const
+            {
+                ML_FUNCTION_LOG( uint64_t{ 0 }, &m_Kernel.m_Context );
+
+                int32_t frequency = 0;
+                int32_t parameter = timestampType == T::Layouts::Configuration::TimestampType::Oa
+                    ? PRELIM_I915_PARAM_OA_TIMESTAMP_FREQUENCY
+                    : I915_PARAM_CS_TIMESTAMP_FREQUENCY;
+
+                if( ML_SUCCESS( GetDrmParameter( parameter, frequency ) ) )
+                {
+                    log.Debug( "Gpu timestamp frequency:", frequency );
+                    log.m_Result = static_cast<uint64_t>( frequency );
+                }
+                else
+                {
+                    if( parameter == PRELIM_I915_PARAM_OA_TIMESTAMP_FREQUENCY )
+                    {
+                        if( ML_SUCCESS( GetDrmParameter( I915_PARAM_CS_TIMESTAMP_FREQUENCY, frequency ) ) )
+                        {
+                            frequency <<= 1;
+                            log.Debug( "Oa timestamp frequency is not available, Cs timestamp frequency is used as a workaround." );
+                            log.Debug( "Gpu timestamp frequency:", frequency );
+                            log.m_Result = static_cast<uint64_t>( frequency );
+                        }
+                    }
+                    else
+                    {
+                        log.Debug( "Unable to obtain gpu timestamp frequency." );
+                    }
+                }
+
+                return log.m_Result;
+            }
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct IoControlTrait : XE_HPG::IoControlTrait<T>
+        {
+            ML_DECLARE_TRAIT( IoControlTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

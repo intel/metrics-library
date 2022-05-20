@@ -418,4 +418,31 @@ namespace ML
             ML_DECLARE_TRAIT( QueryPipelineTimestampsTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct QueryPipelineTimestampsTrait : XE_LP::QueryPipelineTimestampsTrait<T>
+        {
+            ML_DECLARE_TRAIT( QueryPipelineTimestampsTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct QueryPipelineTimestampsTrait : XE_HP::QueryPipelineTimestampsTrait<T>
+        {
+            ML_DECLARE_TRAIT( QueryPipelineTimestampsTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct QueryPipelineTimestampsTrait : XE_HPG::QueryPipelineTimestampsTrait<T>
+        {
+            ML_DECLARE_TRAIT( QueryPipelineTimestampsTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

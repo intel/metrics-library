@@ -194,4 +194,31 @@ namespace ML
             ML_DECLARE_TRAIT( OaBufferDummyTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct OaBufferDummyTrait : XE_LP::OaBufferDummyTrait<T>
+        {
+            ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct OaBufferDummyTrait : XE_HP::OaBufferDummyTrait<T>
+        {
+            ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct OaBufferDummyTrait : XE_HPG::OaBufferDummyTrait<T>
+        {
+            ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML

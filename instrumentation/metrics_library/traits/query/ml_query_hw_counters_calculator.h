@@ -1386,4 +1386,351 @@ namespace ML
             }
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct QueryHwCountersCalculatorTrait : XE_LP::QueryHwCountersCalculatorTrait<T>
+        {
+            ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, XE_LP );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Types.
+            //////////////////////////////////////////////////////////////////////////
+            using Base::Derived;
+            using Base::IsMeasuredContextId;
+            using Base::m_ReportGpu;
+            using Base::m_ReportBegin;
+            using Base::m_OaBuffer;
+            using Base::m_OaBufferState;
+            using Base::m_HwContextIds;
+            using Base::m_Query;
+            using Base::m_QuerySlot;
+            using Base::m_Context;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Function used to sum oa counters between two reports.
+            /// @param  begin       begin internal hw counters report.
+            /// @param  end         end internal hw counters report.
+            /// @return reportApi   api report.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static void OaCountersDelta(
+                const TT::Layouts::HwCounters::ReportOa&   begin,
+                const TT::Layouts::HwCounters::ReportOa&   end,
+                TT::Layouts::HwCounters::Query::ReportApi& reportApi )
+            {
+                for( uint32_t i = 0; i < T::Layouts::HwCounters::m_OagCountersCount; ++i )
+                {
+                    // A4 - A23 and A28 - A31 counters are only 40 bits counters.
+                    if( i >= T::Layouts::HwCounters::m_OaCounter4 && i <= T::Layouts::HwCounters::m_OaCounter23 )
+                    {
+                        const uint32_t highBitsIndex = i - T::Layouts::HwCounters::m_OaCounter4;
+
+                        const uint64_t counterBegin = static_cast<uint64_t>( begin.m_Data.m_OaCounter_0_36[i] ) + ( static_cast<uint64_t>( begin.m_Data.m_OaCounterHB_4_23[highBitsIndex] ) << 32 );
+                        const uint64_t counterEnd   = static_cast<uint64_t>( end.m_Data.m_OaCounter_0_36[i] ) + ( static_cast<uint64_t>( end.m_Data.m_OaCounterHB_4_23[highBitsIndex] ) << 32 );
+
+                        reportApi.m_OaCounter[i] = T::Tools::CountersDelta( counterEnd, counterBegin, 40 );
+                    }
+                    else if( i >= T::Layouts::HwCounters::m_OaCounter28 && i <= T::Layouts::HwCounters::m_OaCounter31 )
+                    {
+                        const uint32_t highBitsIndex = i - T::Layouts::HwCounters::m_OaCounter28;
+
+                        const uint64_t counterBegin = static_cast<uint64_t>( begin.m_Data.m_OaCounter_0_36[i] ) + ( static_cast<uint64_t>( begin.m_Data.m_OaCounterHB_28_31[highBitsIndex] ) << 32 );
+                        const uint64_t counterEnd   = static_cast<uint64_t>( end.m_Data.m_OaCounter_0_36[i] ) + ( static_cast<uint64_t>( end.m_Data.m_OaCounterHB_28_31[highBitsIndex] ) << 32 );
+
+                        reportApi.m_OaCounter[i] = T::Tools::CountersDelta( counterEnd, counterBegin, 40 );
+                    }
+                    else if( i <= T::Layouts::HwCounters::m_OaCounter36 )
+                    {
+                        reportApi.m_OaCounter[i] = T::Tools::CountersDelta( end.m_Data.m_OaCounter_0_36[i], begin.m_Data.m_OaCounter_0_36[i], 32 );
+                    }
+                    else
+                    {
+                        reportApi.m_OaCounter[i] = T::Tools::CountersDelta( end.m_Data.m_OaCounter_37, begin.m_Data.m_OaCounter_37, 32 );
+                    }
+                }
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns command buffer type.
+            /// @return command buffer type obtained from query report.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE GpuCommandBufferType GetCommandBufferType() const
+            {
+                ML_FUNCTION_LOG( GpuCommandBufferType::Render, &m_Context );
+
+                switch( m_ReportGpu.m_CommandStreamerIdentificator )
+                {
+                    case T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender:
+                        return log.m_Result = GpuCommandBufferType::Render;
+
+                    case T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute0:
+                    case T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute1:
+                    case T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute2:
+                    case T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute3:
+                        return log.m_Result = GpuCommandBufferType::Compute;
+
+                    default:
+                        ML_ASSERT_ALWAYS();
+                        return log.m_Result = GpuCommandBufferType::Render;
+                }
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Validates gpu report contexts.
+            /// @return true if gpu report contexts is valid.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode ValidateReportGpuContexts()
+            {
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+                // Validate contexts (rcs only).
+                if( m_ReportGpu.m_CommandStreamerIdentificator == T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender )
+                {
+                    const bool useNullContext = Derived().AllowEmptyContextId();
+                    const bool isSrmOag       = m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag;
+                    const bool validBegin     = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
+                    const bool validEnd       = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
+                    const bool equalContexts  = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
+                    const bool validContexts  = ( validBegin && validEnd ) || isSrmOag || useNullContext;
+
+                    if( !( validContexts && equalContexts ) )
+                    {
+                        log.Error(
+                            "validContexts =",
+                            validContexts,
+                            ", equalContexts = ",
+                            equalContexts,
+                            ", begin.contextId = ",
+                            FormatFlag::Hexadecimal,
+                            FormatFlag::ShowBase,
+                            m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId,
+                            ", end.contextId =",
+                            FormatFlag::Hexadecimal,
+                            FormatFlag::ShowBase,
+                            m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId );
+
+                        log.m_Result = StatusCode::ContextMismatch;
+                    }
+                }
+
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Validates if oa report taken from oa buffer meets all
+            ///         requirements to be taken into consideration.
+            /// @param  oaReport        oa report from oa buffer to compare.
+            /// @return                 true if oa report is valid.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE bool IsValidOaReport( const TT::Layouts::HwCounters::ReportOa& reportOa )
+            {
+                ML_FUNCTION_LOG( true, &m_Context );
+
+                // The begin report is always valid, in other cases check that the buffer report meets all conditions.
+                if( &reportOa != &m_ReportBegin.m_Oa )
+                {
+                    const uint32_t reason = reportOa.m_Header.m_ReportId.m_ReportReason;
+
+                    // 1. Check allowed contexts.
+                    // only reports with the ContextValid flag set are considered
+                    if( reason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::ContextSwitch ) )
+                    {
+                        if( Derived().IsMeasuredContextId( reportOa.m_Header.m_ContextId ) )
+                        {
+                            if( reportOa.m_Header.m_ReportId.m_ContextValid )
+                            {
+                                log.Debug( "Valid context report found" );
+                                m_OaBufferState.m_ContextValid = true;
+                            }
+                            else
+                            {
+                                log.Debug( "Invalid context report found" );
+                                m_OaBufferState.m_ContextValid = false;
+                            }
+                        }
+                        else
+                        {
+                            if( IsRcsContextId( reportOa.m_Header.m_ContextId ) )
+                            {
+                                ML_ASSERT( !m_OaBufferState.m_ContextValid );
+                            }
+                        }
+                    }
+
+                    // 2. Now check the report reason:
+                    if( reason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::C6 ) )
+                    {
+                        // In C6, some configuration registers are reset,
+                        // so it is assumed that the report is always invalid.
+                        log.Debug( "Rc6 report found, oa config is invalid" );
+                        m_OaBufferState.m_ConfigurationValid = false;
+                    }
+                    else if( reason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::ConfigurationUpdate ) )
+                    {
+                        // The configuring report is always valid.
+                        log.Debug( "Configuring report found, oa config is valid" );
+                        m_OaBufferState.m_ConfigurationValid = true;
+                    }
+                    // Other report reasons do not affect the state of the m_ConfigurationValid.
+
+                    // The report is only valid if the context is compatible and the oa configuration is valid.
+                    log.m_Result = m_OaBufferState.m_ContextValid && m_OaBufferState.m_ConfigurationValid;
+                }
+
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Checks if given hw context id belongs to Render Command Streamer.
+            /// @param  contextId       hw context id to check.
+            /// @return                 true if hw context should be taken into account.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE bool IsRcsContextId( const uint32_t contextId ) const
+            {
+                bool rcsContextId = false;
+
+                for( uint32_t i = 0; i < m_HwContextIds.m_Count; ++i )
+                {
+                    if( ( contextId == m_HwContextIds.m_Context[i].m_Id ) &&
+                        ( m_HwContextIds.m_Context[i].m_Node == T::Layouts::Configuration::NodeType::Rcs ) )
+                    {
+                        rcsContextId = true;
+                        break;
+                    }
+                }
+
+                return rcsContextId;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns if gpu report is ready to return api report to the user.
+            /// @return success if api report can be exposed to the user.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode ValidateReportGpu()
+            {
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+                const bool validTags            = m_Query.m_EndTag == m_ReportGpu.m_EndTag;
+                const bool validCommandStreamer = m_ReportGpu.m_CommandStreamerIdentificator > 0;
+
+                log.Debug( "Valid tags       ", validTags );
+                log.Debug( "    obtained     ", m_ReportGpu.m_EndTag );
+                log.Debug( "    expected     ", m_Query.m_EndTag );
+                log.Debug( "Command streamer ", m_ReportGpu.m_CommandStreamerIdentificator );
+
+                return log.m_Result = validTags && validCommandStreamer
+                    ? StatusCode::Success
+                    : StatusCode::ReportNotReady;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Prints platform specific report gpu information.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode PrintReportGpu()
+            {
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+                uint32_t   oaTailPreBeginIndex  = 0;
+                uint32_t   oaTailPostBeginIndex = 0;
+                uint32_t   oaTailPreEndIndex    = 0;
+                uint32_t   oaTailPostEndIndex   = 0;
+                uint32_t   oaReportsCount       = m_OaBuffer.GetReportsCount();
+                const auto csDescription        = T::Layouts::HwCounters::GetCommandStreamerDescription( m_ReportGpu.m_CommandStreamerIdentificator, m_Context );
+
+                m_OaBuffer.GetPreReportIndex( m_ReportGpu, true, oaTailPreBeginIndex );
+                m_OaBuffer.GetPostReportIndex( m_ReportGpu, true, oaTailPostBeginIndex );
+                m_OaBuffer.GetPreReportIndex( m_ReportGpu, false, oaTailPreEndIndex );
+                m_OaBuffer.GetPostReportIndex( m_ReportGpu, false, oaTailPostEndIndex );
+
+                log.Info(
+                    "oaTails:",
+                    csDescription,
+                    FormatFlag::Decimal,
+                    "PreBegin =",
+                    oaTailPreBeginIndex,
+                    ", PostBegin =",
+                    oaTailPostBeginIndex,
+                    ", PreEnd =",
+                    oaTailPreEndIndex,
+                    ", PostEnd =",
+                    oaTailPostEndIndex );
+
+                // Dump all OA reports generated during query
+                log.Debug(
+                    "query window reportsOa count:",
+                    csDescription,
+                    FormatFlag::Decimal,
+                    ( oaTailPostEndIndex - oaTailPreBeginIndex ) );
+
+                if( oaTailPreBeginIndex < oaTailPostEndIndex )
+                {
+                    for( uint32_t i = oaTailPreBeginIndex; i != oaTailPostEndIndex; ( i < oaReportsCount ) ? ++i : 0 )
+                    {
+                        auto& reportOa = m_OaBuffer.GetReport( i );
+                        log.Debug(
+                            "reportOa: ",
+                            csDescription,
+                            "(",
+                            FormatFlag::Decimal,
+                            FormatFlag::SetWidth5,
+                            i,
+                            ")",
+                            reportOa );
+                    }
+                }
+
+                log.Debug( "Command streamer id", m_ReportGpu.m_CommandStreamerIdentificator );
+                log.Debug( "Gpu report                " );
+                log.Info(
+                    "    m_Begin.m_Oa          ",
+                    csDescription,
+                    m_ReportGpu.m_Begin.m_Oa );
+                log.Info(
+                    "    m_End.m_Oa            ",
+                    csDescription,
+                    m_ReportGpu.m_End.m_Oa );
+
+                log.Debug( "    m_EndTag              ", m_ReportGpu.m_EndTag );
+                log.Debug( "    m_DmaFenceIdBegin     ", m_ReportGpu.m_DmaFenceIdBegin );
+                log.Debug( "    m_DmaFenceIdEnd       ", m_ReportGpu.m_DmaFenceIdEnd );
+                log.Debug( "    m_OaBuffer            ", m_ReportGpu.m_OaBuffer.All.m_ReportBufferOffset );
+                log.Debug( "    m_CoreFrequencyBegin  ", m_ReportGpu.m_CoreFrequencyBegin );
+                log.Debug( "    m_CoreFrequencyEnd    ", m_ReportGpu.m_CoreFrequencyEnd );
+                log.Debug( "    m_MarkerUser          ", m_ReportGpu.m_MarkerUser );
+                log.Debug( "    m_MarkerDriver        ", m_ReportGpu.m_MarkerDriver );
+
+                return log.m_Result;
+            }
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct QueryHwCountersCalculatorTrait : XE_HP::QueryHwCountersCalculatorTrait<T>
+        {
+            ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct QueryHwCountersCalculatorTrait : XE_HPG::QueryHwCountersCalculatorTrait<T>
+        {
+            ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, XE_HPG );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Computes slice frequency.
+            /// @param  frequency   gpu frequency value.
+            /// @return             slice frequency.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint64_t ComputeSliceFrequency( const TT::Layouts::HwCounters::ReportId frequency ) const
+            {
+                // Slice frequency is the same as unslice frequency.
+                return frequency.m_FrequencyUnslice * 100 / 6;
+            }
+        };
+    } // namespace XE_HPC
 } // namespace ML

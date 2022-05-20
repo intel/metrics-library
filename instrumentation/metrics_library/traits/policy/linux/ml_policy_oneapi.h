@@ -159,4 +159,82 @@ namespace ML
             };
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct PolicyOneApiTrait : XE_LP::PolicyOneApiTrait<T>
+        {
+            ML_DECLARE_TRAIT( PolicyOneApiTrait, XE_LP );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Query hw counters policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct QueryHwCounters : Base::QueryHwCounters
+            {
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief Query get data policies.
+                //////////////////////////////////////////////////////////////////////////
+                struct GetData : Base::QueryHwCounters::GetData
+                {
+                    static constexpr bool m_IncludeRenderContextSwitchReports = false;
+                };
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Sub device policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct SubDevice
+            {
+                static constexpr bool m_DriverClientDataRequired = false;
+                static constexpr bool m_AllowImplicitScaling     = true;
+            };
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct PolicyOneApiTrait : XE_HP::PolicyOneApiTrait<T>
+        {
+            ML_DECLARE_TRAIT( PolicyOneApiTrait, XE_HP );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Query hw counters policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct QueryHwCounters : Base::QueryHwCounters
+            {
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief Query get data policies.
+                //////////////////////////////////////////////////////////////////////////
+                struct GetData : Base::QueryHwCounters::GetData
+                {
+                    static constexpr bool m_IncludeRenderContextSwitchReports = true;
+                };
+            };
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct PolicyOneApiTrait : XE_HPG::PolicyOneApiTrait<T>
+        {
+            ML_DECLARE_TRAIT( PolicyOneApiTrait, XE_HPG );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Query hw counters policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct QueryHwCounters : Base::QueryHwCounters
+            {
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief Query get data policies.
+                //////////////////////////////////////////////////////////////////////////
+                struct GetData : Base::QueryHwCounters::GetData
+                {
+                    static constexpr bool m_IncludeRenderContextSwitchReports = false;
+                };
+            };
+        };
+    } // namespace XE_HPC
 } // namespace ML

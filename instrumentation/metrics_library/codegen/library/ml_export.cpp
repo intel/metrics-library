@@ -32,6 +32,15 @@ Template:           Tools/MetricsLibraryGenerator/templates/export.h
 #if ML_ENABLE_XE_LP
 #include "ml_traits_xe_lp.h"
 #endif
+#if ML_ENABLE_XE_HP
+#include "ml_traits_xe_hp.h"
+#endif
+#if ML_ENABLE_XE_HPG
+#include "ml_traits_xe_hpg.h"
+#endif
+#if ML_ENABLE_XE_HPC
+#include "ml_traits_xe_hpc.h"
+#endif
 
 using namespace ML;
 
@@ -113,6 +122,72 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
         }
     }
 #endif // ML_ENABLE_XE_LP
+
+#if ML_ENABLE_XE_HP
+    if( clientType.Gen == ClientGen::XeHP )
+    {
+        switch( clientType.Api )
+        {
+            #if ML_ENABLE_OPENCL
+            case ClientApi::OpenCL:
+                return &ML_GET_NAMESPACE( XE_HP, OpenCL )::DdiFunctionTable<ML_GET_NAMESPACE( XE_HP, OpenCL )::Traits>::GetInstance();
+            #endif
+
+            #if ML_ENABLE_ONEAPI
+            case ClientApi::OneApi:
+                return &ML_GET_NAMESPACE( XE_HP, OneApi )::DdiFunctionTable<ML_GET_NAMESPACE( XE_HP, OneApi )::Traits>::GetInstance();
+            #endif
+
+            default:
+                ML_ASSERT_ALWAYS_NO_ADAPTER();
+                break;
+        }
+    }
+#endif // ML_ENABLE_XE_HP
+
+#if ML_ENABLE_XE_HPG
+    if( clientType.Gen == ClientGen::XeHPG )
+    {
+        switch( clientType.Api )
+        {
+            #if ML_ENABLE_OPENCL
+            case ClientApi::OpenCL:
+                return &ML_GET_NAMESPACE( XE_HPG, OpenCL )::DdiFunctionTable<ML_GET_NAMESPACE( XE_HPG, OpenCL )::Traits>::GetInstance();
+            #endif
+
+            #if ML_ENABLE_ONEAPI
+            case ClientApi::OneApi:
+                return &ML_GET_NAMESPACE( XE_HPG, OneApi )::DdiFunctionTable<ML_GET_NAMESPACE( XE_HPG, OneApi )::Traits>::GetInstance();
+            #endif
+
+            default:
+                ML_ASSERT_ALWAYS_NO_ADAPTER();
+                break;
+        }
+    }
+#endif // ML_ENABLE_XE_HPG
+
+#if ML_ENABLE_XE_HPC
+    if( clientType.Gen == ClientGen::XeHPC )
+    {
+        switch( clientType.Api )
+        {
+            #if ML_ENABLE_OPENCL
+            case ClientApi::OpenCL:
+                return &ML_GET_NAMESPACE( XE_HPC, OpenCL )::DdiFunctionTable<ML_GET_NAMESPACE( XE_HPC, OpenCL )::Traits>::GetInstance();
+            #endif
+
+            #if ML_ENABLE_ONEAPI
+            case ClientApi::OneApi:
+                return &ML_GET_NAMESPACE( XE_HPC, OneApi )::DdiFunctionTable<ML_GET_NAMESPACE( XE_HPC, OneApi )::Traits>::GetInstance();
+            #endif
+
+            default:
+                ML_ASSERT_ALWAYS_NO_ADAPTER();
+                break;
+        }
+    }
+#endif // ML_ENABLE_XE_HPC
 
     return nullptr;
 }

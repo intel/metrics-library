@@ -97,6 +97,33 @@ namespace ML
             ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct GpuRegistersLayoutsTrait : XE_LP::GpuRegistersLayoutsTrait<T>
+        {
+            ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, XE_LP );
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct GpuRegistersLayoutsTrait : XE_HP::GpuRegistersLayoutsTrait<T>
+        {
+            ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct GpuRegistersLayoutsTrait : XE_HPG::GpuRegistersLayoutsTrait<T>
+        {
+            ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML
 
 ML_STRUCTURE_PACK_END();

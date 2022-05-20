@@ -80,8 +80,8 @@ namespace ML
         struct Configuration
         {
             static constexpr uint32_t m_InvalidHandle        = 0;
-            static constexpr uint32_t m_MaxOaProlog          = 11;
-            static constexpr uint32_t m_MaxOaEpilog          = 2;
+            static constexpr uint32_t m_MaxOaProlog          = 14;
+            static constexpr uint32_t m_MaxOaEpilog          = 6;
             static constexpr uint32_t m_MaxRegistersBase     = 4096;
             static constexpr uint32_t m_MaxRegisters         = m_MaxRegistersBase + m_MaxOaEpilog + m_MaxOaProlog;
             static constexpr uint32_t m_MaxOverrideRegisters = 256;

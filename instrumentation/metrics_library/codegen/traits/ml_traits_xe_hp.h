@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_traits_gen9.h
+@file ml_traits_xe_hp.h
 
 @brief Auto-generated file. Creates Traits structures for a given gen / os / api.
 
@@ -20,17 +20,17 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits.h
 
 #pragma once
 
-#if ML_ENABLE_GEN9
-#define ML_GEN9 1
+#if ML_ENABLE_XE_HP
+#define ML_XE_HP 1
 
-#include "ml_ddi_gen9.h"
+#include "ml_ddi_xe_hp.h"
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Instantiates ML traits for GEN9.
+/// @brief Instantiates ML traits for XE_HP.
 //////////////////////////////////////////////////////////////////////////
 namespace ML
 {
-    namespace GEN9
+    namespace XE_HP
     {
         #if ML_ENABLE_OPENCL
         namespace OpenCL
@@ -225,7 +225,7 @@ namespace ML
                 static void PrintGpuType()
                 {
                 #if ML_DEBUG || ML_INTERNAL
-                    FunctionLogStatic::Traits( "Gpu type", "GEN9" );
+                    FunctionLogStatic::Traits( "Gpu type", "XE_HP" );
                 #endif
                 }
                 static void PrintTraits()
@@ -502,7 +502,7 @@ namespace ML
                 static void PrintGpuType()
                 {
                 #if ML_DEBUG || ML_INTERNAL
-                    FunctionLogStatic::Traits( "Gpu type", "GEN9" );
+                    FunctionLogStatic::Traits( "Gpu type", "XE_HP" );
                 #endif
                 }
                 static void PrintTraits()
@@ -586,7 +586,7 @@ namespace ML
         } // namespace OneApi
         #endif //ML_ENABLE_ONEAPI
 
-    } // namespace GEN9
+    } // namespace XE_HP
 } // namespace ML
-#undef ML_GEN9
-#endif // ML_ENABLE_GEN9
+#undef ML_XE_HP
+#endif // ML_ENABLE_XE_HP

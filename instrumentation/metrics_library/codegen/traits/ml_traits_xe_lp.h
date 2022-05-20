@@ -89,7 +89,9 @@ namespace ML
                 /// @brief SubDevice.
                 //////////////////////////////////////////////////////////////////////////
                 using SubDeviceCommon               = SubDeviceCommonTrait<Traits>;                 //  ml_sub_device_common.h
-                using SubDevice                     = SubDeviceCommon;
+                #if ML_LINUX
+                using SubDevice                     = SubDeviceTrait<Traits>;                       //  linux/ml_sub_device.h
+                #endif
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Gpu registers commands / command buffer.
@@ -200,6 +202,12 @@ namespace ML
                     using PipelineTimestamps          = QueryPipelineTimestampsTrait<Traits>;           //  ml_query_pipeline_timestamps.h
                 };
 
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief Internal features.
+                //////////////////////////////////////////////////////////////////////////
+                #if ML_LINUX || ML_RELEASE
+                using InternalFeature           = InternalFeatureTrait<Traits>;                     //  ml_internal_feature.h
+                #endif
                 static void PrintBuildNumber()
                 {
                 #if ML_DEBUG || ML_INTERNAL
@@ -236,7 +244,9 @@ namespace ML
                     FunctionLogStatic::Traits( "using DdiObjects", DdiObjects::GetDescription() );
                     FunctionLogStatic::Traits( "using State", State::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
+                #if ML_LINUX
                     FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
+                #endif
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBufferCalculator", GpuCommandBufferCalculator::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommands", GpuCommands::GetDescription() );
@@ -287,6 +297,9 @@ namespace ML
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
                     FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
                     FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
+                #if ML_LINUX || ML_RELEASE
+                    FunctionLogStatic::Traits( "using InternalFeature", InternalFeature::GetDescription() );
+                #endif
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Policy", Policy::GetDescription() );
                 #endif
@@ -353,7 +366,9 @@ namespace ML
                 /// @brief SubDevice.
                 //////////////////////////////////////////////////////////////////////////
                 using SubDeviceCommon               = SubDeviceCommonTrait<Traits>;                 //  ml_sub_device_common.h
-                using SubDevice                     = SubDeviceCommon;
+                #if ML_LINUX
+                using SubDevice                     = SubDeviceTrait<Traits>;                       //  linux/ml_sub_device.h
+                #endif
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief Gpu registers commands / command buffer.
@@ -464,6 +479,12 @@ namespace ML
                     using PipelineTimestamps          = QueryPipelineTimestampsTrait<Traits>;           //  ml_query_pipeline_timestamps.h
                 };
 
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief Internal features.
+                //////////////////////////////////////////////////////////////////////////
+                #if ML_LINUX || ML_RELEASE
+                using InternalFeature           = InternalFeatureTrait<Traits>;                     //  ml_internal_feature.h
+                #endif
                 static void PrintBuildNumber()
                 {
                 #if ML_DEBUG || ML_INTERNAL
@@ -500,7 +521,9 @@ namespace ML
                     FunctionLogStatic::Traits( "using DdiObjects", DdiObjects::GetDescription() );
                     FunctionLogStatic::Traits( "using State", State::GetDescription() );
                     FunctionLogStatic::Traits( "using SubDeviceCommon", SubDeviceCommon::GetDescription() );
+                #if ML_LINUX
                     FunctionLogStatic::Traits( "using SubDevice", SubDevice::GetDescription() );
+                #endif
                     FunctionLogStatic::Traits( "using GpuCommandBuffer", GpuCommandBuffer::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommandBufferCalculator", GpuCommandBufferCalculator::GetDescription() );
                     FunctionLogStatic::Traits( "using GpuCommands", GpuCommands::GetDescription() );
@@ -551,6 +574,9 @@ namespace ML
                     FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
                     FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
                     FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
+                #if ML_LINUX || ML_RELEASE
+                    FunctionLogStatic::Traits( "using InternalFeature", InternalFeature::GetDescription() );
+                #endif
                 #if ML_LINUX
                     FunctionLogStatic::Traits( "using Policy", Policy::GetDescription() );
                 #endif

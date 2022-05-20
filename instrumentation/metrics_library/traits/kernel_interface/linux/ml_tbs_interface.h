@@ -639,4 +639,83 @@ namespace ML
             ML_DECLARE_TRAIT( TbsInterfaceTrait, GEN11 );
         };
     } // namespace XE_LP
+
+    namespace XE_HP
+    {
+        template <typename T>
+        struct TbsInterfaceTrait : XE_LP::TbsInterfaceTrait<T>
+        {
+            ML_DECLARE_TRAIT( TbsInterfaceTrait, XE_LP );
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief  Base types.
+            //////////////////////////////////////////////////////////////////////////
+            using Base::m_Kernel;
+
+            /////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oa report type.
+            /// @return oa report type status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE static drm_i915_oa_format GetOaReportType()
+            {
+                return static_cast<drm_i915_oa_format>( PRELIM_I915_OA_FORMAT_A24u40_A14u32_B8_C8 );
+            }
+
+            /////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns tbs properties.
+            /// @param  metricSet   metric set associated with tbs stream.
+            /// @return properties  tbs properties.
+            /// @return             operation status.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE StatusCode GetStreamProperties(
+                std::vector<uint64_t>& properties,
+                const int32_t          metricSet ) const
+            {
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+                uint32_t engineClass    = 0;
+                uint32_t engineInstance = 0;
+                auto&    subDevice      = m_Kernel.m_Context.m_SubDevice;
+                auto     addProperty    = [&]( const uint64_t key, const uint64_t value )
+                {
+                    properties.push_back( key );
+                    properties.push_back( value );
+                };
+
+                // Use base settings.
+                Base::GetStreamProperties( properties, metricSet );
+
+                // Special path for sub devices.
+                if( subDevice.m_SubDeviceIndex > 0 )
+                {
+                    ML_FUNCTION_CHECK( subDevice.GetTbsEngine( engineClass, engineInstance ) );
+
+                    // clang-format off
+                    addProperty( PRELIM_DRM_I915_PERF_PROP_OA_ENGINE_CLASS,    engineClass );
+                    addProperty( PRELIM_DRM_I915_PERF_PROP_OA_ENGINE_INSTANCE, engineInstance );
+                    // clang-format on
+                }
+
+                return log.m_Result;
+            }
+        };
+    } // namespace XE_HP
+
+    namespace XE_HPG
+    {
+        template <typename T>
+        struct TbsInterfaceTrait : XE_HP::TbsInterfaceTrait<T>
+        {
+            ML_DECLARE_TRAIT( TbsInterfaceTrait, XE_HP );
+        };
+    } // namespace XE_HPG
+
+    namespace XE_HPC
+    {
+        template <typename T>
+        struct TbsInterfaceTrait : XE_HPG::TbsInterfaceTrait<T>
+        {
+            ML_DECLARE_TRAIT( TbsInterfaceTrait, XE_HPG );
+        };
+    } // namespace XE_HPC
 } // namespace ML
