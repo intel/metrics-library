@@ -1227,9 +1227,7 @@ namespace ML
             {
                 ML_FUNCTION_LOG( true, &m_Context );
 
-                const bool validReportReason =
-                    ( reportHeader.m_ReportId.m_ReportReason == static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::Empty ) ) ||
-                    ( reportHeader.m_ReportId.m_ReportReason == static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger ) );
+                const bool validReportReason = reportHeader.m_ReportId.m_ReportReason == static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger );
 
                 if( !validReportReason )
                 {

@@ -332,7 +332,6 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief Inherited report objects.
             //////////////////////////////////////////////////////////////////////////
-            using ReportHeader = typename Base::ReportHeader;
             using ReportGp     = typename Base::ReportGp;
             using ReportUser   = typename Base::ReportUser;
 
@@ -421,6 +420,46 @@ namespace ML
                 }; // OaCounters.
 
                 uint32_t            m_NoaCounter[Base::m_NoaCountersCount];
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Report id.
+            //////////////////////////////////////////////////////////////////////////
+            struct ReportId
+            {
+                union
+                {
+                    uint32_t        m_Value;
+
+                    struct
+                    {
+                        uint32_t    m_QueryId            : ML_BITFIELD_RANGE( 0,  11 );
+                        uint32_t    m_ContextId          : ML_BITFIELD_RANGE( 12, 31 );
+                    }; // For MI_RPC.
+
+                    struct
+                    {
+                        uint32_t    m_FrequencyUnslice   : ML_BITFIELD_RANGE(  0,  8 );
+                        uint32_t    m_FrequencySliceHigh : ML_BITFIELD_RANGE(  9, 10 );
+                        uint32_t    m_NoaEvents          : ML_BITFIELD_RANGE( 11, 15 );
+                        uint32_t    m_ContextValid       : ML_BITFIELD_BIT  (     16 );
+                        uint32_t    m_ThresholdEnable    : ML_BITFIELD_BIT  (     17 );
+                        uint32_t    m_StartTriggerEvent  : ML_BITFIELD_BIT  (     18 );
+                        uint32_t    m_ReportReason       : ML_BITFIELD_RANGE( 19, 25 );
+                        uint32_t    m_SourceId           : ML_BITFIELD_RANGE( 26, 31 );
+                    }; // For time based sampling.
+                };
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Report header.
+            //////////////////////////////////////////////////////////////////////////
+            struct ReportHeader
+            {
+                ReportId    m_ReportId;
+                uint32_t    m_Timestamp;
+                uint32_t    m_ContextId;
+                uint32_t    m_GpuTicks;
             };
 
             //////////////////////////////////////////////////////////////////////////
@@ -585,143 +624,6 @@ namespace ML
         struct HwCountersLayoutsTrait : XE_HPG::HwCountersLayoutsTrait<T>
         {
             ML_DECLARE_TRAIT( HwCountersLayoutsTrait, XE_HPG );
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Inherited report objects.
-            //////////////////////////////////////////////////////////////////////////
-            using ReportGp     = typename Base::ReportGp;
-            using ReportUser   = typename Base::ReportUser;
-            using ReportOaData = typename Base::ReportOaData;
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Report id.
-            //////////////////////////////////////////////////////////////////////////
-            struct ReportId
-            {
-                union
-                {
-                    uint32_t        m_Value;
-
-                    struct
-                    {
-                        uint32_t    m_QueryId            : ML_BITFIELD_RANGE( 0,  11 );
-                        uint32_t    m_ContextId          : ML_BITFIELD_RANGE( 12, 31 );
-                    }; // For MI_RPC.
-
-                    struct
-                    {
-                        uint32_t    m_FrequencyUnslice   : ML_BITFIELD_RANGE(  0,  8 );
-                        uint32_t    m_FrequencySliceHigh : ML_BITFIELD_RANGE(  9, 10 );
-                        uint32_t    m_NoaEvents          : ML_BITFIELD_RANGE( 11, 15 );
-                        uint32_t    m_ContextValid       : ML_BITFIELD_BIT  (     16 );
-                        uint32_t    m_ThresholdEnable    : ML_BITFIELD_BIT  (     17 );
-                        uint32_t    m_StartTriggerEvent  : ML_BITFIELD_BIT  (     18 );
-                        uint32_t    m_ReportReason       : ML_BITFIELD_RANGE( 19, 25 );
-                        uint32_t    m_SourceId           : ML_BITFIELD_RANGE( 26, 31 );
-                    }; // For time based sampling.
-                };
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Report header.
-            //////////////////////////////////////////////////////////////////////////
-            struct ReportHeader
-            {
-                ReportId    m_ReportId;
-                uint32_t    m_Timestamp;
-                uint32_t    m_ContextId;
-                uint32_t    m_GpuTicks;
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Oa report.
-            //////////////////////////////////////////////////////////////////////////
-            struct ReportOa
-            {
-                ReportHeader    m_Header;
-                ReportOaData    m_Data;
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Base type for Report object.
-            //////////////////////////////////////////////////////////////////////////
-            struct Report
-            {
-                union
-                {
-                    struct
-                    {
-                        ReportOa      m_Oa;      // Oa.
-                        ReportGp      m_Gp;      // 16 bytes.
-                        ReportUser    m_User;    // 16 * 8 + 4 = 132 bytes.
-                    };
-
-                    // OA reports have to be aligned to multiple of 64 bytes.
-                    uint8_t m_Payload[Base::m_ReportAlignment];
-                };
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Hw counters structures related to query.
-            //////////////////////////////////////////////////////////////////////////
-            struct Query : Base::Query
-            {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Base type for QueryReportGpu object.
-                //////////////////////////////////////////////////////////////////////////
-                struct ReportGpu
-                {
-                    // Begin/end report.
-                    Report      m_Begin;
-                    Report      m_End;
-
-                    // Required only for WaDoNotUseMIReportPerfCount for BDW+.
-                    union
-                    {
-                        uint32_t    m_WaBegin[Base::m_OarCounters40bitsCount];    // Oar: High bytes of A0 - A31 counters.
-                        uint32_t    m_WaBeginOag[Base::m_OagCounters40bitsCount]; // Oag: High bytes of A4 - A23 and A28 - A31 counters.
-                    };
-
-                    union
-                    {
-                        uint32_t    m_WaEnd[Base::m_OarCounters40bitsCount];      // Oar: High bytes of A0 - A31 counters.
-                        uint32_t    m_WaEndOag[Base::m_OagCounters40bitsCount];   // Oag: High bytes of A4 - A23 and A28 - A31 counters.
-                    };
-
-                    union
-                    {
-                        struct
-                        {
-                            // Query end marker.
-                            uint64_t    m_EndTag;
-
-                            // Command buffer split indicators.
-                            uint32_t    m_DmaFenceIdBegin;
-                            uint32_t    m_DmaFenceIdEnd;
-
-                            // Oa buffer data related.
-                            TT::Layouts::OaBuffer::Register          m_OaBuffer;
-                            TT::Layouts::OaBuffer::TailRegister      m_OaTailPreBegin;
-                            TT::Layouts::OaBuffer::TailRegister      m_OaTailPostBegin;
-                            TT::Layouts::OaBuffer::TailRegister      m_OaTailPreEnd;
-                            TT::Layouts::OaBuffer::TailRegister      m_OaTailPostEnd;
-
-                            // Command streamer identificator.
-                            uint32_t    m_CommandStreamerIdentificator;
-
-                            // Frequency change indicators.
-                            uint32_t    m_CoreFrequencyBegin;
-                            uint32_t    m_CoreFrequencyEnd;
-
-                            // Markers.
-                            uint64_t    m_MarkerUser;
-                            uint64_t    m_MarkerDriver;
-                        };
-
-                        uint8_t     m_Payload[Base::m_ReportGpuAlignment];
-                    };
-                };
-            };
         };
     } // namespace XE_HPC
 } // namespace ML

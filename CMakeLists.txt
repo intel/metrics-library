@@ -611,6 +611,7 @@ elseif (${PLATFORM} STREQUAL linux) # linux
         -Wno-sequence-point  # disable undefined behavior warning
         -Wno-comment         # allow multi-line comments
         -Ofast               # optimize code in the favor of speed
+        -Wno-extern-c-compat # disable "empty struct has size 0 in C, size 1 in C++" warning
         )
     if ("${TARGET_ARCH}" STREQUAL "32")
         add_definitions (-m32)

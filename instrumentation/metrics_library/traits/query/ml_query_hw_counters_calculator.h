@@ -1452,6 +1452,17 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief  Computes slice frequency.
+            /// @param  frequency   gpu frequency value.
+            /// @return             slice frequency.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint64_t ComputeSliceFrequency( const TT::Layouts::HwCounters::ReportId frequency ) const
+            {
+                // Slice frequency is the same as unslice frequency.
+                return frequency.m_FrequencyUnslice * 100 / 6;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns command buffer type.
             /// @return command buffer type obtained from query report.
             //////////////////////////////////////////////////////////////////////////
@@ -1720,17 +1731,6 @@ namespace ML
         struct QueryHwCountersCalculatorTrait : XE_HPG::QueryHwCountersCalculatorTrait<T>
         {
             ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, XE_HPG );
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Computes slice frequency.
-            /// @param  frequency   gpu frequency value.
-            /// @return             slice frequency.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint64_t ComputeSliceFrequency( const TT::Layouts::HwCounters::ReportId frequency ) const
-            {
-                // Slice frequency is the same as unslice frequency.
-                return frequency.m_FrequencyUnslice * 100 / 6;
-            }
         };
     } // namespace XE_HPC
 } // namespace ML

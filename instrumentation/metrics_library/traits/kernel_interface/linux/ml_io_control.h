@@ -444,51 +444,6 @@ namespace ML
             }
 
             /////////////////////////////////////////////////////////////////////////
-            /// @brief  Maps buffer to obtain cpu address.
-            /// @param  handle   buffer handle.
-            /// @param  size     buffer size to map.
-            /// @return address  cpu address.
-            /// @return          operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode MapBuffer(
-                const uint32_t handle,
-                const uint32_t size,
-                uint8_t*&      address ) const
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-                auto map   = drm_i915_gem_mmap{};
-                map.handle = handle;
-                map.size   = size;
-                address    = nullptr;
-
-                log.m_Result = SendDrm( DRM_IOCTL_I915_GEM_MMAP, map );
-
-                if( ML_SUCCESS( log.m_Result ) )
-                {
-                    address = reinterpret_cast<uint8_t*>( static_cast<uintptr_t>( map.addr_ptr ) );
-                }
-
-                ML_ASSERT( address != nullptr );
-                return log.m_Result;
-            }
-
-            /////////////////////////////////////////////////////////////////////////
-            /// @brief  Unmaps buffer to release cpu access.
-            /// @param  handle buffer handle.
-            /// @return        operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode UnmapBuffer( const uint32_t handle ) const
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-                auto unmap   = drm_i915_gem_sw_finish{};
-                unmap.handle = handle;
-
-                return log.m_Result = SendDrm( DRM_IOCTL_I915_GEM_SW_FINISH, unmap );
-            }
-
-            /////////////////////////////////////////////////////////////////////////
             /// @brief  Returns chipset id.
             /// @return id  chipset id.
             /// @return     operation status.
