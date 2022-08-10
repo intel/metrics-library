@@ -1377,6 +1377,10 @@ namespace ML
                         output << "Empty";
                         break;
 
+                    case T::Layouts::OaBuffer::ReportReason::MmioTrigger:
+                        output << "MmioTrigger";
+                        break;
+
                     default:
                         output << "Illegal report reason: " << std::hex << std::showbase << static_cast<uint32_t>( reportReason );
                         output << " (" << std::dec << static_cast<uint32_t>( reportReason ) << ")";
@@ -2764,7 +2768,7 @@ namespace ML
             /// @return             created string.
             //////////////////////////////////////////////////////////////////////////
             template <typename ValueT>
-            ML_INLINE std::string MemberToStringArray( const char* arrayName, const ValueT value, const char* padding, const int arraySize )
+            ML_INLINE std::string MemberToStringArray( const char* arrayName, const ValueT value, const char* padding, const uint32_t arraySize )
             {
                 std::ostringstream output;
                 const uint32_t     indent = GetIndentLevel();
@@ -2786,11 +2790,11 @@ namespace ML
                 {
                     if( ValidatePointer( value, output ) )
                     {
-                        for( int i = 0; i < arraySize; i++ )
+                        for( uint32_t i = 0; i < arraySize; ++i )
                         {
                             if( m_Aligned )
                             {
-                                for( uint32_t i = 0; i < indent; ++i )
+                                for( uint32_t j = 0; j < indent; ++j )
                                 {
                                     output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
                                 }

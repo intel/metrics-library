@@ -42,14 +42,15 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             struct OaBufferMapped
             {
-                const TT::KernelInterface&         m_Kernel;
-                TT::Layouts::HwCounters::ReportOa* m_Reports;
-                void*                              m_CpuAddress;
-                uint32_t                           m_ReportsCount;
-                uint32_t                           m_ReportSize;
-                uint32_t                           m_Size;
-                int32_t                            m_Stream;
-                bool                               m_Mapped;
+                //////////////////////////////////////////////////////////////////////////
+                /// @brief Members.
+                //////////////////////////////////////////////////////////////////////////
+                const TT::KernelInterface& m_Kernel;
+                void*                      m_CpuAddress;
+                uint32_t                   m_ReportSize;
+                uint32_t                   m_Size;
+                int32_t                    m_Stream;
+                bool                       m_Mapped;
 
                 //////////////////////////////////////////////////////////////////////////
                 /// @brief  Oa buffer constructor.
@@ -57,9 +58,7 @@ namespace ML
                 //////////////////////////////////////////////////////////////////////////
                 OaBufferMapped( const TT::KernelInterface& kernel )
                     : m_Kernel( kernel )
-                    , m_Reports( nullptr )
                     , m_CpuAddress( nullptr )
-                    , m_ReportsCount( 0 )
                     , m_ReportSize( sizeof( TT::Layouts::HwCounters::ReportOa ) )
                     , m_Size( 0 )
                     , m_Stream( T::ConstantsOs::Tbs::m_Invalid )
@@ -134,15 +133,12 @@ namespace ML
                     ML_FUNCTION_CHECK( m_Size > 0 );
                     ML_FUNCTION_CHECK( m_CpuAddress != nullptr );
 
-                    m_Reports      = reinterpret_cast<TT::Layouts::HwCounters::ReportOa*>( m_CpuAddress );
-                    m_ReportsCount = m_Size / m_ReportSize;
-                    m_Mapped       = m_Size && m_CpuAddress;
+                    m_Mapped = m_Size && m_CpuAddress;
 
                     // Log collected data.
-                    log.Info( "Mapped        ", m_Mapped );
-                    log.Info( "Address cpu   ", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_CpuAddress );
-                    log.Info( "Size          ", m_Size );
-                    log.Info( "Reports count ", m_ReportsCount );
+                    log.Info( "Mapped      ", m_Mapped );
+                    log.Info( "Address cpu ", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_CpuAddress );
+                    log.Info( "Size        ", m_Size );
 
                     return log.m_Result = ML_STATUS( m_Mapped );
                 }
@@ -160,12 +156,10 @@ namespace ML
                         munmap( m_CpuAddress, m_Size );
                     }
 
-                    m_CpuAddress   = nullptr;
-                    m_Reports      = nullptr;
-                    m_ReportsCount = 0;
-                    m_Size         = 0;
-                    m_Mapped       = false;
-                    m_Stream       = T::ConstantsOs::Tbs::m_Invalid;
+                    m_CpuAddress = nullptr;
+                    m_Size       = 0;
+                    m_Mapped     = false;
+                    m_Stream     = T::ConstantsOs::Tbs::m_Invalid;
 
                     return log.m_Result;
                 }

@@ -127,14 +127,16 @@ namespace ML
                     return log.m_Result = StatusCode::Failed;
                 }
 
-                // Obtain path that contains metric set id
-                // activated by metrics discovery.
-                TT::ConstantsOs::String::Path path = "";
+                // Obtain path that contains metric set id activated by metrics discovery.
+                TT::ConstantsOs::String::Path path           = "";
+                const uint32_t                subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
+                const std::string             guid           = GenerateQueryGuid( subDeviceIndex );
+                ML_FUNCTION_CHECK( guid != "" );
 
                 snprintf( path, sizeof( path ),
-                          T::ConstantsOs::Tbs::m_ActiveMetricSetPath,   // Activated metric file location.
-                          m_DrmCard,                                    // Drm card index.
-                          T::ConstantsOs::Tbs::m_ActiveMetricSetGuid ); // Activated metric set guid.
+                          T::ConstantsOs::Tbs::m_ActiveMetricSetPath, // Activated metric file location.
+                          m_DrmCard,                                  // Drm card index.
+                          guid.c_str() );                             // Activated metric set guid for given sub device.
 
                 m_KernelMetricSet = path;
 
@@ -828,6 +830,38 @@ namespace ML
                 }
 
                 return output;
+            }
+
+            /////////////////////////////////////////////////////////////////////////
+            /// @brief  Generates guid for query for given sub device index.
+            /// @param  subDeviceIndex  sub device index.
+            /// @return                 generated guid.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE std::string GenerateQueryGuid( const uint32_t subDeviceIndex ) const
+            {
+                ML_FUNCTION_LOG( std::string(), &m_Kernel.m_Context );
+
+                const std::string valueToReplace    = "42a7";
+                const uint32_t    maxSubDeviceIndex = std::pow( 2, valueToReplace.size() * 4 ) - 1;
+
+                if( subDeviceIndex > maxSubDeviceIndex )
+                {
+                    log.Error( "Invalid sub device index" );
+                    return log.m_Result = "";
+                }
+
+                std::string defaultGuid( T::ConstantsOs::Tbs::m_ActiveMetricSetGuid );
+
+                if( subDeviceIndex == 0 )
+                {
+                    return log.m_Result = defaultGuid;
+                }
+
+                std::stringstream stream;
+                stream << std::setfill( '0' ) << std::setw( valueToReplace.size() ) << std::hex << subDeviceIndex;
+                std::string subDeviceIndexHexString( stream.str() );
+
+                return log.m_Result = std::regex_replace( defaultGuid, std::regex( valueToReplace ), subDeviceIndexHexString.c_str() );
             }
         };
     } // namespace BASE

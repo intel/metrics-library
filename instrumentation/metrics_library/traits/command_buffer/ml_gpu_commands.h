@@ -549,11 +549,11 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
+                const uint32_t oaTailPostBeginOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPostBegin );
+                const uint32_t oaTailPreEndOffset    = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPreEnd );
                 const uint32_t oaReportOffset        = begin
                            ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa )
                            : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
-                const uint32_t oaTailPostBeginOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPostBegin );
-                const uint32_t oaTailPreEndOffset    = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPreEnd );
 
                 // Ticks before triggered report.
                 if( begin )
@@ -1347,6 +1347,56 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief  Writes commands to gpu command buffer to store hw counters.
+            /// @param  buffer          target command buffer.
+            /// @param  collectingMode  oa report collecting mode.
+            /// @param  address         memory offset.
+            /// @param  reportId        report id.
+            /// @param  queryId         query id.
+            /// @param  begin           begin query.
+            /// @param  flags           gpu command flags.
+            /// @return                 operation status.
+            //////////////////////////////////////////////////////////////////////////
+            template <typename CommandBuffer>
+            ML_INLINE static StatusCode StoreHwCounters(
+                CommandBuffer&                                             buffer,
+                const TT::Layouts::HwCounters::Query::ReportCollectingMode reportingMode,
+                const uint64_t                                             address,
+                const uint32_t                                             reportId,
+                const uint32_t                                             queryId,
+                const bool                                                 begin,
+                const Flags                                                flags = Flags::None )
+            {
+                ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreCommandStreamerIdentificator(
+                    buffer,
+                    address,
+                    begin,
+                    flags ) );
+
+                switch( reportingMode )
+                {
+                    case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag:
+                        return log.m_Result = T::GpuCommands::StoreHwCountersViaSrmOag(
+                                   buffer,
+                                   address,
+                                   reportId,
+                                   begin,
+                                   flags );
+
+                    default:
+                        return log.m_Result = Base::StoreHwCounters(
+                                   buffer,
+                                   reportingMode,
+                                   address,
+                                   reportId,
+                                   queryId,
+                                   begin,
+                                   flags );
+                }
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Writes STORE_REGISTER_MEM commands to gpu command buffer to
             ///         store hw counters.
             /// @param  buffer      target command buffer.
@@ -1529,12 +1579,6 @@ namespace ML
                     address,
                     reportId,
                     queryId,
-                    begin,
-                    flags ) );
-
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreCommandStreamerIdentificator(
-                    buffer,
-                    address,
                     begin,
                     flags ) );
 

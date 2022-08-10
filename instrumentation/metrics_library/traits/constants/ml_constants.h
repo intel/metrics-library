@@ -94,7 +94,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct OaBuffer
         {
-            static constexpr uint32_t m_InvalidIndex = 0xFFFFFFFF;
+            static constexpr uint32_t m_InvalidOffset = 0xFFFFFFFF;
         };
 
         //////////////////////////////////////////////////////////////////////////

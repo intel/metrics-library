@@ -291,7 +291,7 @@ extern "C" {
         else
         {
             // Initialize logging system.
-            LibraryConfiguration::IntializeLogger();
+            LibraryConfiguration::InitializeLogger();
 
             // Override api/gen settings.
             LibraryConfiguration::OverrideClientType( clientType );

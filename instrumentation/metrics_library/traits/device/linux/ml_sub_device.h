@@ -126,7 +126,7 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             SubDeviceTrait( TT::Context& context )
                 : Base( context )
-                , m_Engines()
+                , m_Engines{}
             {
             }
 

@@ -71,7 +71,7 @@ namespace ML
             , m_SubDevice( *this )
             , m_DdiObjects( *this )
             , m_State{}
-            , m_Internal()
+            , m_Internal{}
         {
         }
 

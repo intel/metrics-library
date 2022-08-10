@@ -62,7 +62,7 @@ namespace ML
                 Slot( TT::Context& context )
                     : m_GpuMemory{}
                     , m_Context( context )
-                    , m_OaBufferState()
+                    , m_OaBufferState{}
                     , m_ReportCollectingMode( T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters )
                 {
                     Reset();
@@ -125,7 +125,7 @@ namespace ML
                 : Base( context )
                 , m_GetDataMode( context.m_Kernel.GetQueryHwCountersReportingMode() )
                 , m_UserConfiguration{ nullptr }
-                , m_Slots()
+                , m_Slots{}
                 , m_EndTag( 0 )
             {
             }
@@ -389,7 +389,7 @@ namespace ML
                     m_Slots.emplace_back( m_Context );
                 }
 
-                return log.m_Result = m_Slots.size()
+                return log.m_Result = ( static_cast<uint32_t>( m_Slots.size() ) == slots )
                     ? StatusCode::Success
                     : StatusCode::IncorrectParameter;
             }
@@ -420,10 +420,13 @@ namespace ML
                     m_Slots[data.Slot].ClearReportGpu();
                 }
 
+                // Override oa report collecting mode if needed.
+                queryDerived.CheckReportCollectingMode( buffer, data.Slot );
+
                 ML_FUNCTION_CHECK( FlushCommandStreamer( buffer, true ) );
                 ML_FUNCTION_CHECK( WriteNopId( buffer, gpuAddress, true ) );
                 ML_FUNCTION_CHECK( WriteCoreFrequency( buffer, gpuAddress, true ) );
-                ML_FUNCTION_CHECK( queryDerived.WriteOaState( buffer, gpuAddress, true ) );
+                ML_FUNCTION_CHECK( queryDerived.WriteOaState( buffer, gpuAddress, data.Slot, true ) );
                 ML_FUNCTION_CHECK( WriteUserCounters( buffer, gpuAddress, true ) );
                 ML_FUNCTION_CHECK( queryDerived.WriteGpCounters( buffer, gpuAddress, true ) );
                 ML_FUNCTION_CHECK( queryDerived.WriteHwCounters( buffer, gpuAddress, data.Slot, true ) );
@@ -462,7 +465,7 @@ namespace ML
                 ML_FUNCTION_CHECK( queryDerived.WriteHwCounters( buffer, gpuAddress, data.Slot, false ) );
                 ML_FUNCTION_CHECK( queryDerived.WriteGpCounters( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteUserCounters( buffer, gpuAddress, false ) );
-                ML_FUNCTION_CHECK( queryDerived.WriteOaState( buffer, gpuAddress, false ) );
+                ML_FUNCTION_CHECK( queryDerived.WriteOaState( buffer, gpuAddress, data.Slot, false ) );
                 ML_FUNCTION_CHECK( WriteNopId( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteCoreFrequency( buffer, gpuAddress, false ) );
                 ML_FUNCTION_CHECK( WriteUserMarker( buffer, gpuAddress, data.MarkerUser ) );
@@ -756,10 +759,7 @@ namespace ML
                 const uint32_t slot,
                 const bool     begin )
             {
-                // Override oa report collecting mode if needed.
-                Derived().CheckReportCollectingMode( buffer, slot );
-
-                const auto&    collectingMode = m_Slots[slot].m_ReportCollectingMode;
+                const auto     collectingMode = m_Slots[slot].m_ReportCollectingMode;
                 const uint32_t queryId        = static_cast<const uint32_t>( T::Tools::GetHash( reinterpret_cast<const uintptr_t>( this ) ) );
 
                 const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
@@ -787,6 +787,7 @@ namespace ML
             /// @brief  Writes oa state.
             /// @param  buffer  target command buffer.
             /// @param  address gpu memory address.
+            /// @param  slot    query slot index.
             /// @param  begin   query begin.
             /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
@@ -794,7 +795,8 @@ namespace ML
             ML_INLINE StatusCode WriteOaState(
                 CommandBuffer& buffer,
                 const uint64_t address,
-                const bool     begin )
+                const uint32_t /*slot*/,
+                const bool begin )
             {
                 ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -1031,39 +1033,39 @@ namespace ML
                 auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
 
                 // OaBuffer data.
-                uint32_t reportsCount      = m_Context.m_OaBuffer.GetReportsCount();
-                uint32_t reportOaIndex     = 0;
-                uint32_t reportOaIndexPost = 0;
-                bool     reportOaValid     = false;
+                uint32_t oaBufferSize       = m_Context.m_OaBuffer.GetSize();
+                uint32_t reportOaOffset     = 0;
+                uint32_t reportOaOffsetPost = 0;
+                bool     reportOaValid      = false;
 
                 // Validate triggered oa report.
-                if( ML_SUCCESS( m_Context.m_OaBuffer.GetPreReportIndex( queryReport, begin, reportOaIndex ) ) &&
-                    ML_SUCCESS( m_Context.m_OaBuffer.GetPostReportIndex( queryReport, begin, reportOaIndexPost ) ) )
+                if( ML_SUCCESS( m_Context.m_OaBuffer.GetPreReportOffset( queryReport, begin, reportOaOffset ) ) &&
+                    ML_SUCCESS( m_Context.m_OaBuffer.GetPostReportOffset( queryReport, begin, reportOaOffsetPost ) ) )
                 {
                     auto& derived = Derived();
 
-                    while( !reportOaValid && ( reportOaIndex != reportOaIndexPost ) )
+                    while( !reportOaValid && ( reportOaOffset != reportOaOffsetPost ) )
                     {
-                        auto& reportOa = m_Context.m_OaBuffer.GetReport( reportOaIndex );
+                        auto& reportOa = m_Context.m_OaBuffer.GetReport( reportOaOffset );
 
-                        reportOaValid = derived.ValidateQueryId( reportOa.m_Header, reportOaIndex );
+                        reportOaValid = derived.ValidateQueryId( reportOa.m_Header, reportOaOffset );
 
                         if( !reportOaValid )
                         {
-                            reportOaIndex = ( reportOaIndex < reportsCount ) ? ++reportOaIndex : 0;
+                            reportOaOffset = ( reportOaOffset < oaBufferSize ) ? reportOaOffset + sizeof( TT::Layouts::HwCounters::ReportOa ) : 0;
                         }
                     }
 
                     // Recreate query report from triggered oa report.
                     if( reportOaValid )
                     {
-                        auto& reportOa = m_Context.m_OaBuffer.GetReport( reportOaIndex );
+                        auto& reportOa = m_Context.m_OaBuffer.GetReport( reportOaOffset );
                         log.Info(
                             "Used reportOa: ",
                             "(",
                             FormatFlag::Decimal,
                             FormatFlag::SetWidth5,
-                            reportOaIndex,
+                            reportOaOffset,
                             ")",
                             reportOa );
 
@@ -1249,7 +1251,7 @@ namespace ML
             {
                 ML_FUNCTION_LOG( true, &m_Context );
 
-                // Only context switch and mmio trigger reports have non-zero context id on XeHP_SDV+ platforms.
+                // Only context switch and mmio trigger reports have non-zero context id on XeHP+ platforms.
                 const uint32_t queryIdExpected = static_cast<const uint32_t>( T::Tools::GetHash( reinterpret_cast<const uintptr_t>( this ) ) );
                 const bool     validQueryId    = ( reportHeader.m_ContextId == queryIdExpected ) || m_Context.m_ClientOptions.m_WorkloadPartitionEnabled;
 

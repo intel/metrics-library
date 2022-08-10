@@ -171,54 +171,7 @@ namespace ML
         };
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for HeadRegister object.
-        //////////////////////////////////////////////////////////////////////////
-        struct HeadRegister
-        {
-            union
-            {
-                uint32_t m_Value;
-
-                struct
-                {
-                    uint32_t          : ML_BITFIELD_RANGE( 0, 5 );
-                    uint32_t m_Head   : ML_BITFIELD_RANGE( 6, 31 ); // Virtual address of the internal trigger based buffer updated by software
-                                                                    // after consuming from the report buffer. Updated by software.
-                } All;
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns oa head offset.
-            /// @return oa head offset.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetOffset() const
-            {
-                return All.m_Head << m_OaRegisterShift;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Returns oa head report index.
-            /// @param base    oa buffer base address.
-            /// @param context context.
-            /// @return        oa head report index.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetIndex( 
-                const Register     base, 
-                TT::Context&       context ) const
-            {
-                ML_FUNCTION_LOG( uint32_t{ 0 }, &context );
-
-                const uint32_t address    = base.GetAllocationOffset();
-                const uint32_t offset     = GetOffset();
-                const uint32_t reportSize = sizeof( TT::Layouts::HwCounters::ReportOa );
-
-                ML_ASSERT( address <= offset );
-                return log.m_Result = ( ( offset - address ) / reportSize );
-            }
-        };
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for OaTailLayout object.
+        /// @brief Oa tail register layout.
         //////////////////////////////////////////////////////////////////////////
         struct TailRegister
         {
@@ -235,52 +188,13 @@ namespace ML
             };
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns oa head offset.
-            /// @return oa head offset.
+            /// @brief  Returns oa tail offset.
+            /// @return oa tail offset.
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE uint32_t GetOffset() const
             {
                 return All.m_Tail << m_OaRegisterShift;
             }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Returns oa head report index.
-            /// @param base    oa buffer base address.
-            /// @param context context.
-            /// @return        oa head report index.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetIndex( 
-                const Register     base,
-                TT::Context&       context ) const
-            {
-                ML_FUNCTION_LOG( uint32_t{ 0 }, &context );
-
-                const uint32_t address    = base.GetAllocationOffset();
-                const uint32_t offset     = GetOffset();
-                const uint32_t reportSize = sizeof( TT::Layouts::HwCounters::ReportOa );
-
-                ML_ASSERT( address <= offset );
-                return log.m_Result = ( ( offset - address ) / reportSize );
-            }
-        };
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for ContextControlRegister object.
-        //////////////////////////////////////////////////////////////////////////
-        struct ContextControlRegister
-        {
-            union
-            {
-                uint32_t m_Value;
-
-                struct
-                {
-                    uint32_t m_OaResume       : ML_BITFIELD_BIT( 0 );         // Is OA stopped(0)/resumed(1).
-                    uint32_t m_TimerEnable    : ML_BITFIELD_BIT( 1 );         // Periodic Strobe enable.
-                    uint32_t m_TimerPeriod    : ML_BITFIELD_RANGE( 2, 7 );    // Strobe Period = MinTimestampPeriod * 2^(TimerPeriod).
-                    uint32_t                  : ML_BITFIELD_RANGE( 8, 31 );
-                } All;
-            };
         };
 
         ML_STRUCTURE_PACK_END();
@@ -294,17 +208,17 @@ namespace ML
             /// @brief Members.
             //////////////////////////////////////////////////////////////////////////
             // Three members below refer to the oa buffer reports which timestamps are in query window.
-            uint32_t                                m_CurrentIndex;       // Index of current end report in the oa buffer.
-            uint32_t                                m_NextAfterLastIndex; // Index of next after last report from the oa buffer.
-            uint32_t                                m_FirstIndex;         // Index of oldest report in the oa buffer.
+            uint32_t                                m_CurrentOffset;       // Offset of current end report in the oa buffer.
+            uint32_t                                m_NextAfterLastOffset; // Offset of next after last report from the oa buffer.
+            uint32_t                                m_FirstOffset;         // Offset of oldest report in the oa buffer.
 
-            uint32_t                                m_TailBeginIndex;     // First oa report after query begin.
-            uint32_t                                m_TailEndIndex;       // First oa report after query end.
+            uint32_t                                m_TailBeginOffset;     // First oa report after query begin.
+            uint32_t                                m_TailEndOffset;       // First oa report after query end.
 
-            uint32_t                                m_LogBeginIndex;      // Index of the begin report from the current slot.
-            uint32_t                                m_LogEndIndex;        // Index of the end report from the current slot.
+            uint32_t                                m_LogBeginOffset;      // Offset of the begin report from the current slot.
+            uint32_t                                m_LogEndOffset;        // Offset of the end report from the current slot.
 
-            TT::Layouts::HwCounters::ReportOa       m_ReportCopy[2];      // Buffer for begin & end reports.
+            TT::Layouts::HwCounters::ReportOa       m_ReportCopy[2];       // Buffer for begin & end reports.
             uint8_t                                 m_ReportCopyIndex;
 
             bool                                    m_ConfigurationValid;
@@ -314,13 +228,13 @@ namespace ML
             /// @brief State constructor.
             //////////////////////////////////////////////////////////////////////////
             State()
-                : m_CurrentIndex( Constants::OaBuffer::m_InvalidIndex )
-                , m_NextAfterLastIndex( Constants::OaBuffer::m_InvalidIndex )
-                , m_FirstIndex( Constants::OaBuffer::m_InvalidIndex )
-                , m_TailBeginIndex( 0 )
-                , m_TailEndIndex( 0 )
-                , m_LogBeginIndex( 0 )
-                , m_LogEndIndex( 0 )
+                : m_CurrentOffset( Constants::OaBuffer::m_InvalidOffset )
+                , m_NextAfterLastOffset( Constants::OaBuffer::m_InvalidOffset )
+                , m_FirstOffset( Constants::OaBuffer::m_InvalidOffset )
+                , m_TailBeginOffset( 0 )
+                , m_TailEndOffset( 0 )
+                , m_LogBeginOffset( 0 )
+                , m_LogEndOffset( 0 )
                 , m_ReportCopy{}
                 , m_ReportCopyIndex( 0 )
                 , m_ConfigurationValid( true )
@@ -333,9 +247,9 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE void Reset()
             {
-                m_FirstIndex            = Constants::OaBuffer::m_InvalidIndex;
-                m_CurrentIndex          = Constants::OaBuffer::m_InvalidIndex;
-                m_NextAfterLastIndex    = Constants::OaBuffer::m_InvalidIndex;
+                m_FirstOffset            = Constants::OaBuffer::m_InvalidOffset;
+                m_CurrentOffset          = Constants::OaBuffer::m_InvalidOffset;
+                m_NextAfterLastOffset    = Constants::OaBuffer::m_InvalidOffset;
                 m_ConfigurationValid    = true;
                 m_ContextValid          = true;
             }
@@ -353,10 +267,8 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief Sanity check.
         //////////////////////////////////////////////////////////////////////////
-        ML_STATIC_ASSERT( ML_SIZE32( StatusRegister ) == 1,         "Wrong oa status register structure size" );
-        ML_STATIC_ASSERT( ML_SIZE32( HeadRegister ) == 1,           "Wrong oa head register structure size" );
-        ML_STATIC_ASSERT( ML_SIZE32( TailRegister ) == 1,           "Wrong oa tail register structure size" );
-        ML_STATIC_ASSERT( ML_SIZE32( ContextControlRegister ) == 1, "Wrong oa context control register structure size" );
+        ML_STATIC_ASSERT( ML_SIZE32( StatusRegister ) == 1, "Wrong oa status register structure size" );
+        ML_STATIC_ASSERT( ML_SIZE32( TailRegister ) == 1,   "Wrong oa tail register structure size" );
     };
 } // namespace ML
 // clang-format on

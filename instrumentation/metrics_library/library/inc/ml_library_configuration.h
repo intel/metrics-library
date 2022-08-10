@@ -24,7 +24,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Initializes log settings.
         //////////////////////////////////////////////////////////////////////////
-        static void IntializeLogger()
+        static void InitializeLogger()
         {
             IuLogGetSettings( nullptr );
         }

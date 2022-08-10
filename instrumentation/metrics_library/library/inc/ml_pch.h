@@ -44,6 +44,7 @@ using namespace MetricsLibraryApi;
 #include <memory>
 #include <mutex>
 #include <iomanip>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <unordered_map>

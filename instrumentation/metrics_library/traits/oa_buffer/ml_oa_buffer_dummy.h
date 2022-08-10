@@ -94,6 +94,16 @@ namespace ML
             }
 
             //////////////////////////////////////////////////////////////////////////
+            /// @brief  Returns oa buffer size in bytes.
+            /// @return oa buffer size.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE uint32_t GetSize() const
+            {
+                ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Context );
+                return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
             /// @brief  Finds oa reports from oa buffer between query begin/end reports.
             /// @param  oaBufferState  oa buffer state.
             /// @return                oa reports count between query begin/end.
@@ -105,10 +115,10 @@ namespace ML
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief  Returns oa report from oa buffer.
-            /// @param  index   oa report index within oa buffer.
+            /// @param  offset  oa report offset within oa buffer.
             /// @return         reference to oa report.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE const TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t /*index*/ ) const
+            ML_INLINE const TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t /*offset*/ ) const
             {
                 return m_OaReportDummy;
             }
@@ -117,13 +127,13 @@ namespace ML
             /// @brief  Returns first oa report associated with query begin/end report.
             /// @param  query   gpu report collected by query.
             /// @param  begin   query begin/end.
-            /// @return index   oa tail index.
+            /// @return offset  oa tail offset.
             /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode GetPreReportIndex(
+            ML_INLINE StatusCode GetPreReportOffset(
                 const TT::Layouts::HwCounters::Query::ReportGpu& /*query*/,
                 const bool /*begin*/,
-                uint32_t& /*index*/ )
+                uint32_t& /*offset*/ )
             {
                 ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
                 return StatusCode::Failed;
@@ -133,26 +143,16 @@ namespace ML
             /// @brief  Returns last oa report associated with query begin/end report.
             /// @param  query   gpu report collected by query.
             /// @param  begin   query begin/end.
-            /// @return index   oa tail index.
+            /// @return offset  oa tail offset.
             /// @return         operation status.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode GetPostReportIndex(
+            ML_INLINE StatusCode GetPostReportOffset(
                 const TT::Layouts::HwCounters::Query::ReportGpu& /*query*/,
                 const bool /*begin*/,
-                uint32_t& /*index*/ )
+                uint32_t& /*offset*/ )
             {
                 ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
                 return StatusCode::Failed;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns oa reports count within oa buffer.
-            /// @return oa reports count within oa buffer.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetReportsCount() const
-            {
-                ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Context );
-                return log.m_Result;
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -164,6 +164,17 @@ namespace ML
             {
                 ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
                 return log.m_Result;
+            }
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Prints out requested report count.
+            /// @param offset   oa report start offset.
+            /// @param count    oa report count.
+            //////////////////////////////////////////////////////////////////////////
+            ML_INLINE void PrintReports(
+                const uint32_t /*offset*/,
+                const uint32_t /*count*/ )
+            {
             }
         };
     } // namespace BASE
