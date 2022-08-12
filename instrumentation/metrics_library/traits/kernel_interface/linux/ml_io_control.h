@@ -269,13 +269,15 @@ namespace ML
             {
                 ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Tbs::m_Invalid }, &m_Kernel.m_Context );
 
-                const char*             guid                  = T::ConstantsOs::Tbs::m_ActiveMetricSetGuid;
-                uint32_t                guidLength            = strlen( T::ConstantsOs::Tbs::m_ActiveMetricSetGuid );
+                const uint32_t    subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
+                const std::string guid           = GenerateQueryGuid( subDeviceIndex );
+                ML_FUNCTION_CHECK_ERROR( guid != "", T::ConstantsOs::Tbs::m_Invalid );
+
                 drm_i915_perf_oa_config configuration         = {};
                 uint32_t                configurationDummy[2] = { T::GpuRegisters::m_OaTrigger2, 0 };
 
                 // Copy guid without ending '\0' (size 36).
-                T::Tools::MemoryCopy( configuration.uuid, sizeof( configuration.uuid ), guid, guidLength );
+                T::Tools::MemoryCopy( configuration.uuid, sizeof( configuration.uuid ), guid.c_str(), guid.size() );
 
                 // Dummy configuration parameters.
                 configuration.boolean_regs_ptr = reinterpret_cast<uint64_t>( configurationDummy );
