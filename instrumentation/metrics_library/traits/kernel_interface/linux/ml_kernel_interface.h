@@ -249,7 +249,7 @@ namespace ML
         /// @param  userConfiguration   activated mmio user configuration.
         /// @return                     operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetUserConfiguration( TT::Layouts::Configuration::UserRegisters& /*userConfiguration*/ ) const
+        ML_INLINE StatusCode GetUserConfiguration( [[maybe_unused]] TT::Layouts::Configuration::UserRegisters& userConfiguration ) const
         {
             ML_FUNCTION_LOG( StatusCode::NotSupported, &m_Context );
 

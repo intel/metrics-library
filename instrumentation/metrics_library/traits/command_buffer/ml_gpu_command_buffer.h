@@ -175,47 +175,8 @@ namespace ML
         /// @param  command gpu command.
         /// @return         gpu memory address.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static uint64_t GetMemoryAddress( const TT::Layouts::GpuCommands::MI_LOAD_REGISTER_IMM& /*command*/ )
-        {
-            return 0;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns gpu memory address from gpu command.
-        /// @param  command gpu command.
-        /// @return         gpu memory address.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static uint64_t GetMemoryAddress( const TT::Layouts::GpuCommands::MI_STORE_DATA_IMM& /*command*/ )
-        {
-            return 0;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns gpu memory address from gpu command.
-        /// @param  command gpu command.
-        /// @return         gpu memory address.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static uint64_t GetMemoryAddress( const TT::Layouts::GpuCommands::PIPE_CONTROL& /*command*/ )
-        {
-            return 0;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns gpu memory address from gpu command.
-        /// @param  command gpu command.
-        /// @return         gpu memory address.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static uint64_t GetMemoryAddress( const TT::Layouts::GpuCommands::MI_COPY_MEM_MEM& /*command*/ )
-        {
-            return 0;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns gpu memory address from gpu command.
-        /// @param  command gpu command.
-        /// @return         gpu memory address.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static uint64_t GetMemoryAddress( const TT::Layouts::GpuCommands::MI_LOAD_REGISTER_REG& /*command*/ )
+        template <typename GpuCommand>
+        ML_INLINE static uint64_t GetMemoryAddress( const GpuCommand& )
         {
             return 0;
         }

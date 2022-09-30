@@ -66,7 +66,7 @@ set (LIB_VERSION ${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_BUILD_VERSION})
 #################################################################################
 # CONFIGURE C++ STANDARD
 #################################################################################
-set (CMAKE_CXX_STANDARD 14)
+set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #################################################################################
@@ -463,6 +463,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_i915_perf.h
     )
 elseif (${PLATFORM} STREQUAL linux) # linux
     source_group (codegen\\traits\\linux             ${BS_DIR_INSTRUMENTATION}/metrics_library/codegen/traits/linux/.*h)
@@ -482,6 +483,7 @@ elseif (${PLATFORM} STREQUAL linux) # linux
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
+        ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_i915_perf.h
     )
 else()
     message("-- Using platform is ${PLATFORM}")

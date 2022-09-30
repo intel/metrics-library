@@ -15,375 +15,372 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML
+namespace ML::BASE
 {
-    namespace BASE
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Base type for OaBufferMappedTrait object.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct OaBufferMappedTrait
     {
+        ML_DELETE_DEFAULT_COPY_AND_MOVE( OaBufferMappedTrait );
+
+    private:
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for OaBufferMappedTrait object.
+        /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        template <typename T>
-        struct OaBufferMappedTrait
+        TT::KernelInterface&              m_Kernel;
+        const TT::Layouts::OaBuffer::Type m_OaBufferType;
+        TT::TbsInterface::OaBufferMapped& m_OaBuffer;
+        TT::Layouts::HwCounters::ReportOa m_ReportSplitted;
+
+    public:
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief OaBufferMappedTrait constructor.
+        /// @param kernel   kernel interface.
+        //////////////////////////////////////////////////////////////////////////
+        OaBufferMappedTrait( TT::KernelInterface& kernel )
+            : m_Kernel( kernel )
+            , m_OaBufferType( T::Layouts::OaBuffer::Type::Oa )
+            , m_OaBuffer( kernel.m_Tbs.GetOaBufferMapped( m_OaBufferType ) )
+            , m_ReportSplitted{}
         {
-            ML_DELETE_DEFAULT_COPY_AND_MOVE( OaBufferMappedTrait );
+        }
 
-        private:
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Members.
-            //////////////////////////////////////////////////////////////////////////
-            TT::KernelInterface&              m_Kernel;
-            const TT::Layouts::OaBuffer::Type m_OaBufferType;
-            TT::TbsInterface::OaBufferMapped& m_OaBuffer;
-            TT::Layouts::HwCounters::ReportOa m_ReportSplitted;
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns description about itself.
+        /// @return trait name used in library's code.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static const std::string GetDescription()
+        {
+            return "OaBufferMappedTrait<Traits>";
+        }
 
-        public:
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief OaBufferMappedTrait constructor.
-            /// @param kernel   kernel interface.
-            //////////////////////////////////////////////////////////////////////////
-            OaBufferMappedTrait( TT::KernelInterface& kernel )
-                : m_Kernel( kernel )
-                , m_OaBufferType( T::Layouts::OaBuffer::Type::Oa )
-                , m_OaBuffer( kernel.m_Tbs.GetOaBufferMapped( m_OaBufferType ) )
-                , m_ReportSplitted{}
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Initializes oa buffer.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode Initialize()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            // Some cases does not require mapped oa buffer.
+            // For example when tbs is used by metrics discovery.
+            log.m_Result = m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled
+                ? StatusCode::Success
+                : m_OaBuffer.Map();
+
+            // Mapped oa buffer may not be required for some cases.
+            // For example linux without oa buffer mapping patch
+            // will use a standard mirpc (without context switch handling).
+            log.m_Result = T::ConstantsOs::Tbs::m_MappingRequired
+                ? log.m_Result
+                : StatusCode::Success;
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Updates oa buffer state kept by hw counters query.
+        /// @param  query query instance.
+        /// @return       operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode UpdateQuery( TT::Queries::HwCounters::Slot& query ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_ASSERT( IsValid() );
+
+            auto& state     = query.m_OaBufferState;
+            auto& reportGpu = query.GetReportGpu();
+
+            const uint32_t base      = reportGpu.m_OaBuffer.GetAllocationOffset();
+            const uint32_t tailBegin = reportGpu.m_OaTailPreBegin.GetOffset();
+            const uint32_t tailEnd   = reportGpu.m_OaTailPostEnd.GetOffset();
+
+            const bool validBegin = tailBegin >= base;
+            const bool validEnd   = tailEnd >= base;
+
+            state.m_TailBeginOffset = tailBegin - base;
+            state.m_TailEndOffset   = tailEnd - base;
+            log.m_Result            = ML_STATUS( validBegin && validEnd );
+
+            log.Debug( "Base address   ", base );
+            log.Debug( "Tail pre begin ", tailBegin, state.m_TailBeginOffset );
+            log.Debug( "Tail post end  ", tailEnd, state.m_TailEndOffset );
+            log.Debug( "Valid          ", log.m_Result );
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Releases a reference to oa buffer.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode Release()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            return log.m_Result = m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled
+                ? StatusCode::Success
+                : m_OaBuffer.Unmap();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks oa buffer correctness.
+        /// @return true if oa buffer has valid state.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsValid() const
+        {
+            ML_FUNCTION_LOG( false, &m_Kernel.m_Context );
+
+            return log.m_Result = m_OaBuffer.IsMapped();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa buffer size in bytes.
+        /// @return oa buffer size.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t GetSize() const
+        {
+            return m_OaBuffer.m_Size;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Finds oa reports between query begin/end reports.
+        /// @param  oaBufferState  oa buffer state.
+        /// @return                oa reports count between query begin/end.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t FindOaWindow( const TT::Layouts::OaBuffer::State& oaBufferState ) const
+        {
+            ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
+            ML_ASSERT( m_OaBuffer.IsMapped() );
+
+            const uint32_t oaWindow       = oaBufferState.m_TailEndOffset - oaBufferState.m_TailBeginOffset;
+            const uint32_t oaReportsCount = ( ( ( oaBufferState.m_TailEndOffset < oaBufferState.m_TailBeginOffset ) ? m_OaBuffer.m_Size : 0 ) + oaWindow ) / sizeof( TT::Layouts::HwCounters::ReportOa );
+
+            log.Info( "Oa tail begin offset", FormatFlag::Decimal, oaBufferState.m_TailBeginOffset );
+            log.Info( "Oa tail end offset  ", FormatFlag::Decimal, oaBufferState.m_TailEndOffset );
+            log.Info( "Oa reports count    ", FormatFlag::Decimal, oaReportsCount );
+
+            return log.m_Result = oaReportsCount;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa report from oa buffer.
+        /// @param  offset  oa report offset within oa buffer.
+        /// @return         reference to oa report.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t offset )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_ASSERT( m_OaBuffer.IsMapped() )
+
+            const bool oaReportSplit = IsSplitted( offset );
+
+            auto& oaReport = oaReportSplit
+                ? GetSplittedReport( offset )
+                : *reinterpret_cast<TT::Layouts::HwCounters::ReportOa*>( static_cast<uint8_t*>( m_OaBuffer.m_CpuAddress ) + offset );
+
+            log.Debug( "Oa report offset", FormatFlag::Decimal, offset );
+            log.Debug( "Oa report split", oaReportSplit );
+            log.Debug( "Oa report", oaReport );
+
+            return oaReport;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns first oa report associated with query begin/end report.
+        /// @param  reportGpu   gpu report collected by query.
+        /// @param  begin       query begin/end.
+        /// @return offset      oa tail offset.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetPreReportOffset(
+            const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
+            const bool                                       begin,
+            uint32_t&                                        offset )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
+
+            const auto&    oaTail = begin ? reportGpu.m_OaTailPreBegin : reportGpu.m_OaTailPreEnd;
+            const uint32_t base   = reportGpu.m_OaBuffer.GetAllocationOffset();
+            const uint32_t size   = m_OaBuffer.m_Size;
+            offset                = oaTail.GetOffset() - base;
+
+            log.Debug( "Offset", offset );
+
+            return log.m_Result = ML_STATUS( offset < size );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns last oa report associated with query begin/end report.
+        /// @param  query   gpu report collected by query.
+        /// @param  begin   query begin/end.
+        /// @return offset  oa tail offset.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetPostReportOffset(
+            const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
+            const bool                                       begin,
+            uint32_t&                                        offset )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
+
+            const auto&    oaTail = begin ? reportGpu.m_OaTailPostBegin : reportGpu.m_OaTailPostEnd;
+            const uint32_t base   = reportGpu.m_OaBuffer.GetAllocationOffset();
+            const uint32_t size   = m_OaBuffer.m_Size;
+            offset                = oaTail.GetOffset() - base;
+
+            log.Debug( "Offset", offset );
+
+            return log.m_Result = ML_STATUS( offset < size );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Dumps oa buffer reports between query begin / query end.
+        /// @param  reportGpu   gpu query report.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu reportGpu )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            if( T::Tools::CheckLogLevel( LogType::Csv ) )
             {
-            }
+                const auto     emptyReportOa = TT::Layouts::HwCounters::ReportOa{};
+                const uint32_t base          = reportGpu.m_OaBuffer.GetAllocationOffset();
+                const uint32_t beginOffset   = reportGpu.m_OaTailPreBegin.GetOffset() - base;
+                const uint32_t endOffset     = reportGpu.m_OaTailPostEnd.GetOffset() - base;
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns description about itself.
-            /// @return trait name used in library's code.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static const std::string GetDescription()
-            {
-                return "OaBufferMappedTrait<Traits>";
-            }
+                // Print empty report first to distinguish oa buffer reports for different queries.
+                log.Csv( &m_Kernel.m_Context, emptyReportOa );
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Initializes oa buffer.
-            /// @return operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Initialize()
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-                // Some cases does not require mapped oa buffer.
-                // For example when tbs is used by metrics discovery.
-                log.m_Result = m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled
-                    ? StatusCode::Success
-                    : m_OaBuffer.Map();
-
-                // Mapped oa buffer may not be required for some cases.
-                // For example linux without oa buffer mapping patch
-                // will use a standard mirpc (without context switch handling).
-                log.m_Result = T::ConstantsOs::Tbs::m_MappingRequired
-                    ? log.m_Result
-                    : StatusCode::Success;
-
-                return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Updates oa buffer state kept by hw counters query.
-            /// @param  query query instance.
-            /// @return       operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode UpdateQuery( TT::Queries::HwCounters::Slot& query ) const
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_ASSERT( IsValid() );
-
-                auto& state     = query.m_OaBufferState;
-                auto& reportGpu = query.GetReportGpu();
-
-                const uint32_t base      = reportGpu.m_OaBuffer.GetAllocationOffset();
-                const uint32_t tailBegin = reportGpu.m_OaTailPreBegin.GetOffset();
-                const uint32_t tailEnd   = reportGpu.m_OaTailPostEnd.GetOffset();
-
-                const bool validBegin = tailBegin >= base;
-                const bool validEnd   = tailEnd >= base;
-
-                state.m_TailBeginOffset = tailBegin - base;
-                state.m_TailEndOffset   = tailEnd - base;
-                log.m_Result            = ML_STATUS( validBegin && validEnd );
-
-                log.Debug( "Base address   ", base );
-                log.Debug( "Tail pre begin ", tailBegin, state.m_TailBeginOffset );
-                log.Debug( "Tail post end  ", tailEnd, state.m_TailEndOffset );
-                log.Debug( "Valid          ", log.m_Result );
-
-                return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Releases a reference to oa buffer.
-            /// @return operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Release()
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-                return log.m_Result = m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled
-                    ? StatusCode::Success
-                    : m_OaBuffer.Unmap();
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Checks oa buffer correctness.
-            /// @return true if oa buffer has valid state.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE bool IsValid() const
-            {
-                ML_FUNCTION_LOG( false, &m_Kernel.m_Context );
-
-                return log.m_Result = m_OaBuffer.IsMapped();
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns oa buffer size in bytes.
-            /// @return oa buffer size.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetSize() const
-            {
-                return m_OaBuffer.m_Size;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Finds oa reports between query begin/end reports.
-            /// @param  oaBufferState  oa buffer state.
-            /// @return                oa reports count between query begin/end.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t FindOaWindow( const TT::Layouts::OaBuffer::State& oaBufferState ) const
-            {
-                ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
-                ML_ASSERT( m_OaBuffer.IsMapped() );
-
-                const uint32_t oaWindow       = oaBufferState.m_TailEndOffset - oaBufferState.m_TailBeginOffset;
-                const uint32_t oaReportsCount = ( ( ( oaBufferState.m_TailEndOffset < oaBufferState.m_TailBeginOffset ) ? m_OaBuffer.m_Size : 0 ) + oaWindow ) / sizeof( TT::Layouts::HwCounters::ReportOa );
-
-                log.Info( "Oa tail begin offset", FormatFlag::Decimal, oaBufferState.m_TailBeginOffset );
-                log.Info( "Oa tail end offset  ", FormatFlag::Decimal, oaBufferState.m_TailEndOffset );
-                log.Info( "Oa reports count    ", FormatFlag::Decimal, oaReportsCount );
-
-                return log.m_Result = oaReportsCount;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns oa report from oa buffer.
-            /// @param  offset  oa report offset within oa buffer.
-            /// @return         reference to oa report.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t offset )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_ASSERT( m_OaBuffer.IsMapped() )
-
-                const bool oaReportSplit = IsSplitted( offset );
-
-                auto& oaReport = oaReportSplit
-                    ? GetSplittedReport( offset )
-                    : *reinterpret_cast<TT::Layouts::HwCounters::ReportOa*>( static_cast<uint8_t*>( m_OaBuffer.m_CpuAddress ) + offset );
-
-                log.Debug( "Oa report offset", FormatFlag::Decimal, offset );
-                log.Debug( "Oa report split", oaReportSplit );
-                log.Debug( "Oa report", oaReport );
-
-                return oaReport;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns first oa report associated with query begin/end report.
-            /// @param  reportGpu   gpu report collected by query.
-            /// @param  begin       query begin/end.
-            /// @return offset      oa tail offset.
-            /// @return             operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode GetPreReportOffset(
-                const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-                const bool                                       begin,
-                uint32_t&                                        offset )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
-
-                const auto&    oaTail = begin ? reportGpu.m_OaTailPreBegin : reportGpu.m_OaTailPreEnd;
-                const uint32_t base   = reportGpu.m_OaBuffer.GetAllocationOffset();
-                const uint32_t size   = m_OaBuffer.m_Size;
-                offset                = oaTail.GetOffset() - base;
-
-                log.Debug( "Offset", offset );
-
-                return log.m_Result = ML_STATUS( offset < size );
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns last oa report associated with query begin/end report.
-            /// @param  query   gpu report collected by query.
-            /// @param  begin   query begin/end.
-            /// @return offset  oa tail offset.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode GetPostReportOffset(
-                const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-                const bool                                       begin,
-                uint32_t&                                        offset )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
-
-                const auto&    oaTail = begin ? reportGpu.m_OaTailPostBegin : reportGpu.m_OaTailPostEnd;
-                const uint32_t base   = reportGpu.m_OaBuffer.GetAllocationOffset();
-                const uint32_t size   = m_OaBuffer.m_Size;
-                offset                = oaTail.GetOffset() - base;
-
-                log.Debug( "Offset", offset );
-
-                return log.m_Result = ML_STATUS( offset < size );
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Dumps oa buffer reports between query begin / query end.
-            /// @param  reportGpu   gpu query report.
-            /// @return operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu reportGpu )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-                if( T::Tools::CheckLogLevel( LogType::Csv ) )
+                if( beginOffset != endOffset )
                 {
-                    const auto     emptyReportOa = TT::Layouts::HwCounters::ReportOa{};
-                    const uint32_t base          = reportGpu.m_OaBuffer.GetAllocationOffset();
-                    const uint32_t beginOffset   = reportGpu.m_OaTailPreBegin.GetOffset() - base;
-                    const uint32_t endOffset     = reportGpu.m_OaTailPostEnd.GetOffset() - base;
+                    const uint32_t size   = m_OaBuffer.m_Size;
+                    uint32_t       offset = beginOffset;
 
-                    // Print empty report first to distinguish oa buffer reports for different queries.
-                    log.Csv( &m_Kernel.m_Context, emptyReportOa );
+                    ML_ASSERT( ( beginOffset < size ) && ( endOffset < size ) );
 
-                    if( beginOffset != endOffset )
+                    do
                     {
-                        const uint32_t size   = m_OaBuffer.m_Size;
-                        uint32_t       offset = beginOffset;
-
-                        ML_ASSERT( ( beginOffset < size ) && ( endOffset < size ) );
-
-                        do
-                        {
-                            log.Csv( &m_Kernel.m_Context, GetReport( offset ) );
-                            offset = ( offset + sizeof( TT::Layouts::HwCounters::ReportOa ) ) % size;
-                        }
-                        while( offset != endOffset );
+                        log.Csv( &m_Kernel.m_Context, GetReport( offset ) );
+                        offset = ( offset + sizeof( TT::Layouts::HwCounters::ReportOa ) ) % size;
                     }
-                }
-
-                return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Prints out requested report count.
-            /// @param offset   oa report start offset.
-            /// @param count    oa report count.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE void PrintReports(
-                const uint32_t offset,
-                const uint32_t count )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_ASSERT( offset + count * sizeof( TT::Layouts::HwCounters::ReportOa ) < m_OaBuffer.m_Size );
-
-                for( uint32_t i = 0; i < count; ++i )
-                {
-                    const auto& oaReport = GetReport( offset + i * sizeof( TT::Layouts::HwCounters::ReportOa ) );
-                    log.Debug( "Oa report", i, oaReport );
+                    while( offset != endOffset );
                 }
             }
 
-        private:
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Checks whether oa report is splitted.
-            /// @param  offset  oa report offset.
-            /// @return         true if oa report is splitted.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE bool IsSplitted( const uint32_t offset ) const
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Prints out requested report count.
+        /// @param offset   oa report start offset.
+        /// @param count    oa report count.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void PrintReports(
+            const uint32_t offset,
+            const uint32_t count )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_ASSERT( offset + count * sizeof( TT::Layouts::HwCounters::ReportOa ) < m_OaBuffer.m_Size );
+
+            for( uint32_t i = 0; i < count; ++i )
             {
-                return ( offset + m_OaBuffer.m_ReportSize ) > m_OaBuffer.m_Size;
+                const auto& oaReport = GetReport( offset + i * sizeof( TT::Layouts::HwCounters::ReportOa ) );
+                log.Debug( "Oa report", i, oaReport );
             }
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Reconstructs splitted oa report.
-            /// @param  offset  splitted oa report offset.
-            /// @return         a reference to reconstructed oa report.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE TT::Layouts::HwCounters::ReportOa& GetSplittedReport( const uint32_t offset )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-                const uint32_t reportSize  = m_OaBuffer.m_ReportSize;
-                uint8_t*       report      = reinterpret_cast<uint8_t*>( &m_ReportSplitted );
-                uint8_t*       cpuAddress  = reinterpret_cast<uint8_t*>( m_OaBuffer.m_CpuAddress );
-                const uint32_t part1Length = m_OaBuffer.m_Size - offset;
-                const uint32_t part2Length = reportSize - part1Length;
-
-                T::Tools::MemoryCopy( report, reportSize, cpuAddress + offset, part1Length );
-                T::Tools::MemoryCopy( report + part1Length, reportSize - part1Length, cpuAddress, part2Length );
-
-                ML_ASSERT( ( offset + reportSize ) > m_OaBuffer.m_Size );
-
-                return m_ReportSplitted;
-            }
-        };
-    } // namespace BASE
-
-    namespace GEN9
-    {
-        template <typename T>
-        struct OaBufferMappedTrait : BASE::OaBufferMappedTrait<T>
+    private:
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks whether oa report is splitted.
+        /// @param  offset  oa report offset.
+        /// @return         true if oa report is splitted.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsSplitted( const uint32_t offset ) const
         {
-            ML_DECLARE_TRAIT( OaBufferMappedTrait, BASE );
-        };
-    } // namespace GEN9
+            return ( offset + m_OaBuffer.m_ReportSize ) > m_OaBuffer.m_Size;
+        }
 
-    namespace GEN11
-    {
-        template <typename T>
-        struct OaBufferMappedTrait : GEN9::OaBufferMappedTrait<T>
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Reconstructs splitted oa report.
+        /// @param  offset  splitted oa report offset.
+        /// @return         a reference to reconstructed oa report.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE TT::Layouts::HwCounters::ReportOa& GetSplittedReport( const uint32_t offset )
         {
-            ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN9 );
-        };
-    } // namespace GEN11
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
-    namespace XE_LP
-    {
-        template <typename T>
-        struct OaBufferMappedTrait : GEN11::OaBufferMappedTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN11 );
-        };
-    } // namespace XE_LP
+            const uint32_t reportSize  = m_OaBuffer.m_ReportSize;
+            uint8_t*       report      = reinterpret_cast<uint8_t*>( &m_ReportSplitted );
+            uint8_t*       cpuAddress  = reinterpret_cast<uint8_t*>( m_OaBuffer.m_CpuAddress );
+            const uint32_t part1Length = m_OaBuffer.m_Size - offset;
+            const uint32_t part2Length = reportSize - part1Length;
 
-    namespace XE_HP
-    {
-        template <typename T>
-        struct OaBufferMappedTrait : XE_LP::OaBufferMappedTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_LP );
-        };
-    } // namespace XE_HP
+            T::Tools::MemoryCopy( report, reportSize, cpuAddress + offset, part1Length );
+            T::Tools::MemoryCopy( report + part1Length, reportSize - part1Length, cpuAddress, part2Length );
 
-    namespace XE_HPG
-    {
-        template <typename T>
-        struct OaBufferMappedTrait : XE_HP::OaBufferMappedTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HP );
-        };
-    } // namespace XE_HPG
+            ML_ASSERT( ( offset + reportSize ) > m_OaBuffer.m_Size );
 
-    namespace XE_HPC
+            return m_ReportSplitted;
+        }
+    };
+} // namespace ML::BASE
+
+namespace ML::GEN9
+{
+    template <typename T>
+    struct OaBufferMappedTrait : BASE::OaBufferMappedTrait<T>
     {
-        template <typename T>
-        struct OaBufferMappedTrait : XE_HPG::OaBufferMappedTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HPG );
-        };
-    } // namespace XE_HPC
-} // namespace ML
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, BASE );
+    };
+} // namespace ML::GEN9
+
+namespace ML::GEN11
+{
+    template <typename T>
+    struct OaBufferMappedTrait : GEN9::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN9 );
+    };
+} // namespace ML::GEN11
+
+namespace ML::XE_LP
+{
+    template <typename T>
+    struct OaBufferMappedTrait : GEN11::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN11 );
+    };
+} // namespace ML::XE_LP
+
+namespace ML::XE_HP
+{
+    template <typename T>
+    struct OaBufferMappedTrait : XE_LP::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_LP );
+    };
+} // namespace ML::XE_HP
+
+namespace ML::XE_HPG
+{
+    template <typename T>
+    struct OaBufferMappedTrait : XE_HP::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HP );
+    };
+} // namespace ML::XE_HPG
+
+namespace ML::XE_HPC
+{
+    template <typename T>
+    struct OaBufferMappedTrait : XE_HPG::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HPG );
+    };
+} // namespace ML::XE_HPC

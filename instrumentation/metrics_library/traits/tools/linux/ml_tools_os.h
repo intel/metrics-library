@@ -14,154 +14,151 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML
+namespace ML::BASE
 {
-    namespace BASE
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Base type for ToolsOsTrait object.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct ToolsOsTrait
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( ToolsOsTrait );
+        ML_DELETE_DEFAULT_COPY_AND_MOVE( ToolsOsTrait );
+
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for ToolsOsTrait object.
+        /// @brief  Returns description about itself.
+        /// @return trait name used in library's code.
         //////////////////////////////////////////////////////////////////////////
-        template <typename T>
-        struct ToolsOsTrait
+        ML_INLINE static const std::string GetDescription()
         {
-            ML_DELETE_DEFAULT_CONSTRUCTOR( ToolsOsTrait );
-            ML_DELETE_DEFAULT_COPY_AND_MOVE( ToolsOsTrait );
+            return "ToolsOsTrait<Traits> (Linux)";
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns description about itself.
-            /// @return trait name used in library's code.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static const std::string GetDescription()
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns process id.
+        /// @return process id.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static uint32_t GetProcessId()
+        {
+            return getpid();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns cpu timestamp.
+        /// @return timestamp value.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static uint64_t GetCpuTimestamp()
+        {
+            struct timespec time = {};
+            clock_gettime( CLOCK_MONOTONIC, &time );
+            return (uint64_t) time.tv_nsec + (uint64_t) time.tv_sec * Constants::Time::m_SecondInNanoseconds;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Gets exact cpu timestamp frequency.
+        /// @return cpu timestamp frequency.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static uint64_t GetCpuTimestampFrequency()
+        {
+            return Constants::Time::m_SecondInNanoseconds;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Reads system settings.
+        /// @param  name    system variable name.
+        /// @return data    system variable value.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename Result>
+        ML_INLINE static StatusCode GetSystemVariable(
+            const char* name,
+            Result&     data )
+        {
+            const std::string variableName = std::string( Constants::Library::m_Name ) + name;
+            const char*       rawData      = std::getenv( variableName.c_str() );
+
+            if( rawData == nullptr )
             {
-                return "ToolsOsTrait<Traits> (Linux)";
+                return StatusCode::Failed;
+            }
+            else
+            {
+                uint32_t toInteger = std::atoi( rawData );
+                data               = static_cast<Result>( toInteger );
             }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns process id.
-            /// @return process id.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static uint32_t GetProcessId()
-            {
-                return getpid();
-            }
+            return StatusCode::Success;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns cpu timestamp.
-            /// @return timestamp value.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static uint64_t GetCpuTimestamp()
-            {
-                struct timespec time = {};
-                clock_gettime( CLOCK_MONOTONIC, &time );
-                return (uint64_t) time.tv_nsec + (uint64_t) time.tv_sec * Constants::Time::m_SecondInNanoseconds;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Gets exact cpu timestamp frequency.
-            /// @return cpu timestamp frequency.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static uint64_t GetCpuTimestampFrequency()
-            {
-                return Constants::Time::m_SecondInNanoseconds;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Reads system settings.
-            /// @param  name    system variable name.
-            /// @return data    system variable value.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename Result>
-            ML_INLINE static StatusCode GetSystemVariable(
-                const char* name,
-                Result&     data )
-            {
-                const std::string variableName = std::string( Constants::Library::m_Name ) + name;
-                const char*       rawData      = std::getenv( variableName.c_str() );
-
-                if( rawData == nullptr )
-                {
-                    return StatusCode::Failed;
-                }
-                else
-                {
-                    uint32_t toInteger = std::atoi( rawData );
-                    data               = static_cast<Result>( toInteger );
-                }
-
-                return StatusCode::Success;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns current time as string.
-            /// @return current time.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static std::string GetCurrentTime()
-            {
-                std::ostringstream timeOutput;
-                tm                 timeLocal;
-                time_t             timeCurrent = time( nullptr );
-
-                timeLocal = *localtime( &timeCurrent );
-
-                timeOutput << std::put_time( &timeLocal, "%d-%m-%Y_%H-%M-%S" );
-
-                return timeOutput.str();
-            }
-        };
-    } // namespace BASE
-
-    namespace GEN9
-    {
-        template <typename T>
-        struct ToolsOsTrait : BASE::ToolsOsTrait<T>
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns current time as string.
+        /// @return current time.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static std::string GetCurrentTime()
         {
-            ML_DECLARE_TRAIT( ToolsOsTrait, BASE );
-        };
-    } // namespace GEN9
+            std::ostringstream timeOutput;
+            tm                 timeLocal;
+            time_t             timeCurrent = time( nullptr );
 
-    namespace GEN11
-    {
-        template <typename T>
-        struct ToolsOsTrait : GEN9::ToolsOsTrait<T>
-        {
-            ML_DECLARE_TRAIT( ToolsOsTrait, GEN9 );
-        };
-    } // namespace GEN11
+            timeLocal = *localtime( &timeCurrent );
 
-    namespace XE_LP
-    {
-        template <typename T>
-        struct ToolsOsTrait : GEN11::ToolsOsTrait<T>
-        {
-            ML_DECLARE_TRAIT( ToolsOsTrait, GEN11 );
-        };
-    } // namespace XE_LP
+            timeOutput << std::put_time( &timeLocal, "%d-%m-%Y_%H-%M-%S" );
 
-    namespace XE_HP
-    {
-        template <typename T>
-        struct ToolsOsTrait : XE_LP::ToolsOsTrait<T>
-        {
-            ML_DECLARE_TRAIT( ToolsOsTrait, XE_LP );
-        };
-    } // namespace XE_HP
+            return timeOutput.str();
+        }
+    };
+} // namespace ML::BASE
 
-    namespace XE_HPG
+namespace ML::GEN9
+{
+    template <typename T>
+    struct ToolsOsTrait : BASE::ToolsOsTrait<T>
     {
-        template <typename T>
-        struct ToolsOsTrait : XE_HP::ToolsOsTrait<T>
-        {
-            ML_DECLARE_TRAIT( ToolsOsTrait, XE_HP );
-        };
-    } // namespace XE_HPG
+        ML_DECLARE_TRAIT( ToolsOsTrait, BASE );
+    };
+} // namespace ML::GEN9
 
-    namespace XE_HPC
+namespace ML::GEN11
+{
+    template <typename T>
+    struct ToolsOsTrait : GEN9::ToolsOsTrait<T>
     {
-        template <typename T>
-        struct ToolsOsTrait : XE_HPG::ToolsOsTrait<T>
-        {
-            ML_DECLARE_TRAIT( ToolsOsTrait, XE_HPG );
-        };
-    } // namespace XE_HPC
-} // namespace ML
+        ML_DECLARE_TRAIT( ToolsOsTrait, GEN9 );
+    };
+} // namespace ML::GEN11
+
+namespace ML::XE_LP
+{
+    template <typename T>
+    struct ToolsOsTrait : GEN11::ToolsOsTrait<T>
+    {
+        ML_DECLARE_TRAIT( ToolsOsTrait, GEN11 );
+    };
+} // namespace ML::XE_LP
+
+namespace ML::XE_HP
+{
+    template <typename T>
+    struct ToolsOsTrait : XE_LP::ToolsOsTrait<T>
+    {
+        ML_DECLARE_TRAIT( ToolsOsTrait, XE_LP );
+    };
+} // namespace ML::XE_HP
+
+namespace ML::XE_HPG
+{
+    template <typename T>
+    struct ToolsOsTrait : XE_HP::ToolsOsTrait<T>
+    {
+        ML_DECLARE_TRAIT( ToolsOsTrait, XE_HP );
+    };
+} // namespace ML::XE_HPG
+
+namespace ML::XE_HPC
+{
+    template <typename T>
+    struct ToolsOsTrait : XE_HPG::ToolsOsTrait<T>
+    {
+        ML_DECLARE_TRAIT( ToolsOsTrait, XE_HPG );
+    };
+} // namespace ML::XE_HPC

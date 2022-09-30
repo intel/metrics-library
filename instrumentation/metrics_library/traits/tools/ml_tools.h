@@ -344,7 +344,7 @@ namespace ML
 
             while( std::getline( stream, line ) )
             {
-                if( Constants::Log::m_FilterEnabled )
+                if constexpr( Constants::Log::m_FilterEnabled )
                 {
                     FilterLine( line, lines, debug );
                 }
@@ -543,7 +543,7 @@ namespace ML
                     break;
             }
 
-            if( T::ConstantsOs::Log::m_FlushEachLog )
+            if constexpr( T::ConstantsOs::Log::m_FlushEachLog )
             {
                 fflush( stdout );
             }

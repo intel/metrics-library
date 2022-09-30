@@ -15,123 +15,120 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML
+namespace ML::BASE
 {
-    namespace BASE
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Base type for OverrideUserTrait object.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct OverrideUserTrait : DdiObject<T, TT::Overrides::User, OverrideHandle_1_0, ObjectType::OverrideUser>
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( OverrideUserTrait );
+        ML_DELETE_DEFAULT_COPY_AND_MOVE( OverrideUserTrait );
+
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for OverrideUserTrait object.
+        /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
-        template <typename T>
-        struct OverrideUserTrait : DdiObject<T, TT::Overrides::User, OverrideHandle_1_0, ObjectType::OverrideUser>
+        using Base = DdiObject<T, TT::Overrides::User, OverrideHandle_1_0, ObjectType::OverrideUser>;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns description about itself.
+        /// @return trait name used in library's code.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static const std::string GetDescription()
         {
-            ML_DELETE_DEFAULT_CONSTRUCTOR( OverrideUserTrait );
-            ML_DELETE_DEFAULT_COPY_AND_MOVE( OverrideUserTrait );
+            return "OverrideUserTrait<Traits> (Linux)";
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Types.
-            //////////////////////////////////////////////////////////////////////////
-            using Base = DdiObject<T, TT::Overrides::User, OverrideHandle_1_0, ObjectType::OverrideUser>;
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates user override configuration.
+        /// @param  context library context.
+        /// @return handle  override handle.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static StatusCode Create(
+            [[maybe_unused]] TT::Context&        context,
+            [[maybe_unused]] OverrideHandle_1_0& handle )
+        {
+            return StatusCode::NotImplemented;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns description about itself.
-            /// @return trait name used in library's code.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static const std::string GetDescription()
-            {
-                return "OverrideUserTrait<Traits> (Linux)";
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes null hardware override commands to command buffer.
+        /// @param  buffer  command buffer.
+        /// @param  data    override data.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE static StatusCode Write(
+            [[maybe_unused]] CommandBuffer&                   buffer,
+            [[maybe_unused]] const CommandBufferOverride_1_0& data )
+        {
+            return StatusCode::NotImplemented;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Creates user override configuration.
-            /// @param  context library context.
-            /// @return handle  override handle.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static StatusCode Create(
-                TT::Context& /*context*/,
-                OverrideHandle_1_0& /*handle*/ )
-            {
-                return StatusCode::NotImplemented;
-            }
+        ////////////////////////////////////////////////////////////////////////
+        /// @brief  Return override reports.
+        /// @return getData data requested by client.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static StatusCode GetData( [[maybe_unused]] const GetReportOverride_1_0& getData )
+        {
+            return StatusCode::NotImplemented;
+        }
+    };
+} // namespace ML::BASE
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Writes null hardware override commands to command buffer.
-            /// @param  buffer  command buffer.
-            /// @param  data    override data.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            template <typename CommandBuffer>
-            ML_INLINE static StatusCode Write(
-                CommandBuffer& /*buffer*/,
-                const CommandBufferOverride_1_0& /*data*/ )
-            {
-                return StatusCode::NotImplemented;
-            }
-
-            ////////////////////////////////////////////////////////////////////////
-            /// @brief  Return override reports.
-            /// @return getData data requested by client.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static StatusCode GetData( const GetReportOverride_1_0& /*getData*/ )
-            {
-                return StatusCode::NotImplemented;
-            }
-        };
-    } // namespace BASE
-
-    namespace GEN9
+namespace ML::GEN9
+{
+    template <typename T>
+    struct OverrideUserTrait : BASE::OverrideUserTrait<T>
     {
-        template <typename T>
-        struct OverrideUserTrait : BASE::OverrideUserTrait<T>
-        {
-            ML_DECLARE_TRAIT( OverrideUserTrait, BASE );
-        };
-    } // namespace GEN9
+        ML_DECLARE_TRAIT( OverrideUserTrait, BASE );
+    };
+} // namespace ML::GEN9
 
-    namespace GEN11
+namespace ML::GEN11
+{
+    template <typename T>
+    struct OverrideUserTrait : GEN9::OverrideUserTrait<T>
     {
-        template <typename T>
-        struct OverrideUserTrait : GEN9::OverrideUserTrait<T>
-        {
-            ML_DECLARE_TRAIT( OverrideUserTrait, GEN9 );
-        };
-    } // namespace GEN11
+        ML_DECLARE_TRAIT( OverrideUserTrait, GEN9 );
+    };
+} // namespace ML::GEN11
 
-    namespace XE_LP
+namespace ML::XE_LP
+{
+    template <typename T>
+    struct OverrideUserTrait : GEN11::OverrideUserTrait<T>
     {
-        template <typename T>
-        struct OverrideUserTrait : GEN11::OverrideUserTrait<T>
-        {
-            ML_DECLARE_TRAIT( OverrideUserTrait, GEN11 );
-        };
-    } // namespace XE_LP
+        ML_DECLARE_TRAIT( OverrideUserTrait, GEN11 );
+    };
+} // namespace ML::XE_LP
 
-    namespace XE_HP
+namespace ML::XE_HP
+{
+    template <typename T>
+    struct OverrideUserTrait : XE_LP::OverrideUserTrait<T>
     {
-        template <typename T>
-        struct OverrideUserTrait : XE_LP::OverrideUserTrait<T>
-        {
-            ML_DECLARE_TRAIT( OverrideUserTrait, XE_LP );
-        };
-    } // namespace XE_HP
+        ML_DECLARE_TRAIT( OverrideUserTrait, XE_LP );
+    };
+} // namespace ML::XE_HP
 
-    namespace XE_HPG
+namespace ML::XE_HPG
+{
+    template <typename T>
+    struct OverrideUserTrait : XE_HP::OverrideUserTrait<T>
     {
-        template <typename T>
-        struct OverrideUserTrait : XE_HP::OverrideUserTrait<T>
-        {
-            ML_DECLARE_TRAIT( OverrideUserTrait, XE_HP );
-        };
-    } // namespace XE_HPG
+        ML_DECLARE_TRAIT( OverrideUserTrait, XE_HP );
+    };
+} // namespace ML::XE_HPG
 
-    namespace XE_HPC
+namespace ML::XE_HPC
+{
+    template <typename T>
+    struct OverrideUserTrait : XE_HPG::OverrideUserTrait<T>
     {
-        template <typename T>
-        struct OverrideUserTrait : XE_HPG::OverrideUserTrait<T>
-        {
-            ML_DECLARE_TRAIT( OverrideUserTrait, XE_HPG );
-        };
-    } // namespace XE_HPC
-} // namespace ML
+        ML_DECLARE_TRAIT( OverrideUserTrait, XE_HPG );
+    };
+} // namespace ML::XE_HPC

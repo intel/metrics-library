@@ -14,227 +14,224 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML
+namespace ML::BASE
 {
-    namespace BASE
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Base type for PolicyOpenCLTrait object.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct PolicyOpenCLTrait
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( PolicyOpenCLTrait );
+        ML_DELETE_DEFAULT_COPY_AND_MOVE( PolicyOpenCLTrait );
+
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for PolicyOpenCLTrait object.
+        /// @brief  Returns description about itself.
+        /// @return trait name used in library's code.
         //////////////////////////////////////////////////////////////////////////
-        template <typename T>
-        struct PolicyOpenCLTrait
+        ML_INLINE static const std::string GetDescription()
         {
-            ML_DELETE_DEFAULT_CONSTRUCTOR( PolicyOpenCLTrait );
-            ML_DELETE_DEFAULT_COPY_AND_MOVE( PolicyOpenCLTrait );
+            return "PolicyOpenCLTrait<Traits>";
+        }
 
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Query hw counters policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct QueryHwCounters
+        {
             //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns description about itself.
-            /// @return trait name used in library's code.
+            /// @brief Common query policies.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static const std::string GetDescription()
+            struct Common
             {
-                return "PolicyOpenCLTrait<Traits>";
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Query hw counters policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct QueryHwCounters
-            {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Common query policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct Common
-                {
-                    static constexpr bool m_PatchGpuMemory = false;
-                };
-
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Query creation policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct Create
-                {
-                    static constexpr uint32_t m_SlotsCount   = 1;
-                    static constexpr bool     m_UserCounters = false;
-                };
-
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Query begin policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct Begin
-                {
-                    static constexpr bool m_FlushCommandBuffer = true;
-                    static constexpr bool m_ClearGpuMemory     = true;
-                };
-
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Query get data policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct GetData
-                {
-                    static constexpr bool m_AllowEmptyContextId               = true;
-                    static constexpr bool m_ResetOaBufferState                = false;
-                    static constexpr bool m_AsyncCompute                      = false;
-                    static constexpr bool m_RecoverContextId                  = false;
-                    static constexpr bool m_IncludeRenderContextSwitchReports = true;
-                    static constexpr bool m_CheckConfigurationActivation      = false;
-                };
+                static constexpr bool m_PatchGpuMemory = false;
             };
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Stream marker policies.
+            /// @brief Query creation policies.
             //////////////////////////////////////////////////////////////////////////
-            struct StreamMarker
+            struct Create
             {
-                static constexpr bool m_Use32bitValue = false;
+                static constexpr uint32_t m_SlotsCount   = 1;
+                static constexpr bool     m_UserCounters = false;
             };
 
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Configuration oa policies.
+            /// @brief Query begin policies.
             //////////////////////////////////////////////////////////////////////////
-            struct ConfigurationOa
+            struct Begin
             {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Configuration activation policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct Activate
-                {
-                    static constexpr bool m_RestartTbs = true;
-                };
+                static constexpr bool m_FlushCommandBuffer = true;
+                static constexpr bool m_ClearGpuMemory     = true;
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Query get data policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct GetData
+            {
+                static constexpr bool m_AllowEmptyContextId               = true;
+                static constexpr bool m_ResetOaBufferState                = false;
+                static constexpr bool m_AsyncCompute                      = false;
+                static constexpr bool m_RecoverContextId                  = false;
+                static constexpr bool m_IncludeRenderContextSwitchReports = true;
+                static constexpr bool m_CheckConfigurationActivation      = false;
             };
         };
-    } // namespace BASE
 
-    namespace GEN9
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Stream marker policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct StreamMarker
+        {
+            static constexpr bool m_Use32bitValue = false;
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Configuration oa policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct ConfigurationOa
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Configuration activation policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct Activate
+            {
+                static constexpr bool m_RestartTbs = true;
+            };
+        };
+    };
+} // namespace ML::BASE
+
+namespace ML::GEN9
+{
+    template <typename T>
+    struct PolicyOpenCLTrait : BASE::PolicyOpenCLTrait<T>
     {
-        template <typename T>
-        struct PolicyOpenCLTrait : BASE::PolicyOpenCLTrait<T>
-        {
-            ML_DECLARE_TRAIT( PolicyOpenCLTrait, BASE );
-        };
-    } // namespace GEN9
+        ML_DECLARE_TRAIT( PolicyOpenCLTrait, BASE );
+    };
+} // namespace ML::GEN9
 
-    namespace GEN11
+namespace ML::GEN11
+{
+    template <typename T>
+    struct PolicyOpenCLTrait : GEN9::PolicyOpenCLTrait<T>
     {
-        template <typename T>
-        struct PolicyOpenCLTrait : GEN9::PolicyOpenCLTrait<T>
-        {
-            ML_DECLARE_TRAIT( PolicyOpenCLTrait, GEN9 );
-        };
-    } // namespace GEN11
+        ML_DECLARE_TRAIT( PolicyOpenCLTrait, GEN9 );
+    };
+} // namespace ML::GEN11
 
-    namespace XE_LP
+namespace ML::XE_LP
+{
+    template <typename T>
+    struct PolicyOpenCLTrait : GEN11::PolicyOpenCLTrait<T>
     {
-        template <typename T>
-        struct PolicyOpenCLTrait : GEN11::PolicyOpenCLTrait<T>
+        ML_DECLARE_TRAIT( PolicyOpenCLTrait, GEN11 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Query hw counters policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct QueryHwCounters : Base::QueryHwCounters
         {
-            ML_DECLARE_TRAIT( PolicyOpenCLTrait, GEN11 );
-
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Query hw counters policies.
+            /// @brief Common query policies.
             //////////////////////////////////////////////////////////////////////////
-            struct QueryHwCounters : Base::QueryHwCounters
+            struct Common
             {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Common query policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct Common
-                {
-                    static constexpr bool m_PatchGpuMemory = false;
-                };
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Configuration oa policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct ConfigurationOa : Base::ConfigurationOa
-            {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Configuration activation policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct Activate
-                {
-                    static constexpr bool m_RestartTbs = false;
-                };
+                static constexpr bool m_PatchGpuMemory = false;
             };
         };
-    } // namespace XE_LP
 
-    namespace XE_HP
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Configuration oa policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct ConfigurationOa : Base::ConfigurationOa
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Configuration activation policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct Activate
+            {
+                static constexpr bool m_RestartTbs = false;
+            };
+        };
+    };
+} // namespace ML::XE_LP
+
+namespace ML::XE_HP
+{
+    template <typename T>
+    struct PolicyOpenCLTrait : XE_LP::PolicyOpenCLTrait<T>
     {
-        template <typename T>
-        struct PolicyOpenCLTrait : XE_LP::PolicyOpenCLTrait<T>
+        ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_LP );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Query hw counters policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct QueryHwCounters : Base::QueryHwCounters
         {
-            ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_LP );
-
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Query hw counters policies.
+            /// @brief Query get data policies.
             //////////////////////////////////////////////////////////////////////////
-            struct QueryHwCounters : Base::QueryHwCounters
+            struct GetData : Base::QueryHwCounters::GetData
             {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Query get data policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct GetData : Base::QueryHwCounters::GetData
-                {
-                    static constexpr bool m_IncludeRenderContextSwitchReports = false;
-                };
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Sub device policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct SubDevice
-            {
-                static constexpr bool m_DriverClientDataRequired = false;
-                static constexpr bool m_AllowImplicitScaling     = false;
+                static constexpr bool m_IncludeRenderContextSwitchReports = false;
             };
         };
-    } // namespace XE_HP
 
-    namespace XE_HPG
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Sub device policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct SubDevice
+        {
+            static constexpr bool m_DriverClientDataRequired = false;
+            static constexpr bool m_AllowImplicitScaling     = false;
+        };
+    };
+} // namespace ML::XE_HP
+
+namespace ML::XE_HPG
+{
+    template <typename T>
+    struct PolicyOpenCLTrait : XE_HP::PolicyOpenCLTrait<T>
     {
-        template <typename T>
-        struct PolicyOpenCLTrait : XE_HP::PolicyOpenCLTrait<T>
-        {
-            ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_HP );
+        ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_HP );
 
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Query hw counters policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct QueryHwCounters : Base::QueryHwCounters
+        {
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Query hw counters policies.
+            /// @brief Query get data policies.
             //////////////////////////////////////////////////////////////////////////
-            struct QueryHwCounters : Base::QueryHwCounters
+            struct GetData : Base::QueryHwCounters::GetData
             {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Query get data policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct GetData : Base::QueryHwCounters::GetData
-                {
-                    static constexpr bool m_IncludeRenderContextSwitchReports = true;
-                };
+                static constexpr bool m_IncludeRenderContextSwitchReports = true;
             };
         };
-    } // namespace XE_HPG
+    };
+} // namespace ML::XE_HPG
 
-    namespace XE_HPC
+namespace ML::XE_HPC
+{
+    template <typename T>
+    struct PolicyOpenCLTrait : XE_HPG::PolicyOpenCLTrait<T>
     {
-        template <typename T>
-        struct PolicyOpenCLTrait : XE_HPG::PolicyOpenCLTrait<T>
-        {
-            ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_HPG );
+        ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_HPG );
 
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Query hw counters policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct QueryHwCounters : Base::QueryHwCounters
+        {
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Query hw counters policies.
+            /// @brief Query get data policies.
             //////////////////////////////////////////////////////////////////////////
-            struct QueryHwCounters : Base::QueryHwCounters
+            struct GetData : Base::QueryHwCounters::GetData
             {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Query get data policies.
-                //////////////////////////////////////////////////////////////////////////
-                struct GetData : Base::QueryHwCounters::GetData
-                {
-                    static constexpr bool m_IncludeRenderContextSwitchReports = false;
-                };
+                static constexpr bool m_IncludeRenderContextSwitchReports = false;
             };
         };
-    } // namespace XE_HPC
-} // namespace ML
+    };
+} // namespace ML::XE_HPC

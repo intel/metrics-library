@@ -14,222 +14,219 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML
+namespace ML::BASE
 {
-    namespace BASE
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Base type for OaBufferDummyTrait object.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct OaBufferDummyTrait
     {
+        ML_DELETE_DEFAULT_COPY_AND_MOVE( OaBufferDummyTrait );
+
+    private:
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for OaBufferDummyTrait object.
+        /// @brief  Members.
         //////////////////////////////////////////////////////////////////////////
-        template <typename T>
-        struct OaBufferDummyTrait
+        const TT::Layouts::HwCounters::ReportOa m_OaReportDummy;
+        TT::Context&                            m_Context;
+
+    public:
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief OaBufferDummyTrait constructor.
+        /// @param kernel   kernel interface.
+        //////////////////////////////////////////////////////////////////////////
+        OaBufferDummyTrait( const TT::KernelInterface& kernel )
+            : m_OaReportDummy{}
+            , m_Context( kernel.m_Context )
         {
-            ML_DELETE_DEFAULT_COPY_AND_MOVE( OaBufferDummyTrait );
+        }
 
-        private:
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Members.
-            //////////////////////////////////////////////////////////////////////////
-            const TT::Layouts::HwCounters::ReportOa m_OaReportDummy;
-            TT::Context&                            m_Context;
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns description about itself.
+        /// @return trait name used in library's code.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static const std::string GetDescription()
+        {
+            return "OaBufferDummyTrait<Traits>";
+        }
 
-        public:
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief OaBufferDummyTrait constructor.
-            /// @param kernel   kernel interface.
-            //////////////////////////////////////////////////////////////////////////
-            OaBufferDummyTrait( const TT::KernelInterface& kernel )
-                : m_OaReportDummy{}
-                , m_Context( kernel.m_Context )
-            {
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Initializes oa buffer.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode Initialize() const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            return log.m_Result;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns description about itself.
-            /// @return trait name used in library's code.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static const std::string GetDescription()
-            {
-                return "OaBufferDummyTrait<Traits>";
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Update oa buffer state kept by hw counters query.
+        /// @param  query   query instance.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode UpdateQuery( [[maybe_unused]] TT::Queries::HwCounters::Slot& query ) const
+        {
+            return StatusCode::Success;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Initializes oa buffer.
-            /// @return operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Initialize() const
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-                return log.m_Result;
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Releases a reference to oa buffer.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode Release() const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            return log.m_Result;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Update oa buffer state kept by hw counters query.
-            /// @param  query   query instance.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode UpdateQuery( TT::Queries::HwCounters::Slot& /*query*/ ) const
-            {
-                return StatusCode::Success;
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks oa buffer state.
+        /// @return true if oa buffer has valid state.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsValid() const
+        {
+            ML_FUNCTION_LOG( false, &m_Context );
+            return log.m_Result;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Releases a reference to oa buffer.
-            /// @return operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Release() const
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-                return log.m_Result;
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa buffer size in bytes.
+        /// @return oa buffer size.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t GetSize() const
+        {
+            ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Context );
+            return log.m_Result;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Checks oa buffer state.
-            /// @return true if oa buffer has valid state.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE bool IsValid() const
-            {
-                ML_FUNCTION_LOG( false, &m_Context );
-                return log.m_Result;
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Finds oa reports from oa buffer between query begin/end reports.
+        /// @param  oaBufferState  oa buffer state.
+        /// @return                oa reports count between query begin/end.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t FindOaWindow( [[maybe_unused]] const TT::Layouts::OaBuffer::State& oaBufferState ) const
+        {
+            return 0;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns oa buffer size in bytes.
-            /// @return oa buffer size.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t GetSize() const
-            {
-                ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Context );
-                return log.m_Result;
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa report from oa buffer.
+        /// @param  offset  oa report offset within oa buffer.
+        /// @return         reference to oa report.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE const TT::Layouts::HwCounters::ReportOa& GetReport( [[maybe_unused]] const uint32_t offset ) const
+        {
+            return m_OaReportDummy;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Finds oa reports from oa buffer between query begin/end reports.
-            /// @param  oaBufferState  oa buffer state.
-            /// @return                oa reports count between query begin/end.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE uint32_t FindOaWindow( const TT::Layouts::OaBuffer::State& /*oaBufferState*/ ) const
-            {
-                return 0;
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns first oa report associated with query begin/end report.
+        /// @param  query   gpu report collected by query.
+        /// @param  begin   query begin/end.
+        /// @return offset  oa tail offset.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetPreReportOffset(
+            [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& query,
+            [[maybe_unused]] const bool                                       begin,
+            [[maybe_unused]] uint32_t&                                        offset )
+        {
+            ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
+            return StatusCode::Failed;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns oa report from oa buffer.
-            /// @param  offset  oa report offset within oa buffer.
-            /// @return         reference to oa report.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE const TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t /*offset*/ ) const
-            {
-                return m_OaReportDummy;
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns last oa report associated with query begin/end report.
+        /// @param  query   gpu report collected by query.
+        /// @param  begin   query begin/end.
+        /// @return offset  oa tail offset.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetPostReportOffset(
+            [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& query,
+            [[maybe_unused]] const bool                                       begin,
+            [[maybe_unused]] uint32_t&                                        offset )
+        {
+            ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
+            return StatusCode::Failed;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns first oa report associated with query begin/end report.
-            /// @param  query   gpu report collected by query.
-            /// @param  begin   query begin/end.
-            /// @return offset  oa tail offset.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode GetPreReportOffset(
-                const TT::Layouts::HwCounters::Query::ReportGpu& /*query*/,
-                const bool /*begin*/,
-                uint32_t& /*offset*/ )
-            {
-                ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
-                return StatusCode::Failed;
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Dumps oa buffer reports between query begin / query end.
+        /// @param  reportGpu   gpu query report.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode DumpReports( [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu reportGpu )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            return log.m_Result;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns last oa report associated with query begin/end report.
-            /// @param  query   gpu report collected by query.
-            /// @param  begin   query begin/end.
-            /// @return offset  oa tail offset.
-            /// @return         operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode GetPostReportOffset(
-                const TT::Layouts::HwCounters::Query::ReportGpu& /*query*/,
-                const bool /*begin*/,
-                uint32_t& /*offset*/ )
-            {
-                ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
-                return StatusCode::Failed;
-            }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Prints out requested report count.
+        /// @param offset   oa report start offset.
+        /// @param count    oa report count.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void PrintReports(
+            [[maybe_unused]] const uint32_t offset,
+            [[maybe_unused]] const uint32_t count )
+        {
+        }
+    };
+} // namespace ML::BASE
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Dumps oa buffer reports between query begin / query end.
-            /// @param  reportGpu   gpu query report.
-            /// @return operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu /*reportGpu*/ )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-                return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Prints out requested report count.
-            /// @param offset   oa report start offset.
-            /// @param count    oa report count.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE void PrintReports(
-                const uint32_t /*offset*/,
-                const uint32_t /*count*/ )
-            {
-            }
-        };
-    } // namespace BASE
-
-    namespace GEN9
+namespace ML::GEN9
+{
+    template <typename T>
+    struct OaBufferDummyTrait : BASE::OaBufferDummyTrait<T>
     {
-        template <typename T>
-        struct OaBufferDummyTrait : BASE::OaBufferDummyTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferDummyTrait, BASE );
-        };
-    } // namespace GEN9
+        ML_DECLARE_TRAIT( OaBufferDummyTrait, BASE );
+    };
+} // namespace ML::GEN9
 
-    namespace GEN11
+namespace ML::GEN11
+{
+    template <typename T>
+    struct OaBufferDummyTrait : GEN9::OaBufferDummyTrait<T>
     {
-        template <typename T>
-        struct OaBufferDummyTrait : GEN9::OaBufferDummyTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferDummyTrait, GEN9 );
-        };
-    } // namespace GEN11
+        ML_DECLARE_TRAIT( OaBufferDummyTrait, GEN9 );
+    };
+} // namespace ML::GEN11
 
-    namespace XE_LP
+namespace ML::XE_LP
+{
+    template <typename T>
+    struct OaBufferDummyTrait : GEN11::OaBufferDummyTrait<T>
     {
-        template <typename T>
-        struct OaBufferDummyTrait : GEN11::OaBufferDummyTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferDummyTrait, GEN11 );
-        };
-    } // namespace XE_LP
+        ML_DECLARE_TRAIT( OaBufferDummyTrait, GEN11 );
+    };
+} // namespace ML::XE_LP
 
-    namespace XE_HP
+namespace ML::XE_HP
+{
+    template <typename T>
+    struct OaBufferDummyTrait : XE_LP::OaBufferDummyTrait<T>
     {
-        template <typename T>
-        struct OaBufferDummyTrait : XE_LP::OaBufferDummyTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_LP );
-        };
-    } // namespace XE_HP
+        ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_LP );
+    };
+} // namespace ML::XE_HP
 
-    namespace XE_HPG
+namespace ML::XE_HPG
+{
+    template <typename T>
+    struct OaBufferDummyTrait : XE_HP::OaBufferDummyTrait<T>
     {
-        template <typename T>
-        struct OaBufferDummyTrait : XE_HP::OaBufferDummyTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_HP );
-        };
-    } // namespace XE_HPG
+        ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_HP );
+    };
+} // namespace ML::XE_HPG
 
-    namespace XE_HPC
+namespace ML::XE_HPC
+{
+    template <typename T>
+    struct OaBufferDummyTrait : XE_HPG::OaBufferDummyTrait<T>
     {
-        template <typename T>
-        struct OaBufferDummyTrait : XE_HPG::OaBufferDummyTrait<T>
-        {
-            ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_HPG );
-        };
-    } // namespace XE_HPC
-} // namespace ML
+        ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_HPG );
+    };
+} // namespace ML::XE_HPC

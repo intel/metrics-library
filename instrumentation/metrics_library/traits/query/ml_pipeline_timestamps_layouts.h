@@ -16,128 +16,125 @@ SPDX-License-Identifier: MIT
 
 ML_STRUCTURE_PACK_BEGIN( 1 );
 
-namespace ML
+namespace ML::BASE
 {
-    namespace BASE
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Base type for PipelineTimestampsLayoutsTrait object.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct PipelineTimestampsLayoutsTrait
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( PipelineTimestampsLayoutsTrait );
+        ML_DELETE_DEFAULT_COPY_AND_MOVE( PipelineTimestampsLayoutsTrait );
+
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for PipelineTimestampsLayoutsTrait object.
+        /// @brief  Returns description about itself.
+        /// @return trait name used in library's code.
         //////////////////////////////////////////////////////////////////////////
-        template <typename T>
-        struct PipelineTimestampsLayoutsTrait
+        ML_INLINE static const std::string GetDescription()
         {
-            ML_DELETE_DEFAULT_CONSTRUCTOR( PipelineTimestampsLayoutsTrait );
-            ML_DELETE_DEFAULT_COPY_AND_MOVE( PipelineTimestampsLayoutsTrait );
+            return "PipelineTimestampsLayoutsTrait<Traits>";
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns description about itself.
-            /// @return trait name used in library's code.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE static const std::string GetDescription()
-            {
-                return "PipelineTimestampsLayoutsTrait<Traits>";
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Api report format.
-            //////////////////////////////////////////////////////////////////////////
-            struct ReportApi
-            {
-                uint64_t m_BeginTimestamp;    // Store register memory timestamp gathered on query begin.
-                uint64_t m_EndTimestampEnter; // Store register memory timestamp gathered on query end enter.
-                uint64_t m_EopTimestamp;      // End of pipe timestamp.
-                uint64_t m_EndTimestampExit;  // Store register memory timestamp gathered on query end exit.
-                                              //
-                uint64_t m_QueryInfo;         // Query execution information flags.
-                uint32_t m_ReportId;
-                uint32_t m_ReportsCount;
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Pipeline timestamps.
-            //////////////////////////////////////////////////////////////////////////
-            struct Timestamps
-            {
-                uint64_t m_Begin;         // Store register memory timestamp gathered on query begin.
-                uint64_t m_EndEnter;      // Store register memory timestamp gathered on query end enter.
-                uint64_t m_EndOfPipeline; // End of pipe timestamp.
-                uint64_t m_EndExit;       // Store register memory timestamp gathered on query end exit.
-                uint64_t m_Info;          // Query execution information flags.
-                uint64_t m_EndTag;
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Gpu report format.
-            //////////////////////////////////////////////////////////////////////////
-            struct ReportGpu
-            {
-                Timestamps m_TimestampsRender;
-            };
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Api report format.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportApi
+        {
+            uint64_t m_BeginTimestamp;    // Store register memory timestamp gathered on query begin.
+            uint64_t m_EndTimestampEnter; // Store register memory timestamp gathered on query end enter.
+            uint64_t m_EopTimestamp;      // End of pipe timestamp.
+            uint64_t m_EndTimestampExit;  // Store register memory timestamp gathered on query end exit.
+                                          //
+            uint64_t m_QueryInfo;         // Query execution information flags.
+            uint32_t m_ReportId;
+            uint32_t m_ReportsCount;
         };
-    } // namespace BASE
 
-    namespace GEN9
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Pipeline timestamps.
+        //////////////////////////////////////////////////////////////////////////
+        struct Timestamps
+        {
+            uint64_t m_Begin;         // Store register memory timestamp gathered on query begin.
+            uint64_t m_EndEnter;      // Store register memory timestamp gathered on query end enter.
+            uint64_t m_EndOfPipeline; // End of pipe timestamp.
+            uint64_t m_EndExit;       // Store register memory timestamp gathered on query end exit.
+            uint64_t m_Info;          // Query execution information flags.
+            uint64_t m_EndTag;
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Gpu report format.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportGpu
+        {
+            Timestamps m_TimestampsRender;
+        };
+    };
+} // namespace ML::BASE
+
+namespace ML::GEN9
+{
+    template <typename T>
+    struct PipelineTimestampsLayoutsTrait : BASE::PipelineTimestampsLayoutsTrait<T>
     {
-        template <typename T>
-        struct PipelineTimestampsLayoutsTrait : BASE::PipelineTimestampsLayoutsTrait<T>
-        {
-            ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, BASE );
-        };
-    } // namespace GEN9
+        ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, BASE );
+    };
+} // namespace ML::GEN9
 
-    namespace GEN11
+namespace ML::GEN11
+{
+    template <typename T>
+    struct PipelineTimestampsLayoutsTrait : GEN9::PipelineTimestampsLayoutsTrait<T>
     {
-        template <typename T>
-        struct PipelineTimestampsLayoutsTrait : GEN9::PipelineTimestampsLayoutsTrait<T>
+        ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, GEN9 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Gpu report format.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportGpu
         {
-            ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, GEN9 );
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Gpu report format.
-            //////////////////////////////////////////////////////////////////////////
-            struct ReportGpu
-            {
-                typename Base::Timestamps m_TimestampsRender;
-                typename Base::Timestamps m_TimestampsPosh;
-            };
+            typename Base::Timestamps m_TimestampsRender;
+            typename Base::Timestamps m_TimestampsPosh;
         };
-    } // namespace GEN11
+    };
+} // namespace ML::GEN11
 
-    namespace XE_LP
+namespace ML::XE_LP
+{
+    template <typename T>
+    struct PipelineTimestampsLayoutsTrait : GEN11::PipelineTimestampsLayoutsTrait<T>
     {
-        template <typename T>
-        struct PipelineTimestampsLayoutsTrait : GEN11::PipelineTimestampsLayoutsTrait<T>
-        {
-            ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, GEN11 );
-        };
-    } // namespace XE_LP
+        ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, GEN11 );
+    };
+} // namespace ML::XE_LP
 
-    namespace XE_HP
+namespace ML::XE_HP
+{
+    template <typename T>
+    struct PipelineTimestampsLayoutsTrait : XE_LP::PipelineTimestampsLayoutsTrait<T>
     {
-        template <typename T>
-        struct PipelineTimestampsLayoutsTrait : XE_LP::PipelineTimestampsLayoutsTrait<T>
-        {
-            ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, XE_LP );
-        };
-    } // namespace XE_HP
+        ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, XE_LP );
+    };
+} // namespace ML::XE_HP
 
-    namespace XE_HPG
+namespace ML::XE_HPG
+{
+    template <typename T>
+    struct PipelineTimestampsLayoutsTrait : XE_HP::PipelineTimestampsLayoutsTrait<T>
     {
-        template <typename T>
-        struct PipelineTimestampsLayoutsTrait : XE_HP::PipelineTimestampsLayoutsTrait<T>
-        {
-            ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, XE_HP );
-        };
-    } // namespace XE_HPG
+        ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, XE_HP );
+    };
+} // namespace ML::XE_HPG
 
-    namespace XE_HPC
+namespace ML::XE_HPC
+{
+    template <typename T>
+    struct PipelineTimestampsLayoutsTrait : XE_HPG::PipelineTimestampsLayoutsTrait<T>
     {
-        template <typename T>
-        struct PipelineTimestampsLayoutsTrait : XE_HPG::PipelineTimestampsLayoutsTrait<T>
-        {
-            ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, XE_HPG );
-        };
-    } // namespace XE_HPC
-} // namespace ML
+        ML_DECLARE_TRAIT( PipelineTimestampsLayoutsTrait, XE_HPG );
+    };
+} // namespace ML::XE_HPC
 
 ML_STRUCTURE_PACK_END();

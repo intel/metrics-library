@@ -198,7 +198,7 @@ namespace ML
     /// @brief  Translates all unsupported gpu types to supported ones.
     /// @return clientType  supported gpu type for a given input gpu type.
     //////////////////////////////////////////////////////////////////////////
-    ML_INLINE void TranslateToSupportedGpuType( ClientGen& clientGen )
+    ML_INLINE void TranslateToSupportedGpuType( [[maybe_unused]] ClientGen& clientGen )
     {
     #if( ML_ENABLE_GEN9 || ML_ENABLE_GEN11 )
         switch( clientGen )
@@ -218,8 +218,6 @@ namespace ML
             default:
                 break;
         }
-    #else
-        (void) clientGen;
     #endif
     }
 
@@ -227,9 +225,9 @@ namespace ML
     /// @brief  Translates all unsupported apis to supported ones.
     /// @return clientType  supported api for a given input api.
     //////////////////////////////////////////////////////////////////////////
-    ML_INLINE void TranslateToSupportedApiType( ClientApi& clientApi )
+    ML_INLINE void TranslateToSupportedApiType( [[maybe_unused]] ClientApi& clientApi )
     {
-        (void) clientApi;
+
     }
 
     //////////////////////////////////////////////////////////////////////////

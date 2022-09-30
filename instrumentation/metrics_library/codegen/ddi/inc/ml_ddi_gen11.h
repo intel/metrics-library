@@ -24,152 +24,146 @@ Template:           Tools/MetricsLibraryGenerator/templates/function_table.h
 #if ML_ENABLE_GEN11
 #include "ml_ddi.h"
 
-namespace ML
+#if ML_ENABLE_OPENCL
+namespace ML::GEN11::OpenCL
 {
-    namespace GEN11
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Function signatures for GEN11.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ContextCreate_1_0( ClientType_1_0, ContextCreateData_1_0*, ContextHandle_1_0* );
+    StatusCode ML_STDCALL ContextDelete_1_0( const ContextHandle_1_0 );
+    StatusCode ML_STDCALL GetParameter_1_0( const ParameterType, ValueType*, TypedValue_1_0* );
+    StatusCode ML_STDCALL CommandBufferGet_1_0( const CommandBufferData_1_0* );
+    StatusCode ML_STDCALL CommandBufferGetSize_1_0( const CommandBufferData_1_0*, CommandBufferSize_1_0* );
+    StatusCode ML_STDCALL QueryCreate_1_0( const QueryCreateData_1_0*, QueryHandle_1_0* );
+    StatusCode ML_STDCALL QueryDelete_1_0( const QueryHandle_1_0 );
+    StatusCode ML_STDCALL OverrideCreate_1_0( const OverrideCreateData_1_0*, OverrideHandle_1_0* );
+    StatusCode ML_STDCALL OverrideDelete_1_0( const OverrideHandle_1_0 );
+    StatusCode ML_STDCALL ConfigurationCreate_1_0( const ConfigurationCreateData_1_0*, ConfigurationHandle_1_0* );
+    StatusCode ML_STDCALL ConfigurationActivate_1_0( const ConfigurationHandle_1_0, const ConfigurationActivateData_1_0* );
+    StatusCode ML_STDCALL ConfigurationDeactivate_1_0( const ConfigurationHandle_1_0 );
+    StatusCode ML_STDCALL ConfigurationDelete_1_0( const ConfigurationHandle_1_0 );
+    StatusCode ML_STDCALL GetData_1_0( GetReportData_1_0* );
+    StatusCode ML_STDCALL MarkerCreate_1_0( const MarkerCreateData_1_0*, MarkerHandle_1_0* );
+    StatusCode ML_STDCALL MarkerDelete_1_0( const MarkerHandle_1_0 );
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief DDI function pointers for GEN11.
+    //////////////////////////////////////////////////////////////////////////
+    template<typename T>
+    struct DdiFunctionTable : DdiFunctionTableBase
     {
-        #if ML_ENABLE_OPENCL
-        namespace OpenCL
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Initializes all function pointers for GEN11.
+        //////////////////////////////////////////////////////////////////////////
+        DdiFunctionTable()
         {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Function signatures for GEN11.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL ContextCreate_1_0( ClientType_1_0, ContextCreateData_1_0*, ContextHandle_1_0* );
-            StatusCode ML_STDCALL ContextDelete_1_0( const ContextHandle_1_0 );
-            StatusCode ML_STDCALL GetParameter_1_0( const ParameterType, ValueType*, TypedValue_1_0* );
-            StatusCode ML_STDCALL CommandBufferGet_1_0( const CommandBufferData_1_0* );
-            StatusCode ML_STDCALL CommandBufferGetSize_1_0( const CommandBufferData_1_0*, CommandBufferSize_1_0* );
-            StatusCode ML_STDCALL QueryCreate_1_0( const QueryCreateData_1_0*, QueryHandle_1_0* );
-            StatusCode ML_STDCALL QueryDelete_1_0( const QueryHandle_1_0 );
-            StatusCode ML_STDCALL OverrideCreate_1_0( const OverrideCreateData_1_0*, OverrideHandle_1_0* );
-            StatusCode ML_STDCALL OverrideDelete_1_0( const OverrideHandle_1_0 );
-            StatusCode ML_STDCALL ConfigurationCreate_1_0( const ConfigurationCreateData_1_0*, ConfigurationHandle_1_0* );
-            StatusCode ML_STDCALL ConfigurationActivate_1_0( const ConfigurationHandle_1_0, const ConfigurationActivateData_1_0* );
-            StatusCode ML_STDCALL ConfigurationDeactivate_1_0( const ConfigurationHandle_1_0 );
-            StatusCode ML_STDCALL ConfigurationDelete_1_0( const ConfigurationHandle_1_0 );
-            StatusCode ML_STDCALL GetData_1_0( GetReportData_1_0* );
-            StatusCode ML_STDCALL MarkerCreate_1_0( const MarkerCreateData_1_0*, MarkerHandle_1_0* );
-            StatusCode ML_STDCALL MarkerDelete_1_0( const MarkerHandle_1_0 );
+            pfnContextCreate_1_0                          = ContextCreate_1_0;
+            pfnContextDelete_1_0                          = ContextDelete_1_0;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief DDI function pointers for GEN11.
-            //////////////////////////////////////////////////////////////////////////
-            template<typename T>
-            struct DdiFunctionTable : DdiFunctionTableBase
-            {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Initializes all function pointers for GEN11.
-                //////////////////////////////////////////////////////////////////////////
-                DdiFunctionTable()
-                {
-                    pfnContextCreate_1_0                          = ContextCreate_1_0;
-                    pfnContextDelete_1_0                          = ContextDelete_1_0;
-                }
-
-                void GetInterface( Interface_1_0& interface ) const
-                {
-                    interface = {};
-                    interface.GetParameter                        = GetParameter_1_0;
-                    interface.CommandBufferGet                    = CommandBufferGet_1_0;
-                    interface.CommandBufferGetSize                = CommandBufferGetSize_1_0;
-                    interface.QueryCreate                         = QueryCreate_1_0;
-                    interface.QueryDelete                         = QueryDelete_1_0;
-                    interface.OverrideCreate                      = OverrideCreate_1_0;
-                    interface.OverrideDelete                      = OverrideDelete_1_0;
-                    interface.ConfigurationCreate                 = ConfigurationCreate_1_0;
-                    interface.ConfigurationActivate               = ConfigurationActivate_1_0;
-                    interface.ConfigurationDeactivate             = ConfigurationDeactivate_1_0;
-                    interface.ConfigurationDelete                 = ConfigurationDelete_1_0;
-                    interface.GetData                             = GetData_1_0;
-                    interface.MarkerCreate                        = MarkerCreate_1_0;
-                    interface.MarkerDelete                        = MarkerDelete_1_0;
-                }
-
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief  Returns an instance of DdiFunctionTable object.
-                /// @return singleton DdiFunctionTable object.
-                //////////////////////////////////////////////////////////////////////////
-                static const DdiFunctionTable<T>& GetInstance()
-                {
-                    // Instance of ddi function table must be static.
-                    static const DdiFunctionTable<T> instance;
-                    return instance;
-                }
-            };
-        } // namespace OpenCL
-        #endif // ML_ENABLE_OPENCL
-
-        #if ML_ENABLE_ONEAPI
-        namespace OneApi
+        void GetInterface( Interface_1_0& interface ) const
         {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Function signatures for GEN11.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL ContextCreate_1_0( ClientType_1_0, ContextCreateData_1_0*, ContextHandle_1_0* );
-            StatusCode ML_STDCALL ContextDelete_1_0( const ContextHandle_1_0 );
-            StatusCode ML_STDCALL GetParameter_1_0( const ParameterType, ValueType*, TypedValue_1_0* );
-            StatusCode ML_STDCALL CommandBufferGet_1_0( const CommandBufferData_1_0* );
-            StatusCode ML_STDCALL CommandBufferGetSize_1_0( const CommandBufferData_1_0*, CommandBufferSize_1_0* );
-            StatusCode ML_STDCALL QueryCreate_1_0( const QueryCreateData_1_0*, QueryHandle_1_0* );
-            StatusCode ML_STDCALL QueryDelete_1_0( const QueryHandle_1_0 );
-            StatusCode ML_STDCALL OverrideCreate_1_0( const OverrideCreateData_1_0*, OverrideHandle_1_0* );
-            StatusCode ML_STDCALL OverrideDelete_1_0( const OverrideHandle_1_0 );
-            StatusCode ML_STDCALL ConfigurationCreate_1_0( const ConfigurationCreateData_1_0*, ConfigurationHandle_1_0* );
-            StatusCode ML_STDCALL ConfigurationActivate_1_0( const ConfigurationHandle_1_0, const ConfigurationActivateData_1_0* );
-            StatusCode ML_STDCALL ConfigurationDeactivate_1_0( const ConfigurationHandle_1_0 );
-            StatusCode ML_STDCALL ConfigurationDelete_1_0( const ConfigurationHandle_1_0 );
-            StatusCode ML_STDCALL GetData_1_0( GetReportData_1_0* );
-            StatusCode ML_STDCALL MarkerCreate_1_0( const MarkerCreateData_1_0*, MarkerHandle_1_0* );
-            StatusCode ML_STDCALL MarkerDelete_1_0( const MarkerHandle_1_0 );
+            interface = {};
+            interface.GetParameter                        = GetParameter_1_0;
+            interface.CommandBufferGet                    = CommandBufferGet_1_0;
+            interface.CommandBufferGetSize                = CommandBufferGetSize_1_0;
+            interface.QueryCreate                         = QueryCreate_1_0;
+            interface.QueryDelete                         = QueryDelete_1_0;
+            interface.OverrideCreate                      = OverrideCreate_1_0;
+            interface.OverrideDelete                      = OverrideDelete_1_0;
+            interface.ConfigurationCreate                 = ConfigurationCreate_1_0;
+            interface.ConfigurationActivate               = ConfigurationActivate_1_0;
+            interface.ConfigurationDeactivate             = ConfigurationDeactivate_1_0;
+            interface.ConfigurationDelete                 = ConfigurationDelete_1_0;
+            interface.GetData                             = GetData_1_0;
+            interface.MarkerCreate                        = MarkerCreate_1_0;
+            interface.MarkerDelete                        = MarkerDelete_1_0;
+        }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief DDI function pointers for GEN11.
-            //////////////////////////////////////////////////////////////////////////
-            template<typename T>
-            struct DdiFunctionTable : DdiFunctionTableBase
-            {
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief Initializes all function pointers for GEN11.
-                //////////////////////////////////////////////////////////////////////////
-                DdiFunctionTable()
-                {
-                    pfnContextCreate_1_0                          = ContextCreate_1_0;
-                    pfnContextDelete_1_0                          = ContextDelete_1_0;
-                }
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns an instance of DdiFunctionTable object.
+        /// @return singleton DdiFunctionTable object.
+        //////////////////////////////////////////////////////////////////////////
+        static const DdiFunctionTable<T>& GetInstance()
+        {
+            // Instance of ddi function table must be static.
+            static const DdiFunctionTable<T> instance;
+            return instance;
+        }
+    };
+} // namespace ML::GEN11::OpenCL
+#endif // ML_ENABLE_OPENCL
 
-                void GetInterface( Interface_1_0& interface ) const
-                {
-                    interface = {};
-                    interface.GetParameter                        = GetParameter_1_0;
-                    interface.CommandBufferGet                    = CommandBufferGet_1_0;
-                    interface.CommandBufferGetSize                = CommandBufferGetSize_1_0;
-                    interface.QueryCreate                         = QueryCreate_1_0;
-                    interface.QueryDelete                         = QueryDelete_1_0;
-                    interface.OverrideCreate                      = OverrideCreate_1_0;
-                    interface.OverrideDelete                      = OverrideDelete_1_0;
-                    interface.ConfigurationCreate                 = ConfigurationCreate_1_0;
-                    interface.ConfigurationActivate               = ConfigurationActivate_1_0;
-                    interface.ConfigurationDeactivate             = ConfigurationDeactivate_1_0;
-                    interface.ConfigurationDelete                 = ConfigurationDelete_1_0;
-                    interface.GetData                             = GetData_1_0;
-                    interface.MarkerCreate                        = MarkerCreate_1_0;
-                    interface.MarkerDelete                        = MarkerDelete_1_0;
-                }
+#if ML_ENABLE_ONEAPI
+namespace ML::GEN11::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Function signatures for GEN11.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ContextCreate_1_0( ClientType_1_0, ContextCreateData_1_0*, ContextHandle_1_0* );
+    StatusCode ML_STDCALL ContextDelete_1_0( const ContextHandle_1_0 );
+    StatusCode ML_STDCALL GetParameter_1_0( const ParameterType, ValueType*, TypedValue_1_0* );
+    StatusCode ML_STDCALL CommandBufferGet_1_0( const CommandBufferData_1_0* );
+    StatusCode ML_STDCALL CommandBufferGetSize_1_0( const CommandBufferData_1_0*, CommandBufferSize_1_0* );
+    StatusCode ML_STDCALL QueryCreate_1_0( const QueryCreateData_1_0*, QueryHandle_1_0* );
+    StatusCode ML_STDCALL QueryDelete_1_0( const QueryHandle_1_0 );
+    StatusCode ML_STDCALL OverrideCreate_1_0( const OverrideCreateData_1_0*, OverrideHandle_1_0* );
+    StatusCode ML_STDCALL OverrideDelete_1_0( const OverrideHandle_1_0 );
+    StatusCode ML_STDCALL ConfigurationCreate_1_0( const ConfigurationCreateData_1_0*, ConfigurationHandle_1_0* );
+    StatusCode ML_STDCALL ConfigurationActivate_1_0( const ConfigurationHandle_1_0, const ConfigurationActivateData_1_0* );
+    StatusCode ML_STDCALL ConfigurationDeactivate_1_0( const ConfigurationHandle_1_0 );
+    StatusCode ML_STDCALL ConfigurationDelete_1_0( const ConfigurationHandle_1_0 );
+    StatusCode ML_STDCALL GetData_1_0( GetReportData_1_0* );
+    StatusCode ML_STDCALL MarkerCreate_1_0( const MarkerCreateData_1_0*, MarkerHandle_1_0* );
+    StatusCode ML_STDCALL MarkerDelete_1_0( const MarkerHandle_1_0 );
 
-                //////////////////////////////////////////////////////////////////////////
-                /// @brief  Returns an instance of DdiFunctionTable object.
-                /// @return singleton DdiFunctionTable object.
-                //////////////////////////////////////////////////////////////////////////
-                static const DdiFunctionTable<T>& GetInstance()
-                {
-                    // Instance of ddi function table must be static.
-                    static const DdiFunctionTable<T> instance;
-                    return instance;
-                }
-            };
-        } // namespace OneApi
-        #endif // ML_ENABLE_ONEAPI
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief DDI function pointers for GEN11.
+    //////////////////////////////////////////////////////////////////////////
+    template<typename T>
+    struct DdiFunctionTable : DdiFunctionTableBase
+    {
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Initializes all function pointers for GEN11.
+        //////////////////////////////////////////////////////////////////////////
+        DdiFunctionTable()
+        {
+            pfnContextCreate_1_0                          = ContextCreate_1_0;
+            pfnContextDelete_1_0                          = ContextDelete_1_0;
+        }
 
-    } // namespace GEN11
-} // namespace ML
+        void GetInterface( Interface_1_0& interface ) const
+        {
+            interface = {};
+            interface.GetParameter                        = GetParameter_1_0;
+            interface.CommandBufferGet                    = CommandBufferGet_1_0;
+            interface.CommandBufferGetSize                = CommandBufferGetSize_1_0;
+            interface.QueryCreate                         = QueryCreate_1_0;
+            interface.QueryDelete                         = QueryDelete_1_0;
+            interface.OverrideCreate                      = OverrideCreate_1_0;
+            interface.OverrideDelete                      = OverrideDelete_1_0;
+            interface.ConfigurationCreate                 = ConfigurationCreate_1_0;
+            interface.ConfigurationActivate               = ConfigurationActivate_1_0;
+            interface.ConfigurationDeactivate             = ConfigurationDeactivate_1_0;
+            interface.ConfigurationDelete                 = ConfigurationDelete_1_0;
+            interface.GetData                             = GetData_1_0;
+            interface.MarkerCreate                        = MarkerCreate_1_0;
+            interface.MarkerDelete                        = MarkerDelete_1_0;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns an instance of DdiFunctionTable object.
+        /// @return singleton DdiFunctionTable object.
+        //////////////////////////////////////////////////////////////////////////
+        static const DdiFunctionTable<T>& GetInstance()
+        {
+            // Instance of ddi function table must be static.
+            static const DdiFunctionTable<T> instance;
+            return instance;
+        }
+    };
+} // namespace ML::GEN11::OneApi
+#endif // ML_ENABLE_ONEAPI
+
 #endif // ML_ENABLE_GEN11

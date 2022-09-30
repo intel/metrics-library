@@ -34,62 +34,56 @@ Template:           Tools/MetricsLibraryGenerator/templates/ddi.h
 //////////////////////////////////////////////////////////////////////////
 /// @brief Instantiates functions for DdiMarker.
 //////////////////////////////////////////////////////////////////////////
-namespace ML
+#if ML_ENABLE_OPENCL
+namespace ML::GEN9::OpenCL
 {
-    namespace GEN9
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
     {
-        #if ML_ENABLE_OPENCL
-        namespace OpenCL
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OpenCL
-        #endif // ML_ENABLE_OPENCL
+} // namespace ML::GEN9::OpenCL
+#endif // ML_ENABLE_OPENCL
 
-        #if ML_ENABLE_ONEAPI
-        namespace OneApi
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+#if ML_ENABLE_ONEAPI
+namespace ML::GEN9::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OneApi
-        #endif // ML_ENABLE_ONEAPI
+} // namespace ML::GEN9::OneApi
+#endif // ML_ENABLE_ONEAPI
 
-    } // namespace GEN9
-} // namespace ML
 #endif // ML_ENABLE_GEN9
 
 #if ML_ENABLE_GEN11
@@ -104,62 +98,56 @@ namespace ML
 //////////////////////////////////////////////////////////////////////////
 /// @brief Instantiates functions for DdiMarker.
 //////////////////////////////////////////////////////////////////////////
-namespace ML
+#if ML_ENABLE_OPENCL
+namespace ML::GEN11::OpenCL
 {
-    namespace GEN11
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
     {
-        #if ML_ENABLE_OPENCL
-        namespace OpenCL
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OpenCL
-        #endif // ML_ENABLE_OPENCL
+} // namespace ML::GEN11::OpenCL
+#endif // ML_ENABLE_OPENCL
 
-        #if ML_ENABLE_ONEAPI
-        namespace OneApi
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+#if ML_ENABLE_ONEAPI
+namespace ML::GEN11::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OneApi
-        #endif // ML_ENABLE_ONEAPI
+} // namespace ML::GEN11::OneApi
+#endif // ML_ENABLE_ONEAPI
 
-    } // namespace GEN11
-} // namespace ML
 #endif // ML_ENABLE_GEN11
 
 #if ML_ENABLE_XE_LP
@@ -174,62 +162,56 @@ namespace ML
 //////////////////////////////////////////////////////////////////////////
 /// @brief Instantiates functions for DdiMarker.
 //////////////////////////////////////////////////////////////////////////
-namespace ML
+#if ML_ENABLE_OPENCL
+namespace ML::XE_LP::OpenCL
 {
-    namespace XE_LP
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
     {
-        #if ML_ENABLE_OPENCL
-        namespace OpenCL
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OpenCL
-        #endif // ML_ENABLE_OPENCL
+} // namespace ML::XE_LP::OpenCL
+#endif // ML_ENABLE_OPENCL
 
-        #if ML_ENABLE_ONEAPI
-        namespace OneApi
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+#if ML_ENABLE_ONEAPI
+namespace ML::XE_LP::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OneApi
-        #endif // ML_ENABLE_ONEAPI
+} // namespace ML::XE_LP::OneApi
+#endif // ML_ENABLE_ONEAPI
 
-    } // namespace XE_LP
-} // namespace ML
 #endif // ML_ENABLE_XE_LP
 
 #if ML_ENABLE_XE_HP
@@ -244,62 +226,56 @@ namespace ML
 //////////////////////////////////////////////////////////////////////////
 /// @brief Instantiates functions for DdiMarker.
 //////////////////////////////////////////////////////////////////////////
-namespace ML
+#if ML_ENABLE_OPENCL
+namespace ML::XE_HP::OpenCL
 {
-    namespace XE_HP
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
     {
-        #if ML_ENABLE_OPENCL
-        namespace OpenCL
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OpenCL
-        #endif // ML_ENABLE_OPENCL
+} // namespace ML::XE_HP::OpenCL
+#endif // ML_ENABLE_OPENCL
 
-        #if ML_ENABLE_ONEAPI
-        namespace OneApi
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+#if ML_ENABLE_ONEAPI
+namespace ML::XE_HP::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OneApi
-        #endif // ML_ENABLE_ONEAPI
+} // namespace ML::XE_HP::OneApi
+#endif // ML_ENABLE_ONEAPI
 
-    } // namespace XE_HP
-} // namespace ML
 #endif // ML_ENABLE_XE_HP
 
 #if ML_ENABLE_XE_HPG
@@ -314,62 +290,56 @@ namespace ML
 //////////////////////////////////////////////////////////////////////////
 /// @brief Instantiates functions for DdiMarker.
 //////////////////////////////////////////////////////////////////////////
-namespace ML
+#if ML_ENABLE_OPENCL
+namespace ML::XE_HPG::OpenCL
 {
-    namespace XE_HPG
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
     {
-        #if ML_ENABLE_OPENCL
-        namespace OpenCL
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OpenCL
-        #endif // ML_ENABLE_OPENCL
+} // namespace ML::XE_HPG::OpenCL
+#endif // ML_ENABLE_OPENCL
 
-        #if ML_ENABLE_ONEAPI
-        namespace OneApi
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+#if ML_ENABLE_ONEAPI
+namespace ML::XE_HPG::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OneApi
-        #endif // ML_ENABLE_ONEAPI
+} // namespace ML::XE_HPG::OneApi
+#endif // ML_ENABLE_ONEAPI
 
-    } // namespace XE_HPG
-} // namespace ML
 #endif // ML_ENABLE_XE_HPG
 
 #if ML_ENABLE_XE_HPC
@@ -384,61 +354,55 @@ namespace ML
 //////////////////////////////////////////////////////////////////////////
 /// @brief Instantiates functions for DdiMarker.
 //////////////////////////////////////////////////////////////////////////
-namespace ML
+#if ML_ENABLE_OPENCL
+namespace ML::XE_HPC::OpenCL
 {
-    namespace XE_HPC
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
     {
-        #if ML_ENABLE_OPENCL
-        namespace OpenCL
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OpenCL
-        #endif // ML_ENABLE_OPENCL
+} // namespace ML::XE_HPC::OpenCL
+#endif // ML_ENABLE_OPENCL
 
-        #if ML_ENABLE_ONEAPI
-        namespace OneApi
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerCreate_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerCreate_1_0(
-                const MarkerCreateData_1_0* createData,
-                MarkerHandle_1_0*           handle )
-            {
-                return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
-            }
+#if ML_ENABLE_ONEAPI
+namespace ML::XE_HPC::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
 
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Instantiates template function for MarkerDelete_1_0.
-            //////////////////////////////////////////////////////////////////////////
-            StatusCode ML_STDCALL MarkerDelete_1_0(
-                const MarkerHandle_1_0 handle )
-            {
-                return DdiMarker<T>::MarkerDelete_1_0( handle );
-            }
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
 
-        } // namespace OneApi
-        #endif // ML_ENABLE_ONEAPI
+} // namespace ML::XE_HPC::OneApi
+#endif // ML_ENABLE_ONEAPI
 
-    } // namespace XE_HPC
-} // namespace ML
 #endif // ML_ENABLE_XE_HPC
 
