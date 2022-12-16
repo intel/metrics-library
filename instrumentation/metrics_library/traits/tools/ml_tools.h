@@ -378,11 +378,7 @@ namespace ML
                 }
 
                 TT::Debug& debug = context->m_Debug;
-
-                debug.m_Aligned = IuLogCheckShowMode( IU_DBG_ALIGNED );
-                debug.m_Length  = IuLogCheckShowMode( IU_DBG_SHOW_FUNCTION )
-                     ? static_cast<uint32_t>( functionName.length() )
-                     : 0;
+                debug.m_Aligned  = IuLogCheckShowMode( IU_DBG_ALIGNED );
 
                 std::vector<std::string> lines;
                 std::istringstream       stream( debug.Format( values... ) );
@@ -412,12 +408,8 @@ namespace ML
             const std::string& functionName,
             const Values&... values )
         {
-            TT::Debug debug;
-
+            TT::Debug debug = {};
             debug.m_Aligned = IuLogCheckShowMode( IU_DBG_ALIGNED );
-            debug.m_Length  = IuLogCheckShowMode( IU_DBG_SHOW_FUNCTION )
-                 ? static_cast<uint32_t>( functionName.length() )
-                 : 0;
 
             std::vector<std::string> lines;
             std::istringstream       stream( debug.Format( values... ) );

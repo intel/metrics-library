@@ -369,7 +369,12 @@ if (${PLATFORM} STREQUAL Windows) # windows
     file (GLOB _IU_LINUX_HEADERS
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/*.h
         )
-    set (_HEADERS ${_HEADERS} ${_IU_LINUX_HEADERS})
+
+    # external
+    file (GLOB_RECURSE _EXTERNAL_HEADERS
+        ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm/*.h
+        )
+    set (_HEADERS ${_HEADERS} ${_IU_LINUX_HEADERS} ${_EXTERNAL_HEADERS})
 elseif (${PLATFORM} STREQUAL "linux") # linux
     # instrumentation utils headers
     file (GLOB _IU_OS_HEADERS
@@ -448,17 +453,18 @@ if (${PLATFORM} STREQUAL Windows) # windows
         ${BS_DIR_INSTRUMENTATION}/utils/windows/inc/iu_os.h
     )
     # add linux headers to solution explorer
-    source_group (codegen\\traits\\linux          ${BS_DIR_INSTRUMENTATION}/metrics_library/codegen/traits/linux/.*h)
-    source_group (library\\inc\\linux             ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/.*)
-    source_group (traits\\configuration\\linux    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
-    source_group (traits\\constants\\linux        ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/linux/.*h)
-    source_group (traits\\device\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device/linux/.*h)
-    source_group (traits\\kernel_interface\\linux ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
-    source_group (traits\\marker\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
-    source_group (traits\\override\\linux         ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
-    source_group (traits\\policy\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/policy/linux/.*h)
-    source_group (traits\\tools\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
-    source_group (traits\\validation\\linux       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/linux/.*h)
+    source_group (codegen\\traits\\linux             ${BS_DIR_INSTRUMENTATION}/metrics_library/codegen/traits/linux/.*h)
+    source_group (library\\inc\\linux                ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/.*)
+    source_group (library\\inc\\linux\\external\\drm ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm.*)
+    source_group (traits\\configuration\\linux       ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/configuration/linux/.*h)
+    source_group (traits\\constants\\linux           ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/constants/linux/.*h)
+    source_group (traits\\device\\linux              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/device/linux/.*h)
+    source_group (traits\\kernel_interface\\linux    ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/kernel_interface/linux/.*h)
+    source_group (traits\\marker\\linux              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/marker/linux/.*h)
+    source_group (traits\\override\\linux            ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/override/linux/.*h)
+    source_group (traits\\policy\\linux              ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/policy/linux/.*h)
+    source_group (traits\\tools\\linux               ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/tools/linux/.*h)
+    source_group (traits\\validation\\linux          ${BS_DIR_INSTRUMENTATION}/metrics_library/traits/validation/linux/.*h)
     source_group (iu\\linux FILES
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
@@ -604,16 +610,17 @@ if (${PLATFORM} STREQUAL Windows) # windows
 elseif (${PLATFORM} STREQUAL linux) # linux
     target_compile_options (
         ${PROJECT_NAME} PRIVATE
-        -Wall                # enables all compiler's warning messages
-        -Werror              # treat warning as errors
-        #-Wfatal-errors      # abort compilation on the first error occurred
-        -Wno-unknown-pragmas # allow unknown pragmas (such as #pragma region)
-        -fpack-struct=8      # struct member alignment - 8 bytes
-        -fvisibility=hidden  # hide non-exported symbols
-        -Wno-sequence-point  # disable undefined behavior warning
-        -Wno-comment         # allow multi-line comments
-        -Ofast               # optimize code in the favor of speed
-        -Wno-extern-c-compat # disable "empty struct has size 0 in C, size 1 in C++" warning
+        -Wall                    # enables all compiler's warning messages
+        -Werror                  # treat warning as errors
+        #-Wfatal-errors          # abort compilation on the first error occurred
+        -Wno-unknown-pragmas     # allow unknown pragmas (such as #pragma region)
+        -fpack-struct=8          # struct member alignment - 8 bytes
+        -fvisibility=hidden      # hide non-exported symbols
+        -Wno-sequence-point      # disable undefined behavior warning
+        -Wno-comment             # allow multi-line comments
+        -Ofast                   # optimize code in the favor of speed
+        -Wno-extern-c-compat     # disable "empty struct has size 0 in C, size 1 in C++" warning
+        -fstack-protector-strong # enables stack protection for vulnerable functions that contain: An array of any size and type
         )
     if ("${TARGET_ARCH}" STREQUAL "32")
         add_definitions (-m32)

@@ -213,7 +213,7 @@ namespace ML::BASE
 
                 uint64_t                               m_UserCounter[m_UserCountersCount];
                 uint32_t                               m_UserCounterConfigurationId;
-                ReportApiFlags                         m_Flags;                         // Report flags are defined in ReportApiFlags
+                ReportApiFlags                         m_Flags;                         // Report flags are defined in ReportApiFlags.
             };
 
             //////////////////////////////////////////////////////////////////////////
@@ -224,7 +224,8 @@ namespace ML::BASE
                 ReportPerformanceCounters = 0,
                 StoreRegisterMemoryOar,
                 StoreRegisterMemoryOag,
-                TriggerOag
+                TriggerOag,
+                TriggerOagExtended
             };
 
             //////////////////////////////////////////////////////////////////////////
@@ -368,9 +369,9 @@ namespace ML::XE_HP
         /// @param  context                      context.
         /// @return                              trait name used in library's code.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetCommandStreamerDescription( 
-               const uint32_t                      commandStreamerIdentificator, 
-               [[maybe_unused]] const TT::Context& context )
+        ML_INLINE static const std::string GetCommandStreamerDescription(
+            const uint32_t                      commandStreamerIdentificator,
+            [[maybe_unused]] const TT::Context& context )
         {
             switch( commandStreamerIdentificator )
             {
@@ -540,7 +541,7 @@ namespace ML::XE_HP
 
                 uint64_t                               m_UserCounter[Base::m_UserCountersCount];
                 uint32_t                               m_UserCounterConfigurationId;
-                ReportApiFlags                         m_Flags;                         // Report flags are defined in ReportApiFlags
+                ReportApiFlags                         m_Flags;                         // Report flags are defined in ReportApiFlags.
             };
 
             //////////////////////////////////////////////////////////////////////////

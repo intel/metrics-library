@@ -1998,10 +1998,10 @@ namespace ML::XE_HP
     {
         ML_DECLARE_TRAIT( GpuRegistersTrait, XE_LP );
 
-        // Oar A0 used as render context id cache
+        // Oar A0 used as render context id cache.
         static constexpr uint32_t m_ContextId = Base::m_OaPerfA0;
 
-        // Oac A0 used as compute context id cache
+        // Oac A0 used as compute context id cache.
         static constexpr uint32_t m_ContextIdCompute = 0x15000;
 
         // Oag mmio trigger.

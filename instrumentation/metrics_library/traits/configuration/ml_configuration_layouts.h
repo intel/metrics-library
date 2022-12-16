@@ -161,9 +161,9 @@ namespace ML
             {
                 InitializeRegisters m_Initialize; // Not used by Metrics Library, so let's use it as configuration id.
                 int64_t             m_Id;         // Additional parameter calculated from oa/gp.
-            };                                    // Not compatible with instrumentation
+            };                                    // Not compatible with instrumentation,
         };                                        // but should not effect query execution since.
-                                                  // this is a last element within the structure.
+                                                  // This is a last element within the structure.
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief HwContextType enumeration.

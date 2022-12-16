@@ -367,6 +367,7 @@ namespace ML::BASE
                         flags );
 
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
                     return T::GpuCommands::StoreHwCountersViaOagTriggers(
                         buffer,
                         address,
@@ -1365,6 +1366,7 @@ namespace ML::XE_HP
                                flags );
 
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreQueryId(
                         buffer,
                         address,

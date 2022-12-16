@@ -21,9 +21,16 @@ namespace ML::BASE
     /// @brief Base type for OaBufferMappedTrait object.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
-    struct OaBufferMappedTrait
+    struct OaBufferMappedTrait : TraitObject<T, TT::OaBuffer>
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( OaBufferMappedTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( OaBufferMappedTrait );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base = TraitObject<T, TT::OaBuffer>;
+        using Base::Derived;
 
     private:
         //////////////////////////////////////////////////////////////////////////
@@ -146,17 +153,27 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Finds oa reports between query begin/end reports.
-        /// @param  oaBufferState  oa buffer state.
-        /// @return                oa reports count between query begin/end.
+        /// @brief  Returns report size in oa buffer in bytes.
+        /// @return report size.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint32_t FindOaWindow( const TT::Layouts::OaBuffer::State& oaBufferState ) const
+        ML_INLINE uint32_t GetReportSize() const
+        {
+            return m_OaBuffer.m_ReportSize;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Finds oa reports between query begin/end reports.
+        /// @param  oaBufferState   oa buffer state.
+        /// @return                 oa reports count between query begin/end.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t FindOaWindow( const TT::Layouts::OaBuffer::State& oaBufferState )
         {
             ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
             ML_ASSERT( m_OaBuffer.IsMapped() );
 
+            const uint32_t reportSize     = m_OaBuffer.m_ReportSize;
             const uint32_t oaWindow       = oaBufferState.m_TailEndOffset - oaBufferState.m_TailBeginOffset;
-            const uint32_t oaReportsCount = ( ( ( oaBufferState.m_TailEndOffset < oaBufferState.m_TailBeginOffset ) ? m_OaBuffer.m_Size : 0 ) + oaWindow ) / sizeof( TT::Layouts::HwCounters::ReportOa );
+            const uint32_t oaReportsCount = ( ( ( oaBufferState.m_TailEndOffset < oaBufferState.m_TailBeginOffset ) ? m_OaBuffer.m_Size : 0 ) + oaWindow ) / reportSize;
 
             log.Info( "Oa tail begin offset", FormatFlag::Decimal, oaBufferState.m_TailBeginOffset );
             log.Info( "Oa tail end offset  ", FormatFlag::Decimal, oaBufferState.m_TailEndOffset );
@@ -168,7 +185,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns oa report from oa buffer.
         /// @param  offset  oa report offset within oa buffer.
-        /// @return         reference to oa report.
+        /// @return         a reference to oa report.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t offset )
         {
@@ -241,9 +258,9 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Dumps oa buffer reports between query begin / query end.
         /// @param  reportGpu   gpu query report.
-        /// @return operation status.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu reportGpu )
+        ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
@@ -253,21 +270,22 @@ namespace ML::BASE
                 const uint32_t base          = reportGpu.m_OaBuffer.GetAllocationOffset();
                 const uint32_t beginOffset   = reportGpu.m_OaTailPreBegin.GetOffset() - base;
                 const uint32_t endOffset     = reportGpu.m_OaTailPostEnd.GetOffset() - base;
+                const uint32_t reportSize    = m_OaBuffer.m_ReportSize;
 
                 // Print empty report first to distinguish oa buffer reports for different queries.
-                log.Csv( &m_Kernel.m_Context, emptyReportOa );
+                log.Csv( emptyReportOa );
 
                 if( beginOffset != endOffset )
                 {
-                    const uint32_t size   = m_OaBuffer.m_Size;
-                    uint32_t       offset = beginOffset;
+                    const uint32_t oaBufferSize = m_OaBuffer.m_Size;
+                    uint32_t       offset       = beginOffset;
 
-                    ML_ASSERT( ( beginOffset < size ) && ( endOffset < size ) );
+                    ML_ASSERT( ( beginOffset < oaBufferSize ) && ( endOffset < oaBufferSize ) );
 
                     do
                     {
-                        log.Csv( &m_Kernel.m_Context, GetReport( offset ) );
-                        offset = ( offset + sizeof( TT::Layouts::HwCounters::ReportOa ) ) % size;
+                        log.Csv( GetReport( offset ) );
+                        offset = ( offset + reportSize ) % oaBufferSize;
                     }
                     while( offset != endOffset );
                 }
@@ -286,11 +304,13 @@ namespace ML::BASE
             const uint32_t count )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-            ML_ASSERT( offset + count * sizeof( TT::Layouts::HwCounters::ReportOa ) < m_OaBuffer.m_Size );
+
+            const uint32_t reportSize = m_OaBuffer.m_ReportSize;
+            ML_ASSERT( offset + ( count * reportSize ) < m_OaBuffer.m_Size );
 
             for( uint32_t i = 0; i < count; ++i )
             {
-                const auto& oaReport = GetReport( offset + i * sizeof( TT::Layouts::HwCounters::ReportOa ) );
+                const auto& oaReport = GetReport( offset + ( i * reportSize ) );
                 log.Debug( "Oa report", i, oaReport );
             }
         }
@@ -301,7 +321,7 @@ namespace ML::BASE
         /// @param  offset  oa report offset.
         /// @return         true if oa report is splitted.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool IsSplitted( const uint32_t offset ) const
+        ML_INLINE bool IsSplitted( const uint32_t offset )
         {
             return ( offset + m_OaBuffer.m_ReportSize ) > m_OaBuffer.m_Size;
         }
@@ -315,9 +335,9 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
-            const uint32_t reportSize  = m_OaBuffer.m_ReportSize;
             uint8_t*       report      = reinterpret_cast<uint8_t*>( &m_ReportSplitted );
             uint8_t*       cpuAddress  = reinterpret_cast<uint8_t*>( m_OaBuffer.m_CpuAddress );
+            const uint32_t reportSize  = m_OaBuffer.m_ReportSize;
             const uint32_t part1Length = m_OaBuffer.m_Size - offset;
             const uint32_t part2Length = reportSize - part1Length;
 

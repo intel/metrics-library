@@ -28,8 +28,8 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Members.
         //////////////////////////////////////////////////////////////////////////
-        const TT::Layouts::HwCounters::ReportOa m_OaReportDummy;
-        TT::Context&                            m_Context;
+        TT::Layouts::HwCounters::ReportOa m_OaReportDummy;
+        TT::Context&                      m_Context;
 
     public:
         //////////////////////////////////////////////////////////////////////////
@@ -102,9 +102,19 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Finds oa reports from oa buffer between query begin/end reports.
-        /// @param  oaBufferState  oa buffer state.
-        /// @return                oa reports count between query begin/end.
+        /// @brief  Returns report size in oa buffer in bytes.
+        /// @return report size.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t GetReportSize() const
+        {
+            ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Context );
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Finds oa reports between query begin/end reports.
+        /// @param  oaBufferState   oa buffer state.
+        /// @return                 oa reports count between query begin/end.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint32_t FindOaWindow( [[maybe_unused]] const TT::Layouts::OaBuffer::State& oaBufferState ) const
         {
@@ -116,7 +126,7 @@ namespace ML::BASE
         /// @param  offset  oa report offset within oa buffer.
         /// @return         reference to oa report.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE const TT::Layouts::HwCounters::ReportOa& GetReport( [[maybe_unused]] const uint32_t offset ) const
+        ML_INLINE TT::Layouts::HwCounters::ReportOa& GetReport( [[maybe_unused]] const uint32_t offset )
         {
             return m_OaReportDummy;
         }
@@ -156,9 +166,9 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Dumps oa buffer reports between query begin / query end.
         /// @param  reportGpu   gpu query report.
-        /// @return operation status.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode DumpReports( [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu reportGpu )
+        ML_INLINE StatusCode DumpReports( [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             return log.m_Result;

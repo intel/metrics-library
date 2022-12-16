@@ -67,5 +67,3 @@ using namespace MetricsLibraryApi;
 #include "ml_ddi.h"
 #include "ml_export.h"
 #include "ml_object.h"
-#include "ml_traits_include.h"
-#include "ml_library_configuration.h"

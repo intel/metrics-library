@@ -49,7 +49,7 @@ namespace ML::BASE
         /// @brief  Initializes device data.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
-        StatusCode Initialize()
+        ML_INLINE StatusCode Initialize()
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             return log.m_Result;
@@ -132,12 +132,12 @@ namespace ML::XE_HP
         /// @brief  Initializes device instance.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
-        StatusCode Initialize()
+        ML_INLINE StatusCode Initialize()
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             auto     engines    = std::vector<drm_i915_engine_info>();
-            auto     regions    = std::vector<prelim_drm_i915_memory_region_info>();
+            auto     regions    = std::vector<drm_i915_memory_region_info>();
             auto     distances  = std::vector<prelim_drm_i915_query_distance_info>();
             uint32_t subDevices = 0;
 
@@ -235,7 +235,7 @@ namespace ML::XE_HP
         /// @return engineInstance  engine instance.
         /// @return                 operation status.
         //////////////////////////////////////////////////////////////////////////
-        StatusCode GetTbsEngine(
+        ML_INLINE StatusCode GetTbsEngine(
             uint32_t& engineClass,
             uint32_t& engineInstance )
         {
@@ -244,7 +244,7 @@ namespace ML::XE_HP
             for( uint32_t i = 0; i < m_Engines.size(); ++i )
             {
                 const bool isEngineRender  = m_Engines[i].engine_class == I915_ENGINE_CLASS_RENDER;
-                const bool isEngineCompute = m_Engines[i].engine_class == PRELIM_I915_ENGINE_CLASS_COMPUTE;
+                const bool isEngineCompute = m_Engines[i].engine_class == I915_ENGINE_CLASS_COMPUTE;
 
                 if( isEngineCompute || isEngineRender )
                 {
@@ -302,7 +302,7 @@ namespace ML::XE_HP
         /// @return engines device engines.
         /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
-        StatusCode GetEngines( std::vector<drm_i915_engine_info>& engines )
+        ML_INLINE StatusCode GetEngines( std::vector<drm_i915_engine_info>& engines )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -329,20 +329,20 @@ namespace ML::XE_HP
         /// @return regions    memory regions.
         /// @return            operation status.
         //////////////////////////////////////////////////////////////////////////
-        StatusCode GetMemoryRegions( std::vector<prelim_drm_i915_memory_region_info>& regions )
+        ML_INLINE StatusCode GetMemoryRegions( std::vector<drm_i915_memory_region_info>& regions )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             // Obtain memory regions.
             auto       buffer     = std::vector<uint8_t>();
-            const bool validQuery = ML_SUCCESS( m_IoControl.Query( PRELIM_DRM_I915_QUERY_MEMORY_REGIONS, buffer ) );
+            const bool validQuery = ML_SUCCESS( m_IoControl.Query( DRM_I915_QUERY_MEMORY_REGIONS, buffer ) );
 
             // Query check.
             ML_FUNCTION_CHECK( validQuery );
             ML_FUNCTION_CHECK( buffer.size() > 0 );
 
             // Copy regions data.
-            auto regionsData = reinterpret_cast<prelim_drm_i915_query_memory_regions*>( buffer.data() );
+            auto regionsData = reinterpret_cast<drm_i915_query_memory_regions*>( buffer.data() );
 
             for( uint32_t i = 0; i < regionsData->num_regions; ++i )
             {
@@ -359,10 +359,10 @@ namespace ML::XE_HP
         /// @return distances  engine distances.
         /// @return            operation status.
         //////////////////////////////////////////////////////////////////////////
-        StatusCode GetEngineDistances(
-            const std::vector<drm_i915_engine_info>&               engines,
-            const std::vector<prelim_drm_i915_memory_region_info>& regions,
-            std::vector<prelim_drm_i915_query_distance_info>&      distances )
+        ML_INLINE StatusCode GetEngineDistances(
+            const std::vector<drm_i915_engine_info>&          engines,
+            const std::vector<drm_i915_memory_region_info>&   regions,
+            std::vector<prelim_drm_i915_query_distance_info>& distances )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -372,22 +372,21 @@ namespace ML::XE_HP
             // Prepare distance information.
             for( uint32_t i = 0; i < regions.size(); ++i )
             {
-                if( PRELIM_I915_MEMORY_CLASS_DEVICE == regions[i].region.memory_class )
+                if( I915_MEMORY_CLASS_DEVICE == regions[i].region.memory_class )
                 {
                     auto distance                   = prelim_drm_i915_query_distance_info{};
-                    distance.region.memory_class    = PRELIM_I915_MEMORY_CLASS_DEVICE;
+                    distance.region.memory_class    = I915_MEMORY_CLASS_DEVICE;
                     distance.region.memory_instance = regions[i].region.memory_instance;
 
                     for( uint32_t j = 0; j < engines.size(); ++j )
                     {
-                        auto engine = engines[j];
-
-                        switch( engine.engine.engine_class )
+                        switch( const auto engine = engines[j].engine;
+                                engine.engine_class )
                         {
                             case I915_ENGINE_CLASS_RENDER:
                             case I915_ENGINE_CLASS_COPY:
-                            case PRELIM_I915_ENGINE_CLASS_COMPUTE:
-                                distance.engine = engine.engine;
+                            case I915_ENGINE_CLASS_COMPUTE:
+                                distance.engine = engine;
                                 distances.push_back( distance );
                             default:
                                 break;
@@ -420,7 +419,7 @@ namespace ML::XE_HP
         /// @return subDevices sub device count.
         /// @return            operation status.
         //////////////////////////////////////////////////////////////////////////
-        StatusCode GetSubDeviceEngines(
+        ML_INLINE StatusCode GetSubDeviceEngines(
             const std::vector<prelim_drm_i915_query_distance_info>& distances,
             uint32_t&                                               subDevices )
         {
@@ -428,7 +427,7 @@ namespace ML::XE_HP
 
             for( uint32_t i = 0, subDevice = 0; i < distances.size(); ++i )
             {
-                auto       engine        = distances[i].engine;
+                const auto engine        = distances[i].engine;
                 const bool validDistance = distances[i].distance == 0;
                 const bool newDevice     = ( i > 0 ) && ( distances[i].region.memory_instance != distances[i - 1].region.memory_instance );
                 subDevice                = subDevice + ( newDevice ? 1 : 0 );
@@ -445,7 +444,7 @@ namespace ML::XE_HP
                     switch( engine.engine_class )
                     {
                         case I915_ENGINE_CLASS_RENDER:
-                        case PRELIM_I915_ENGINE_CLASS_COMPUTE:
+                        case I915_ENGINE_CLASS_COMPUTE:
                             m_Engines.push_back( engine );
                             break;
 

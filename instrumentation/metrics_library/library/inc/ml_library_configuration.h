@@ -24,7 +24,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Initializes log settings.
         //////////////////////////////////////////////////////////////////////////
-        static void InitializeLogger()
+        ML_INLINE static void InitializeLogger()
         {
             IuLogGetSettings( nullptr );
         }
@@ -33,7 +33,7 @@ namespace ML
         /// @brief   Overrides api and gen settings provided by client.
         /// @return  clientType     overridden client type.
         //////////////////////////////////////////////////////////////////////////
-        static void OverrideClientType( ClientType_1_0& clientType )
+        ML_INLINE static void OverrideClientType( ClientType_1_0& clientType )
         {
             GetApiOverride( clientType.Api );
             GetGpuOverride( clientType.Gen );
@@ -44,7 +44,7 @@ namespace ML
         /// @brief  Returns overridden client api type.
         /// @return overridden client api type.
         //////////////////////////////////////////////////////////////////////////
-        static void GetApiOverride( ClientApi& clientApi )
+        ML_INLINE static void GetApiOverride( ClientApi& clientApi )
         {
             ClientApi api = ClientApi::Unknown;
 
@@ -61,7 +61,7 @@ namespace ML
         /// @brief  Returns overridden gpu type.
         /// @return overridden gen type.
         //////////////////////////////////////////////////////////////////////////
-        static void GetGpuOverride( ClientGen& clientGpu )
+        ML_INLINE static void GetGpuOverride( ClientGen& clientGpu )
         {
             ClientGen gpu = ClientGen::Unknown;
 

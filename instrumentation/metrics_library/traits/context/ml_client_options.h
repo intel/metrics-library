@@ -61,9 +61,8 @@ namespace ML
             {
                 for( uint32_t i = 0; i < clientData.ClientOptionsCount; ++i )
                 {
-                    auto& options = clientData.ClientOptions[i];
-
-                    switch( clientData.ClientOptions[i].Type )
+                    switch( const auto& options = clientData.ClientOptions[i];
+                            options.Type )
                     {
                         case ClientOptionsType::Posh:
                             m_PoshEnabled = options.Posh.Enabled;

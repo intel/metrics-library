@@ -23,10 +23,6 @@ Template:           Tools/MetricsLibraryGenerator/templates/function_table_base.
 
 namespace ML
 {
-    struct DdiFunctionTableBase;
-    const DdiFunctionTableBase* GetDdiFunctionTable( const ClientType_1_0& clientType );
-    const DdiFunctionTableBase* GetDdiFunctionTable( const ContextHandle_1_0& handle );
-
     //////////////////////////////////////////////////////////////////////////
     // @brief DDI function pointers.
     //////////////////////////////////////////////////////////////////////////
@@ -49,4 +45,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         virtual void GetInterface( Interface_1_0& interface ) const = 0;
     };
+
+    const DdiFunctionTableBase* GetDdiFunctionTable( const ClientType_1_0& clientType );
+    const DdiFunctionTableBase* GetDdiFunctionTable( const ContextHandle_1_0& handle );
 } // namespace ML

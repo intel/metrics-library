@@ -41,7 +41,7 @@ AlwaysBreakTemplateDeclarations: Yes
 
 #AttributeMacros: ['']
 
-BinPackArguments: false
+BinPackArguments: true
 BinPackParameters: false
 
 #BitFieldColonSpacing: Both

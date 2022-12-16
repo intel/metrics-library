@@ -276,13 +276,12 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Logs into a csv file.
-        /// @param context  context.
         /// @param values   variable values to print out.
         //////////////////////////////////////////////////////////////////////////
         template <typename... Values>
-        ML_INLINE void Csv( TT::Context* context, const Values&... values ) const
+        ML_INLINE void Csv( const Values&... values ) const
         {
-            T::Tools::WriteToCsv( context, values... );
+            T::Tools::WriteToCsv( m_Context, values... );
         }
     };
 } // namespace ML

@@ -115,7 +115,7 @@ namespace ML
 
             if( validBuffer )
             {
-                T::Tools::MemoryCopy( (uint8_t*) m_Buffer + m_Usage, m_Size, &command, commandSize );
+                T::Tools::MemoryCopy( static_cast<uint8_t*>( m_Buffer ) + m_Usage, m_Size, &command, commandSize );
 
                 m_Usage += commandSize;
                 m_MemoryPatchesCount += patchMemory ? 1 : 0;
@@ -146,7 +146,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint8_t* GetBuffer()
         {
-            return reinterpret_cast<uint8_t*>( m_Buffer );
+            return static_cast<uint8_t*>( m_Buffer );
         }
 
     private:

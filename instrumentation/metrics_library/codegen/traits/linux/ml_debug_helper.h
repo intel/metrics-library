@@ -84,18 +84,17 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         using Base = TraitObject<T, TT::Debug>;
         using Base::Derived;
-        
+
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        bool                                         m_Aligned;
-        bool                                         m_InitializeCsvOutputFile;
-        bool                                         m_UseDefaultFormat;
-        uint32_t                                     m_FilteredLines;
-        uint32_t                                     m_IndentLevel;
-        uint32_t                                     m_Length;
-        std::ofstream                                m_CsvOutputFile;
-        std::ostringstream                           m_Format;
+        bool               m_Aligned;
+        bool               m_InitializeCsvOutputFile;
+        bool               m_UseDefaultFormat;
+        uint32_t           m_FilteredLines;
+        uint32_t           m_IndentLevel;
+        std::ofstream      m_CsvOutputFile;
+        std::ostringstream m_Format;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief DebugTrait constructor.
@@ -106,7 +105,6 @@ namespace ML::BASE
             , m_UseDefaultFormat( true )
             , m_FilteredLines( 0 )
             , m_IndentLevel( 0 )
-            , m_Length( 0 )
             , m_CsvOutputFile{}
             , m_Format{}
         {
@@ -288,9 +286,9 @@ namespace ML::BASE
 
                 case FormatFlag::Default:
                     m_Format << std::noboolalpha << std::noshowbase << std::noshowpoint
-                                << std::noshowpos << std::noskipws << std::nounitbuf
-                                << std::nouppercase << std::right << std::dec
-                                << std::defaultfloat << std::setw( 1 );
+                             << std::noshowpos << std::noskipws << std::nounitbuf
+                             << std::nouppercase << std::right << std::dec
+                             << std::defaultfloat << std::setw( 1 );
                     m_UseDefaultFormat = true;
                     break;
 
@@ -312,7 +310,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "ClientApi"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -352,7 +350,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "ClientGen"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -432,7 +430,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "ClientOptionsType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -492,7 +490,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "GpuCommandBufferType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -536,7 +534,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "GpuConfigurationActivationType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -572,7 +570,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "LinuxAdapterType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -604,7 +602,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "MemoryFlags"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -636,7 +634,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "MemoryType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -676,7 +674,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "ObjectType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -760,7 +758,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "ParameterType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -808,7 +806,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "StatusCode"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -928,7 +926,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "ValueType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -994,7 +992,6 @@ namespace ML::BASE
             return output.str();
         }
 
-
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Converts an enumerator to a string that contains the
         ///         enumerator name.
@@ -1045,7 +1042,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "OaBufferType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -1077,7 +1074,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "HwCounters::Query::GetDataMode"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -1113,7 +1110,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "Layouts::OaBuffer::SamplingType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -1153,7 +1150,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "HwCounters::Query::ReportCollectingMode"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -1171,6 +1168,10 @@ namespace ML::BASE
 
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
                     output << "TriggerOag";
+                    break;
+
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
+                    output << "TriggerOagExtended";
                     break;
 
                 default:
@@ -1193,7 +1194,7 @@ namespace ML::BASE
         {
             std::ostringstream output;
             output << "LogType"
-                    << "( ";
+                   << "( ";
 
             switch( value )
             {
@@ -2783,14 +2784,16 @@ namespace ML::BASE
             }
 
             output << arrayName << padding;
-            output << "0x" << std::setfill( '0' ) << std::setw( sizeof( void* ) * 2 ) << std::hex << (uintptr_t) ( value );
-            output << " (" << std::dec << (uintptr_t) ( value ) << ")";
+            output << "0x" << std::setfill( '0' ) << std::setw( sizeof( void* ) * 2 ) << std::hex << reinterpret_cast<uintptr_t>( value );
+            output << " (" << std::dec << reinterpret_cast<uintptr_t>( value ) << ")";
             output << " --> \n";
 
             if( arraySize > 0 )
             {
                 if( ValidatePointer( value, output ) )
                 {
+                    auto& derived = Derived();
+
                     for( uint32_t i = 0; i < arraySize; ++i )
                     {
                         if( m_Aligned )
@@ -2800,7 +2803,7 @@ namespace ML::BASE
                                 output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
                             }
                         }
-                        output << arrayName << "[" << i << "]" << padding << Derived().ToString( value[i] );
+                        output << arrayName << "[" << i << "]" << padding << derived.ToString( value[i] );
                     }
                 }
             }
@@ -2825,8 +2828,9 @@ namespace ML::BASE
         template <typename... Values>
         ML_INLINE std::string Format( const Values&... values )
         {
+            auto&                    derived        = Derived();
             const uint32_t           indent         = GetIndentLevel();
-            std::vector<std::string> unpackedValues = { Derived().ToString( values )... };
+            std::vector<std::string> unpackedValues = { derived.ToString( values )... };
             std::ostringstream       output;
 
             if( unpackedValues.size() > 0 )
@@ -2843,7 +2847,7 @@ namespace ML::BASE
                     }
                 }
 
-                // Print the first argument - usually a variable name
+                // Print the first argument - usually a variable name.
                 output << *value;
 
                 // Apply alignment (before printing the next arguments).
@@ -2867,7 +2871,7 @@ namespace ML::BASE
                 }
 
                 // Restore default ML format.
-                Derived().ToString( FormatFlag::Default );
+                derived.ToString( FormatFlag::Default );
             }
 
             return output.str();
@@ -2940,7 +2944,8 @@ namespace ML::BASE
         template <typename... Values>
         ML_INLINE void PrintCsv( TT::Context* context, const Values&... values )
         {
-            ( Derived().ToCsv(context, values), ... );
+            auto& derived = Derived();
+            ( derived.ToCsv( context, values ), ... );
         }
     };
 } // namespace ML::BASE

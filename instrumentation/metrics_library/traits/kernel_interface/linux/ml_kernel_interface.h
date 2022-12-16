@@ -106,7 +106,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint64_t GetGpuOaTimestampFrequency()
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            ML_FUNCTION_LOG( uint64_t{ 0 }, &m_Context );
 
             if( m_OaFrequency == 0 )
             {
@@ -120,7 +120,7 @@ namespace ML
                 }
             }
 
-            return m_OaFrequency;
+            return log.m_Result = m_OaFrequency;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -129,7 +129,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint64_t GetGpuCsTimestampFrequency()
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            ML_FUNCTION_LOG( uint64_t{ 0 }, &m_Context );
 
             if( m_CsFrequency == 0 )
             {
@@ -143,7 +143,7 @@ namespace ML
                 }
             }
 
-            return m_CsFrequency;
+            return log.m_Result = m_CsFrequency;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -153,8 +153,6 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint64_t GetGpuTimestampFrequency( const TT::Layouts::Configuration::TimestampType timestampType )
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-
             return timestampType == T::Layouts::Configuration::TimestampType::Oa
                 ? GetGpuOaTimestampFrequency()
                 : GetGpuCsTimestampFrequency();
@@ -296,6 +294,18 @@ namespace ML
         ML_INLINE bool IsPoshQueryOverride() const
         {
             ML_FUNCTION_LOG( false, &m_Context );
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns report collecting mode override state.
+        /// @return reportCollectingMode    report collecting mode.
+        /// @return                         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetReportCollectingModeOverride( [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportCollectingMode& reportCollectingMode ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::NotSupported, &m_Context );
 
             return log.m_Result;
         }

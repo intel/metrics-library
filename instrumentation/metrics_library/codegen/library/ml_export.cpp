@@ -21,6 +21,8 @@ Template:           Tools/MetricsLibraryGenerator/templates/export.h
 */
 
 #include "ml_pch.h"
+#include "ml_traits_include.h"
+#include "ml_library_configuration.h"
 #include "ml_export.h"
 #include "ml_driver_store_os.h"
 #if ML_ENABLE_GEN9

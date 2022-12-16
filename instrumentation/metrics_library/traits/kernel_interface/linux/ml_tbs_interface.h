@@ -45,8 +45,8 @@ namespace ML::BASE
             //////////////////////////////////////////////////////////////////////////
             const TT::KernelInterface& m_Kernel;
             void*                      m_CpuAddress;
-            uint32_t                   m_ReportSize;
             uint32_t                   m_Size;
+            uint32_t                   m_ReportSize;
             int32_t                    m_Stream;
             bool                       m_Mapped;
 
@@ -57,8 +57,8 @@ namespace ML::BASE
             OaBufferMapped( const TT::KernelInterface& kernel )
                 : m_Kernel( kernel )
                 , m_CpuAddress( nullptr )
-                , m_ReportSize( sizeof( TT::Layouts::HwCounters::ReportOa ) )
                 , m_Size( 0 )
+                , m_ReportSize( sizeof( TT::Layouts::HwCounters::ReportOa ) )
                 , m_Stream( T::ConstantsOs::Tbs::m_Invalid )
                 , m_Mapped( false )
             {
@@ -69,7 +69,7 @@ namespace ML::BASE
             //////////////////////////////////////////////////////////////////////////
             ~OaBufferMapped()
             {
-                ML_FUNCTION_LOG( true, &m_Kernel.m_Context );
+                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
                 if( m_Mapped )
                 {
@@ -178,7 +178,7 @@ namespace ML::BASE
             /// @brief Tbs stream constructor.
             /// @param kernel kernel interface.
             //////////////////////////////////////////////////////////////////////////
-            ML_INLINE TbsStream( TT::KernelInterface& kernel )
+            TbsStream( TT::KernelInterface& kernel )
                 : m_Kernel( kernel )
                 , m_Id( T::ConstantsOs::Tbs::m_Invalid )
                 , m_MetricSet( T::ConstantsOs::Tbs::m_Invalid )
@@ -599,22 +599,21 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint64_t GetTimerPeriodExponent( const uint64_t timerPeriod ) const
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_LOG( uint64_t{ 0 }, &m_Kernel.m_Context );
 
             // Get minimum gpu timestamp period in ns.
             const uint64_t timestampPeriod = GetGpuTimestampPeriod();
             if( !timestampPeriod )
             {
                 log.Error( "Invalid gpu timestamp period (0 ns)" );
-                return 0;
+                return log.m_Result = 0;
             }
 
             // Compute timer exponent.
             const uint64_t period = log2( timerPeriod / timestampPeriod ) - 1;
-            log.Debug( "Tbs timer period exponent", period );
 
             ML_ASSERT( period );
-            return period;
+            return log.m_Result = period;
         }
     };
 } // namespace ML::BASE

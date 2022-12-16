@@ -354,7 +354,7 @@ namespace ML::BASE
             if( ML_FAIL( log.m_Result ) )
             {
                 log.Debug( "Error id          ", errno );
-                log.Debug( "Error description ", (std::string) strerror( errno ) );
+                log.Debug( "Error description ", strerror( errno ) );
             }
 
             return log.m_Result;
@@ -400,7 +400,7 @@ namespace ML::BASE
             if( readBytes < 0 )
             {
                 close( file );
-                log.Warning( "Read negative number of bytes, error %s", strerror( errno ) );
+                log.Warning( "Read negative number of bytes", errno, strerror( errno ) );
                 return log.m_Result = StatusCode::Failed;
             }
 
@@ -537,11 +537,11 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
-            m_DrmFile = drmOpenWithType( T::ConstantsOs::Drm::m_Name, NULL, DRM_NODE_RENDER );
+            m_DrmFile = drmOpenWithType( T::ConstantsOs::Drm::m_Name, nullptr, DRM_NODE_RENDER );
 
             if( m_DrmFile < 0 )
             {
-                m_DrmFile = drmOpenWithType( T::ConstantsOs::Drm::m_Name, NULL, DRM_NODE_PRIMARY );
+                m_DrmFile = drmOpenWithType( T::ConstantsOs::Drm::m_Name, nullptr, DRM_NODE_PRIMARY );
             }
 
             if( m_DrmFile < 0 )
@@ -704,7 +704,7 @@ namespace ML::BASE
             if( error == T::ConstantsOs::Tbs::m_Invalid )
             {
                 log.Debug( "Error id          ", errno );
-                log.Debug( "Error description ", (std::string) strerror( errno ) );
+                log.Debug( "Error description ", strerror( errno ) );
 
                 return log.m_Result = StatusCode::Failed;
             }
@@ -754,7 +754,7 @@ namespace ML::BASE
             if( ML_FAIL( log.m_Result ) )
             {
                 log.Debug( "Error id          ", errno );
-                log.Debug( "Error description ", (std::string) strerror( errno ) );
+                log.Debug( "Error description ", strerror( errno ) );
             }
 
             return log.m_Result;

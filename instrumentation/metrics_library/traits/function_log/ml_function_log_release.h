@@ -142,11 +142,10 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Logs into a csv file.
-        /// @param context  context.
         /// @param values   variable values to print out.
         //////////////////////////////////////////////////////////////////////////
         template <typename... Values>
-        ML_INLINE void Csv( [[maybe_unused]] TT::Context* context, [[maybe_unused]] const Values&... values ) const
+        ML_INLINE void Csv( [[maybe_unused]] const Values&... values ) const
         {
         }
     };

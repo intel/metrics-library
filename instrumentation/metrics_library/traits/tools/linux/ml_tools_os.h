@@ -51,7 +51,7 @@ namespace ML::BASE
         {
             struct timespec time = {};
             clock_gettime( CLOCK_MONOTONIC, &time );
-            return (uint64_t) time.tv_nsec + (uint64_t) time.tv_sec * Constants::Time::m_SecondInNanoseconds;
+            return static_cast<uint64_t>( time.tv_nsec ) + static_cast<uint64_t>( time.tv_sec ) * Constants::Time::m_SecondInNanoseconds;
         }
 
         //////////////////////////////////////////////////////////////////////////
