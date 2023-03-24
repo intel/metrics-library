@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 /*
 @file iu_std.cpp
 
-@brief Instrumentation Utils implementation with Linux/Android specific functions.
+@brief Instrumentation Utils implementation with Linux specific functions.
 
 @note Some functions from the header may be unimplemented - they weren't
       needed in Linux version at the moment.
@@ -23,9 +23,7 @@ SPDX-License-Identifier: MIT
 #include <string.h>
 #include <wchar.h>
 
-#if defined( ANDROID )
-    #include <cutils/log.h>
-#elif defined( __linux__ )
+#if defined( __linux__ )
     #include <memory.h>
     #include <syslog.h>
 #endif
@@ -54,6 +52,31 @@ extern "C"
     bool iu_zeromem( void* dest, size_t destSize )
     {
         return memset( dest, 0, destSize ) != NULL;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Group:
+    //     Instrumentation Utils Standard OS Specific Functions
+    //
+    // Function:
+    //     iu_memset
+    //
+    // Description:
+    //     Fills the first 'count' bytes of the memory 'dest' with 'value'
+    //
+    // Input:
+    //     void*   dest  - momory to fill
+    //     int32_t value - value to be written
+    //     size_t  count - number of bytes to be written
+    //
+    // Output:
+    //     bool - true if success
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    bool iu_memset( void* dest, int32_t value, size_t count )
+    {
+        return memset( dest, value, count ) != NULL;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -495,6 +518,49 @@ extern "C"
     // Group:
     //     Instrumentation Utils Standard OS Specific Functions
     //
+    // Function:
+    //     iu_mbstowstr_s
+    //
+    // Description:
+    //     Converts standard cstring 'srcStr' to wide-char cstring 'destWstr'.
+    //
+    // Input:
+    //     wchar_t*       destWstr - destination cstring
+    //     size_t         destSize - 'destStr' buffer size
+    //     const char*    srcStr   - wide-char cstring to convert
+    //     size_t         count    - in characters
+    //
+    // Output:
+    //     size_t - number of converted chars
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    size_t iu_mbstowstr_s( wchar_t* destWstr, size_t destSize, const char* srcStr, size_t count )
+    {
+        if( destWstr == NULL || destSize == 0 || srcStr == NULL )
+        {
+            IU_ASSERT( false );
+            return 0;
+        }
+        if( destSize <= count )
+        {
+            // Buffer too small
+            IU_ASSERT( false );
+            return 0;
+        }
+
+        size_t convertedChars = mbstowcs( destWstr, srcStr, count );
+        if( convertedChars && convertedChars < destSize )
+        {
+            destWstr[convertedChars - 1] = L'\0'; // Add null-character at the end
+        }
+        return convertedChars;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Group:
+    //     Instrumentation Utils Standard OS Specific Functions
+    //
     // Method:
     //     iu_sprintf_s
     //
@@ -603,9 +669,7 @@ extern "C"
     ///////////////////////////////////////////////////////////////////////////////
     void iu_log( const char* msg )
     {
-#if defined( ANDROID )
-        ALOGE( "%s", msg );
-#elif defined( __linux__ )
+#if defined( __linux__ )
         syslog( LOG_USER | LOG_ERR, "%s", msg );
 #endif
     }
@@ -624,9 +688,10 @@ extern "C"
     // Input:
     //     const char* msg    - message to print
     //     const bool  addEOL - add a new line sign at the end of the message
+    //     const bool  flush  - flush buffer
     //
     ///////////////////////////////////////////////////////////////////////////////
-    void iu_printf( const char* msg, const bool addEOL )
+    void iu_printf( const char* msg, const bool addEOL, const bool flush )
     {
         if( addEOL )
         {
@@ -635,6 +700,10 @@ extern "C"
         else
         {
             printf( "%s", msg );
+        }
+        if( flush )
+        {
+            fflush( stdout );
         }
     }
 

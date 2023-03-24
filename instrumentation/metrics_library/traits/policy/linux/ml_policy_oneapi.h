@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -52,7 +52,7 @@ namespace ML::BASE
             //////////////////////////////////////////////////////////////////////////
             struct Create
             {
-                static constexpr uint32_t m_SlotsCount   = 0xFFFFFFFF;
+                static constexpr uint32_t m_MaxSlotCount = 0xFFFFFFFF;
                 static constexpr bool     m_UserCounters = false;
             };
 
@@ -71,11 +71,19 @@ namespace ML::BASE
             struct GetData
             {
                 static constexpr bool m_AllowEmptyContextId               = true;
-                static constexpr bool m_ResetOaBufferState                = false;
+                static constexpr bool m_ResetOaBufferState                = true;
                 static constexpr bool m_AsyncCompute                      = false;
                 static constexpr bool m_RecoverContextId                  = false;
                 static constexpr bool m_IncludeRenderContextSwitchReports = true;
                 static constexpr bool m_CheckConfigurationActivation      = true;
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Query write policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct Write
+            {
+                static constexpr bool m_MirpcOnOagTriggers = false;
             };
         };
 
@@ -129,20 +137,6 @@ namespace ML::XE_LP
         ML_DECLARE_TRAIT( PolicyOneApiTrait, GEN11 );
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Query hw counters policies.
-        //////////////////////////////////////////////////////////////////////////
-        struct QueryHwCounters : Base::QueryHwCounters
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Common query policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct Common
-            {
-                static constexpr bool m_PatchGpuMemory = false;
-            };
-        };
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief Configuration oa policies.
         //////////////////////////////////////////////////////////////////////////
         struct ConfigurationOa : Base::ConfigurationOa
@@ -176,6 +170,14 @@ namespace ML::XE_HP
             struct GetData : Base::QueryHwCounters::GetData
             {
                 static constexpr bool m_IncludeRenderContextSwitchReports = false;
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Query write policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct Write : Base::QueryHwCounters::Write
+            {
+                static constexpr bool m_MirpcOnOagTriggers = true;
             };
         };
 

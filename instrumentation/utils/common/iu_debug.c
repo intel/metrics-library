@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -94,7 +94,7 @@ bool IuLogCheckShowMode(
 ///////////////////////////////////////////////////////////////////////////////
 static const char* __IuLogGetModuleInfo()
 {
-#if !defined( _DEBUG ) && !defined( _RELEASE_INTERNAL )
+#if _RELEASE
 
     return IuOsGetModuleInfo( NULL );
 
@@ -210,10 +210,10 @@ void __IuLogPrint(
         int32_t functionAlignment = ( g_IuLogsControl.LogLevel & IU_DBG_ALIGNED ) ? IU_FUNCTION_ALIGNMENT : 0;
         outFormatOffset           = iu_strnlen_s( outFormat, sizeof( outFormat ) );
 
-        // TODO: The '*s' printf parameter doesn't work in KMD drv - used a hardcoded version instead
-        // iu_snprintf(outFormat+outFormatOffset, IU_FORMAT_SIZE-outFormatOffset, ":%*s", functionAlignment, fncName);
         if( functionAlignment )
         {
+            // TODO: The '*s' printf parameter doesn't work in KMD drv - used a hardcoded version instead
+            // iu_snprintf(outFormat+outFormatOffset, IU_FORMAT_SIZE - outFormatOffset, ":%*s", functionAlignment, fncName);
             iu_snprintf( outFormat + outFormatOffset, IU_FORMAT_SIZE - outFormatOffset, ":%-50s", fncName );
         }
         else
@@ -243,7 +243,7 @@ void __IuLogPrint(
 
     if( ( g_IuLogsControl.LogLevel & IU_DBG_CONSOLE_DUMP ) || ( level & IU_DBG_CONSOLE_DUMP ) )
     {
-        iu_printf( buf, !( g_IuLogsControl.LogLevel & IU_DBG_EOL ) );
+        iu_printf( buf, !( g_IuLogsControl.LogLevel & IU_DBG_EOL ), g_IuLogsControl.LogLevel & IU_DBG_CONSOLE_FLUSH );
     }
 }
 

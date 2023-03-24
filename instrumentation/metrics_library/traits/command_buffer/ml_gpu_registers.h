@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -2012,7 +2012,7 @@ namespace ML::XE_HP
         static constexpr uint32_t m_OagPerfA37 = 0xDB28;
 
         // Oag counters high.
-        // A32 - A35 upper registers are missing on XeHP_SDV.
+        // A32 - A35 upper registers are missing on XeHP.
         static constexpr uint32_t m_OagPerfA36Upper = 0xDB24;
         static constexpr uint32_t m_OagPerfA37Upper = 0xDB2C;
 

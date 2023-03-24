@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -36,9 +36,8 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         TT::Queries::HwCounters&                        m_Query;
         TT::Context&                                    m_Context;
-        const uint32_t                                  m_QuerySlotIndex;
         TT::Queries::HwCounters::Slot&                  m_QuerySlot;
-        TT::Layouts::HwCounters::Query::ReportGpu&      m_ReportGpu;
+        TT::Layouts::HwCounters::Query::ReportGpu       m_ReportGpu;
         TT::Layouts::HwCounters::Report&                m_ReportBegin;
         TT::Layouts::HwCounters::Report&                m_ReportEnd;
         TT::Layouts::HwCounters::Query::ReportApi&      m_ReportApi;
@@ -53,24 +52,23 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Hw counters query report constructor.
-        /// @param  slot        query pool slot index.
+        /// @param  slotIndex   query pool slot index.
         /// @param  query       reference to hw counters query object.
         /// @param  reportApi   reference to output report api.
         //////////////////////////////////////////////////////////////////////////
         QueryHwCountersCalculatorTrait(
-            const uint32_t                             slot,
+            const uint32_t                             slotIndex,
             TT::Queries::HwCounters&                   query,
             TT::Layouts::HwCounters::Query::ReportApi& reportApi )
             : Base()
             , m_Query( query )
             , m_Context( query.m_Context )
-            , m_QuerySlotIndex( slot )
-            , m_QuerySlot( query.GetSlotData( slot ) )
+            , m_QuerySlot( query.GetSlot( slotIndex ) )
             , m_ReportGpu( m_QuerySlot.GetReportGpu() )
             , m_ReportBegin( m_ReportGpu.m_Begin )
             , m_ReportEnd( m_ReportGpu.m_End )
             , m_ReportApi( reportApi )
-            , m_OaBufferState( GetOaBufferState() )
+            , m_OaBufferState( m_QuerySlot.m_OaBufferState )
             , m_OaBuffer( m_Context.m_OaBuffer )
             , m_Kernel( m_Context.m_Kernel )
             , m_HwContextIds( m_Kernel.GetHwContextIds() )
@@ -111,7 +109,7 @@ namespace ML::BASE
                 return log.m_Result;
             }
 
-            // Reset oa buffer state if required (dx12/vulkan).
+            // Reset oa buffer state if required (dx12/vulkan/oneapi).
             if constexpr( T::Policy::QueryHwCounters::GetData::m_ResetOaBufferState )
             {
                 m_OaBufferState.Reset();
@@ -122,7 +120,7 @@ namespace ML::BASE
             switch( m_Query.m_GetDataMode )
             {
                 case T::Layouts::HwCounters::Query::GetDataMode::Multisampled:
-                    log.m_Result = derived.GetReportMultisampled( false, m_ReportApi );
+                    log.m_Result = derived.template GetReportMultisampled<false>( m_ReportApi );
                     break;
 
                 default:
@@ -142,8 +140,8 @@ namespace ML::BASE
 
     protected:
         //////////////////////////////////////////////////////////////////////////
-        /// @brief   Prepares hw counters internal report to evaluate counters values.
-        /// @return  operation status.
+        /// @brief  Prepares hw counters internal report to evaluate counters values.
+        /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode PrepareReportGpu()
         {
@@ -155,17 +153,17 @@ namespace ML::BASE
                     break;
 
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOar:
-                    m_Query.UseSrmOarReport( m_QuerySlotIndex );
+                    m_Query.UseSrmOarReport( m_ReportGpu );
                     break;
 
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag:
-                    m_Query.UseSrmOagReport( m_QuerySlotIndex );
+                    m_Query.UseSrmOagReport( m_ReportGpu );
                     break;
 
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
                     ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailPreBegin.All.m_Tail != m_ReportGpu.m_OaTailPostEnd.All.m_Tail, StatusCode::ReportLost );
-                    ML_FUNCTION_CHECK_ERROR( m_Query.GetTriggeredOaReports( m_QuerySlotIndex ), StatusCode::ReportLost );
+                    ML_FUNCTION_CHECK_ERROR( m_Query.GetTriggeredOaReports( m_ReportGpu ), StatusCode::ReportLost );
                     break;
 
                 default:
@@ -219,7 +217,7 @@ namespace ML::BASE
 
             // Api report flags.
             auto& flags = m_ReportApi.m_Flags;
-            flags       = TT::Layouts::HwCounters::Query::ReportApiFlags{};
+            flags       = {};
 
             flags.m_ReportContextSwitchLost |= !m_OaBuffer.IsValid();
 
@@ -305,12 +303,12 @@ namespace ML::BASE
             // Validate contexts.
             // Compute command streamer always returns context id equals to zero.
             // Also Linux may use zero context id.
-            const bool useNullContext = Derived().AllowEmptyContextId();
-            const bool isSrmOag       = m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag;
-            const bool validBegin     = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
-            const bool validEnd       = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
-            const bool equalContexts  = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
-            const bool validContexts  = ( validBegin && validEnd ) || isSrmOag || useNullContext;
+            constexpr bool useNullContext = T::Policy::QueryHwCounters::GetData::m_AllowEmptyContextId;
+            const bool     isSrmOag       = m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag;
+            const bool     validBegin     = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
+            const bool     validEnd       = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
+            const bool     equalContexts  = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
+            const bool     validContexts  = ( validBegin && validEnd ) || isSrmOag || useNullContext;
 
             if( !( validContexts && equalContexts ) )
             {
@@ -352,17 +350,16 @@ namespace ML::BASE
         /// @return reportApi       reference to report api.
         /// @return                 operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetReportMultisampled(
-            const bool                                 isExtendedQuery,
-            TT::Layouts::HwCounters::Query::ReportApi& reportApi )
+        template <bool isExtendedQuery>
+        ML_INLINE StatusCode GetReportMultisampled( TT::Layouts::HwCounters::Query::ReportApi& reportApi )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             const TT::Layouts::HwCounters::ReportOa* oaBegin   = &m_ReportGpu.m_Begin.m_Oa;
             const TT::Layouts::HwCounters::ReportOa* oaEnd     = &m_ReportGpu.m_End.m_Oa;
             TT::Layouts::HwCounters::ReportId        frequency = {};
-            bool                                     overrun   = false;
             TT::Layouts::OaBuffer::ReportReason      events    = {};
+            bool                                     overrun   = false;
             auto&                                    derived   = Derived();
 
             // Clear api report data.
@@ -381,8 +378,8 @@ namespace ML::BASE
                         oaBegin,
                         oaEnd,
                         frequency,
-                        overrun,
-                        events );
+                        events,
+                        overrun );
                 }
                 while( ML_SUCCESS( log.m_Result ) && !derived.IsValidOaReport( *oaBegin ) && !overrun );
             }
@@ -433,14 +430,12 @@ namespace ML::BASE
             reportBegin.m_Oa = *oaBegin;
             reportEnd.m_Oa   = *oaEnd;
 
-            CalculateCounters(
+            CalculateCounters<true, false>(
                 reportBegin,
                 reportEnd,
-                true,
-                false,
                 reportApi );
 
-            if( !isExtendedQuery )
+            if constexpr( !isExtendedQuery )
             {
                 // Copy gp reports.
                 reportBegin.m_Gp = m_ReportGpu.m_Begin.m_Gp;
@@ -457,17 +452,15 @@ namespace ML::BASE
                 reportBegin.m_Oa.m_Header.m_Timestamp = m_ReportGpu.m_Begin.m_Oa.m_Header.m_Timestamp;
                 reportEnd.m_Oa.m_Header.m_Timestamp   = m_ReportGpu.m_End.m_Oa.m_Header.m_Timestamp;
 
-                CalculateCounters(
+                CalculateCounters<false, true>(
                     reportBegin,
                     reportEnd,
-                    false,
-                    true,
                     reportApi );
             }
 
             reportApi.m_MiddleQueryEvents = events;
             reportApi.m_OverrunOccured    = overrun;
-            reportApi.m_BeginTimestamp    = T::Queries::HwCountersCalculator::GetBeginTimestamp( oaBegin->m_Header.m_Timestamp, m_GpuTimestampFrequency );
+            reportApi.m_BeginTimestamp    = derived.GetBeginTimestamp( oaBegin->m_Header.m_Timestamp );
             reportApi.m_SplitOccured      = m_ReportGpu.m_DmaFenceIdBegin != m_ReportGpu.m_DmaFenceIdEnd;
 
             // Output logs.
@@ -493,7 +486,7 @@ namespace ML::BASE
 
             do
             {
-                log.m_Result = derived.GetReportMultisampled( true, source );
+                log.m_Result = derived.template GetReportMultisampled<true>( source );
 
                 if( ML_SUCCESS( log.m_Result ) )
                 {
@@ -608,32 +601,31 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Calculates counters delta values between two reports.
         ///         Handles context switches which can occur between reports.
-        /// @param  begin           begin hw counters report.
-        /// @param  end             end hw counters report.
         /// @param  calculateOa     flag to indicate if oa counters need to be calculated.
         /// @param  calculateGp     flag to indicate if gp counters need to be calculated.
+        /// @param  begin           begin hw counters report.
+        /// @param  end             end hw counters report.
         /// @return reportApi       api report.
         //////////////////////////////////////////////////////////////////////////
+        template <bool calculateOa, bool calculateGp>
         ML_INLINE void CalculateCounters(
             const TT::Layouts::HwCounters::Report&     begin,
             const TT::Layouts::HwCounters::Report&     end,
-            const bool                                 calculateOa,
-            const bool                                 calculateGp,
             TT::Layouts::HwCounters::Query::ReportApi& reportApi )
         {
-            static const TT::Layouts::HwCounters::Report dummy = {};
+            static constexpr TT::Layouts::HwCounters::Report dummy = {};
 
             if( m_NullBegin )
             {
                 reportApi.m_ReportsCount = 1;
             }
 
-            if( calculateOa )
+            if constexpr( calculateOa )
             {
                 AdjustOaCounters( m_NullBegin ? dummy.m_Oa : begin.m_Oa, end.m_Oa, reportApi );
             }
 
-            if( calculateGp )
+            if constexpr( calculateGp )
             {
                 Derived().AdjustGpCounters( m_NullBegin ? dummy.m_Gp : begin.m_Gp, end.m_Gp, reportApi );
                 AdjustUserCounters( m_NullBegin ? dummy.m_User : begin.m_User, end.m_User, reportApi );
@@ -858,15 +850,12 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Calculates gpu timestamp gathered by query begin.
-        /// @param  timestamp               begin gpu timestamp.
-        /// @param  gpuTimestampFrequency   gpu timestamp frequency in Hz.
-        /// @return                         timestamp in nanoseconds.
+        /// @param  timestamp   begin gpu timestamp.
+        /// @return             timestamp in nanoseconds.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static uint64_t GetBeginTimestamp(
-            const uint32_t timestamp,
-            const uint64_t gpuTimestampFrequency )
+        ML_INLINE uint64_t GetBeginTimestamp( const uint32_t timestamp ) const
         {
-            return static_cast<uint64_t>( timestamp ) * Constants::Time::m_SecondInNanoseconds / gpuTimestampFrequency;
+            return ( static_cast<uint64_t>( timestamp ) * Constants::Time::m_SecondInNanoseconds ) / m_GpuTimestampFrequency;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -926,16 +915,16 @@ namespace ML::BASE
         /// @param  reportBegin oa report begin.
         /// @param  reportEnd   oa report end.
         /// @return frequency   gpu frequency value.
-        /// @return overrun     oa buffer has overwritten reports between begin/end.
         /// @return events      all types of events occurring between query begin/end.
+        /// @return overrun     oa buffer has overwritten reports between begin/end.
         /// @return             success if oa report has been found.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetNextOaReport(
             const TT::Layouts::HwCounters::ReportOa*& reportBegin,
             const TT::Layouts::HwCounters::ReportOa*& reportEnd,
             TT::Layouts::HwCounters::ReportId&        frequency,
-            bool&                                     overrun,
-            TT::Layouts::OaBuffer::ReportReason&      events )
+            TT::Layouts::OaBuffer::ReportReason&      events,
+            bool&                                     overrun )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -989,7 +978,7 @@ namespace ML::BASE
             else
             {
                 // Initialize oa buffer state.
-                if( ML_FAIL( m_OaBuffer.UpdateQuery( m_QuerySlot ) ) )
+                if( ML_FAIL( m_OaBuffer.UpdateQuery( m_OaBufferState, m_ReportGpu ) ) )
                 {
                     ML_ASSERT_ALWAYS();
                     return log.m_Result = StatusCode::NotInitialized;
@@ -1002,9 +991,9 @@ namespace ML::BASE
 
                 for( uint32_t i = 0; i < oaReportsCount; ++i )
                 {
-                    const uint32_t                           oaReportOffset = ( m_OaBufferState.m_TailBeginOffset + ( i * reportSize ) ) % oaBufferSize;
-                    const TT::Layouts::HwCounters::ReportOa& oaReport       = m_OaBuffer.GetReport( oaReportOffset );
-                    auto&                                    derived        = Derived();
+                    const uint32_t oaReportOffset = ( m_OaBufferState.m_TailBeginOffset + ( i * reportSize ) ) % oaBufferSize;
+                    const auto&    oaReport       = m_OaBuffer.GetReport( oaReportOffset );
+                    auto&          derived        = Derived();
 
                     if( derived.CompareTimestamps( oaReport.m_Header.m_Timestamp, reportBegin.m_Header.m_Timestamp ) <= 0 )
                     {
@@ -1017,8 +1006,8 @@ namespace ML::BASE
                         frequency = oaReport.m_Header.m_ReportId;
                         log.Info( "oaReport (skip end):   ", "(", FormatFlag::Decimal, oaReportOffset, ")", oaReport );
 
-                        const uint32_t                           oaReportPostEndOffset = ( m_OaBufferState.m_TailBeginOffset + ( ( i + 1 ) * reportSize ) ) % oaBufferSize;
-                        const TT::Layouts::HwCounters::ReportOa& oaReportPostEnd       = m_OaBuffer.GetReport( oaReportPostEndOffset );
+                        const uint32_t oaReportPostEndOffset = ( m_OaBufferState.m_TailBeginOffset + ( ( i + 1 ) * reportSize ) ) % oaBufferSize;
+                        const auto&    oaReportPostEnd       = m_OaBuffer.GetReport( oaReportPostEndOffset );
                         log.Debug( "oaReport (post end):   ", "(", FormatFlag::Decimal, oaReportPostEndOffset, ")", oaReportPostEnd );
                         break;
                     }
@@ -1227,24 +1216,6 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns oa buffer state for a given layout slot.
-        /// @return reference to oa buffer state.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE TT::Layouts::OaBuffer::State& GetOaBufferState() const
-        {
-            return m_QuerySlot.m_OaBufferState;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns true if null context id is valid, false otherwise.
-        /// @return true if null context id is valid.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool AllowEmptyContextId() const
-        {
-            return T::Policy::QueryHwCounters::GetData::m_AllowEmptyContextId;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns command buffer type.
         /// @return render command buffer as long as other types are not used.
         //////////////////////////////////////////////////////////////////////////
@@ -1295,9 +1266,6 @@ namespace ML::BASE
 
 namespace ML::GEN9
 {
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief Gen9 type for QueryHwCountersCalculatorTrait object.
-    //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct QueryHwCountersCalculatorTrait : BASE::QueryHwCountersCalculatorTrait<T>
     {
@@ -1328,15 +1296,6 @@ namespace ML::XE_LP
         using Base::AggregateOaCounters;
         using Base::AggregateNoaCounters;
         using Base::AggregateUserCounters;
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Null context id is valid on trigger based query.
-        /// @return true if null context id is valid.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool AllowEmptyContextId() const
-        {
-            return true;
-        }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Sums general purpose counters deltas between two reports.
@@ -1493,12 +1452,12 @@ namespace ML::XE_HP
             // Validate contexts (rcs only).
             if( m_ReportGpu.m_CommandStreamerIdentificator == T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender )
             {
-                const bool useNullContext = Derived().AllowEmptyContextId();
-                const bool isSrmOag       = m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag;
-                const bool validBegin     = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
-                const bool validEnd       = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
-                const bool equalContexts  = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
-                const bool validContexts  = ( validBegin && validEnd ) || isSrmOag || useNullContext;
+                constexpr bool useNullContext = T::Policy::QueryHwCounters::GetData::m_AllowEmptyContextId;
+                const bool     isSrmOag       = m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag;
+                const bool     validBegin     = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
+                const bool     validEnd       = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
+                const bool     equalContexts  = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
+                const bool     validContexts  = ( validBegin && validEnd ) || isSrmOag || useNullContext;
 
                 if( !( validContexts && equalContexts ) )
                 {
@@ -1620,12 +1579,19 @@ namespace ML::XE_HP
             const bool validTags            = m_Query.m_EndTag == m_ReportGpu.m_EndTag;
             const bool validCommandStreamer = m_ReportGpu.m_CommandStreamerIdentificator > 0;
 
+            // Validate mirpc for RCS only.
+            const bool validMirpc =
+                !T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers ||
+                ( validCommandStreamer && m_ReportGpu.m_CommandStreamerIdentificator != T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender ) ||
+                ( m_ReportGpu.m_Begin.m_Oa.m_Header.m_ReportId.m_Value != 0 && m_ReportGpu.m_End.m_Oa.m_Header.m_ReportId.m_Value != 0 );
+
             log.Debug( "Valid tags       ", validTags );
             log.Debug( "    obtained     ", m_ReportGpu.m_EndTag );
             log.Debug( "    expected     ", m_Query.m_EndTag );
             log.Debug( "Command streamer ", m_ReportGpu.m_CommandStreamerIdentificator );
+            log.Debug( "Valid mirpc      ", validMirpc );
 
-            return log.m_Result = validTags && validCommandStreamer
+            return log.m_Result = validTags && validCommandStreamer && validMirpc
                 ? StatusCode::Success
                 : StatusCode::ReportNotReady;
         }
@@ -1642,10 +1608,10 @@ namespace ML::XE_HP
             uint32_t oaTailPreEndOffset    = 0;
             uint32_t oaTailPostEndOffset   = 0;
 
-            ML_FUNCTION_CHECK( m_OaBuffer.GetPreReportOffset( m_ReportGpu, true, oaTailPreBeginOffset ) );
-            ML_FUNCTION_CHECK( m_OaBuffer.GetPostReportOffset( m_ReportGpu, true, oaTailPostBeginOffset ) );
-            ML_FUNCTION_CHECK( m_OaBuffer.GetPreReportOffset( m_ReportGpu, false, oaTailPreEndOffset ) );
-            ML_FUNCTION_CHECK( m_OaBuffer.GetPostReportOffset( m_ReportGpu, false, oaTailPostEndOffset ) );
+            ML_FUNCTION_CHECK( m_OaBuffer.template GetPreReportOffset<true>( m_ReportGpu, oaTailPreBeginOffset ) );
+            ML_FUNCTION_CHECK( m_OaBuffer.template GetPostReportOffset<true>( m_ReportGpu, oaTailPostBeginOffset ) );
+            ML_FUNCTION_CHECK( m_OaBuffer.template GetPreReportOffset<false>( m_ReportGpu, oaTailPreEndOffset ) );
+            ML_FUNCTION_CHECK( m_OaBuffer.template GetPostReportOffset<false>( m_ReportGpu, oaTailPostEndOffset ) );
 
             const auto csDescription = T::Layouts::HwCounters::GetCommandStreamerDescription( m_ReportGpu.m_CommandStreamerIdentificator, m_Context );
 

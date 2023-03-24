@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -98,9 +98,9 @@ namespace ML::BASE
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE bool IsSupported() const
             {
-                const uint32_t revision  = static_cast<uint32_t>( m_Kernel.m_Revision );
-                const uint32_t expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::OaBufferMapping );
-                bool           supported = revision >= expected;
+                const uint32_t     revision  = static_cast<uint32_t>( m_Kernel.m_Revision );
+                constexpr uint32_t expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::OaBufferMapping );
+                const bool         supported = revision >= expected;
 
                 return supported;
             }
@@ -411,8 +411,7 @@ namespace ML::BASE
         /// @param  type    oa buffer type.
         /// @return         mapped oa buffer.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE OaBufferMapped& GetOaBufferMapped(
-            const TT::Layouts::OaBuffer::Type type )
+        ML_INLINE OaBufferMapped& GetOaBufferMapped( const TT::Layouts::OaBuffer::Type type )
         {
             switch( type )
             {
@@ -511,8 +510,8 @@ namespace ML::BASE
             ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
             ML_FUNCTION_CHECK_ERROR( m_IoControl.IsTbsEnabled(), 0 );
 
-            const size_t reportSize = sizeof( TbsOaReport );
-            const size_t dataSize   = reportSize * count;
+            constexpr size_t reportSize = sizeof( TbsOaReport );
+            const size_t     dataSize   = reportSize * count;
 
             ML_ASSERT( count <= m_ReportsCache.size() );
             ML_ASSERT( reportSize );
@@ -663,7 +662,7 @@ namespace ML::XE_HP
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static drm_i915_oa_format GetOaReportType()
         {
-            return static_cast<drm_i915_oa_format>( PRELIM_I915_OA_FORMAT_A24u40_A14u32_B8_C8 );
+            return static_cast<drm_i915_oa_format>( I915_OA_FORMAT_A24u40_A14u32_B8_C8 );
         }
 
         /////////////////////////////////////////////////////////////////////////

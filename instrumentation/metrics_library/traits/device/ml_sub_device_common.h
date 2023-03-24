@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021-2022 Intel Corporation
+Copyright (C) 2021-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -75,9 +75,6 @@ namespace ML::BASE
 
 namespace ML::GEN9
 {
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief Gen9 type for SubDeviceCommonTrait object.
-    //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct SubDeviceCommonTrait : BASE::SubDeviceCommonTrait<T>
     {

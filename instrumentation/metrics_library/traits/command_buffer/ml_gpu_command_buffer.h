@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -73,15 +73,6 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Checks if command buffer calculates gpu commands size only.
-        /// @return true if command buffer calculates gpu commands size.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE const bool IsCalculateSizePhase() const
-        {
-            return false;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns command buffer requirements like needed memory space
         ///         and allocation handles to patch.
         /// @return requirements    command buffer size information.
@@ -98,35 +89,34 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Writes gpu command to command buffer.
-        /// @param  command         gpu command to write.
-        /// @param  patchMemory     flag that indicates that command should be patched.
-        /// @return                 operation status.
+        /// @param  patchMemory flag that indicates that command should be patched.
+        /// @param  command     gpu command to write.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        template <typename GpuCommand>
-        ML_INLINE StatusCode Write(
-            const GpuCommand& command,
-            const bool        patchMemory )
+        template <bool patchMemory, typename GpuCommand>
+        ML_INLINE StatusCode Write( const GpuCommand& command )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            const uint32_t commandSize = sizeof( command );
-            const bool     validSpace  = m_Usage + commandSize <= m_Size;
-            const bool     validBuffer = m_Buffer && validSpace;
+            constexpr uint32_t commandSize = sizeof( command );
+            const bool         validSpace  = m_Usage + commandSize <= m_Size;
+            const bool         validBuffer = m_Buffer && validSpace;
 
             if( validBuffer )
             {
                 T::Tools::MemoryCopy( static_cast<uint8_t*>( m_Buffer ) + m_Usage, m_Size, &command, commandSize );
 
                 m_Usage += commandSize;
-                m_MemoryPatchesCount += patchMemory ? 1 : 0;
 
-                if( patchMemory )
+                if constexpr( patchMemory && T::Policy::QueryHwCounters::Common::m_PatchGpuMemory )
                 {
+                    m_MemoryPatchesCount++;
+
                     const ClientMemoryHandle_1_0 memoryHandle  = m_GpuMemory.HandleMemory;
                     const uint64_t               memoryAddress = GetMemoryAddress( command );
                     const uint64_t               commandOffset = reinterpret_cast<uint64_t>( m_Buffer ) + m_Usage;
 
-                    if( memoryAddress > 0 )
+                    if( memoryAddress != 0 )
                     {
                         ML_FUNCTION_CHECK( PatchGpuMemory( memoryHandle, memoryAddress, commandOffset ) );
                     }
@@ -193,13 +183,16 @@ namespace ML
             const uint64_t               memoryOffset,
             const uint64_t               commandOffset ) const
         {
-            const bool  validPatchFunction = m_Context.m_ClientCallbacks.GpuMemoryPatch != nullptr;
-            const bool  validPatchPolicy   = T::Policy::QueryHwCounters::Common::m_PatchGpuMemory;
-            const auto& callback           = m_Context.m_ClientCallbacks.GpuMemoryPatch;
+            if constexpr( T::Policy::QueryHwCounters::Common::m_PatchGpuMemory )
+            {
+                if( const auto callback = m_Context.m_ClientCallbacks.GpuMemoryPatch;
+                    callback != nullptr )
+                {
+                    return callback( m_Context.m_ClientHandle, handle, memoryOffset, commandOffset );
+                }
+            }
 
-            return validPatchFunction && validPatchPolicy
-                ? callback( m_Context.m_ClientHandle, handle, memoryOffset, commandOffset )
-                : StatusCode::Success;
+            return StatusCode::Success;
         }
     };
 
@@ -245,15 +238,6 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Checks if command buffer calculates gpu commands size only.
-        /// @return true if command buffer calculates gpu commands size.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE const bool IsCalculateSizePhase() const
-        {
-            return true;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns command buffer requirements like needed memory space
         ///         and allocation handles to patch.
         /// @return requirements    command buffer requirements information.
@@ -270,17 +254,19 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Writes gpu command to command buffer.
-        /// @param  command         gpu command to write.
-        /// @param  patchMemory     flag that indicates that command should be patched.
-        /// @return                 operation status.
+        /// @param  patchMemory flag that indicates that command should be patched.
+        /// @param  command     gpu command to write.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        template <typename GpuCommand>
-        ML_INLINE StatusCode Write(
-            const GpuCommand& command,
-            const bool        patchMemory )
+        template <bool patchMemory, typename GpuCommand>
+        ML_INLINE StatusCode Write( const GpuCommand& command )
         {
             m_Usage += sizeof( command );
-            m_MemoryPatchesCount += patchMemory ? 1 : 0;
+
+            if constexpr( patchMemory && T::Policy::QueryHwCounters::Common::m_PatchGpuMemory )
+            {
+                m_MemoryPatchesCount++;
+            }
 
             return StatusCode::Success;
         }

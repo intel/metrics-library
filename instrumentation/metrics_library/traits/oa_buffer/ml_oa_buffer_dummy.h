@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -62,11 +62,14 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Update oa buffer state kept by hw counters query.
-        /// @param  query   query instance.
-        /// @return         operation status.
+        /// @brief  Updates oa buffer state kept by hw counters query.
+        /// @param  state       oa buffer state.
+        /// @param  reportGpu   query report gpu.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode UpdateQuery( [[maybe_unused]] TT::Queries::HwCounters::Slot& query ) const
+        ML_INLINE StatusCode UpdateQuery(
+            [[maybe_unused]] TT::Layouts::OaBuffer::State&              state,
+            [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportGpu& reportGpu ) const
         {
             return StatusCode::Success;
         }
@@ -133,14 +136,14 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns first oa report associated with query begin/end report.
-        /// @param  query   gpu report collected by query.
-        /// @param  begin   query begin/end.
-        /// @return offset  oa tail offset.
-        /// @return         operation status.
+        /// @param  begin       query begin/end.
+        /// @param  reportGpu   gpu report collected by query.
+        /// @return offset      oa tail offset.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
+        template <bool begin>
         ML_INLINE StatusCode GetPreReportOffset(
-            [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& query,
-            [[maybe_unused]] const bool                                       begin,
+            [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
             [[maybe_unused]] uint32_t&                                        offset )
         {
             ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
@@ -149,14 +152,14 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns last oa report associated with query begin/end report.
-        /// @param  query   gpu report collected by query.
-        /// @param  begin   query begin/end.
-        /// @return offset  oa tail offset.
-        /// @return         operation status.
+        /// @param  begin       query begin/end.
+        /// @param  reportGpu   gpu report collected by query.
+        /// @return offset      oa tail offset.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
+        template <bool begin>
         ML_INLINE StatusCode GetPostReportOffset(
-            [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& query,
-            [[maybe_unused]] const bool                                       begin,
+            [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
             [[maybe_unused]] uint32_t&                                        offset )
         {
             ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );

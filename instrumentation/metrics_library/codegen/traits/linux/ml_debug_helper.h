@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -1413,6 +1413,16 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief  Converts a double precision floating-point value to a string.
+        /// @param  value   a given double precision floating-point value to convert.
+        /// @return         converted double precision floating-point value to string.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const double value )
+        {
+            return std::to_string( value );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Creates a empty string.
         /// @return empty string.
         //////////////////////////////////////////////////////////////////////////
@@ -2661,11 +2671,10 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Validates a given pointer and prints an error message out if
-        ///         the pointer is null.
+        /// @brief  Dereferences a pointer and converts it to a string or prints
+        ///         its address.
         /// @param  value   a given pointer.
-        /// @param  output  an output string stream.
-        /// @return         true if the pointer is not null, false otherwise.
+        /// @return         converted pointer to string.
         //////////////////////////////////////////////////////////////////////////
         template <typename ValueT>
         ML_INLINE std::string ToString( const ValueT* value )

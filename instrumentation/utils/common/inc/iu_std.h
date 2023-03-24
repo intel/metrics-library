@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -51,6 +51,7 @@ extern "C"
     size_t  iu_wstrnlen( const wchar_t* wstr, size_t wstrSize );
     int32_t iu_wstrncmp( const wchar_t* wstr1, const wchar_t* wstr2, size_t count );
     size_t  iu_wstrtombs_s( char* destStr, size_t destSize, const wchar_t* srcWstr, size_t count );
+    size_t  iu_mbstowstr_s( wchar_t* destWstr, size_t destSize, const char* srcStr, size_t count );
 
     // Printing
     int32_t iu_sprintf_s( char* destStr, size_t destSize, const char* format, ... );
@@ -59,7 +60,7 @@ extern "C"
 
     // Debug printing
     void iu_log( const char* msg );
-    void iu_printf( const char* msg, const bool addEOL );
+    void iu_printf( const char* msg, const bool addEOL, const bool flush );
 
     // Files
     bool   iu_fopen_s( FILE** pFile, const char* filename, const char* mode );

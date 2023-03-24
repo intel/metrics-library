@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -374,10 +374,10 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief   Reads data from file.
-        /// @param   path  file path.
-        /// @return  data  data to read.
-        /// @return        operation status.
+        /// @brief  Reads data from file.
+        /// @param  path    file path.
+        /// @return data    data to read.
+        /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
         template <typename Data>
         ML_INLINE StatusCode ReadFile(
@@ -513,11 +513,9 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( uint64_t{ 0 }, &m_Kernel.m_Context );
 
-            int32_t frequency = 0;
-
-            if( ML_SUCCESS( GetDrmParameter( I915_PARAM_CS_TIMESTAMP_FREQUENCY, frequency ) ) )
+            if( int32_t frequency = 0;
+                ML_SUCCESS( GetDrmParameter( I915_PARAM_CS_TIMESTAMP_FREQUENCY, frequency ) ) )
             {
-                log.Debug( "Gpu timestamp frequency:", frequency );
                 log.m_Result = static_cast<uint64_t>( frequency );
             }
             else
@@ -937,7 +935,7 @@ namespace ML::XE_HPG
             // Check parameter availability.
             switch( parameter )
             {
-                case PRELIM_I915_PARAM_OA_TIMESTAMP_FREQUENCY:
+                case I915_PARAM_OA_TIMESTAMP_FREQUENCY:
                     break;
 
                 default:
@@ -961,23 +959,21 @@ namespace ML::XE_HPG
 
             int32_t frequency = 0;
             int32_t parameter = timestampType == T::Layouts::Configuration::TimestampType::Oa
-                ? PRELIM_I915_PARAM_OA_TIMESTAMP_FREQUENCY
+                ? I915_PARAM_OA_TIMESTAMP_FREQUENCY
                 : I915_PARAM_CS_TIMESTAMP_FREQUENCY;
 
             if( ML_SUCCESS( GetDrmParameter( parameter, frequency ) ) )
             {
-                log.Debug( "Gpu timestamp frequency:", frequency );
                 log.m_Result = static_cast<uint64_t>( frequency );
             }
             else
             {
-                if( parameter == PRELIM_I915_PARAM_OA_TIMESTAMP_FREQUENCY )
+                if( parameter == I915_PARAM_OA_TIMESTAMP_FREQUENCY )
                 {
                     if( ML_SUCCESS( GetDrmParameter( I915_PARAM_CS_TIMESTAMP_FREQUENCY, frequency ) ) )
                     {
                         frequency <<= 1;
                         log.Debug( "Oa timestamp frequency is not available, Cs timestamp frequency is used as a workaround." );
-                        log.Debug( "Gpu timestamp frequency:", frequency );
                         log.m_Result = static_cast<uint64_t>( frequency );
                     }
                 }

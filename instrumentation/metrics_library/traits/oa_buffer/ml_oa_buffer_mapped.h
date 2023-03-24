@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -89,16 +89,16 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Updates oa buffer state kept by hw counters query.
-        /// @param  query query instance.
-        /// @return       operation status.
+        /// @param  state       oa buffer state.
+        /// @param  reportGpu   query report gpu.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode UpdateQuery( TT::Queries::HwCounters::Slot& query ) const
+        ML_INLINE StatusCode UpdateQuery(
+            TT::Layouts::OaBuffer::State&              state,
+            TT::Layouts::HwCounters::Query::ReportGpu& reportGpu ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_ASSERT( IsValid() );
-
-            auto& state     = query.m_OaBufferState;
-            auto& reportGpu = query.GetReportGpu();
 
             const uint32_t base      = reportGpu.m_OaBuffer.GetAllocationOffset();
             const uint32_t tailBegin = reportGpu.m_OaTailPreBegin.GetOffset();
@@ -207,14 +207,14 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns first oa report associated with query begin/end report.
-        /// @param  reportGpu   gpu report collected by query.
         /// @param  begin       query begin/end.
+        /// @param  reportGpu   gpu report collected by query.
         /// @return offset      oa tail offset.
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
+        template <bool begin>
         ML_INLINE StatusCode GetPreReportOffset(
             const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-            const bool                                       begin,
             uint32_t&                                        offset )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
@@ -232,14 +232,14 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns last oa report associated with query begin/end report.
-        /// @param  query   gpu report collected by query.
-        /// @param  begin   query begin/end.
-        /// @return offset  oa tail offset.
-        /// @return         operation status.
+        /// @param  begin       query begin/end.
+        /// @param  reportGpu   gpu report collected by query.
+        /// @return offset      oa tail offset.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
+        template <bool begin>
         ML_INLINE StatusCode GetPostReportOffset(
             const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-            const bool                                       begin,
             uint32_t&                                        offset )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );

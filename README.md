@@ -27,31 +27,37 @@ There is no need to build the library as long as it is an integrated part of tho
 
 1\. Download sources.
 
-2\. Run CMake generation:
+2\. Install libdrm-dev:
+
+```shell
+sudo apt install libdrm-dev
+```
+
+3\. Run CMake generation:
 
 ```shell
 cmake .
 ```
 
-3\. Build:
+4\. Build:
 
 ```shell
 make -j$(nproc)
 ```
 
-4\. Built library will be here (for 64-bit release Linux):
+5\. Built library will be here (for 64-bit release Linux):
 
 ```shell
 (project_root)/dump/linux64/release/metrics_library/libigdml.so
 ```
 
-5\. To prepare an installation package:
+6\. To prepare an installation package:
 
 ```shell
 make package
 ```
 
-6\. Install:
+7\. Install:
 
 ```shell
 sudo dpkg -i intel-metrics-library*.deb

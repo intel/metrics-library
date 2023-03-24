@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -30,8 +30,8 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief   Overrides api and gen settings provided by client.
-        /// @return  clientType     overridden client type.
+        /// @brief  Overrides api and gen settings provided by client.
+        /// @return clientType     overridden client type.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static void OverrideClientType( ClientType_1_0& clientType )
         {

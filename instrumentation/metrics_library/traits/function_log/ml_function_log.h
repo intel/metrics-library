@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -152,10 +152,10 @@ namespace ML
                 return;
             }
 
-            const std::string namespaceOperator     = "::";
-            const size_t      namespaceOperatorSize = namespaceOperator.size();
-            const size_t      namespaceBegin        = 0;
-            size_t            namespaceEnd          = functionName.size();
+            constexpr std::string_view namespaceOperator( "::" );
+            constexpr size_t           namespaceOperatorSize = namespaceOperator.size();
+            constexpr size_t           namespaceBegin        = 0;
+            size_t                     namespaceEnd          = functionName.size();
 
             for( uint32_t i = 0; i < level; ++i )
             {

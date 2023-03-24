@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -398,14 +398,14 @@ namespace ML::XE_HP
         {
             union
             {
-                // Oa and oar and oag pre-XeHP_SDV.
+                // Oa and oar and oag pre-XeHP.
                 struct
                 {
                     uint32_t    m_OaCounter[Base::m_OaCountersCount];                       // A0 - A35.
                     uint8_t     m_OaCounterHB[Base::m_OaCounters40bitsCount];               // High bytes of A0 - A31.
                 };
 
-                // For XeHP_SDV+ platforms oag report format has been changed.
+                // For XeHP+ platforms oag report format has been changed.
                 // High bytes of A0 - A3 and A24 - A27 counters have been replaced by A36 and A37 32 bits counters.
                 // There is no need to have 40 bits of A0 - A3 and A24 - A27 counters, because their values and deltas
                 // are small enough to have them only 32 bits for stream and query purpose.

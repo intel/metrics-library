@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -143,6 +143,9 @@ extern "C"
 
 // if following flag is set, a new line sign will be inserted at the end of each log
 #define IU_DBG_EOL 0x40000000
+
+// if following flag is set, each debug log will be flushed
+#define IU_DBG_CONSOLE_FLUSH 0x20000000
 
 // layers
 #define IU_DBG_LAYER_INSTR 0x00000001

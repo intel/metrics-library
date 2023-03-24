@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -140,24 +140,23 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Copies array.
+        /// @param  allowOverrun    allow to overrun if target_index + count >= target_size.
         /// @return target          target array.
         /// @param  targetIndex     target start index.
         /// @param  source          source array.
         /// @param  sourceIndex     source start index.
         /// @param  count           slots to copy.
-        /// @param  allowOverrun    allow to overrun if target_index + count >= target_size.
         //////////////////////////////////////////////////////////////////////////
-        template <typename TargetArray, typename SourceArray>
+        template <bool allowOverrun, typename TargetArray, typename SourceArray>
         ML_INLINE static void ArrayCopy(
             TargetArray&       target,
             const uint32_t     targetIndex,
             const SourceArray& source,
             const uint32_t     sourceIndex,
-            const uint32_t     count,
-            const bool         allowOverrun )
+            const uint32_t     count )
         {
-            const bool     overrun    = ( targetIndex + count ) >= target.size();
-            const uint32_t reportSize = sizeof( target[0] );
+            const bool         overrun    = ( targetIndex + count ) >= target.size();
+            constexpr uint32_t reportSize = sizeof( target[0] );
 
             if( overrun == false )
             {
@@ -169,7 +168,7 @@ namespace ML
 
                 MemoryCopy( targetMemory, targetSize, sourceMemory, sourceSize );
             }
-            else if( allowOverrun )
+            else if constexpr( allowOverrun )
             {
                 const uint32_t count0 = target.size() - targetIndex;
                 const uint32_t count1 = count - count0;
@@ -287,12 +286,12 @@ namespace ML
         /// @return         difference between two measure points.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static uint64_t CountersDelta(
-            uint64_t end,
-            uint64_t begin,
-            uint32_t bitsize )
+            uint64_t       end,
+            uint64_t       begin,
+            const uint32_t bitsize )
         {
-            const uint32_t maxBitsize = 64;
-            const uint64_t mask       = ( bitsize != maxBitsize ) ? ( ( ML_BIT( bitsize ) ) - 1 ) : -1;
+            constexpr uint32_t maxBitsize = 64;
+            const uint64_t     mask       = ( bitsize != maxBitsize ) ? ( ( ML_BIT( bitsize ) ) - 1 ) : -1;
 
             ML_ASSERT_NO_ADAPTER( bitsize <= maxBitsize );
 

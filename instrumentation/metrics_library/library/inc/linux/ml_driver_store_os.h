@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021-2022 Intel Corporation
+Copyright (C) 2021-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -22,8 +22,8 @@ namespace ML
     struct DriverStoreOs
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief   Returns an address of redirected ddi using function name.
-        /// @return  Null pointer.
+        /// @brief  Returns an address of redirected ddi using function name.
+        /// @return Null pointer.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static void* GetRedirectedDdi( const char* functionName )
         {
@@ -31,7 +31,7 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief   Free loaded library.
+        /// @brief Free loaded library.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static void UnloadLibrary()
         {

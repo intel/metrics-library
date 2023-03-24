@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -109,17 +109,12 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( IsValid( data.QueryPipelineTimestamps.Handle ) );
 
-            auto&          queryData = data.QueryPipelineTimestamps;
-            auto&          query     = FromHandle( queryData.Handle );
-            const uint32_t offset    = offsetof( TT::Layouts::PipelineTimestamps::ReportGpu, m_TimestampsRender );
-
-            if( queryData.Begin )
-            {
-                query.SetGpuMemory( gpuMemory );
-            }
+            auto&              queryData = data.QueryPipelineTimestamps;
+            auto&              query     = FromHandle( queryData.Handle );
+            constexpr uint32_t offset    = offsetof( TT::Layouts::PipelineTimestamps::ReportGpu, m_TimestampsRender );
 
             return log.m_Result = queryData.Begin
-                ? query.WriteBegin( buffer, offset )
+                ? query.WriteBegin( buffer, offset, gpuMemory )
                 : query.WriteEnd( buffer, offset, queryData );
         }
 
@@ -179,24 +174,29 @@ namespace ML::BASE
             m_GpuMemory = memory;
             m_GpuReport = reinterpret_cast<TT::Layouts::PipelineTimestamps::ReportGpu*>( memory.CpuAddress );
 
+            // Clear gpu memory.
+            ClearReportGpu();
+
             return log.m_Result;
         }
 
         /////////////////////////////////////////////////////////////////////////
         /// @brief  Writes begin gpu commands to command buffer.
-        /// @param  buffer  target command buffer.
-        /// @param  offset  memory offset.
-        /// @return         operation status.
+        /// @param  buffer      target command buffer.
+        /// @param  offset      memory offset.
+        /// @param  gpuMemory   gpu memory allocation.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
         template <typename CommandBuffer>
         ML_INLINE StatusCode WriteBegin(
-            CommandBuffer& buffer,
-            const uint64_t offset )
+            CommandBuffer&       buffer,
+            const uint64_t       offset,
+            const GpuMemory_1_0& gpuMemory )
         {
-            // Clear gpu memory.
-            if( !buffer.IsCalculateSizePhase() )
+            // Set gpu memory.
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
             {
-                ClearReportGpu();
+                SetGpuMemory( gpuMemory );
             }
 
             const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
@@ -339,11 +339,6 @@ namespace ML::GEN11
             auto&    query     = FromHandle( queryData.Handle );
             uint32_t offset    = 0;
 
-            if( queryData.Begin )
-            {
-                query.SetGpuMemory( gpuMemory );
-            }
-
             switch( data.Type )
             {
                 case GpuCommandBufferType::Render:
@@ -360,7 +355,7 @@ namespace ML::GEN11
             }
 
             return log.m_Result = queryData.Begin
-                ? query.WriteBegin( buffer, offset )
+                ? query.WriteBegin( buffer, offset, gpuMemory )
                 : query.WriteEnd( buffer, offset, queryData );
         }
 

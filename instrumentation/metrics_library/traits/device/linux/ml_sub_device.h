@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021-2022 Intel Corporation
+Copyright (C) 2021-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -68,9 +68,6 @@ namespace ML::BASE
 
 namespace ML::GEN9
 {
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief Gen9 type for SubDeviceTrait object.
-    //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct SubDeviceTrait : BASE::SubDeviceTrait<T>
     {
@@ -167,11 +164,11 @@ namespace ML::XE_HP
             ML_FUNCTION_CHECK( GetSubDeviceEngines( distances, subDevices ) );
 
             // Helper data.
-            const bool isRootDevice           = m_IsSubDevice == false;
-            const bool isSubDevice            = m_IsSubDevice == true;
-            const bool isFirstSubDevice       = m_IsSubDevice && ( m_SubDeviceIndex == 0 );
-            const bool isKernelSupport        = IsSubDeviceSupported() && m_Engines.size() > 0;
-            const bool isAllowImplicitScaling = T::Policy::SubDevice::m_AllowImplicitScaling;
+            const bool     isRootDevice           = m_IsSubDevice == false;
+            const bool     isSubDevice            = m_IsSubDevice == true;
+            const bool     isFirstSubDevice       = m_IsSubDevice && ( m_SubDeviceIndex == 0 );
+            const bool     isKernelSupport        = IsSubDeviceSupported() && m_Engines.size() > 0;
+            constexpr bool isAllowImplicitScaling = T::Policy::SubDevice::m_AllowImplicitScaling;
 
             // Supported modes.
             const bool validRootDeviceOneSubDevice   = isRootDevice && ( m_SubDeviceCount == 1 );
@@ -290,9 +287,9 @@ namespace ML::XE_HP
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE bool IsSubDeviceSupported()
         {
-            const uint32_t revision  = static_cast<uint32_t>( m_Context.m_Kernel.m_Revision );
-            const uint32_t expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::SubDevices );
-            bool           supported = revision >= expected;
+            const uint32_t     revision  = static_cast<uint32_t>( m_Context.m_Kernel.m_Revision );
+            constexpr uint32_t expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::SubDevices );
+            const bool         supported = revision >= expected;
 
             return supported;
         }
@@ -333,6 +330,21 @@ namespace ML::XE_HP
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
+            // Check supported memory classes. Prefer device local memory.
+            auto getPreferredMemoryClass = [&]( drm_i915_query_memory_regions* regionsData )
+            {
+                for( uint32_t i = 0; i < regionsData->num_regions; ++i )
+                {
+                    if( regionsData->regions[i].region.memory_class == I915_MEMORY_CLASS_DEVICE )
+                    {
+                        // Device has local memory.
+                        return I915_MEMORY_CLASS_DEVICE;
+                    }
+                }
+                // Device has only system memory.
+                return I915_MEMORY_CLASS_SYSTEM;
+            };
+
             // Obtain memory regions.
             auto       buffer     = std::vector<uint8_t>();
             const bool validQuery = ML_SUCCESS( m_IoControl.Query( DRM_I915_QUERY_MEMORY_REGIONS, buffer ) );
@@ -344,9 +356,14 @@ namespace ML::XE_HP
             // Copy regions data.
             auto regionsData = reinterpret_cast<drm_i915_query_memory_regions*>( buffer.data() );
 
+            const auto preferredMemoryClass = getPreferredMemoryClass( regionsData );
+
             for( uint32_t i = 0; i < regionsData->num_regions; ++i )
             {
-                regions.push_back( regionsData->regions[i] );
+                if( regionsData->regions[i].region.memory_class == preferredMemoryClass )
+                {
+                    regions.push_back( std::move( regionsData->regions[i] ) );
+                }
             }
 
             return log.m_Result;
@@ -372,25 +389,22 @@ namespace ML::XE_HP
             // Prepare distance information.
             for( uint32_t i = 0; i < regions.size(); ++i )
             {
-                if( I915_MEMORY_CLASS_DEVICE == regions[i].region.memory_class )
-                {
-                    auto distance                   = prelim_drm_i915_query_distance_info{};
-                    distance.region.memory_class    = I915_MEMORY_CLASS_DEVICE;
-                    distance.region.memory_instance = regions[i].region.memory_instance;
+                auto distance                   = prelim_drm_i915_query_distance_info{};
+                distance.region.memory_class    = regions[i].region.memory_class;
+                distance.region.memory_instance = regions[i].region.memory_instance;
 
-                    for( uint32_t j = 0; j < engines.size(); ++j )
+                for( uint32_t j = 0; j < engines.size(); ++j )
+                {
+                    switch( const auto engine = engines[j].engine;
+                            engine.engine_class )
                     {
-                        switch( const auto engine = engines[j].engine;
-                                engine.engine_class )
-                        {
-                            case I915_ENGINE_CLASS_RENDER:
-                            case I915_ENGINE_CLASS_COPY:
-                            case I915_ENGINE_CLASS_COMPUTE:
-                                distance.engine = engine;
-                                distances.push_back( distance );
-                            default:
-                                break;
-                        }
+                        case I915_ENGINE_CLASS_RENDER:
+                        case I915_ENGINE_CLASS_COPY:
+                        case I915_ENGINE_CLASS_COMPUTE:
+                            distance.engine = engine;
+                            distances.push_back( distance );
+                        default:
+                            break;
                     }
                 }
             }

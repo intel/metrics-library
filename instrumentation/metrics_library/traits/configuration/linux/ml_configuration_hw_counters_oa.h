@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -96,8 +96,8 @@ namespace ML
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
 
-            auto&      oaBuffer   = m_Kernel.m_Tbs.GetOaBufferMapped( T::Layouts::OaBuffer::Type::Oa );
-            const bool restartTbs = T::Policy::ConfigurationOa::Activate::m_RestartTbs;
+            auto&          oaBuffer   = m_Kernel.m_Tbs.GetOaBufferMapped( T::Layouts::OaBuffer::Type::Oa );
+            constexpr bool restartTbs = T::Policy::ConfigurationOa::Activate::m_RestartTbs;
 
             m_Kernel.m_OaConfigurationReferenceCounter++;
 
@@ -131,8 +131,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Initialize()
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            return log.m_Result = m_Kernel.GetOaConfiguration( m_OaRegisters );
+            return m_Kernel.GetOaConfiguration( m_OaRegisters );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -141,13 +140,16 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode FlushCommandBuffer() const
         {
-            const bool  validFlushCallback = m_Context.m_ClientCallbacks.CommandBufferFlush != nullptr;
-            const bool  validFlushPolicy   = T::Policy::QueryHwCounters::Begin::FlushCommandBuffer;
-            const auto& callback           = m_Context.m_ClientCallbacks.CommandBufferFlush;
+            if constexpr( T::Policy::QueryHwCounters::Begin::m_FlushCommandBuffer )
+            {
+                if( const auto callback = m_Context.m_ClientCallbacks.CommandBufferFlush;
+                    callback != nullptr )
+                {
+                    return callback( m_Context.m_ClientHandle );
+                }
+            }
 
-            return validFlushCallback && validFlushPolicy
-                ? callback( m_Context.m_ClientHandle )
-                : StatusCode::Success;
+            return StatusCode::Success;
         }
     };
 } // namespace ML

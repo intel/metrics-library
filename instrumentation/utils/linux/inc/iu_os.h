@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 @file iu_os.h
 
 @brief Instrumentation Utils implementation with OS specific non-standard
-       functions for Linux / Android.
+       functions for Linux.
 */
 
 #pragma once
