@@ -60,11 +60,18 @@ extern "C"
 
     // Debug printing
     void iu_log( const char* msg );
+    bool iu_log_file( const char* msg );
     void iu_printf( const char* msg, const bool addEOL, const bool flush );
 
     // Files
     bool   iu_fopen_s( FILE** pFile, const char* filename, const char* mode );
     size_t iu_fread_s( void* buff, size_t buffSize, size_t elemSize, size_t count, FILE* stream );
+
+    // Environment variable
+    const char* iu_dupenv_s( const char* varName );
+
+    // System
+    uint32_t iu_get_thread_id();
 
 #if defined( __cplusplus )
 } // extern "C"

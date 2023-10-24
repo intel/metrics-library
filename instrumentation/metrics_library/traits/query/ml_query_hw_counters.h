@@ -37,81 +37,11 @@ namespace ML::BASE
         using Base::m_Context;
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for HwCounters slot object.
-        //////////////////////////////////////////////////////////////////////////
-        struct Slot
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Members.
-            //////////////////////////////////////////////////////////////////////////
-            GpuMemory_1_0                                        m_GpuMemory;            // Gpu memory associated with query slot.
-            uint32_t                                             m_ApiReportIndex;       // Current report id exposed by api.
-            uint32_t                                             m_ApiReportsCount;      // Reports count exposed by api.
-            uint8_t*                                             m_WorkloadBegin;        // Store a buffer pointer at the begin of query.
-            uint8_t*                                             m_WorkloadEnd;          // Store a buffer pointer at the end of query.
-            TT::Context&                                         m_Context;              // Context.
-            TT::Layouts::OaBuffer::State                         m_OaBufferState;        // Oa buffer state captured during slot execution.
-            TT::Layouts::HwCounters::Query::ReportCollectingMode m_ReportCollectingMode; // Report collecting mode (via MIRPC / SRMs / Oa triggers).
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Slot constructor.
-            /// @param context context.
-            //////////////////////////////////////////////////////////////////////////
-            Slot( TT::Context& context )
-                : m_GpuMemory{}
-                , m_Context( context )
-                , m_OaBufferState{}
-                , m_ReportCollectingMode( T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters )
-            {
-                Reset();
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Resets slot's state.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE void Reset()
-            {
-                m_ApiReportIndex  = 1;
-                m_ApiReportsCount = 1;
-                m_WorkloadBegin   = nullptr;
-                m_WorkloadEnd     = nullptr;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns internal hw counters gpu report for a given slot.
-            /// @return a reference to internal hw counters layout data.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE TT::Layouts::HwCounters::Query::ReportGpu& GetReportGpu() const
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-                ML_ASSERT( m_GpuMemory.CpuAddress );
-
-                return *static_cast<TT::Layouts::HwCounters::Query::ReportGpu*>( m_GpuMemory.CpuAddress );
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Clears gpu memory for a given slot.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE void ClearReportGpu()
-            {
-                if constexpr( T::Policy::QueryHwCounters::Begin::m_ClearGpuMemory )
-                {
-                    auto reportGpu = static_cast<TT::Layouts::HwCounters::Query::ReportGpu*>( m_GpuMemory.CpuAddress );
-
-                    if( reportGpu != nullptr )
-                    {
-                        *reportGpu = {};
-                    }
-                }
-            }
-        };
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
         TT::Layouts::HwCounters::Query::GetDataMode m_GetDataMode;
         ConfigurationHandle_1_0                     m_UserConfiguration;
-        std::vector<Slot>                           m_Slots;
+        std::vector<TT::Queries::HwCountersSlot>    m_Slots;
         uint64_t                                    m_EndTag;
 
         //////////////////////////////////////////////////////////////////////////
@@ -198,11 +128,9 @@ namespace ML::BASE
 
             auto& query = FromHandle( data.Handle );
 
-            log.m_Result = data.Begin
+            return log.m_Result = data.Begin
                 ? query.WriteBegin( buffer, data, gpuMemory )
                 : query.WriteEnd( buffer, data );
-
-            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -273,11 +201,10 @@ namespace ML::BASE
             // Check if a configuration was activated before executing query commands.
             if constexpr( T::Policy::QueryHwCounters::GetData::m_CheckConfigurationActivation )
             {
-                if( kernel.m_OaConfigurationReferenceCounter <= 0 )
+                if( kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter <= 0 )
                 {
                     log.Error( "Empty configuration found" );
-                    log.m_Result = StatusCode::ReportWithEmptyConfiguration;
-                    return log.m_Result;
+                    return log.m_Result = StatusCode::ReportWithEmptyConfiguration;
                 }
             }
 
@@ -292,6 +219,12 @@ namespace ML::BASE
             {
                 // Initialize calculator.
                 TT::Queries::HwCountersCalculator calculator = { getData.Slot + i, query, reportsApi[i] };
+
+                // Validate query calls sequence correctness.
+                if( ML_FAIL( calculator.m_QuerySlot.CheckStateConsistency( T::Queries::HwCountersSlot::State::Resolved ) ) )
+                {
+                    break;
+                }
 
                 // Calculate query reports.
                 log.m_Result = calculator.GetReportApi();
@@ -312,7 +245,7 @@ namespace ML::BASE
         /// @param  slotIndex   slot index.
         /// @return             reference slot.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE Slot& GetSlot( const uint32_t slotIndex )
+        ML_INLINE TT::Queries::HwCountersSlot& GetSlot( const uint32_t slotIndex )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_ASSERT( slotIndex < m_Slots.size() );
@@ -334,26 +267,21 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Recreates oag report from srm reports.
-        /// @param  report  report gpu.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void UseSrmOagReport( TT::Layouts::HwCounters::Query::ReportGpu& report )
-        {
-            UseSrmOarReport( report );
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Recreates oa report from triggered report from oa buffer.
+        /// @param  slot    query slot.
         /// @param  report  report gpu.
         /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetTriggeredOaReports( TT::Layouts::HwCounters::Query::ReportGpu& report )
+        ML_INLINE StatusCode GetTriggeredOaReports(
+            TT::Queries::HwCountersSlot&               slot,
+            TT::Layouts::HwCounters::Query::ReportGpu& report )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( m_Context.m_OaBuffer.IsValid() );
-            ML_FUNCTION_CHECK( m_Context.m_OaBuffer.DumpReports( report ) );
-            ML_FUNCTION_CHECK( FindTriggeredOaReport<true>( report ) );
-            ML_FUNCTION_CHECK( FindTriggeredOaReport<false>( report ) );
+
+            log.m_Result = FindTriggeredOaReport<true>( slot, report );
+            log.m_Result = ML_SUCCESS( log.m_Result ) ? FindTriggeredOaReport<false>( slot, report ) : log.m_Result;
+            log.m_Result = ML_SUCCESS( log.m_Result ) ? m_Context.m_OaBuffer.DumpReports( report ) : log.m_Result;
 
             return log.m_Result;
         }
@@ -409,18 +337,21 @@ namespace ML::BASE
             auto&          slot      = GetSlot( slotIndex );
             auto&          derived   = Derived();
 
+            // Override oa report collecting mode if needed.
+            derived.CheckReportCollectingMode( buffer, slot );
+
             // Will be called during a real begin query call.
             // Not during gpu commands size calculation phase.
             if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
             {
-                SetGpuMemory( slotIndex, gpuMemory, slot ); // Set gpu memory data.
-                ResetOaBufferState( slot );                 // Reset oa buffer state.
+                ML_FUNCTION_CHECK( slot.CheckStateConsistency( T::Queries::HwCountersSlot::State::Begun ) ); // Validate query calls sequence correctness.
+                ML_FUNCTION_CHECK( SetGpuMemory( slotIndex, gpuMemory, slot ) );                             // Set gpu memory data.
+
+                slot.ClearReportGpu();      // Clear gpu memory.
+                ResetOaBufferState( slot ); // Reset oa buffer state.
             }
 
             const uint64_t gpuAddress = slot.m_GpuMemory.GpuAddress;
-
-            // Override oa report collecting mode if needed.
-            derived.CheckReportCollectingMode( buffer, slot );
 
             ML_FUNCTION_CHECK( FlushCommandStreamer<true>( buffer ) );
             ML_FUNCTION_CHECK( WriteNopId<true>( buffer, gpuAddress ) );
@@ -433,6 +364,8 @@ namespace ML::BASE
             if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
             {
                 slot.m_WorkloadBegin = buffer.GetBuffer() + buffer.m_Usage;
+
+                slot.UpdateState( T::Queries::HwCountersSlot::State::Begun );
             }
 
             return log.m_Result;
@@ -459,6 +392,8 @@ namespace ML::BASE
 
             if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
             {
+                ML_FUNCTION_CHECK( slot.CheckStateConsistency( T::Queries::HwCountersSlot::State::Ended ) ); // Validate query calls sequence correctness.
+
                 slot.m_WorkloadEnd = buffer.GetBuffer();
             }
 
@@ -472,6 +407,11 @@ namespace ML::BASE
             ML_FUNCTION_CHECK( WriteUserMarker( buffer, gpuAddress, data.MarkerUser ) );
             ML_FUNCTION_CHECK( WriteDriverMarker( buffer, gpuAddress, data.MarkerDriver ) );
             ML_FUNCTION_CHECK( WriteEndTag( buffer, gpuAddress ) );
+
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                slot.UpdateState( T::Queries::HwCountersSlot::State::Ended );
+            }
 
             return log.m_Result;
         }
@@ -513,9 +453,9 @@ namespace ML::BASE
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode SetGpuMemory(
-            const uint32_t       slotIndex,
-            const GpuMemory_1_0& memory,
-            Slot&                slot )
+            const uint32_t               slotIndex,
+            const GpuMemory_1_0&         memory,
+            TT::Queries::HwCountersSlot& slot )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -529,9 +469,6 @@ namespace ML::BASE
             // Offset for a given slot.
             slot.m_GpuMemory.CpuAddress = static_cast<uint8_t*>( memory.CpuAddress ) + offset;
             slot.m_GpuMemory.GpuAddress += offset;
-
-            // Clear gpu memory.
-            slot.ClearReportGpu();
 
             return log.m_Result;
         }
@@ -721,9 +658,9 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         template <bool begin, typename CommandBuffer>
         ML_INLINE StatusCode WriteHwCounters(
-            CommandBuffer& buffer,
-            const uint64_t address,
-            const Slot&    slot )
+            CommandBuffer&                     buffer,
+            const uint64_t                     address,
+            const TT::Queries::HwCountersSlot& slot )
         {
             const auto     collectingMode = slot.m_ReportCollectingMode;
             const uint32_t queryId        = static_cast<const uint32_t>( T::Tools::GetHash( reinterpret_cast<const uintptr_t>( buffer.GetBuffer() ) ) );
@@ -758,9 +695,9 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         template <bool begin, typename CommandBuffer>
         ML_INLINE StatusCode WriteOaState(
-            CommandBuffer&               buffer,
-            const uint64_t               address,
-            [[maybe_unused]] const Slot& slot )
+            CommandBuffer&                                      buffer,
+            const uint64_t                                      address,
+            [[maybe_unused]] const TT::Queries::HwCountersSlot& slot )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -882,7 +819,7 @@ namespace ML::BASE
         template <typename CommandBuffer>
         ML_INLINE void CheckReportCollectingMode(
             [[maybe_unused]] CommandBuffer& buffer,
-            Slot&                           slot )
+            TT::Queries::HwCountersSlot&    slot )
         {
             // For gen 9 always use mirpc.
             auto& mode = slot.m_ReportCollectingMode;
@@ -893,7 +830,7 @@ namespace ML::BASE
         /// @brief  Resets oa buffer state for a given pool slot.
         /// @param  slot    slot data.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void ResetOaBufferState( Slot& slot )
+        ML_INLINE void ResetOaBufferState( TT::Queries::HwCountersSlot& slot )
         {
             slot.m_OaBufferState.Reset();
         }
@@ -905,7 +842,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE bool ValidateReportReason( const TT::Layouts::HwCounters::ReportHeader& reportHeader ) const
         {
-            return reportHeader.m_ReportId.m_ReportReason == static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::TriggerQuery );
+            return ( reportHeader.m_ReportId.m_ReportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::TriggerQuery ) ) != 0;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -991,11 +928,14 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Recreates oa report from triggered report from oa buffer.
         /// @param  begin       begin/end indicator.
+        /// @param  slot        query slot.
         /// @param  queryReport query report gpu.
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
         template <bool begin>
-        ML_INLINE StatusCode FindTriggeredOaReport( TT::Layouts::HwCounters::Query::ReportGpu& queryReport )
+        ML_INLINE StatusCode FindTriggeredOaReport(
+            TT::Queries::HwCountersSlot&               slot,
+            TT::Layouts::HwCounters::Query::ReportGpu& queryReport )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -1003,11 +943,16 @@ namespace ML::BASE
             auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
 
             // OaBuffer data.
-            const uint32_t oaBufferSize       = m_Context.m_OaBuffer.GetSize();
-            const uint32_t reportSize         = m_Context.m_OaBuffer.GetReportSize();
-            uint32_t       reportOaOffset     = 0;
-            uint32_t       reportOaOffsetPost = 0;
-            bool           reportOaValid      = false;
+            const uint32_t     oaBufferSize        = m_Context.m_OaBuffer.GetSize();
+            const uint32_t     reportSize          = m_Context.m_OaBuffer.GetReportSize();
+            uint32_t           reportOaOffset      = 0;
+            uint32_t           reportOaOffsetPost  = 0;
+            bool               reportOaValid       = false;
+            uint32_t           foundTriggers       = 0;
+            uint32_t           foundReportOaOffset = 0;
+            constexpr uint32_t expectedTriggers    = ( !begin && T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers )
+                   ? 2
+                   : 1;
 
             // Validate triggered oa report.
             if( ML_SUCCESS( m_Context.m_OaBuffer.template GetPreReportOffset<begin>( queryReport, reportOaOffset ) ) &&
@@ -1033,9 +978,28 @@ namespace ML::BASE
                     auto& reportOa = m_Context.m_OaBuffer.GetReport( reportOaOffset );
 
                     const uint32_t queryIdExpected = derived.template GetQueryId<begin>( queryReport );
-                    reportOaValid                  = derived.ValidateQueryId( reportOa.m_Header, reportOaOffset, queryIdExpected );
 
-                    if( !reportOaValid )
+                    reportOaValid =
+                        derived.ValidateQueryId( reportOa.m_Header, reportOaOffset, queryIdExpected ) &&
+                        derived.ValidateReportReason( reportOa.m_Header ) &&
+                        derived.ValidateGpuTimestamps( queryReport, reportOa );
+
+                    if( reportOaValid )
+                    {
+                        if( ++foundTriggers == 1 )
+                        {
+                            // Keep the offset of the first found oa report.
+                            foundReportOaOffset = reportOaOffset;
+                        }
+
+                        if( foundTriggers < expectedTriggers )
+                        {
+                            // Set report to not valid and advance offset if more triggers are expected.
+                            reportOaValid  = false;
+                            reportOaOffset = ( reportOaOffset + reportSize ) % oaBufferSize;
+                        }
+                    }
+                    else
                     {
                         reportOaOffset = ( reportOaOffset + reportSize ) % oaBufferSize;
 
@@ -1050,32 +1014,35 @@ namespace ML::BASE
                 // Recreate query report from triggered oa report.
                 if( reportOaValid )
                 {
-                    auto& reportOa = m_Context.m_OaBuffer.GetReport( reportOaOffset );
+                    auto& reportOa = m_Context.m_OaBuffer.GetReport( foundReportOaOffset );
                     log.Info(
                         "Used reportOa: ",
-                        "(", FormatFlag::Decimal, FormatFlag::SetWidth5, reportOaOffset, ")",
+                        "(", FormatFlag::Decimal, FormatFlag::SetWidth5, foundReportOaOffset, ")",
                         reportOa );
-
-                    // Adjust cs timestamps.
-                    if constexpr( begin )
-                    {
-                        ML_ASSERT( ML_SUCCESS( derived.AdjustCsTimestamps( queryReport ) ) );
-                    }
-
-                    ML_ASSERT( derived.ValidateReportReason( reportOa.m_Header ) );
-                    ML_ASSERT( ValidateGpuTimestamps( queryReport, reportOa ) );
 
                     // Copy triggered oa report into query oa report.
                     derived.CopyTriggeredOaReport( queryReportOa, reportOa );
+
+                    // Reset attempts.
+                    slot.m_TriggeredReportGetAttempt = 0;
                 }
             }
 
             if( !reportOaValid )
             {
-                queryReport.m_Begin.m_Oa.m_Data = {};
-                queryReport.m_End.m_Oa.m_Data   = {};
-                log.Critical( "Unable to recreate report from triggered oa report" );
-                log.m_Result = StatusCode::ReportLost;
+                if( ++slot.m_TriggeredReportGetAttempt < T::Layouts::HwCounters::m_TriggeredReportGetAttempts )
+                {
+                    log.Debug( "Triggered report is not ready yet, attempt number:", slot.m_TriggeredReportGetAttempt );
+                    log.m_Result = StatusCode::ReportNotReady;
+                }
+                else
+                {
+                    slot.m_TriggeredReportGetAttempt = 0;
+                    queryReport.m_Begin.m_Oa.m_Data  = {};
+                    queryReport.m_End.m_Oa.m_Data    = {};
+                    log.Critical( "Unable to recreate report from triggered oa report" );
+                    log.m_Result = StatusCode::ReportLost;
+                }
             }
 
             return log.m_Result;
@@ -1092,17 +1059,6 @@ namespace ML::BASE
         {
             // Copy report.
             queryReportOa = reportTriggered;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Adjust cs with oa timestamps.
-        /// @param  queryReport query report gpu.
-        /// @return             operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode AdjustCsTimestamps( [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportGpu& queryReport )
-        {
-            // Not needed for pre-XeHPG.
-            return StatusCode::Success;
         }
     };
 } // namespace ML::BASE
@@ -1127,7 +1083,6 @@ namespace ML::GEN11
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base::m_Context;
-        using Slot = typename Base::Slot;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Checks oa report collecting mode.
@@ -1137,7 +1092,7 @@ namespace ML::GEN11
         template <typename CommandBuffer>
         ML_INLINE void CheckReportCollectingMode(
             [[maybe_unused]] CommandBuffer& buffer,
-            Slot&                           slot )
+            TT::Queries::HwCountersSlot&    slot )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -1170,7 +1125,6 @@ namespace ML::XE_LP
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base::m_Context;
-        using Slot = typename Base::Slot;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Checks oa report collecting mode.
@@ -1180,7 +1134,7 @@ namespace ML::XE_LP
         template <typename CommandBuffer>
         ML_INLINE void CheckReportCollectingMode(
             [[maybe_unused]] CommandBuffer& buffer,
-            Slot&                           slot )
+            TT::Queries::HwCountersSlot&    slot )
         {
             // For XeLP+ always use triggered reports.
             auto& mode = slot.m_ReportCollectingMode;
@@ -1223,18 +1177,24 @@ namespace ML::XE_HP
         /// @param  reportHeader    query report header.
         /// @return                 success if triggered oa report reason is valid.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool ValidateReportReason( const TT::Layouts::HwCounters::ReportHeader& reportHeader ) const
+        ML_INLINE bool ValidateReportReason( [[maybe_unused]] const TT::Layouts::HwCounters::ReportHeader& reportHeader ) const
         {
-            ML_FUNCTION_LOG( true, &m_Context );
+            // Accept any report reason due to report reason == 0 for mmio triggers on XeHP.
+            return true;
+        }
 
-            const bool validReportReason = reportHeader.m_ReportId.m_ReportReason == static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger );
-
-            if( !validReportReason )
-            {
-                log.Error( "report reason", reportHeader.m_ReportId.m_ReportReason );
-            }
-
-            return log.m_Result = ( validReportReason );
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Validates triggered oa report against query begin/end timestamps.
+        /// @param  reportQuery     query report.
+        /// @param  reportTriggered triggered oa report to validate.
+        /// @return                 true if triggered oa report is valid.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool ValidateGpuTimestamps(
+            [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportQuery,
+            [[maybe_unused]] const TT::Layouts::HwCounters::ReportOa&         reportTriggered )
+        {
+            // Do not validate gpu timestamps because query id in mmio trigger is enough unique.
+            return true;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1279,30 +1239,6 @@ namespace ML::XE_HP
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Recreates oag report from srm reports.
-        /// @param  report  query report gpu.
-        /// @return         operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void UseSrmOagReport( TT::Layouts::HwCounters::Query::ReportGpu& report )
-        {
-            constexpr uint32_t oagCounters40bitsOffset = T::Layouts::HwCounters::m_OagCounters40bitsCount - 4;
-
-            // High bytes of A4 - A23 counters.
-            for( uint32_t i = 0; i < oagCounters40bitsOffset; ++i )
-            {
-                report.m_Begin.m_Oa.m_Data.m_OaCounterHB_4_23[i] = static_cast<uint8_t>( report.m_WaBeginOag[i] );
-                report.m_End.m_Oa.m_Data.m_OaCounterHB_4_23[i]   = static_cast<uint8_t>( report.m_WaEndOag[i] );
-            }
-
-            // High bytes of A28 - A31 counters.
-            for( uint32_t i = 0; i < 4; ++i )
-            {
-                report.m_Begin.m_Oa.m_Data.m_OaCounterHB_28_31[i] = static_cast<uint8_t>( report.m_WaBeginOag[i + oagCounters40bitsOffset] );
-                report.m_End.m_Oa.m_Data.m_OaCounterHB_28_31[i]   = static_cast<uint8_t>( report.m_WaEndOag[i + oagCounters40bitsOffset] );
-            }
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Copies triggered oa report into query oa report.
         /// @param  queryReportOa   query oa report
         /// @param  reportTriggered triggered oa report.
@@ -1329,6 +1265,16 @@ namespace ML::XE_HP
                 // reportTriggered.m_Header.m_ContextId = contextId;
             }
         }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Recreates oar report from srm reports.
+        /// @param  report  report gpu.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void UseSrmOarReport( [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportGpu& report )
+        {
+            // Not supported.
+            ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
+        }
     };
 } // namespace ML::XE_HP
 
@@ -1345,27 +1291,22 @@ namespace ML::XE_HPG
         using Base::m_Context;
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Adjust cs with oa timestamps.
-        /// @param  queryReport query report gpu.
-        /// @return             operation status.
+        /// @brief  Validates triggered oa report against its reason.
+        /// @param  reportHeader    query report header.
+        /// @return                 success if triggered oa report reason is valid.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode AdjustCsTimestamps( TT::Layouts::HwCounters::Query::ReportGpu& queryReport )
+        ML_INLINE bool ValidateReportReason( const TT::Layouts::HwCounters::ReportHeader& reportHeader ) const
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            ML_FUNCTION_LOG( false, &m_Context );
 
-            const uint64_t oaTimestampFrequency = m_Context.m_Kernel.GetGpuTimestampFrequency( T::Layouts::Configuration::TimestampType::Oa );
-            const uint64_t csTimestampFrequency = m_Context.m_Kernel.GetGpuTimestampFrequency( T::Layouts::Configuration::TimestampType::Cs );
+            const bool validReportReason = ( reportHeader.m_ReportId.m_ReportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger ) ) != 0;
 
-            if( oaTimestampFrequency == 0 || csTimestampFrequency == 0 )
+            if( !validReportReason )
             {
-                log.Error( "Invalid timestamp frequency!" );
-                return log.m_Result = StatusCode::Failed;
+                log.Error( "Invalid report reason", reportHeader.m_ReportId.m_ReportReason );
             }
 
-            queryReport.m_Begin.m_Oa.m_Header.m_Timestamp = static_cast<uint32_t>( queryReport.m_Begin.m_Oa.m_Header.m_Timestamp * oaTimestampFrequency / csTimestampFrequency );
-            queryReport.m_End.m_Oa.m_Header.m_Timestamp   = static_cast<uint32_t>( queryReport.m_End.m_Oa.m_Header.m_Timestamp * oaTimestampFrequency / csTimestampFrequency );
-
-            return log.m_Result;
+            return log.m_Result = validReportReason;
         }
     };
 } // namespace ML::XE_HPG

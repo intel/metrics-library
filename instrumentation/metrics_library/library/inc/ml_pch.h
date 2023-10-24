@@ -41,6 +41,7 @@ using namespace MetricsLibraryApi;
 #include <atomic>
 #include <cmath>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <iomanip>

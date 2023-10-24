@@ -76,15 +76,12 @@ namespace ML
         /// @brief  Returns command buffer requirements like needed memory space
         ///         and allocation handles to patch.
         /// @return requirements    command buffer size information.
-        /// @return                 operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetSizeRequirements( CommandBufferSize_1_0& requirements ) const
+        ML_INLINE void GetSizeRequirements( CommandBufferSize_1_0& requirements ) const
         {
             requirements                       = {};
             requirements.GpuMemorySize         = m_Usage;
             requirements.GpuMemoryPatchesCount = m_MemoryPatchesCount;
-
-            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -241,15 +238,12 @@ namespace ML
         /// @brief  Returns command buffer requirements like needed memory space
         ///         and allocation handles to patch.
         /// @return requirements    command buffer requirements information.
-        /// @return                 operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetSizeRequirements( CommandBufferSize_1_0& requirements ) const
+        ML_INLINE void GetSizeRequirements( CommandBufferSize_1_0& requirements ) const
         {
             requirements                       = {};
             requirements.GpuMemorySize         = m_Usage;
             requirements.GpuMemoryPatchesCount = m_MemoryPatchesCount;
-
-            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////

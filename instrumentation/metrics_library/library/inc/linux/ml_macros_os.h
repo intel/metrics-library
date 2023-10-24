@@ -13,31 +13,28 @@ SPDX-License-Identifier: MIT
 */
 
 #pragma once
-// clang-format off
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Pragma definition.
 //////////////////////////////////////////////////////////////////////////
-#define ML_PRAGMA( x )              _Pragma( #x )
+#define ML_PRAGMA( x )           _Pragma( #x )
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Inline macros.
 //////////////////////////////////////////////////////////////////////////
-#define ML_INLINE                   inline
-#define ML_FORCE_INLINE             __attribute__( ( always_inline ) ) inline
+#define ML_INLINE                inline
+#define ML_FORCE_INLINE          __attribute__( ( always_inline ) ) inline
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Export definition.
 //////////////////////////////////////////////////////////////////////////
-#define ML_EXPORT( RETURN_TYPE )    RETURN_TYPE __attribute__( ( visibility( "default" ) ) )
+#define ML_EXPORT( RETURN_TYPE ) RETURN_TYPE __attribute__( ( visibility( "default" ) ) )
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief ML_LINUX.
 //////////////////////////////////////////////////////////////////////////
 #if defined( __linux__ )
-    #define ML_LINUX                1
+    #define ML_LINUX 1
 #else
-    #define ML_LINUX                0
+    #define ML_LINUX 0
 #endif
-
-// clang-format on

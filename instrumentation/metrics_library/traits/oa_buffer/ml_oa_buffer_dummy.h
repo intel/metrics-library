@@ -22,6 +22,7 @@ namespace ML::BASE
     template <typename T>
     struct OaBufferDummyTrait
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( OaBufferDummyTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( OaBufferDummyTrait );
 
     private:
@@ -57,8 +58,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Initialize() const
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            return log.m_Result;
+            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -80,8 +80,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Release() const
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            return log.m_Result;
+            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -90,8 +89,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE bool IsValid() const
         {
-            ML_FUNCTION_LOG( false, &m_Context );
-            return log.m_Result;
+            return false;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -100,8 +98,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint32_t GetSize() const
         {
-            ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Context );
-            return log.m_Result;
+            return 0;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -110,8 +107,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint32_t GetReportSize() const
         {
-            ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Context );
-            return log.m_Result;
+            return 0;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -173,8 +169,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode DumpReports( [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu )
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            return log.m_Result;
+            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////

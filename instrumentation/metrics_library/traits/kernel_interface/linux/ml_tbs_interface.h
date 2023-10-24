@@ -413,14 +413,9 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE OaBufferMapped& GetOaBufferMapped( const TT::Layouts::OaBuffer::Type type )
         {
-            switch( type )
+            if( type != T::Layouts::OaBuffer::Type::Oa )
             {
-                case T::Layouts::OaBuffer::Type::Oa:
-                    return m_Stream.m_OaBufferMapped;
-
-                default:
-                    ML_ASSERT_ALWAYS_ADAPTER( m_Kernel.m_Context.m_AdapterId );
-                    break;
+                ML_ASSERT_ALWAYS_ADAPTER( m_Kernel.m_Context.m_AdapterId );
             }
 
             return m_Stream.m_OaBufferMapped;
@@ -453,12 +448,10 @@ namespace ML::BASE
                 properties.push_back( value );
             };
 
-            // clang-format off
-            addProperty( DRM_I915_PERF_PROP_SAMPLE_OA,      true );
+            addProperty( DRM_I915_PERF_PROP_SAMPLE_OA, true );
             addProperty( DRM_I915_PERF_PROP_OA_METRICS_SET, static_cast<uint64_t>( metricSet ) );
-            addProperty( DRM_I915_PERF_PROP_OA_FORMAT,      T::TbsInterface::GetOaReportType() );
-            addProperty( DRM_I915_PERF_PROP_OA_EXPONENT,    GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
-            // clang-format on
+            addProperty( DRM_I915_PERF_PROP_OA_FORMAT, T::TbsInterface::GetOaReportType() );
+            addProperty( DRM_I915_PERF_PROP_OA_EXPONENT, GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
 
             return log.m_Result;
         }
@@ -692,10 +685,8 @@ namespace ML::XE_HP
             // Special path for sub devices.
             ML_FUNCTION_CHECK( subDevice.GetTbsEngine( engineClass, engineInstance ) );
 
-            // clang-format off
-            addProperty( PRELIM_DRM_I915_PERF_PROP_OA_ENGINE_CLASS,    engineClass );
+            addProperty( PRELIM_DRM_I915_PERF_PROP_OA_ENGINE_CLASS, engineClass );
             addProperty( PRELIM_DRM_I915_PERF_PROP_OA_ENGINE_INSTANCE, engineInstance );
-            // clang-format on
 
             return log.m_Result;
         }

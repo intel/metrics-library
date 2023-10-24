@@ -35,7 +35,6 @@ namespace ML::BASE
             GetReportData_1_0* data )
         {
             ML_FUNCTION_CHECK_STATIC( data != nullptr );
-            ML_FUNCTION_CHECK_STATIC( data != nullptr );
 
             switch( data->Type )
             {
@@ -45,7 +44,7 @@ namespace ML::BASE
                     ML_FUNCTION_LOG( StatusCode::Success, &context );
 
                     // Print input values.
-                    log.Input( data );
+                    log.Input( *data );
 
                     log.m_Result = T::Queries::HwCounters::GetData( data->Query );
                     ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
@@ -58,7 +57,7 @@ namespace ML::BASE
                     ML_FUNCTION_LOG( StatusCode::Success, &context );
 
                     // Print input values.
-                    log.Input( data );
+                    log.Input( *data );
 
                     log.m_Result = T::Queries::PipelineTimestamps::GetData( data->Query );
                     ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
@@ -71,7 +70,7 @@ namespace ML::BASE
                     ML_FUNCTION_LOG( StatusCode::Success, &context );
 
                     // Print input values.
-                    log.Input( data );
+                    log.Input( *data );
 
                     log.m_Result = T::Overrides::User::GetData( data->Override );
                     ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
@@ -84,7 +83,7 @@ namespace ML::BASE
                     ML_FUNCTION_LOG( StatusCode::Success, &context );
 
                     // Print input values.
-                    log.Input( data );
+                    log.Input( *data );
 
                     log.m_Result = T::Overrides::PoshQuery::GetData( data->Override );
                     ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
@@ -97,7 +96,7 @@ namespace ML::BASE
                     ML_ASSERT_ALWAYS();
 
                     // Print input values.
-                    log.Input( data );
+                    log.Input( *data );
 
                     return log.m_Result;
                 }

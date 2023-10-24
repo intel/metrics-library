@@ -44,8 +44,7 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &context );
 
             // Print input values.
-            log.Input( createData );
-            log.Input( handle );
+            log.Input( *createData );
 
             switch( createData->Type )
             {
@@ -62,6 +61,9 @@ namespace ML::BASE
                     log.m_Result = StatusCode::IncorrectParameter;
                     break;
             }
+
+            // Print input values.
+            log.Output( *handle );
 
             return log.m_Result;
         }

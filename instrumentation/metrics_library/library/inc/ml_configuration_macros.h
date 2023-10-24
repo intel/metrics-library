@@ -13,27 +13,24 @@ SPDX-License-Identifier: MIT
 */
 
 #pragma once
-// clang-format off
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Configuration macros.
 //////////////////////////////////////////////////////////////////////////
 #if defined( _DEBUG )
-    #define ML_DEBUG                                1
+    #define ML_DEBUG 1
 #else
-    #define ML_DEBUG                                0
+    #define ML_DEBUG 0
 #endif
 
 #if defined( _RELEASE_INTERNAL )
-    #define ML_INTERNAL                             1
+    #define ML_INTERNAL 1
 #else
-    #define ML_INTERNAL                             0
+    #define ML_INTERNAL 0
 #endif
 
 #if !defined( _DEBUG ) && !defined( _RELEASE_INTERNAL )
-    #define ML_RELEASE                              1
+    #define ML_RELEASE 1
 #else
-    #define ML_RELEASE                              0
+    #define ML_RELEASE 0
 #endif
-
-// clang-format on

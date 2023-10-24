@@ -147,13 +147,10 @@ static const char* __IuLogGetModuleInfo()
 //
 // Description:    Outputs debug information.
 ///////////////////////////////////////////////////////////////////////////////
-#pragma warning( push )
-#pragma warning( disable : 4100 ) // unreferenced formal parameter
 
 void __IuLogPrint(
     const uint32_t adapterId,
-    const char*    sevTag,
-    const uint32_t level,
+    const char     sevTag,
     const char*    layerTag,
     const char*    fncName, // this parameter isn't used in release driver
     const char*    inFormat,
@@ -172,6 +169,12 @@ void __IuLogPrint(
     char   outFormat[IU_FORMAT_SIZE];
     size_t outFormatOffset = 0;
 
+    if( g_IuLogsControl.LogLevel & IU_DBG_SHOW_THREAD_ID )
+    {
+        iu_snprintf( outFormat + outFormatOffset, IU_FORMAT_SIZE, "[ThreadId:%u]", iu_get_thread_id() );
+        outFormatOffset = iu_strnlen_s( outFormat, sizeof( outFormat ) );
+    }
+
     // adapter Id
     if( adapterId == IU_ADAPTER_ID_UNKNOWN )
     {
@@ -184,7 +187,7 @@ void __IuLogPrint(
 
     // severity tag
     outFormatOffset = iu_strnlen_s( outFormat, sizeof( outFormat ) );
-    iu_snprintf( outFormat + outFormatOffset, IU_FORMAT_SIZE, ":%s", sevTag );
+    iu_snprintf( outFormat + outFormatOffset, IU_FORMAT_SIZE, ":%c", sevTag );
 
     // layer tag
     if( g_IuLogsControl.LogLevel & IU_DBG_SHOW_TAG )
@@ -203,7 +206,6 @@ void __IuLogPrint(
     }
 
 #if IU_DEBUG_LOGS // function names strings cannot be compiled into a release drv
-
     // function name
     if( g_IuLogsControl.LogLevel & IU_DBG_SHOW_FUNCTION )
     {
@@ -221,7 +223,8 @@ void __IuLogPrint(
             iu_snprintf( outFormat + outFormatOffset, IU_FORMAT_SIZE - outFormatOffset, ":%s", fncName );
         }
     }
-
+#else
+    (void) fncName;
 #endif
 
     // log body
@@ -232,22 +235,29 @@ void __IuLogPrint(
     if( g_IuLogsControl.LogLevel & IU_DBG_EOL )
     {
         outFormatOffset = iu_strnlen_s( outFormat, sizeof( outFormat ) );
-        iu_snprintf( outFormat + outFormatOffset, IU_BUF_SIZE - outFormatOffset, "%s", "\n" );
+        iu_snprintf( outFormat + outFormatOffset, IU_BUF_SIZE - outFormatOffset, "\n" );
     }
 
     va_start( ap, inFormat );
     iu_vsnprintf( buf, IU_BUF_SIZE, outFormat, ap );
     va_end( ap );
 
-    iu_log( buf );
-
-    if( ( g_IuLogsControl.LogLevel & IU_DBG_CONSOLE_DUMP ) || ( level & IU_DBG_CONSOLE_DUMP ) )
+    bool dumpToFile = ( g_IuLogsControl.LogLevel & IU_DBG_FILE_DUMP );
+    if( dumpToFile )
     {
-        iu_printf( buf, !( g_IuLogsControl.LogLevel & IU_DBG_EOL ), g_IuLogsControl.LogLevel & IU_DBG_CONSOLE_FLUSH );
+        dumpToFile = iu_log_file( buf );
+    }
+
+    if( !dumpToFile )
+    {
+        iu_log( buf );
+
+        if( ( g_IuLogsControl.LogLevel & IU_DBG_CONSOLE_DUMP ) )
+        {
+            iu_printf( buf, !( g_IuLogsControl.LogLevel & IU_DBG_EOL ), ( g_IuLogsControl.LogLevel & IU_DBG_CONSOLE_FLUSH ) );
+        }
     }
 }
-
-#pragma warning( pop )
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function:    IuLogGetSettings

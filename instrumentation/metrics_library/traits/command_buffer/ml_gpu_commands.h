@@ -107,8 +107,11 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            log.Input( "registerAddress", registerAddress );
-            log.Input( "memoryAddress", memoryAddress );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "memoryAddress", memoryAddress );
+            }
 
             TT::Layouts::GpuCommands::MI_STORE_REGISTER_MEM command = {};
 
@@ -171,8 +174,11 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            log.Input( "data", data );
-            log.Input( "address", address );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "data", data );
+                log.Input( "address", address );
+            }
 
             TT::Layouts::GpuCommands::MI_STORE_DATA_IMM command = {};
 
@@ -203,9 +209,12 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync ) );
 
-            log.Input( "data", data );
-            log.Input( "address", address );
-            log.Input( "flags", flags );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "data", data );
+                log.Input( "address", address );
+                log.Input( "flags", flags );
+            }
 
             const bool isPostSyncEnabled = static_cast<uint32_t>( flags & Flags::EnablePostSync ) != 0;
 
@@ -262,9 +271,12 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync, Flags::EnableStall ) );
 
-            log.Input( "registerAddress", registerAddress );
-            log.Input( "data", data );
-            log.Input( "flags", flags );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "data", data );
+                log.Input( "flags", flags );
+            }
 
             const bool isStallEnabled    = static_cast<uint32_t>( flags & Flags::EnableStall ) != 0;
             const bool isPostSyncEnabled = static_cast<uint32_t>( flags & Flags::EnablePostSync ) != 0;
@@ -316,8 +328,11 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            log.Input( "sourceRegisterAddress", sourceRegisterAddress );
-            log.Input( "destinationRegisterAddress", destinationRegisterAddress );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "sourceRegisterAddress", sourceRegisterAddress );
+                log.Input( "destinationRegisterAddress", destinationRegisterAddress );
+            }
 
             TT::Layouts::GpuCommands::MI_LOAD_REGISTER_REG command = {};
 
@@ -348,36 +363,31 @@ namespace ML::BASE
             const uint32_t                                             queryId,
             const Flags                                                flags = Flags::None )
         {
+            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
             switch( collectingMode )
             {
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
-                    return T::GpuCommands::template StoreHwCountersViaMirpc<begin>(
+                    ML_FUNCTION_CHECK( T::GpuCommands::template StoreHwCountersViaMirpc<begin>(
                         buffer,
                         address,
-                        reportId );
+                        reportId ) );
+                    break;
 
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOar:
-                    return T::GpuCommands::template StoreHwCountersViaSrmOar<begin>(
+                    ML_FUNCTION_CHECK( T::GpuCommands::template StoreHwCountersViaSrmOar<begin>(
                         buffer,
                         address,
                         reportId,
-                        flags );
-
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
-                    return T::GpuCommands::template StoreHwCountersViaOagTriggers<begin>(
-                        buffer,
-                        address,
-                        reportId,
-                        queryId,
-                        flags );
+                        flags ) );
+                    break;
 
                 default:
-                    ML_ASSERT_ALWAYS_ADAPTER( buffer.m_Context.m_AdapterId );
-                    break;
+                    ML_ASSERT_ALWAYS();
+                    return log.m_Result = StatusCode::IncorrectParameter;
             }
 
-            return StatusCode::NotSupported;
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -397,9 +407,12 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            log.Input( "address", address );
-            log.Input( "reportId", reportId );
-            log.Input( "begin", begin );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "address", address );
+                log.Input( "reportId", reportId );
+                log.Input( "begin", begin );
+            }
 
             TT::Layouts::GpuCommands::MI_REPORT_PERF_COUNT command = {};
 
@@ -543,21 +556,23 @@ namespace ML::BASE
                        ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa )
                        : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
 
-            // Ticks before triggered report.
             if constexpr( begin )
             {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
-                    buffer,
-                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
-                    flags | Flags::EnableMmioRemap ) );
-
+                // Do not use mirpc on pre-HeXP platforms because trigger report has valid context id.
                 if constexpr( !T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers )
                 {
+                    // Store report id when mirpc is not used.
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
                         buffer,
                         reportId,
                         address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
                         flags ) );
+
+                    // Ticks before triggered report.
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
+                        buffer,
+                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
+                        flags | Flags::EnableMmioRemap ) );
                 }
             }
             else
@@ -586,19 +601,28 @@ namespace ML::BASE
             }
             else
             {
-                // Ticks after triggered report.
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
-                    buffer,
-                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
-                    flags | Flags::EnableMmioRemap ) );
-
+                // Do not use mirpc on pre-HeXP platforms because trigger report has valid context id.
                 if constexpr( !T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers )
                 {
+                    // Store report id when mirpc is not used.
                     ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
                         buffer,
                         reportId,
                         address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
                         flags ) );
+
+                    // Ticks after triggered report.
+                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
+                        buffer,
+                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
+                        flags | Flags::EnableMmioRemap ) );
+                }
+                else
+                {
+                    // Trigger additional report in oa buffer on query end to make sure the previous one is completed.
+                    ML_FUNCTION_CHECK( T::GpuCommands::TriggerQueryReport(
+                        buffer,
+                        queryId ) );
                 }
             }
 
@@ -715,7 +739,10 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            log.Input( "memoryAddress", memoryAddress );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "memoryAddress", memoryAddress );
+            }
 
             TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
 
@@ -749,9 +776,12 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_ASSERT( ( size % sizeof( uint32_t ) ) == 0 );
 
-            log.Input( "addressSource", addressSource );
-            log.Input( "addressTarget", addressTarget );
-            log.Input( "size", size );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "addressSource", addressSource );
+                log.Input( "addressTarget", addressTarget );
+                log.Input( "size", size );
+            }
 
             TT::Layouts::GpuCommands::MI_COPY_MEM_MEM command = {};
 
@@ -847,9 +877,12 @@ namespace ML::XE_LP
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnableMmioRemap ) );
 
-            log.Input( "registerAddress", registerAddress );
-            log.Input( "memoryAddress", memoryAddress );
-            log.Input( "flags", flags );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "memoryAddress", memoryAddress );
+                log.Input( "flags", flags );
+            }
 
             TT::Layouts::GpuCommands::MI_STORE_REGISTER_MEM command = {};
 
@@ -889,9 +922,12 @@ namespace ML::XE_LP
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync, Flags::EnableStall, Flags::EnableMmioRemap ) );
 
-            log.Input( "registerAddress", registerAddress );
-            log.Input( "data", data );
-            log.Input( "flags", flags );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "data", data );
+                log.Input( "flags", flags );
+            }
 
             TT::Layouts::GpuCommands::MI_LOAD_REGISTER_IMM command = {};
 
@@ -931,122 +967,23 @@ namespace ML::XE_LP
             const uint32_t                                             queryId,
             const Flags                                                flags = Flags::None )
         {
+            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
             switch( collectingMode )
             {
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag:
-                    return T::GpuCommands::template StoreHwCountersViaSrmOag<begin>(
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
+                    ML_FUNCTION_CHECK( T::GpuCommands::template StoreHwCountersViaOagTriggers<begin>(
                         buffer,
-                        address,
-                        reportId,
-                        flags );
-
-                default:
-                    return Base::template StoreHwCounters<begin>(
-                        buffer,
-                        collectingMode,
                         address,
                         reportId,
                         queryId,
-                        flags );
+                        flags ) );
+                    break;
+
+                default:
+                    ML_ASSERT_ALWAYS();
+                    return log.m_Result = StatusCode::IncorrectParameter;
             }
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes STORE_REGISTER_MEM commands to gpu command buffer to
-        ///         store hw counters.
-        /// @param  begin       begin/end query indicator.
-        /// @param  buffer      target command buffer.
-        /// @param  address     memory offset.
-        /// @param  reportId    report id.
-        /// @param  flags       gpu command flags.
-        /// @return             operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <bool begin, typename CommandBuffer>
-        ML_INLINE static StatusCode StoreHwCountersViaSrmOag(
-            CommandBuffer& buffer,
-            const uint64_t address,
-            const uint32_t reportId,
-            const Flags    flags = Flags::None )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
-
-            constexpr uint32_t oaReportOffset = begin
-                ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa )
-                : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
-
-            // Lower 32 bits of oa counters.
-            uint64_t countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Data.m_OaCounter[0] );
-
-            for( const auto oagCounterLow : T::GpuRegisters::GetOagCountersLow() )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                    buffer,
-                    oagCounterLow,
-                    countersOffset + ( ( oagCounterLow - T::GpuRegisters::m_OagPerfA0 ) / 2 ),
-                    flags ) );
-            }
-
-            // Higher byte of oa counters.
-            countersOffset = begin
-                ? address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_WaBegin )
-                : address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_WaEnd );
-
-            for( const auto oagCounterHigh : T::GpuRegisters::GetOagCountersHigh() )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                    buffer,
-                    oagCounterHigh,
-                    countersOffset + ( ( oagCounterHigh - T::GpuRegisters::m_OagPerfA0Upper ) / 2 ),
-                    flags ) );
-            }
-
-            // Noa counters (available only 32 bits).
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Data.m_NoaCounter[0] );
-
-            for( const auto noagCounter : T::GpuRegisters::GetNoagCounters() )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                    buffer,
-                    noagCounter,
-                    countersOffset + ( noagCounter - T::GpuRegisters::m_OagPerfB0 ),
-                    flags ) );
-            }
-
-            // Report id.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
-                buffer,
-                reportId,
-                countersOffset,
-                flags ) );
-
-            // Context id.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ContextId );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                T::GpuRegisters::m_ContextId,
-                countersOffset,
-                flags ) );
-
-            // Gpu ticks.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_GpuTicks );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                T::GpuRegisters::m_OagGpuTicks,
-                countersOffset,
-                flags ) );
-
-            // Timestamp.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                T::GpuRegisters::m_TimestampLow,
-                countersOffset,
-                flags ) );
 
             return log.m_Result;
         }
@@ -1085,9 +1022,12 @@ namespace ML::XE_HP
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnableMmioRemap, Flags::WorkloadPartition ) );
 
-            log.Input( "registerAddress", registerAddress );
-            log.Input( "memoryAddress", memoryAddress );
-            log.Input( "flags", flags );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "memoryAddress", memoryAddress );
+                log.Input( "flags", flags );
+            }
 
             TT::Layouts::GpuCommands::MI_STORE_REGISTER_MEM command = {};
 
@@ -1133,9 +1073,12 @@ namespace ML::XE_HP
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( CheckFlags( flags, Flags::WorkloadPartition ) );
 
-            log.Input( "data", data );
-            log.Input( "address", address );
-            log.Input( "flags", flags );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "data", data );
+                log.Input( "address", address );
+                log.Input( "flags", flags );
+            }
 
             TT::Layouts::GpuCommands::MI_STORE_DATA_IMM command = {};
 
@@ -1173,9 +1116,12 @@ namespace ML::XE_HP
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync, Flags::WorkloadPartition ) );
 
-            log.Input( "data", data );
-            log.Input( "address", address );
-            log.Input( "flags", flags );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "data", data );
+                log.Input( "address", address );
+                log.Input( "flags", flags );
+            }
 
             const bool isPostSyncEnabled          = static_cast<uint32_t>( flags & Flags::EnablePostSync ) != 0;
             const bool isWorkloadPartitionEnabled = static_cast<uint32_t>( flags & Flags::WorkloadPartition ) != 0;
@@ -1241,8 +1187,11 @@ namespace ML::XE_HP
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( CheckFlags( flags, Flags::WorkloadPartition ) );
 
-            log.Input( "memoryAddress", memoryAddress );
-            log.Input( "flags", flags );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "memoryAddress", memoryAddress );
+                log.Input( "flags", flags );
+            }
 
             TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
 
@@ -1288,23 +1237,18 @@ namespace ML::XE_HP
 
             switch( collectingMode )
             {
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag:
-                    ML_FUNCTION_CHECK( T::GpuCommands::template StoreHwCountersViaSrmOag<begin>(
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
+                    ML_FUNCTION_CHECK( T::GpuCommands::template StoreHwCountersViaOagTriggers<begin>(
                         buffer,
-                        address,
-                        reportId,
-                        flags ) );
-                    break;
-
-                default:
-                    ML_FUNCTION_CHECK( Base::template StoreHwCounters<begin>(
-                        buffer,
-                        collectingMode,
                         address,
                         reportId,
                         queryId,
                         flags ) );
                     break;
+
+                default:
+                    ML_ASSERT_ALWAYS();
+                    return log.m_Result = StatusCode::IncorrectParameter;
             }
 
             if constexpr( begin )
@@ -1322,145 +1266,6 @@ namespace ML::XE_HP
                     address,
                     flags ) );
             }
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes STORE_REGISTER_MEM commands to gpu command buffer to
-        ///         store hw counters.
-        /// @param  begin       begin/end query indicator.
-        /// @param  buffer      target command buffer.
-        /// @param  address     memory offset.
-        /// @param  reportId    report id.
-        /// @param  flags       gpu command flags.
-        /// @return             operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <bool begin, typename CommandBuffer>
-        ML_INLINE static StatusCode StoreHwCountersViaSrmOag(
-            CommandBuffer& buffer,
-            const uint64_t address,
-            const uint32_t reportId,
-            const Flags    flags = Flags::None )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
-
-            const auto&        oagCountersLow  = T::GpuRegisters::GetOagCountersLow();
-            const auto&        oagCountersHigh = T::GpuRegisters::GetOagCountersHigh();
-            constexpr uint32_t oaReportOffset  = begin
-                 ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa )
-                 : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
-
-            // Lower 32 bits of oag counters.
-            uint64_t countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Data.m_OaCounter_0_36[0] );
-
-            // Store A0 - A35 counters.
-            for( size_t i = 0; i < T::Layouts::HwCounters::m_OaCounter35; ++i )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                    buffer,
-                    oagCountersLow[i],
-                    countersOffset + ( ( oagCountersLow[i] - T::GpuRegisters::m_OagPerfA0 ) / 2 ),
-                    flags ) );
-            }
-
-            // Store A36 counter.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Data.m_OaCounter_0_36[T::Layouts::HwCounters::m_OaCounter36] );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                oagCountersLow[T::Layouts::HwCounters::m_OaCounter36],
-                countersOffset,
-                flags ) );
-
-            // Store A37 counter.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Data.m_OaCounter_37 );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                oagCountersLow[T::Layouts::HwCounters::m_OaCounter37],
-                countersOffset,
-                flags ) );
-
-            // Higher byte of oag counters.
-            countersOffset = begin
-                ? address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_WaBeginOag )
-                : address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_WaEndOag );
-
-            // Store A4 - A23 counters.
-            for( size_t i = T::Layouts::HwCounters::m_OaCounter4; i < T::Layouts::HwCounters::m_OaCounter23; ++i )
-            {
-                // It starts from A4 counter.
-                constexpr uint32_t baseRegister = T::GpuRegisters::m_OagPerfA4Upper;
-
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                    buffer,
-                    oagCountersHigh[i],
-                    countersOffset + ( ( oagCountersHigh[i] - baseRegister ) / 2 ),
-                    flags ) );
-            }
-
-            // Store A28 - A31 counters.
-            for( size_t i = T::Layouts::HwCounters::m_OaCounter28; i < T::Layouts::HwCounters::m_OaCounter31; ++i )
-            {
-                // It starts from A28 counter, but the offset must be moved by 20 registers,
-                // because it is a continuation of storing A4 - A23 counters previously.
-                constexpr uint32_t baseRegister = T::GpuRegisters::m_OagPerfA8Upper;
-
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                    buffer,
-                    oagCountersHigh[i],
-                    countersOffset + ( ( oagCountersHigh[i] - baseRegister ) / 2 ),
-                    flags ) );
-            }
-
-            // Noag counters (available only 32 bits).
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Data.m_NoaCounter[0] );
-
-            for( const auto noagCounter : T::GpuRegisters::GetNoagCounters() )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                    buffer,
-                    noagCounter,
-                    countersOffset + ( noagCounter - T::GpuRegisters::m_OagPerfB0 ),
-                    flags ) );
-            }
-
-            // Report id.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
-                buffer,
-                reportId,
-                countersOffset,
-                flags ) );
-
-            // Context id.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ContextId );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                T::GpuRegisters::m_ContextId,
-                countersOffset,
-                flags ) );
-
-            // Gpu ticks.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_GpuTicks );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                T::GpuRegisters::m_OagGpuTicks,
-                countersOffset,
-                flags ) );
-
-            // Timestamp.
-            countersOffset = address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                T::GpuRegisters::m_TimestampLow,
-                countersOffset,
-                flags ) );
 
             return log.m_Result;
         }
@@ -1659,8 +1464,11 @@ namespace ML::XE_HP
 
             if( isPostSyncEnabled )
             {
-                log.Input( "marker", marker );
-                log.Input( "flags", flags );
+                if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+                {
+                    log.Input( "marker", marker );
+                    log.Input( "flags", flags );
+                }
 
                 TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
 
@@ -1766,27 +1574,6 @@ namespace ML::XE_HPC
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes STORE_REGISTER_MEM commands to gpu command buffer to
-        ///         store hw counters.
-        /// @param  begin       begin/end query indicator.
-        /// @param  buffer      target command buffer.
-        /// @param  address     memory offset.
-        /// @param  reportId    report id.
-        /// @param  flags       gpu command flags.
-        /// @return             operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <bool begin, typename CommandBuffer>
-        ML_INLINE static StatusCode StoreHwCountersViaSrmOag(
-            [[maybe_unused]] CommandBuffer& buffer,
-            [[maybe_unused]] const uint64_t address,
-            [[maybe_unused]] const uint32_t reportId,
-            [[maybe_unused]] const Flags    flags )
-        {
-            ML_ASSERT_ALWAYS_ADAPTER( buffer.m_Context.m_AdapterId );
-            return StatusCode::NotSupported;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Writes MI_LOAD_REGISTER_IMM or PIPE_CONTROL command to gpu
         ///         command buffer to load a register with a 32 bit constant.
         /// @param  buffer          target command buffer.
@@ -1805,9 +1592,12 @@ namespace ML::XE_HPC
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
             ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync, Flags::EnableStall, Flags::EnableMmioRemap ) );
 
-            log.Input( "registerAddress", registerAddress );
-            log.Input( "data", data );
-            log.Input( "flags", flags );
+            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+            {
+                log.Input( "registerAddress", registerAddress );
+                log.Input( "data", data );
+                log.Input( "flags", flags );
+            }
 
             const bool isStallEnabled     = static_cast<uint32_t>( flags & Flags::EnableStall ) != 0;
             const bool isPostSyncEnabled  = static_cast<uint32_t>( flags & Flags::EnablePostSync ) != 0;

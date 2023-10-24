@@ -41,11 +41,12 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief Constants.
         //////////////////////////////////////////////////////////////////////////
-        static constexpr uint32_t m_OaCountersCount       = 36;
-        static constexpr uint32_t m_OaCounters40bitsCount = 32;
-        static constexpr uint32_t m_NoaCountersCount      = 16;
-        static constexpr uint32_t m_UserCountersCount     = 16;
-        static constexpr uint32_t m_ReportGpuAlignment    = 64;
+        static constexpr uint32_t m_OaCountersCount            = 36;
+        static constexpr uint32_t m_OaCounters40bitsCount      = 32;
+        static constexpr uint32_t m_NoaCountersCount           = 16;
+        static constexpr uint32_t m_UserCountersCount          = 16;
+        static constexpr uint32_t m_ReportGpuAlignment         = 64;
+        static constexpr uint32_t m_TriggeredReportGetAttempts = 10;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Report gp.
@@ -173,13 +174,14 @@ namespace ML::BASE
             {
                 struct
                 {
-                    uint32_t    m_ReportLost                : 1;
-                    uint32_t    m_ReportInconsistent        : 1;
-                    uint32_t    m_ReportNotReady            : 1;
-                    uint32_t    m_ReportContextSwitchLost   : 1;
-                    uint32_t    m_ReportWithoutWorkload     : 1;
-                    uint32_t    m_ContextMismatch           : 1;
-                    uint32_t    m_Reserved                  : 26;
+                    uint32_t    m_ReportLost                : ML_BITFIELD_BIT( 0 );
+                    uint32_t    m_ReportInconsistent        : ML_BITFIELD_BIT( 1 );
+                    uint32_t    m_ReportNotReady            : ML_BITFIELD_BIT( 2 );
+                    uint32_t    m_ReportContextSwitchLost   : ML_BITFIELD_BIT( 3 );
+                    uint32_t    m_ReportWithoutWorkload     : ML_BITFIELD_BIT( 4 );
+                    uint32_t    m_ContextMismatch           : ML_BITFIELD_BIT( 5 );
+                    uint32_t    m_QueryModeMismatch         : ML_BITFIELD_BIT( 6 );
+                    uint32_t    m_Reserved                  : ML_BITFIELD_RANGE( 7, 31 );
                 };
             };
 
@@ -225,7 +227,22 @@ namespace ML::BASE
                 StoreRegisterMemoryOar,
                 StoreRegisterMemoryOag,
                 TriggerOag,
-                TriggerOagExtended
+                TriggerOagExtended,
+                // ...
+                Default = ReportPerformanceCounters
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Query mode.
+            //////////////////////////////////////////////////////////////////////////
+            enum class Mode : uint32_t
+            {
+                Render         = 1,
+                Compute        = 2,
+                Global         = 3,
+                GlobalExtended = 4,
+                // ...
+                Default = Render
             };
 
             //////////////////////////////////////////////////////////////////////////
@@ -552,19 +569,6 @@ namespace ML::XE_HP
                 // Begin/end report.
                 Report      m_Begin;
                 Report      m_End;
-
-                // Required only for WaDoNotUseMIReportPerfCount for BDW+.
-                union
-                {
-                    uint32_t    m_WaBegin[m_OarCounters40bitsCount];    // Oar: High bytes of A0 - A31 counters.
-                    uint32_t    m_WaBeginOag[m_OagCounters40bitsCount]; // Oag: High bytes of A4 - A23 and A28 - A31 counters.
-                };
-
-                union
-                {
-                    uint32_t    m_WaEnd[m_OarCounters40bitsCount];      // Oar: High bytes of A0 - A31 counters.
-                    uint32_t    m_WaEndOag[m_OagCounters40bitsCount];   // Oag: High bytes of A4 - A23 and A28 - A31 counters.
-                };
 
                 union
                 {

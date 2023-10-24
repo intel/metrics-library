@@ -22,20 +22,21 @@ namespace ML
     template <typename T>
     struct KernelInterfaceTrait
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( KernelInterfaceTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( KernelInterfaceTrait );
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        TT::Context&                   m_Context;
-        TT::ConstantsOs::Drm::Revision m_Revision;
-        int32_t                        m_DeviceId;
-        TT::IoControl                  m_IoControl;
-        TT::TbsInterface               m_Tbs;
-        int32_t                        m_OaConfigurationReferenceCounter;
-        uint64_t                       m_OaFrequency;
-        uint64_t                       m_CsFrequency;
-        uint64_t                       m_GpuTimestampTickValue;
+        TT::Context&                                           m_Context;
+        TT::ConstantsOs::Drm::Revision                         m_Revision;
+        TT::IoControl                                          m_IoControl;
+        TT::TbsInterface                                       m_Tbs;
+        TT::Configurations::HwCountersOa::ConfigurationManager m_ConfigurationManager;
+        uint64_t                                               m_OaFrequency;
+        uint64_t                                               m_CsFrequency;
+        uint64_t                                               m_GpuTimestampTickValue;
+        int32_t                                                m_DeviceId;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief KernelInterfaceTrait constructor.
@@ -44,13 +45,13 @@ namespace ML
         KernelInterfaceTrait( TT::Context& context )
             : m_Context( context )
             , m_Revision( T::ConstantsOs::Drm::Revision::Unsupported )
-            , m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
             , m_IoControl( *this )
             , m_Tbs( *this )
-            , m_OaConfigurationReferenceCounter( 0 )
+            , m_ConfigurationManager{}
             , m_OaFrequency( 0 )
             , m_CsFrequency( 0 )
             , m_GpuTimestampTickValue( 0 )
+            , m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
         {
         }
 
@@ -197,13 +198,13 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Loads oa configuration to gpu through tbs interface.
-        /// @param  oaConfiguration  oa configuration.
-        /// @return                  operation status.
+        /// @param  oaConfigurationId  oa configuration id.
+        /// @return                    operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode LoadOaConfigurationToGpu( const TT::Layouts::Configuration::PerformanceMonitoringRegisters& oaConfiguration )
+        ML_INLINE StatusCode LoadOaConfigurationToGpu( const int64_t oaConfigurationId )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfiguration.m_Id ) );
+            ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfigurationId ) );
 
             return log.m_Result;
         }
@@ -212,13 +213,13 @@ namespace ML
         /// @brief  Releases oa metric set. If metric set has been used previously
         ///         then reference counter will be decreased. If reference counter
         ///         will become zero then another metric set can be used.
-        /// @param  oaConfiguration  oa configuration.
-        /// @return                  operation status.
+        /// @param  oaConfigurationId  oa configuration id.
+        /// @return                    operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode UnloadOaConfigurationFromGpu( const TT::Layouts::Configuration::PerformanceMonitoringRegisters& oaConfiguration )
+        ML_INLINE StatusCode UnloadOaConfigurationFromGpu( const int64_t oaConfigurationId )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            ML_FUNCTION_CHECK( m_Tbs.m_Stream.ReleaseMetricSet( oaConfiguration.m_Id ) );
+            ML_FUNCTION_CHECK( m_Tbs.m_Stream.ReleaseMetricSet( oaConfigurationId ) );
 
             return log.m_Result;
         }
@@ -226,16 +227,16 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns activated by metrics discovery oa configuration
         ///         from the kernel.
-        /// @return oaConfiguration     activated oa configuration.
-        /// @return                     operation status.
+        /// @return oaConfigurationId oa configuration id.
+        /// @return                   operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaConfiguration( TT::Layouts::Configuration::PerformanceMonitoringRegisters& oaConfiguration ) const
+        ML_INLINE StatusCode GetOaConfiguration( int64_t& oaConfigurationId ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            oaConfiguration.m_Id = m_IoControl.GetKernelMetricSet();
+            oaConfigurationId = m_IoControl.GetKernelMetricSet();
 
-            ML_FUNCTION_CHECK( oaConfiguration.m_Id != T::ConstantsOs::Tbs::m_Invalid );
+            ML_FUNCTION_CHECK( oaConfigurationId != T::ConstantsOs::Tbs::m_Invalid );
 
             return log.m_Result;
         }
@@ -299,13 +300,23 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns report collecting mode override state.
-        /// @return reportCollectingMode    report collecting mode.
-        /// @return                         operation status.
+        /// @brief  Returns query mode override state.
+        /// @return query mode.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetReportCollectingModeOverride( [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportCollectingMode& reportCollectingMode ) const
+        ML_INLINE TT::Layouts::HwCounters::Query::Mode GetQueryModeOverride() const
         {
-            ML_FUNCTION_LOG( StatusCode::NotSupported, &m_Context );
+            ML_FUNCTION_LOG( T::Layouts::HwCounters::Query::Mode::Default, &m_Context );
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns report collecting mode override state.
+        /// @return report collecting mode.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE TT::Layouts::HwCounters::Query::ReportCollectingMode GetReportCollectingModeOverride() const
+        {
+            ML_FUNCTION_LOG( T::Layouts::HwCounters::Query::ReportCollectingMode::Default, &m_Context );
 
             return log.m_Result;
         }

@@ -619,9 +619,11 @@ elseif (${PLATFORM} STREQUAL linux) # linux
         -Wno-sequence-point      # disable undefined behavior warning
         -Wno-comment             # allow multi-line comments
         -Ofast                   # optimize code in the favor of speed
-        -Wno-extern-c-compat     # disable "empty struct has size 0 in C, size 1 in C++" warning
         -fstack-protector-strong # enables stack protection for vulnerable functions that contain: An array of any size and type
         )
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        add_definitions (-Wno-extern-c-compat) # disable "empty struct has size 0 in C, size 1 in C++" warning
+    endif ()
     if ("${TARGET_ARCH}" STREQUAL "32")
         add_definitions (-m32)
     endif ()

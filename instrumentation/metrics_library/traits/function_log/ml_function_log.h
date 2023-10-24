@@ -255,8 +255,8 @@ namespace ML
         ////////////////////////////////////////////////////////////////////////
         template <typename... Values>
         ML_INLINE static void ErrorStatic(
-            const std::string functionName,
-            const StatusCode  result,
+            const std::string& functionName,
+            const StatusCode   result,
             const Values&... values )
         {
             T::Tools::Log( LogType::Entered, functionName, nullptr, std::string( Constants::Log::m_EnteredFunctionTag ) );

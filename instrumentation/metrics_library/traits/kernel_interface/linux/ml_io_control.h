@@ -22,6 +22,7 @@ namespace ML::BASE
     template <typename T>
     struct IoControlTrait
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( IoControlTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( IoControlTrait );
 
     private:
@@ -166,7 +167,7 @@ namespace ML::BASE
             const bool validCall   = ML_SUCCESS( SendDrm( DRM_IOCTL_I915_QUERY, query ) );
             const bool validLength = item.length > 0;
 
-            return ( validCall && validLength )
+            return log.m_Result = ( validCall && validLength )
                 ? item.length
                 : 0;
         }
@@ -368,9 +369,12 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Tbs::m_Invalid }, &m_Kernel.m_Context );
 
-            return ML_SUCCESS( ReadFile( m_KernelMetricSet, log.m_Result ) )
-                ? log.m_Result
-                : T::ConstantsOs::Tbs::m_Invalid;
+            if( ML_FAIL( ReadFile( m_KernelMetricSet, log.m_Result ) ) )
+            {
+                log.Warning( "Cannot get kernel metric set" );
+            }
+
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -608,27 +612,26 @@ namespace ML::BASE
             DIR*              drmDirectory     = opendir( drmDirectoryPath.c_str() );
             dirent*           entry            = nullptr;
 
-            if( drmDirectory == nullptr )
+            if( drmDirectory != nullptr )
             {
-                return StatusCode::Failed;
-            }
-
-            // Look for a directory named 'card.*'.
-            while( ( entry = readdir( drmDirectory ) ) != nullptr )
-            {
-                const bool validDirectory = entry->d_type == DT_DIR;
-                const bool validCard      = validDirectory && ( strncmp( entry->d_name, "card", 4 ) == 0 );
-
-                if( validCard )
+                // Look for a directory named 'card.*'.
+                while( ( entry = readdir( drmDirectory ) ) != nullptr )
                 {
-                    m_DrmCard = strtoull( entry->d_name + 4, nullptr, 10 );
-                    log.Debug( "DRM card number is ", m_DrmCard );
-                    closedir( drmDirectory );
-                    return log.m_Result = StatusCode::Success;
+                    const bool validDirectory = entry->d_type == DT_DIR;
+                    const bool validCard      = validDirectory && ( strncmp( entry->d_name, "card", 4 ) == 0 );
+
+                    if( validCard )
+                    {
+                        m_DrmCard = strtoull( entry->d_name + 4, nullptr, 10 );
+                        log.Debug( "DRM card number is ", m_DrmCard );
+                        closedir( drmDirectory );
+                        return log.m_Result = StatusCode::Success;
+                    }
                 }
+
+                closedir( drmDirectory );
             }
 
-            closedir( drmDirectory );
             return log.m_Result;
         }
 
@@ -768,9 +771,8 @@ namespace ML::BASE
         {
             ML_STATIC_ASSERT( sizeof( Type ) == sizeof( uint32_t ), "Incorrect input size, expected 4 bytes." );
 
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_LOG( Type{}, &m_Kernel.m_Context );
 
-            auto output       = Type{};
             auto parameters   = drm_i915_reg_read{};
             parameters.offset = offset;
 
@@ -788,10 +790,10 @@ namespace ML::BASE
             // Read register with io control.
             if( ML_SUCCESS( SendDrm( DRM_IOCTL_I915_REG_READ, parameters ) ) )
             {
-                *reinterpret_cast<uint32_t*>( &output ) = static_cast<uint32_t>( parameters.val );
+                *reinterpret_cast<uint32_t*>( &log.m_Result ) = static_cast<uint32_t>( parameters.val );
             }
 
-            return output;
+            return log.m_Result;
         }
 
         /////////////////////////////////////////////////////////////////////////
@@ -804,9 +806,8 @@ namespace ML::BASE
         {
             ML_STATIC_ASSERT( sizeof( Type ) == sizeof( uint64_t ), "Incorrect input size, expected 8 bytes." );
 
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_LOG( Type{}, &m_Kernel.m_Context );
 
-            auto output       = Type{};
             auto parameters   = drm_i915_reg_read{};
             parameters.offset = offset;
 
@@ -824,10 +825,10 @@ namespace ML::BASE
             // Read register with io control.
             if( ML_SUCCESS( SendDrm( DRM_IOCTL_I915_REG_READ, parameters ) ) )
             {
-                *reinterpret_cast<uint64_t*>( &output ) = parameters.val;
+                *reinterpret_cast<uint64_t*>( &log.m_Result ) = parameters.val;
             }
 
-            return output;
+            return log.m_Result;
         }
 
         /////////////////////////////////////////////////////////////////////////
@@ -839,8 +840,15 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( std::string(), &m_Kernel.m_Context );
 
+            const std::string defaultGuid = T::ConstantsOs::Tbs::m_ActiveMetricSetGuid;
+
+            if( subDeviceIndex == 0 )
+            {
+                return log.m_Result = defaultGuid;
+            }
+
             const std::string valueToReplace    = "42a7";
-            const uint32_t    maxSubDeviceIndex = std::pow( 2, valueToReplace.size() * 4 ) - 1;
+            const uint32_t    maxSubDeviceIndex = std::pow( 2, valueToReplace.length() * 4 ) - 1;
 
             if( subDeviceIndex > maxSubDeviceIndex )
             {
@@ -848,18 +856,10 @@ namespace ML::BASE
                 return log.m_Result = "";
             }
 
-            std::string defaultGuid( T::ConstantsOs::Tbs::m_ActiveMetricSetGuid );
-
-            if( subDeviceIndex == 0 )
-            {
-                return log.m_Result = defaultGuid;
-            }
-
             std::stringstream stream;
-            stream << std::setfill( '0' ) << std::setw( valueToReplace.size() ) << std::hex << subDeviceIndex;
-            std::string subDeviceIndexHexString( stream.str() );
+            stream << std::setfill( '0' ) << std::setw( valueToReplace.length() ) << std::hex << subDeviceIndex;
 
-            return log.m_Result = std::regex_replace( defaultGuid, std::regex( valueToReplace ), subDeviceIndexHexString.c_str() );
+            return log.m_Result = std::regex_replace( defaultGuid, std::regex( valueToReplace ), stream.str() );
         }
     };
 } // namespace ML::BASE

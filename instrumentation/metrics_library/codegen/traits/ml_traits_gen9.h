@@ -189,6 +189,7 @@ namespace ML::GEN9::OpenCL
         //////////////////////////////////////////////////////////////////////////
         /// @brief Hw Counters.
         //////////////////////////////////////////////////////////////////////////
+            using HwCountersSlot              = QueryHwCountersSlotTrait<Traits>;               //  ml_query_hw_counters_slot.h
             using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
             using HwCountersCalculator        = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
 
@@ -290,6 +291,7 @@ namespace ML::GEN9::OpenCL
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
             #endif
+                FunctionLogStatic::Traits( "using Queries::HwCountersSlot", Queries::HwCountersSlot::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
@@ -466,6 +468,7 @@ namespace ML::GEN9::OneApi
         //////////////////////////////////////////////////////////////////////////
         /// @brief Hw Counters.
         //////////////////////////////////////////////////////////////////////////
+            using HwCountersSlot              = QueryHwCountersSlotTrait<Traits>;               //  ml_query_hw_counters_slot.h
             using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
             using HwCountersCalculator        = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
 
@@ -567,6 +570,7 @@ namespace ML::GEN9::OneApi
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using Overrides::PoshQuery", Overrides::PoshQuery::GetDescription() );
             #endif
+                FunctionLogStatic::Traits( "using Queries::HwCountersSlot", Queries::HwCountersSlot::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );

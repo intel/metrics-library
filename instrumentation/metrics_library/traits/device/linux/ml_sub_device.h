@@ -22,6 +22,7 @@ namespace ML::BASE
     template <typename T>
     struct SubDeviceTrait : SubDeviceCommonTrait<T>
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( SubDeviceTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( SubDeviceTrait );
 
         //////////////////////////////////////////////////////////////////////////
@@ -51,8 +52,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Initialize()
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            return log.m_Result;
+            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////

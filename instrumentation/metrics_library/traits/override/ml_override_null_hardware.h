@@ -37,7 +37,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const std::string GetDescription()
         {
-            return "OverrideNullHardwareTrait<Traits> (Windows)";
+            return "OverrideNullHardwareTrait<Traits>";
         }
 
         //////////////////////////////////////////////////////////////////////////

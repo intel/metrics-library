@@ -51,7 +51,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const std::string GetDescription()
         {
-            return "OverridePoshQueryTrait<Traits> (Windows)";
+            return "OverridePoshQueryTrait<Traits> (Linux)";
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -64,16 +64,7 @@ namespace ML::BASE
             TT::Context&        context,
             OverrideHandle_1_0& handle )
         {
-            auto override = Allocate( context );
-
-            if( override )
-            {
-                handle = override->GetHandle();
-            }
-
-            return override
-                ? StatusCode::Success
-                : StatusCode::Failed;
+            return StatusCode::NotImplemented;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -83,17 +74,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static StatusCode GetData( GetReportOverride_1_0& getData )
         {
-            ML_FUNCTION_CHECK_STATIC( getData.Data != nullptr );
-            ML_FUNCTION_CHECK_STATIC( getData.DataSize == sizeof( TT::Layouts::Override::PoshQuery ) );
-            ML_FUNCTION_CHECK_STATIC( IsValid( getData.Handle ) );
-
-            auto& override = FromHandle( getData.Handle );
-            ML_FUNCTION_LOG( StatusCode::Success, &override.m_Context );
-
-            auto& report     = *static_cast<TT::Layouts::Override::PoshQuery*>( getData.Data );
-            report.m_Enabled = false;
-
-            return log.m_Result;
+            return StatusCode::NotImplemented;
         }
     };
 } // namespace ML::BASE

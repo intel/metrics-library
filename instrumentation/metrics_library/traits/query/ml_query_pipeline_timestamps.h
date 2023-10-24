@@ -174,9 +174,6 @@ namespace ML::BASE
             m_GpuMemory = memory;
             m_GpuReport = reinterpret_cast<TT::Layouts::PipelineTimestamps::ReportGpu*>( memory.CpuAddress );
 
-            // Clear gpu memory.
-            ClearReportGpu();
-
             return log.m_Result;
         }
 
@@ -193,10 +190,11 @@ namespace ML::BASE
             const uint64_t       offset,
             const GpuMemory_1_0& gpuMemory )
         {
-            // Set gpu memory.
+            // Set gpu memory and clear it.
             if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
             {
                 SetGpuMemory( gpuMemory );
+                ClearReportGpu();
             }
 
             const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
@@ -377,7 +375,7 @@ namespace ML::GEN11
 
             // Report index / count.
             reportApi.m_ReportsCount = query.m_Context.m_ClientOptions.m_PoshEnabled ? 2 : 1;
-            query.m_ReportIndex      = ( ++query.m_ReportIndex ) % reportApi.m_ReportsCount;
+            query.m_ReportIndex      = ( query.m_ReportIndex + 1 ) % reportApi.m_ReportsCount;
 
             // Return api report.
             switch( static_cast<GpuCommandBufferType>( query.m_ReportIndex ) )

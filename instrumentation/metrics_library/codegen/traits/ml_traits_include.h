@@ -149,6 +149,7 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 //////////////////////////////////////////////////////////////////////////
 /// @brief Hw Counters:
 //////////////////////////////////////////////////////////////////////////
+#include "ml_query_hw_counters_slot.h"
 #include "ml_query_hw_counters.h"
 #include "ml_query_hw_counters_calculator.h"
 

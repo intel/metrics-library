@@ -25,7 +25,7 @@ namespace ML::BASE
         ML_DELETE_DEFAULT_COPY_AND_MOVE( InternalFeatureTrait );
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief InternalFeatureOsTrait constructor.
+        /// @brief InternalFeatureTrait constructor.
         //////////////////////////////////////////////////////////////////////////
         InternalFeatureTrait()
         {

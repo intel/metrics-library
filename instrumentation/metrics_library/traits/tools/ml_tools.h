@@ -204,7 +204,7 @@ namespace ML
                 value &= mask;
                 while( !( mask & 1 ) )
                 {
-                    mask >>= 1;
+                    mask  >>= 1;
                     value >>= 1;
                 }
             }
@@ -212,6 +212,7 @@ namespace ML
             {
                 value = 0;
             }
+
             return value;
         }
 
@@ -228,6 +229,7 @@ namespace ML
             const uint32_t value2 )
         {
             int32_t result = 0;
+
             if( value1 < value2 )
             {
                 result = ( ( value2 - value1 ) < 0x80000000 ) ? -1 : 1;
@@ -295,7 +297,7 @@ namespace ML
 
             ML_ASSERT_NO_ADAPTER( bitsize <= maxBitsize );
 
-            end &= mask;
+            end   &= mask;
             begin &= mask;
 
             if( end >= begin )

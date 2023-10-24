@@ -81,11 +81,8 @@ namespace ML::BASE
             {
                 return StatusCode::Failed;
             }
-            else
-            {
-                uint32_t toInteger = std::atoi( rawData );
-                data               = static_cast<Result>( toInteger );
-            }
+
+            data = static_cast<Result>( std::atoi( rawData ) );
 
             return StatusCode::Success;
         }

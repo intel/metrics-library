@@ -34,10 +34,29 @@ namespace ML
         using Base::m_Context;
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief Base type for HwCounters configuration manager object.
+        //////////////////////////////////////////////////////////////////////////
+        struct ConfigurationManager
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Members.
+            //////////////////////////////////////////////////////////////////////////
+            int32_t m_OaConfigurationReferenceCounter;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief ConfigurationManager constructor.
+            //////////////////////////////////////////////////////////////////////////
+            ConfigurationManager()
+                : m_OaConfigurationReferenceCounter( 0 )
+            {
+            }
+        };
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        TT::KernelInterface&                                       m_Kernel;
-        TT::Layouts::Configuration::PerformanceMonitoringRegisters m_OaRegisters;
+        TT::KernelInterface& m_Kernel;
+        int64_t              m_Id;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Configuration hw counters oa constructor.
@@ -46,7 +65,7 @@ namespace ML
         ConfigurationHwCountersOaTrait( TT::Context& context )
             : Base( context )
             , m_Kernel{ context.m_Kernel }
-            , m_OaRegisters{}
+            , m_Id( T::ConstantsOs::Tbs::m_Invalid )
         {
         }
 
@@ -99,11 +118,11 @@ namespace ML
             auto&          oaBuffer   = m_Kernel.m_Tbs.GetOaBufferMapped( T::Layouts::OaBuffer::Type::Oa );
             constexpr bool restartTbs = T::Policy::ConfigurationOa::Activate::m_RestartTbs;
 
-            m_Kernel.m_OaConfigurationReferenceCounter++;
+            m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter++;
 
             return log.m_Result = ( restartTbs && !oaBuffer.m_Mapped )
                 ? m_Kernel.m_Tbs.m_Stream.Restart()
-                : m_Kernel.LoadOaConfigurationToGpu( m_OaRegisters );
+                : m_Kernel.LoadOaConfigurationToGpu( m_Id );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -117,11 +136,11 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            m_Kernel.m_OaConfigurationReferenceCounter--;
+            m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter--;
 
             return log.m_Result = T::Policy::ConfigurationOa::Activate::m_RestartTbs
                 ? StatusCode::Success
-                : m_Kernel.UnloadOaConfigurationFromGpu( m_OaRegisters );
+                : m_Kernel.UnloadOaConfigurationFromGpu( m_Id );
         }
 
     private:
@@ -131,7 +150,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Initialize()
         {
-            return m_Kernel.GetOaConfiguration( m_OaRegisters );
+            return m_Kernel.GetOaConfiguration( m_Id );
         }
 
         //////////////////////////////////////////////////////////////////////////

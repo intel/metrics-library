@@ -14,11 +14,17 @@
 AccessModifierOffset: -4
 
 AlignAfterOpenBracket: AlwaysBreak
-#AlignArrayOfStructures: Left
-AlignConsecutiveAssignments: Consecutive
+AlignArrayOfStructures: Right
+AlignConsecutiveAssignments:
+    Enabled: true
+    AlignCompound: true
+    PadOperators: true
 AlignConsecutiveBitFields: AcrossEmptyLinesAndComments
 AlignConsecutiveDeclarations: Consecutive
-AlignConsecutiveMacros: Consecutive
+AlignConsecutiveMacros:
+    Enabled: true
+    AcrossEmptyLines: true
+    AcrossComments: true
 AlignEscapedNewlinesLeft: Right
 AlignOperands: DontAlign
 AlignTrailingComments: true

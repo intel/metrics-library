@@ -1185,6 +1185,46 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief  Converts an enumerator of query mode enumeration
+        ///         to a string that contains the enumerator name.
+        /// @param  value   a given enumerator to convert.
+        /// @return         converted enumerator name to string.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::Mode value )
+        {
+            std::ostringstream output;
+            output << "HwCounters::Query::Mode"
+                   << "( ";
+
+            switch( value )
+            {
+                case T::Layouts::HwCounters::Query::Mode::Render:
+                    output << "Render";
+                    break;
+
+                case T::Layouts::HwCounters::Query::Mode::Compute:
+                    output << "Compute";
+                    break;
+
+                case T::Layouts::HwCounters::Query::Mode::Global:
+                    output << "Global";
+                    break;
+
+                case T::Layouts::HwCounters::Query::Mode::GlobalExtended:
+                    output << "GlobalExtended";
+                    break;
+
+                default:
+                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
+                    output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
+                    break;
+            }
+            output << " )";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Converts an enumerator of log type enumeration to a string
         ///         that contains the enumerator name.
         /// @param  value   a given enumerator to convert.
@@ -1371,10 +1411,6 @@ namespace ML::BASE
                     output << "FrequencyChange";
                     break;
 
-                case T::Layouts::OaBuffer::ReportReason::DmaSampling:
-                    output << "DmaSampling";
-                    break;
-
                 case T::Layouts::OaBuffer::ReportReason::Empty:
                     output << "Empty";
                     break;
@@ -1386,6 +1422,42 @@ namespace ML::BASE
                 default:
                     output << "Illegal report reason: " << std::hex << std::showbase << static_cast<uint32_t>( reportReason );
                     output << " (" << std::dec << static_cast<uint32_t>( reportReason ) << ")";
+                    break;
+            }
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates query slot state log.
+        /// @param  state   a given query slot state.
+        /// @return         string that contains formatted query slot state.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Queries::HwCountersSlot::State state )
+        {
+            std::ostringstream output;
+
+            switch( state )
+            {
+                case T::Queries::HwCountersSlot::State::Initial:
+                    output << "Initial";
+                    break;
+
+                case T::Queries::HwCountersSlot::State::Begun:
+                    output << "Begun";
+                    break;
+
+                case T::Queries::HwCountersSlot::State::Ended:
+                    output << "Ended";
+                    break;
+
+                case T::Queries::HwCountersSlot::State::Resolved:
+                    output << "Resolved";
+                    break;
+
+                default:
+                    output << "Illegal query slot state: " << std::hex << std::showbase << static_cast<uint32_t>( state );
+                    output << " (" << std::dec << static_cast<uint32_t>( state ) << ")";
                     break;
             }
 

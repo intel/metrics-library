@@ -89,15 +89,14 @@ namespace ML
         template <typename Handle>
         ML_INLINE static ClientType_1_0 GetClientType( const Handle& handle )
         {
-            const BaseObject* object  = static_cast<BaseObject*>( handle.data );
-            const bool        valid   = object && IsValidType( *object );
-            ClientType_1_0    unknown = { ClientApi::Unknown, ClientGen::Unknown };
+            const BaseObject* object = static_cast<BaseObject*>( handle.data );
+            const bool        valid  = object && IsValidType( *object );
 
             ML_ASSERT_NO_ADAPTER( valid );
 
             return valid
                 ? object->m_ClientType
-                : unknown;
+                : ClientType_1_0{ ClientApi::Unknown, ClientGen::Unknown };
         }
     };
 

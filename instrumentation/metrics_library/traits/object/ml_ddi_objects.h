@@ -23,6 +23,7 @@ namespace ML
     template <typename T>
     struct DdiObjectsTrait
     {
+        ML_DELETE_DEFAULT_CONSTRUCTOR( DdiObjectsTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( DdiObjectsTrait );
 
         //////////////////////////////////////////////////////////////////////////

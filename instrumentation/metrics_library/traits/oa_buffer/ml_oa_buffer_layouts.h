@@ -46,9 +46,6 @@ namespace ML
             WaBbContext         = User1,
             WaBbC6              = User2,
             TriggerQuery        = User1,
-
-            // Software values - values with more than a single bit are allowed:
-            DmaSampling         = 0b0000011
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -247,11 +244,11 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             ML_INLINE void Reset()
             {
-                m_FirstOffset            = Constants::OaBuffer::m_InvalidOffset;
-                m_CurrentOffset          = Constants::OaBuffer::m_InvalidOffset;
-                m_NextAfterLastOffset    = Constants::OaBuffer::m_InvalidOffset;
-                m_ConfigurationValid    = true;
-                m_ContextValid          = true;
+                m_FirstOffset         = Constants::OaBuffer::m_InvalidOffset;
+                m_CurrentOffset       = Constants::OaBuffer::m_InvalidOffset;
+                m_NextAfterLastOffset = Constants::OaBuffer::m_InvalidOffset;
+                m_ConfigurationValid  = true;
+                m_ContextValid        = true;
             }
         };
 

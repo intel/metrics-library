@@ -50,10 +50,15 @@ namespace ML::BASE
 
             // Print input values.
             log.Input( clientType );
-            log.Input( createData );
-            log.Input( handle );
+            log.Input( *createData );
 
-            return log.m_Result = T::Context::Create( clientType, *createData, *handle );
+            log.m_Result = T::Context::Create( clientType, *createData, *handle );
+
+            // Print output values.
+            log.Output( *createData );
+            log.Output( *handle );
+
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -133,8 +138,8 @@ namespace ML::BASE
             value->Type = *type;
 
             // Print output values.
-            log.Output( type );
-            log.Output( value );
+            log.Output( *type );
+            log.Output( *value );
 
             ML_ASSERT( log.m_Result == StatusCode::Success );
 

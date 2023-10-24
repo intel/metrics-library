@@ -81,8 +81,8 @@ namespace ML
         struct Configuration
         {
             static constexpr uint32_t m_InvalidHandle        = 0;
-            static constexpr uint32_t m_MaxOaProlog          = 15;
-            static constexpr uint32_t m_MaxOaEpilog          = 6;
+            static constexpr uint32_t m_MaxOaProlog          = 7;
+            static constexpr uint32_t m_MaxOaEpilog          = 3;
             static constexpr uint32_t m_MaxRegistersBase     = 4096;
             static constexpr uint32_t m_MaxRegisters         = m_MaxRegistersBase + m_MaxOaEpilog + m_MaxOaProlog;
             static constexpr uint32_t m_MaxOverrideRegisters = 256;
@@ -112,8 +112,8 @@ namespace ML
         struct Log
         {
             static constexpr const char  m_ScopeCharacter            = ':';
-            static constexpr const char* m_EnteredFunctionTag        = "Enter: ";
-            static constexpr const char* m_ExitingFunctionTag        = "Exit : ";
+            static constexpr const char* m_EnteredFunctionTag        = "Enter:";
+            static constexpr const char* m_ExitingFunctionTag        = "Exit :";
             static constexpr uint32_t    m_IndentSize                = 4;
             static constexpr bool        m_SimplifyFunctionName      = false;
             static constexpr uint32_t    m_SimplifyFunctionNameLevel = 0;

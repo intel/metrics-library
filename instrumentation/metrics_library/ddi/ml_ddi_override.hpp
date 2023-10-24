@@ -44,8 +44,7 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &context );
 
             // Print input values.
-            log.Input( createData );
-            log.Input( handle );
+            log.Input( *createData );
 
             switch( createData->Type )
             {
@@ -72,6 +71,9 @@ namespace ML::BASE
             }
 
             ML_ASSERT( log.m_Result == StatusCode::Success );
+
+            // Print output values.
+            log.Output( *handle );
 
             return log.m_Result;
         }

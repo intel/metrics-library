@@ -44,8 +44,7 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &context );
 
             // Print input values.
-            log.Input( createData );
-            log.Input( handle );
+            log.Input( *createData );
 
             switch( createData->Type )
             {
@@ -64,6 +63,9 @@ namespace ML::BASE
             }
 
             ML_ASSERT( log.m_Result == StatusCode::Success );
+
+            // Print output values.
+            log.Output( *handle );
 
             return log.m_Result;
         }
@@ -88,7 +90,7 @@ namespace ML::BASE
 
                     // Print input values.
                     log.Input( handle );
-                    log.Input( activateData );
+                    log.Input( *activateData );
 
                     log.m_Result = config.Activate( *activateData );
                     ML_ASSERT( log.m_Result == StatusCode::Success );
@@ -101,7 +103,7 @@ namespace ML::BASE
 
                     // Print input values.
                     log.Input( handle );
-                    log.Input( activateData );
+                    log.Input( *activateData );
 
                     ML_ASSERT( log.m_Result == StatusCode::Success );
 
@@ -114,7 +116,7 @@ namespace ML::BASE
 
                     // Print input values.
                     log.Input( handle );
-                    log.Input( activateData );
+                    log.Input( *activateData );
 
                     return log.m_Result;
                 }

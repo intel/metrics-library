@@ -41,7 +41,7 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &context );
 
             // Print input values.
-            log.Input( data );
+            log.Input( *data );
 
             TT::GpuCommandBuffer buffer = { data->Data, data->Size, data->Type, data->Allocation, context };
 
@@ -107,7 +107,7 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &context );
 
             // Print input values.
-            log.Input( data );
+            log.Input( *data );
 
             TT::GpuCommandBufferCalculator buffer = { data->Type, context };
 
@@ -151,14 +151,19 @@ namespace ML::BASE
                     break;
             }
 
-            // Print output values.
-            log.Output( size );
+            if( ML_SUCCESS( log.m_Result ) )
+            {
+                buffer.GetSizeRequirements( *size );
 
-            ML_ASSERT( log.m_Result == StatusCode::Success );
+                // Print output values.
+                log.Output( *size );
+            }
+            else
+            {
+                ML_ASSERT_ALWAYS();
+            }
 
-            return ML_SUCCESS( log.m_Result )
-                ? buffer.GetSizeRequirements( *size )
-                : log.m_Result;
+            return log.m_Result;
         }
     };
 } // namespace ML::BASE
