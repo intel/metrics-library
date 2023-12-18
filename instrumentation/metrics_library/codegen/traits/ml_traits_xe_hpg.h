@@ -105,15 +105,15 @@ namespace ML::XE_HPG::OpenCL
             using Configuration             = ConfigurationLayoutsTrait<Traits>;            //  ml_configuration_layouts.h
             using OaBuffer                  = OaBufferLayoutsTrait<Traits>;                 //  ml_oa_buffer_layouts.h
             using HwCounters                = HwCountersLayoutsTrait<Traits>;               //  ml_hw_counters_layouts.h
-        #if ML_LINUX
-            using IoControl                 = IoControlLayoutsTrait;                        //  linux/ml_io_control_layouts.h
-        #endif
             using GpuCommands               = GpuCommandsLayoutsTrait<Traits>;              //  ml_gpu_commands_include.h
         #if ML_LINUX
             using Override                  = OverrideLayoutsTrait<Traits>;                 //  linux/ml_override_layouts.h
         #endif
             using PipelineTimestamps        = PipelineTimestampsLayoutsTrait<Traits>;       //  ml_pipeline_timestamps_layouts.h
             using GpuRegisters              = GpuRegistersLayoutsTrait<Traits>;             //  ml_gpu_registers_layouts.h
+        #if ML_LINUX
+            using Drm                       = DrmLayoutsTrait<Traits>;                      //  linux/ml_drm_layouts.h
+        #endif
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -138,10 +138,13 @@ namespace ML::XE_HPG::OpenCL
         /// @brief Linux kernel interface traits.
         //////////////////////////////////////////////////////////////////////////
         #if ML_LINUX
+        using KernelInterface               = KernelInterfaceTrait<Traits>;                 //  linux/ml_kernel_interface.h
+        #endif
+        #if ML_LINUX
         using TbsInterface                  = TbsInterfaceTrait<Traits>;                    //  linux/ml_tbs_interface.h
         #endif
         #if ML_LINUX
-        using KernelInterface               = KernelInterfaceTrait<Traits>;                 //  linux/ml_kernel_interface.h
+        using TbsStream                     = TbsStreamTrait<Traits>;                       //  linux/ml_tbs_stream.h
         #endif
         #if ML_LINUX
         using IoControl                     = IoControlTrait<Traits>;                       //  linux/ml_io_control.h
@@ -252,13 +255,13 @@ namespace ML::XE_HPG::OpenCL
                 FunctionLogStatic::Traits( "using Layouts::OaBuffer", Layouts::OaBuffer::GetDescription() );
                 FunctionLogStatic::Traits( "using Layouts::HwCounters", Layouts::HwCounters::GetDescription() );
             #if ML_LINUX
-                FunctionLogStatic::Traits( "using Layouts::IoControl", Layouts::IoControl::GetDescription() );
-            #endif
-            #if ML_LINUX
                 FunctionLogStatic::Traits( "using Layouts::Override", Layouts::Override::GetDescription() );
             #endif
                 FunctionLogStatic::Traits( "using Layouts::PipelineTimestamps", Layouts::PipelineTimestamps::GetDescription() );
                 FunctionLogStatic::Traits( "using Layouts::GpuRegisters", Layouts::GpuRegisters::GetDescription() );
+            #if ML_LINUX
+                FunctionLogStatic::Traits( "using Layouts::Drm", Layouts::Drm::GetDescription() );
+            #endif
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using Debug", Debug::GetDescription() );
             #endif
@@ -267,10 +270,13 @@ namespace ML::XE_HPG::OpenCL
                 FunctionLogStatic::Traits( "using Markers::StreamUserExtended", Markers::StreamUserExtended::GetDescription() );
             #endif
             #if ML_LINUX
+                FunctionLogStatic::Traits( "using KernelInterface", KernelInterface::GetDescription() );
+            #endif
+            #if ML_LINUX
                 FunctionLogStatic::Traits( "using TbsInterface", TbsInterface::GetDescription() );
             #endif
             #if ML_LINUX
-                FunctionLogStatic::Traits( "using KernelInterface", KernelInterface::GetDescription() );
+                FunctionLogStatic::Traits( "using TbsStream", TbsStream::GetDescription() );
             #endif
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using IoControl", IoControl::GetDescription() );
@@ -384,15 +390,15 @@ namespace ML::XE_HPG::OneApi
             using Configuration             = ConfigurationLayoutsTrait<Traits>;            //  ml_configuration_layouts.h
             using OaBuffer                  = OaBufferLayoutsTrait<Traits>;                 //  ml_oa_buffer_layouts.h
             using HwCounters                = HwCountersLayoutsTrait<Traits>;               //  ml_hw_counters_layouts.h
-        #if ML_LINUX
-            using IoControl                 = IoControlLayoutsTrait;                        //  linux/ml_io_control_layouts.h
-        #endif
             using GpuCommands               = GpuCommandsLayoutsTrait<Traits>;              //  ml_gpu_commands_include.h
         #if ML_LINUX
             using Override                  = OverrideLayoutsTrait<Traits>;                 //  linux/ml_override_layouts.h
         #endif
             using PipelineTimestamps        = PipelineTimestampsLayoutsTrait<Traits>;       //  ml_pipeline_timestamps_layouts.h
             using GpuRegisters              = GpuRegistersLayoutsTrait<Traits>;             //  ml_gpu_registers_layouts.h
+        #if ML_LINUX
+            using Drm                       = DrmLayoutsTrait<Traits>;                      //  linux/ml_drm_layouts.h
+        #endif
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -417,10 +423,13 @@ namespace ML::XE_HPG::OneApi
         /// @brief Linux kernel interface traits.
         //////////////////////////////////////////////////////////////////////////
         #if ML_LINUX
+        using KernelInterface               = KernelInterfaceTrait<Traits>;                 //  linux/ml_kernel_interface.h
+        #endif
+        #if ML_LINUX
         using TbsInterface                  = TbsInterfaceTrait<Traits>;                    //  linux/ml_tbs_interface.h
         #endif
         #if ML_LINUX
-        using KernelInterface               = KernelInterfaceTrait<Traits>;                 //  linux/ml_kernel_interface.h
+        using TbsStream                     = TbsStreamTrait<Traits>;                       //  linux/ml_tbs_stream.h
         #endif
         #if ML_LINUX
         using IoControl                     = IoControlTrait<Traits>;                       //  linux/ml_io_control.h
@@ -531,13 +540,13 @@ namespace ML::XE_HPG::OneApi
                 FunctionLogStatic::Traits( "using Layouts::OaBuffer", Layouts::OaBuffer::GetDescription() );
                 FunctionLogStatic::Traits( "using Layouts::HwCounters", Layouts::HwCounters::GetDescription() );
             #if ML_LINUX
-                FunctionLogStatic::Traits( "using Layouts::IoControl", Layouts::IoControl::GetDescription() );
-            #endif
-            #if ML_LINUX
                 FunctionLogStatic::Traits( "using Layouts::Override", Layouts::Override::GetDescription() );
             #endif
                 FunctionLogStatic::Traits( "using Layouts::PipelineTimestamps", Layouts::PipelineTimestamps::GetDescription() );
                 FunctionLogStatic::Traits( "using Layouts::GpuRegisters", Layouts::GpuRegisters::GetDescription() );
+            #if ML_LINUX
+                FunctionLogStatic::Traits( "using Layouts::Drm", Layouts::Drm::GetDescription() );
+            #endif
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using Debug", Debug::GetDescription() );
             #endif
@@ -546,10 +555,13 @@ namespace ML::XE_HPG::OneApi
                 FunctionLogStatic::Traits( "using Markers::StreamUserExtended", Markers::StreamUserExtended::GetDescription() );
             #endif
             #if ML_LINUX
+                FunctionLogStatic::Traits( "using KernelInterface", KernelInterface::GetDescription() );
+            #endif
+            #if ML_LINUX
                 FunctionLogStatic::Traits( "using TbsInterface", TbsInterface::GetDescription() );
             #endif
             #if ML_LINUX
-                FunctionLogStatic::Traits( "using KernelInterface", KernelInterface::GetDescription() );
+                FunctionLogStatic::Traits( "using TbsStream", TbsStream::GetDescription() );
             #endif
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using IoControl", IoControl::GetDescription() );

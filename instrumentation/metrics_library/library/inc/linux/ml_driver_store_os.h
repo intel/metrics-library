@@ -25,7 +25,7 @@ namespace ML
         /// @brief  Returns an address of redirected ddi using function name.
         /// @return Null pointer.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static void* GetRedirectedDdi( const char* functionName )
+        ML_INLINE static void* GetRedirectedDdi( [[maybe_unused]] const char* functionName )
         {
             return nullptr;
         }

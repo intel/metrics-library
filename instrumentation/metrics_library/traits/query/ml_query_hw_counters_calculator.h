@@ -294,15 +294,15 @@ namespace ML::BASE
         /// @brief  Returns if gpu report is ready to return api report to the user.
         /// @return success if api report can be exposed to the user.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode ValidateReportGpu()
+        ML_INLINE StatusCode ValidateReportGpu() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            const bool validTags = m_Query.m_EndTag == m_ReportGpu.m_EndTag;
+            const bool validTags = m_QuerySlot.m_EndTag == m_ReportGpu.m_EndTag;
 
             log.Debug( "Valid tags   ", validTags );
             log.Debug( "    obtained ", m_ReportGpu.m_EndTag );
-            log.Debug( "    expected ", m_Query.m_EndTag );
+            log.Debug( "    expected ", m_QuerySlot.m_EndTag );
 
             return log.m_Result = validTags
                 ? StatusCode::Success
@@ -313,7 +313,7 @@ namespace ML::BASE
         /// @brief  Validates gpu report contexts.
         /// @return true if gpu report contexts is valid.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode ValidateReportGpuContexts()
+        ML_INLINE StatusCode ValidateReportGpuContexts() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -344,7 +344,7 @@ namespace ML::BASE
         /// @brief  Validates gpu report workload.
         /// @return true if gpu report workload is valid.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode ValidateReportGpuWorkload()
+        ML_INLINE StatusCode ValidateReportGpuWorkload() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -523,7 +523,7 @@ namespace ML::BASE
 
                     m_ReportApi.m_SplitOccured         |= source.m_SplitOccured;
                     m_ReportApi.m_CoreFrequencyChanged |= source.m_CoreFrequencyChanged;
-                    m_ReportApi.m_CoreFrequency        = source.m_CoreFrequency;
+                    m_ReportApi.m_CoreFrequency         = source.m_CoreFrequency;
                 }
             }
             while( ML_SUCCESS( log.m_Result ) && ( source.m_ReportId < source.m_ReportsCount ) );
@@ -579,7 +579,7 @@ namespace ML::BASE
             const uint32_t frequencyEnd   = GetGpuClock( m_ReportGpu.m_CoreFrequencyEnd );
 
             frequencyChanged |= ( frequencyBegin != frequencyEnd );
-            frequency        = static_cast<uint64_t>( frequencyEnd ) * Constants::Time::m_Megahertz;
+            frequency         = static_cast<uint64_t>( frequencyEnd ) * Constants::Time::m_Megahertz;
 
             return log.m_Result;
         }
@@ -753,7 +753,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE void AggregateCounters(
             const TT::Layouts::HwCounters::Query::ReportApi& source,
-            TT::Layouts::HwCounters::Query::ReportApi&       reportApi )
+            TT::Layouts::HwCounters::Query::ReportApi&       reportApi ) const
         {
             reportApi.m_GpuTicks            += source.m_GpuTicks;
             reportApi.m_TotalTime           += source.m_TotalTime;
@@ -761,7 +761,7 @@ namespace ML::BASE
             reportApi.m_PerformanceCounter2 += source.m_PerformanceCounter2;
             reportApi.m_OverrunOccured      |= source.m_OverrunOccured;
 
-            Derived().AggregateOaCounters( source, reportApi );
+            AggregateOaCounters( source, reportApi );
             AggregateNoaCounters( source, reportApi );
             AggregateUserCounters( source, reportApi );
 
@@ -1255,7 +1255,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Prints platform specific report gpu information.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode PrintReportGpu()
+        ML_INLINE StatusCode PrintReportGpu() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -1335,7 +1335,7 @@ namespace ML::XE_LP
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE void AggregateCounters(
             const TT::Layouts::HwCounters::Query::ReportApi& source,
-            TT::Layouts::HwCounters::Query::ReportApi&       reportApi )
+            TT::Layouts::HwCounters::Query::ReportApi&       reportApi ) const
         {
             reportApi.m_GpuTicks       += source.m_GpuTicks;
             reportApi.m_TotalTime      += source.m_TotalTime;
@@ -1461,7 +1461,7 @@ namespace ML::XE_HP
         /// @brief  Validates gpu report contexts.
         /// @return true if gpu report contexts is valid.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode ValidateReportGpuContexts()
+        ML_INLINE StatusCode ValidateReportGpuContexts() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -1591,20 +1591,21 @@ namespace ML::XE_HP
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            const bool validTags            = m_Query.m_EndTag == m_ReportGpu.m_EndTag;
-            const bool validCommandStreamer = m_ReportGpu.m_CommandStreamerIdentificator > 0;
+            const auto& derived              = Derived();
+            const bool  validTags            = m_QuerySlot.m_EndTag == m_ReportGpu.m_EndTag;
+            const bool  validCommandStreamer = m_ReportGpu.m_CommandStreamerIdentificator > 0;
 
             // Validate mirpc for RCS only.
             const bool validMirpc =
                 !T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers ||
                 ( validCommandStreamer && m_ReportGpu.m_CommandStreamerIdentificator != T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender ) ||
-                Derived().IsMirpcCompleted();
+                derived.IsMirpcCompleted();
 
-            const bool validQueryMode = Derived().IsQueryModeValid();
+            const bool validQueryMode = derived.IsQueryModeValid();
 
             log.Debug( "Valid tags       ", validTags );
             log.Debug( "    obtained     ", m_ReportGpu.m_EndTag );
-            log.Debug( "    expected     ", m_Query.m_EndTag );
+            log.Debug( "    expected     ", m_QuerySlot.m_EndTag );
             log.Debug( "Command streamer ", m_ReportGpu.m_CommandStreamerIdentificator );
             log.Debug( "Valid mirpc      ", validMirpc );
             log.Debug( "Valid query mode ", validQueryMode );
@@ -1627,7 +1628,7 @@ namespace ML::XE_HP
         /// @brief  Checks mirpc completeness meaning report id is not zero.
         /// @return true if mirpc is completed.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool IsMirpcCompleted()
+        ML_INLINE bool IsMirpcCompleted() const
         {
             return m_ReportGpu.m_Begin.m_Oa.m_Header.m_ReportId.m_Value != 0 && m_ReportGpu.m_End.m_Oa.m_Header.m_ReportId.m_Value != 0;
         }
@@ -1636,7 +1637,7 @@ namespace ML::XE_HP
         /// @brief  Checks if chosen query mode matches with command streamer.
         /// @return true if query mode is valid.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool IsQueryModeValid()
+        ML_INLINE bool IsQueryModeValid() const
         {
             return true;
         }
@@ -1644,7 +1645,7 @@ namespace ML::XE_HP
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Prints platform specific report gpu information.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode PrintReportGpu()
+        ML_INLINE StatusCode PrintReportGpu() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 

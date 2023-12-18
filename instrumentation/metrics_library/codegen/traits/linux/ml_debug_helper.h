@@ -882,6 +882,10 @@ namespace ML::BASE
                     output << "ReportNotReady";
                     break;
 
+                case StatusCode::ReportQueryModeMismatch:
+                    output << "ReportQueryModeMismatch";
+                    break;
+
                 case StatusCode::ReportWithEmptyConfiguration:
                     output << "ReportWithEmptyConfiguration";
                     break;

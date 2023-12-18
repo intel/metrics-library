@@ -46,6 +46,7 @@ namespace ML::BASE
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
         GpuMemory_1_0                                        m_GpuMemory;                 // Gpu memory associated with query slot.
+        uint64_t                                             m_EndTag;                    // End tag / completion status.
         uint32_t                                             m_ApiReportIndex;            // Current report id exposed by api.
         uint32_t                                             m_ApiReportsCount;           // Reports count exposed by api.
         uint8_t*                                             m_WorkloadBegin;             // Store a buffer pointer at the begin of query.
@@ -62,6 +63,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         QueryHwCountersSlotTrait( TT::Context& context )
             : m_GpuMemory{}
+            , m_EndTag( 0 )
             , m_ApiReportIndex( 1 )
             , m_ApiReportsCount( 1 )
             , m_WorkloadBegin( nullptr )
@@ -80,6 +82,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         QueryHwCountersSlotTrait( QueryHwCountersSlotTrait&& slot )
             : m_GpuMemory( slot.m_GpuMemory )
+            , m_EndTag( slot.m_EndTag )
             , m_ApiReportIndex( slot.m_ApiReportIndex )
             , m_ApiReportsCount( slot.m_ApiReportsCount )
             , m_WorkloadBegin( slot.m_WorkloadBegin )
@@ -148,7 +151,7 @@ namespace ML::BASE
         /// @brief  Resets oa report in gpu memory.
         /// @param  reportGpu   report gpu.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void ResetOaReport( [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportGpu& reportGpu )
+        ML_INLINE void ResetOaReport( [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportGpu& reportGpu ) const
         {
             // Do nothing on purpose.
         }
@@ -167,7 +170,7 @@ namespace ML::BASE
         /// @param  newState    new query slot state.
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode CheckStateConsistency( const State newState )
+        ML_INLINE StatusCode CheckStateConsistency( const State newState ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -209,16 +212,16 @@ namespace ML::BASE
             switch( log.m_Result )
             {
                 case StatusCode::Success:
-                    log.Debug( "Correct sequence of query calls (current state / new state)", m_State, newState );
+                    log.Debug( "Correct sequence of query calls:", m_State, "->", newState );
                     break;
 
                 case StatusCode::IncorrectParameter:
-                    log.Warning( "Incorrect sequence of query calls but acceptable (current state / new state)", m_State, newState );
+                    log.Warning( "Incorrect sequence of query calls but acceptable:", m_State, "->", newState );
                     log.m_Result = StatusCode::Success;
                     break;
 
                 default:
-                    log.Error( "Incorrect sequence of query calls (current state / new state)", m_State, newState );
+                    log.Error( "Incorrect sequence of query calls:", m_State, "->", newState );
                     break;
             }
 

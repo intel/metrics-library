@@ -21,19 +21,16 @@ namespace ML::BASE
     ///        sampling on linux.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
-    struct TbsInterfaceTrait
+    struct TbsInterfaceTrait : TraitObject<T, TT::TbsInterface>
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( TbsInterfaceTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( TbsInterfaceTrait );
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Tbs oa report layout used by linux kernel.
+        /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
-        struct TbsOaReport
-        {
-            drm_i915_perf_record_header       m_Header;
-            TT::Layouts::HwCounters::ReportOa m_Report;
-        };
+        using Base = TraitObject<T, TT::TbsInterface>;
+        using Base::Derived;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Base type for mapped oa buffer object.
@@ -90,19 +87,6 @@ namespace ML::BASE
                 m_Stream = stream;
 
                 return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Checks oa buffer mapping is supported.
-            /// @return true if oa buffer mapping is supported.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE bool IsSupported() const
-            {
-                const uint32_t     revision  = static_cast<uint32_t>( m_Kernel.m_Revision );
-                constexpr uint32_t expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::OaBufferMapping );
-                const bool         supported = revision >= expected;
-
-                return supported;
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -164,207 +148,12 @@ namespace ML::BASE
         };
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Tbs stream data.
-        //////////////////////////////////////////////////////////////////////////
-        struct TbsStream
-        {
-            TT::KernelInterface& m_Kernel;
-            int32_t              m_Id;
-            int32_t              m_MetricSet;
-            bool                 m_MetricSetInternal;
-            OaBufferMapped       m_OaBufferMapped;
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Tbs stream constructor.
-            /// @param kernel kernel interface.
-            //////////////////////////////////////////////////////////////////////////
-            TbsStream( TT::KernelInterface& kernel )
-                : m_Kernel( kernel )
-                , m_Id( T::ConstantsOs::Tbs::m_Invalid )
-                , m_MetricSet( T::ConstantsOs::Tbs::m_Invalid )
-                , m_MetricSetInternal( false )
-                , m_OaBufferMapped( kernel )
-            {
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Initializes tbs stream.
-            /// @return initialization status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Initialize()
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-                if( m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled )
-                {
-                    // Do not initialize tbs if metrics library was opened to support
-                    // umd driver that also uses tbs.
-                    // For example L0 may open metric tracer (tbs) and gpu commands
-                    // may be needed for stream markers. For such case metrics library,
-                    // cannot open tbs internally. It would block metric tracer to use tbs.
-                    // Application should reinitialize metrics library to use query again.
-                    log.Debug( "Another application is using tbs, tbs will not be used." );
-                    return log.m_Result;
-                }
-
-                // Try to obtain metric set activated by metrics discovery.
-                m_MetricSet = m_Kernel.m_IoControl.GetKernelMetricSet();
-
-                // Otherwise, create an internal metric set to enable tbs.
-                if( m_MetricSet == T::ConstantsOs::Tbs::m_Invalid )
-                {
-                    m_MetricSet         = m_Kernel.m_IoControl.CreateMetricSet();
-                    m_MetricSetInternal = m_MetricSet != T::ConstantsOs::Tbs::m_Invalid;
-                }
-
-                return log.m_Result = Enable();
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Returns tbs state.
-            /// @return true if tbs is enabled.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE bool IsEnabled() const
-            {
-                return m_Id != T::ConstantsOs::Tbs::m_Invalid;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Allows to use a new metric set by gpu.
-            /// @param  set metric set id.
-            /// @return     operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode SetMetricSet( int32_t set )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_FUNCTION_CHECK( IsEnabled() );
-
-                log.Debug( "Used set ", m_MetricSet );
-                log.Debug( "New set  ", set );
-
-                log.m_Result = m_Kernel.m_IoControl.SetTbsMetricSet( m_Id, set );
-                m_MetricSet  = ML_SUCCESS( log.m_Result ) ? set : m_MetricSet;
-
-                log.Debug( "Current set ", m_MetricSet );
-
-                return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Releases metric set usage.
-            /// @param  set metric set id to release.
-            /// @return     operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode ReleaseMetricSet( const int32_t set )
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_ASSERT( m_MetricSet == set );
-
-                if( m_MetricSetInternal )
-                {
-                    m_Kernel.m_IoControl.RemoveMetricSet( m_MetricSet );
-                    m_MetricSetInternal = false;
-                }
-
-                m_MetricSet = T::ConstantsOs::Tbs::m_Invalid;
-
-                return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Disables tbs stream.
-            /// @return operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Disable()
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-                if( !m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled )
-                {
-                    ML_FUNCTION_CHECK( IsEnabled() );
-
-                    // Release used metric set.
-                    ReleaseMetricSet( m_MetricSet );
-
-                    // Close stream.
-                    m_Kernel.m_IoControl.CloseTbs( m_Id );
-                    m_Id = T::ConstantsOs::Tbs::m_Invalid;
-                }
-
-                return log.m_Result;
-            }
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief  Restarts tbs stream.
-            /// @return operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Restart()
-            {
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-                // Disable stream.
-                Disable();
-
-                // Try to obtain metric set activated by metrics discovery.
-                m_MetricSet = m_Kernel.m_IoControl.GetKernelMetricSet();
-
-                // Enable stream.
-                return log.m_Result = Enable();
-            }
-
-        private:
-            /////////////////////////////////////////////////////////////////////////
-            /// @brief  Enables tbs stream for a given metric set.
-            /// @return operation status.
-            //////////////////////////////////////////////////////////////////////////
-            ML_INLINE StatusCode Enable()
-            {
-                std::vector<uint64_t> properties;
-
-                ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_FUNCTION_CHECK( IsEnabled() == false );
-                ML_FUNCTION_CHECK( m_MetricSet != T::ConstantsOs::Tbs::m_Invalid );
-                ML_FUNCTION_CHECK( m_Kernel.m_Tbs.GetStreamProperties( properties, m_MetricSet ) );
-
-                // Enable stream.
-                do
-                {
-                    log.m_Result = m_Kernel.m_IoControl.OpenTbs( properties, m_Id );
-                    log.m_Result = ML_STATUS( ML_SUCCESS( log.m_Result ) && IsEnabled() );
-                }
-                while( ML_FAIL( log.m_Result ) && ML_SUCCESS( m_Kernel.m_Tbs.UpdateStreamProperties( properties ) ) );
-
-                // Initialize oa buffer mapping if supported.
-                if( ML_SUCCESS( log.m_Result ) )
-                {
-                    m_OaBufferMapped.Initialize( m_Id );
-                }
-
-                // Disable an internal metric set used to enable tbs.
-                // It will allow metrics discovery to enable another metrics set.
-                if( m_MetricSetInternal )
-                {
-                    ReleaseMetricSet( m_MetricSet );
-                }
-
-                return log.m_Result;
-            }
-        };
-
-    public:
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Tbs/oa reports containers.
-        //////////////////////////////////////////////////////////////////////////
-        using OaReports       = std::vector<TT::Layouts::HwCounters::ReportOa>;
-        using TbsReportsCache = std::array<TbsOaReport, T::ConstantsOs::Tbs::m_CacheCapacity>;
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
         TT::KernelInterface& m_Kernel;
         TT::IoControl&       m_IoControl;
-        TbsReportsCache      m_ReportsCache;
-        TbsStream            m_Stream;
+        OaBufferMapped       m_OaBufferMapped;
+        TT::TbsStream        m_Stream;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief TbsInterfaceTrait constructor.
@@ -373,7 +162,7 @@ namespace ML::BASE
         TbsInterfaceTrait( TT::KernelInterface& kernel )
             : m_Kernel( kernel )
             , m_IoControl( kernel.m_IoControl )
-            , m_ReportsCache{}
+            , m_OaBufferMapped( kernel )
             , m_Stream( kernel )
         {
         }
@@ -418,42 +207,7 @@ namespace ML::BASE
                 ML_ASSERT_ALWAYS_ADAPTER( m_Kernel.m_Context.m_AdapterId );
             }
 
-            return m_Stream.m_OaBufferMapped;
-        }
-
-        /////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns oa report type.
-        /// @return oa report type status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static drm_i915_oa_format GetOaReportType()
-        {
-            return I915_OA_FORMAT_A32u40_A4u32_B8_C8;
-        }
-
-        /////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns tbs properties.
-        /// @param  metricSet   metric set associated with tbs stream.
-        /// @return properties  tbs properties.
-        /// @return             operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetStreamProperties(
-            std::vector<uint64_t>& properties,
-            const int32_t          metricSet ) const
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-            auto addProperty = [&]( const uint64_t key, const uint64_t value )
-            {
-                properties.push_back( key );
-                properties.push_back( value );
-            };
-
-            addProperty( DRM_I915_PERF_PROP_SAMPLE_OA, true );
-            addProperty( DRM_I915_PERF_PROP_OA_METRICS_SET, static_cast<uint64_t>( metricSet ) );
-            addProperty( DRM_I915_PERF_PROP_OA_FORMAT, T::TbsInterface::GetOaReportType() );
-            addProperty( DRM_I915_PERF_PROP_OA_EXPONENT, GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
-
-            return log.m_Result;
+            return m_OaBufferMapped;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -466,121 +220,7 @@ namespace ML::BASE
             return StatusCode::NotSupported;
         }
 
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns oa reports.
-        /// @return oaReports output oa reports.
-        /// @return           operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaReports( OaReports& oaReports )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-            const int32_t readBytes = ReadReports( oaReports.capacity() );
-
-            if( readBytes < 0 )
-            {
-                if( errno == EAGAIN )
-                {
-                    log.Debug( "i915 performance stream data not available yet" );
-                    return log.m_Result = StatusCode::Success;
-                }
-
-                log.Error( "Reading i915 stream failed", errno, strerror( errno ) );
-                return log.m_Result = StatusCode::TbsUnableToRead;
-            }
-
-            return log.m_Result = ProcessReports( readBytes, oaReports );
-        }
-
-    private:
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Reads tbs reports from the stream file descriptor.
-        /// @param  count tbs reports count to read.
-        /// @return       read data in bytes.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint32_t ReadReports( const uint32_t count )
-        {
-            ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
-            ML_FUNCTION_CHECK_ERROR( m_IoControl.IsTbsEnabled(), 0 );
-
-            constexpr size_t reportSize = sizeof( TbsOaReport );
-            const size_t     dataSize   = reportSize * count;
-
-            ML_ASSERT( count <= m_ReportsCache.size() );
-            ML_ASSERT( reportSize );
-            ML_ASSERT( dataSize );
-
-            log.Debug( "Tbs report size  ", reportSize );
-            log.Debug( "Tbs size to read ", dataSize );
-
-            return log.m_Result = m_IoControl.ReadTbs( m_ReportsCache, dataSize );
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Transforms linux kernel tbs data to the original oa buffer format.
-        /// @param  tbsDataSize tbs reports data size in bytes.
-        /// @return oaReports   oa reports.
-        /// @return             operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode ProcessReports(
-            const uint32_t tbsDataSize,
-            OaReports&     oaReports )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-            ML_ASSERT( tbsDataSize > 0 );
-
-            uint32_t tbsDataOffset = 0;
-
-            while( tbsDataOffset < tbsDataSize )
-            {
-                const uint8_t* tbsData     = reinterpret_cast<const uint8_t*>( m_ReportsCache.data() );
-                const auto     tbsHeader   = reinterpret_cast<const drm_i915_perf_record_header*>( tbsData + tbsDataOffset );
-                const auto     tbsOaReport = reinterpret_cast<const TbsOaReport*>( tbsData + tbsDataOffset );
-
-                // Validate header.
-                ML_FUNCTION_CHECK( tbsHeader->size != 0 );
-
-                // Process each tbs report type.
-                switch( tbsHeader->type )
-                {
-                    case DRM_I915_PERF_RECORD_SAMPLE:
-                        ML_FUNCTION_CHECK( tbsHeader->size == sizeof( TbsOaReport ) );
-                        ML_ASSERT( oaReports.size() < oaReports.capacity() );
-                        oaReports.push_back( tbsOaReport->m_Report );
-                        break;
-
-                    case DRM_I915_PERF_RECORD_OA_REPORT_LOST:
-                        log.Error( "Oa report lost" );
-                        break;
-
-                    case DRM_I915_PERF_RECORD_OA_BUFFER_LOST:
-                        log.Error( "Oa buffer lost" );
-                        break;
-
-                    default:
-                        log.Warning( "Unknown header type", tbsHeader->type );
-                        break;
-                }
-
-                // Advance data offset.
-                tbsDataOffset += tbsHeader->size;
-                ML_ASSERT( tbsDataOffset <= tbsDataSize );
-            }
-
-            log.Debug( "Oa reports count", oaReports.size() );
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns minimum gpu timestamp period is nanoseconds based on
-        ///         gpu timestamp frequency.
-        /// @return gpu timestamp period in ns.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint64_t GetGpuTimestampPeriod() const
-        {
-            return Constants::Time::m_SecondInNanoseconds / m_Kernel.GetGpuTimestampFrequency( T::Layouts::Configuration::TimestampType::Oa );
-        }
-
+    protected:
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Changes the given timer period in nanoseconds to the oa timer
         ///         period exponent. Periods are rounded down to the nearest exponent.
@@ -607,6 +247,17 @@ namespace ML::BASE
             ML_ASSERT( period );
             return log.m_Result = period;
         }
+
+    private:
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns minimum gpu timestamp period is nanoseconds based on
+        ///         gpu timestamp frequency.
+        /// @return gpu timestamp period in ns.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint64_t GetGpuTimestampPeriod() const
+        {
+            return Constants::Time::m_SecondInNanoseconds / m_Kernel.GetGpuTimestampFrequency( T::Layouts::Configuration::TimestampType::Oa );
+        }
     };
 } // namespace ML::BASE
 
@@ -616,6 +267,49 @@ namespace ML::GEN9
     struct TbsInterfaceTrait : BASE::TbsInterfaceTrait<T>
     {
         ML_DECLARE_TRAIT( TbsInterfaceTrait, BASE );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::Derived;
+        using Base::GetTimerPeriodExponent;
+        using Base::m_Kernel;
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns tbs properties.
+        /// @param  metricSet   metric set associated with tbs stream.
+        /// @return properties  tbs properties.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetStreamProperties(
+            std::vector<uint64_t>& properties,
+            const int32_t          metricSet )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            auto addProperty = [&]( const uint64_t key, const uint64_t value )
+            {
+                properties.push_back( key );
+                properties.push_back( value );
+            };
+
+            addProperty( DRM_I915_PERF_PROP_SAMPLE_OA, true );
+            addProperty( DRM_I915_PERF_PROP_OA_METRICS_SET, static_cast<uint64_t>( metricSet ) );
+            addProperty( DRM_I915_PERF_PROP_OA_FORMAT, Derived().GetOaReportType() );
+            addProperty( DRM_I915_PERF_PROP_OA_EXPONENT, GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
+
+            return log.m_Result;
+        }
+
+    protected:
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa report type.
+        /// @return oa report type status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE drm_i915_oa_format GetOaReportType() const
+        {
+            return I915_OA_FORMAT_A32u40_A4u32_B8_C8;
+        }
     };
 } // namespace ML::GEN9
 
@@ -645,7 +339,7 @@ namespace ML::XE_HP
         ML_DECLARE_TRAIT( TbsInterfaceTrait, XE_LP );
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Base types.
+        /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base::m_Kernel;
 
@@ -653,7 +347,7 @@ namespace ML::XE_HP
         /// @brief  Returns oa report type.
         /// @return oa report type status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static drm_i915_oa_format GetOaReportType()
+        ML_INLINE drm_i915_oa_format GetOaReportType() const
         {
             return static_cast<drm_i915_oa_format>( I915_OA_FORMAT_A24u40_A14u32_B8_C8 );
         }
@@ -666,7 +360,7 @@ namespace ML::XE_HP
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetStreamProperties(
             std::vector<uint64_t>& properties,
-            const int32_t          metricSet ) const
+            const int32_t          metricSet )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
@@ -685,6 +379,7 @@ namespace ML::XE_HP
             // Special path for sub devices.
             ML_FUNCTION_CHECK( subDevice.GetTbsEngine( engineClass, engineInstance ) );
 
+            addProperty( PRELIM_DRM_I915_PERF_PROP_OA_BUFFER_SIZE, GetMaxOaBufferSize() );
             addProperty( PRELIM_DRM_I915_PERF_PROP_OA_ENGINE_CLASS, engineClass );
             addProperty( PRELIM_DRM_I915_PERF_PROP_OA_ENGINE_INSTANCE, engineInstance );
 
@@ -717,6 +412,16 @@ namespace ML::XE_HP
             }
 
             return StatusCode::Success;
+        }
+
+    protected:
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Gets maximum supported oa buffer size on a given platform.
+        /// @return maximum supported oa buffer size.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t GetMaxOaBufferSize() const
+        {
+            return ( 128 * Constants::Data::m_Megabyte );
         }
     };
 } // namespace ML::XE_HP

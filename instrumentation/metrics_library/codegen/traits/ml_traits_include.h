@@ -76,15 +76,15 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 #include "ml_configuration_layouts.h"
 #include "ml_oa_buffer_layouts.h"
 #include "ml_hw_counters_layouts.h"
-#if ML_LINUX
-    #include "linux/ml_io_control_layouts.h"
-#endif
 #include "ml_gpu_commands_include.h"
 #if ML_LINUX
     #include "linux/ml_override_layouts.h"
 #endif
 #include "ml_pipeline_timestamps_layouts.h"
 #include "ml_gpu_registers_layouts.h"
+#if ML_LINUX
+    #include "linux/ml_drm_layouts.h"
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Debug helper:
@@ -105,10 +105,13 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 /// @brief Linux kernel interface traits:
 //////////////////////////////////////////////////////////////////////////
 #if ML_LINUX
+    #include "linux/ml_kernel_interface.h"
+#endif
+#if ML_LINUX
     #include "linux/ml_tbs_interface.h"
 #endif
 #if ML_LINUX
-    #include "linux/ml_kernel_interface.h"
+    #include "linux/ml_tbs_stream.h"
 #endif
 #if ML_LINUX
     #include "linux/ml_io_control.h"

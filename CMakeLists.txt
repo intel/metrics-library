@@ -579,8 +579,6 @@ if (${PLATFORM} STREQUAL Windows) # windows
         USERMODE_DRIVER
         )
     set (COMMON_COMPILE_OPTIONS
-        /W4         # display warnings level 4
-        /WX         # treat warnings as errors
         /Zp8        # struct member alignment - 8 bytes
         /bigobj     # increase number of sections in .obj
         /GR-        # run-time type information disabled
@@ -593,12 +591,16 @@ if (${PLATFORM} STREQUAL Windows) # windows
         ${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Release>:
             ${COMMON_COMPILE_OPTIONS}
+            /W4     # display warnings level 4
+            /WX     # treat warnings as errors
             /Ot     # favor fast code
             /O2     # favor speed
             /GL     # whole program optimization
         >
         $<$<CONFIG:ReleaseInternal>:
             ${COMMON_COMPILE_OPTIONS}
+            /W4     # display warnings level 4
+            /WX     # treat warnings as errors
             /Ot     # favor fast code
             /O2     # favor speed
             /GL     # whole program optimization
@@ -610,16 +612,19 @@ if (${PLATFORM} STREQUAL Windows) # windows
 elseif (${PLATFORM} STREQUAL linux) # linux
     target_compile_options (
         ${PROJECT_NAME} PRIVATE
-        -Wall                    # enables all compiler's warning messages
-        -Werror                  # treat warning as errors
-        #-Wfatal-errors          # abort compilation on the first error occurred
-        -Wno-unknown-pragmas     # allow unknown pragmas (such as #pragma region)
-        -fpack-struct=8          # struct member alignment - 8 bytes
-        -fvisibility=hidden      # hide non-exported symbols
-        -Wno-sequence-point      # disable undefined behavior warning
-        -Wno-comment             # allow multi-line comments
-        -Ofast                   # optimize code in the favor of speed
-        -fstack-protector-strong # enables stack protection for vulnerable functions that contain: An array of any size and type
+        -Wall                         # enables all compiler's warning messages
+        #-Wfatal-errors               # abort compilation on the first error occurred
+        -Wextra                       # enables a comprehensive set of warning options, providing a high level of warning coverage for potential issues
+        -Wno-unknown-pragmas          # allow unknown pragmas (such as #pragma region)
+        -fpack-struct=8               # struct member alignment - 8 bytes
+        -Wformat                      # enables format string checking warnings during compilation
+        -Wformat-security             # warns about potentially insecure format string usages
+        -Werror=format-security       # treat format string security warnings as errors
+        -Wno-sequence-point           # disable undefined behavior warning
+        -Wno-comment                  # allow multi-line comments
+        -Ofast                        # optimize code in the favor of speed 
+        -fstack-protector-strong      # enables stack protection for vulnerable functions that contain: An array of any size and type
+        -Wno-unused-but-set-parameter # disable parameter set but not used warning
         )
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_definitions (-Wno-extern-c-compat) # disable "empty struct has size 0 in C, size 1 in C++" warning
@@ -629,10 +634,22 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     endif ()
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "debug")
         add_definitions (-D_DEBUG)
-    elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release-internal")
+    elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release-internal" OR
+        "${BUILD_TYPE}" STREQUAL "releaseinternal")
         add_definitions (-D_RELEASE_INTERNAL)
-    elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "releaseinternal")
-        add_definitions (-D_RELEASE_INTERNAL)
+    elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release")
+        add_definitions (-D_RELEASE)
+    endif ()
+    if ("${BUILD_TYPE}" STREQUAL "release" OR
+        "${BUILD_TYPE}" STREQUAL "release-internal" OR
+        "${BUILD_TYPE}" STREQUAL "releaseinternal")
+        add_definitions (-Werror)                 # treat warning as errors
+        add_definitions (-flto)                   # enables Link-Time Optimization (LTO)
+        add_definitions (-fvisibility=hidden)     # hide non-exported symbols
+        add_definitions (-Werror=format-security) # treat format string security warnings as errors
+        add_definitions (-fPIC)                   # generates position-independent code during the compilation phase
+        add_definitions (-fPIE)                   # generates position-independent executables during the compilation phase
+        add_definitions (-pie)                    # produces position-independent executables during the linking phase
     endif ()
 else()
     message("-- Using platform is ${PLATFORM}")

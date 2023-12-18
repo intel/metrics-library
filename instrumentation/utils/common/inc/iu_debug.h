@@ -261,8 +261,8 @@ extern "C"
     #define IU_LOG_TAG "[IU]"
 #endif
 
-#define IU_ASSERT( expr )          IU_ASSERT_TAGGED( IU_ADAPTER_ID_UNKNOWN, expr, IU_DBG_LAYER_IU, IU_LOG_TAG )
-#define IU_DBG_PRINT( level, ... ) IU_DBG_PRINT_TAGGED( IU_ADAPTER_ID_UNKNOWN, _##level, IU_DBG_LAYER_IU, IU_LOG_TAG, __FUNCTION__, __VA_ARGS__ )
+#define IU_ASSERT( expr )                    IU_ASSERT_TAGGED( IU_ADAPTER_ID_UNKNOWN, expr, IU_DBG_LAYER_IU, IU_LOG_TAG )
+#define IU_DBG_PRINT( level, ... )           IU_DBG_PRINT_TAGGED( IU_ADAPTER_ID_UNKNOWN, _##level, IU_DBG_LAYER_IU, IU_LOG_TAG, __FUNCTION__, __VA_ARGS__ )
 #define IU_DBG_FUNCTION_ENTER( level )       IU_DBG_FUNCTION_ENTER_TAGGED( IU_ADAPTER_ID_UNKNOWN, _##level, IU_DBG_LAYER_IU, IU_LOG_TAG );
 #define IU_DBG_FUNCTION_EXIT( level )        IU_DBG_FUNCTION_EXIT_TAGGED( IU_ADAPTER_ID_UNKNOWN, _##level, IU_DBG_LAYER_IU, IU_LOG_TAG );
 #define IU_DBG_FUNCTION_INPUT( level, x )    IU_DBG_PRINT( _##level, "IN: %s = %#010x = %u", #x, x, x );

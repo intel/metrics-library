@@ -1,26 +1,19 @@
 https://github.com/intel-gpu/drm-uapi-helper/tree/master/drm-uapi
 
 Base commit:
-https://github.com/intel-gpu/drm-uapi-helper/commit/858244c3b408e08872b32bf6bd1fd22077f5d6c1
+https://github.com/intel-gpu/drm-uapi-helper/commit/6cc4a98623a075db68c57adc3c5e48010f7ddc76
 
 Author: Ashutosh Dixit <ashutosh.dixit@intel.com>
-Date:   20 Mar 2023 21:28:47 +01:00
+Date:   12 Dec 2023 05:16:41 +01:00
 
 Description:
 
-	prelim v2.0-rc17
+	prelim v2.0-rc22
 		* No compatibility breakage in PRELIM uapi
 		* Other changes shown below
 
-	drm.h:
-		* Support for advance degamma mode UAPI
-
 	i915_drm_prelim.h:
-		* Support for reporting LMEM Sparing via UEVENT
-		* New GT errors on PVC
-		* Debugger ABI version getparam
-		* L3 Bank Count query
-		* LMEM memory region info query
+		* PMU: Group busyness counters in VF
 
 	Signed-off-by: Ashutosh Dixit <ashutosh.dixit@intel.com>
 	

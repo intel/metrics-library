@@ -29,12 +29,6 @@ namespace ML::BASE
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base = DdiObject<T, TT::Overrides::PoshQuery, OverrideHandle_1_0, ObjectType::OverridePoshQuery>;
-        using Base::IsValid;
-        using Base::FromHandle;
-        using Base::Allocate;
-        using Base::Delete;
-        using Base::Derived;
-        using Base::m_Context;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Override posh query constructor.
@@ -61,8 +55,8 @@ namespace ML::BASE
         /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static StatusCode Create(
-            TT::Context&        context,
-            OverrideHandle_1_0& handle )
+            [[maybe_unused]] TT::Context&        context,
+            [[maybe_unused]] OverrideHandle_1_0& handle )
         {
             return StatusCode::NotImplemented;
         }
@@ -72,7 +66,7 @@ namespace ML::BASE
         /// @return getData data requested by client.
         /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static StatusCode GetData( GetReportOverride_1_0& getData )
+        ML_INLINE static StatusCode GetData( [[maybe_unused]] GetReportOverride_1_0& getData )
         {
             return StatusCode::NotImplemented;
         }

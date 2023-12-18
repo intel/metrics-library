@@ -360,7 +360,7 @@ namespace ML::BASE
             const TT::Layouts::HwCounters::Query::ReportCollectingMode collectingMode,
             const uint64_t                                             address,
             const uint32_t                                             reportId,
-            const uint32_t                                             queryId,
+            [[maybe_unused]] const uint32_t                            queryId,
             const Flags                                                flags = Flags::None )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );

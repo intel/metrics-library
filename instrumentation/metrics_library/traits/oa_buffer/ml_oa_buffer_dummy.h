@@ -140,7 +140,7 @@ namespace ML::BASE
         template <bool begin>
         ML_INLINE StatusCode GetPreReportOffset(
             [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-            [[maybe_unused]] uint32_t&                                        offset )
+            [[maybe_unused]] uint32_t&                                        offset ) const
         {
             ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
             return StatusCode::Failed;
@@ -156,7 +156,7 @@ namespace ML::BASE
         template <bool begin>
         ML_INLINE StatusCode GetPostReportOffset(
             [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-            [[maybe_unused]] uint32_t&                                        offset )
+            [[maybe_unused]] uint32_t&                                        offset ) const
         {
             ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
             return StatusCode::Failed;
@@ -167,7 +167,7 @@ namespace ML::BASE
         /// @param  reportGpu   gpu query report.
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode DumpReports( [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu )
+        ML_INLINE StatusCode DumpReports( [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu ) const
         {
             return StatusCode::Success;
         }
@@ -179,7 +179,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE void PrintReports(
             [[maybe_unused]] const uint32_t offset,
-            [[maybe_unused]] const uint32_t count )
+            [[maybe_unused]] const uint32_t count ) const
         {
         }
     };

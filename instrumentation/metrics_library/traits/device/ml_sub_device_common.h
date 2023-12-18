@@ -66,7 +66,7 @@ namespace ML::BASE
         /// @brief  Initializes device data.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode Initialize()
+        ML_INLINE StatusCode Initialize() const
         {
             return StatusCode::Success;
         }

@@ -71,10 +71,8 @@ namespace ML
                 SubDevices       = 10
             };
 
-            static constexpr int32_t     m_Invalid      = -1;
-            static constexpr const char* m_Name         = "i915";
-            static constexpr const char* m_Path         = "/sys/dev/char/%d:%d/device/drm";
-            static constexpr const char* m_ParanoidPath = "/proc/sys/dev/i915/perf_stream_paranoid";
+            static constexpr int32_t     m_Invalid  = -1;
+            static constexpr const char* m_Path     = "/sys/dev/char/%d:%d/device/drm";
         };
     };
 } // namespace ML

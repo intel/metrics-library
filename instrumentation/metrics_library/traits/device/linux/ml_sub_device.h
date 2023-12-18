@@ -37,7 +37,7 @@ namespace ML::BASE
         TT::IoControl& m_IoControl;
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Device constructor.
+        /// @brief  Sub device constructor.
         /// @param  context metrics library context.
         //////////////////////////////////////////////////////////////////////////
         SubDeviceTrait( TT::Context& context )
@@ -47,10 +47,10 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Initializes device data.
+        /// @brief  Initializes sub device data.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode Initialize()
+        ML_INLINE StatusCode Initialize() const
         {
             return StatusCode::Success;
         }
@@ -101,7 +101,7 @@ namespace ML::XE_HP
         ML_DECLARE_TRAIT( SubDeviceTrait, XE_LP );
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Base types.
+        /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base::m_Context;
         using Base::m_IoControl;
@@ -116,7 +116,7 @@ namespace ML::XE_HP
         std::vector<i915_engine_class_instance> m_Engines;
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Device constructor.
+        /// @brief  Sub device constructor.
         /// @param  context metrics library context.
         //////////////////////////////////////////////////////////////////////////
         SubDeviceTrait( TT::Context& context )
@@ -126,7 +126,7 @@ namespace ML::XE_HP
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Initializes device instance.
+        /// @brief  Initializes sub device instance.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Initialize()
@@ -234,7 +234,7 @@ namespace ML::XE_HP
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetTbsEngine(
             uint32_t& engineClass,
-            uint32_t& engineInstance )
+            uint32_t& engineInstance ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -266,7 +266,7 @@ namespace ML::XE_HP
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE bool IsEngineAvailable(
             const uint32_t engineClass,
-            const uint32_t engineInstance )
+            const uint32_t engineInstance ) const
         {
             for( auto& engine : m_Engines )
             {
@@ -285,7 +285,7 @@ namespace ML::XE_HP
         /// @brief  Checks if sub devices are supported.
         /// @return true if sub devices are supported.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool IsSubDeviceSupported()
+        ML_INLINE bool IsSubDeviceSupported() const
         {
             const uint32_t     revision  = static_cast<uint32_t>( m_Context.m_Kernel.m_Revision );
             constexpr uint32_t expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::SubDevices );
@@ -299,7 +299,7 @@ namespace ML::XE_HP
         /// @return engines device engines.
         /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetEngines( std::vector<drm_i915_engine_info>& engines )
+        ML_INLINE StatusCode GetEngines( std::vector<drm_i915_engine_info>& engines ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -326,7 +326,7 @@ namespace ML::XE_HP
         /// @return regions    memory regions.
         /// @return            operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetMemoryRegions( std::vector<drm_i915_memory_region_info>& regions )
+        ML_INLINE StatusCode GetMemoryRegions( std::vector<drm_i915_memory_region_info>& regions ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -379,7 +379,7 @@ namespace ML::XE_HP
         ML_INLINE StatusCode GetEngineDistances(
             const std::vector<drm_i915_engine_info>&          engines,
             const std::vector<drm_i915_memory_region_info>&   regions,
-            std::vector<prelim_drm_i915_query_distance_info>& distances )
+            std::vector<prelim_drm_i915_query_distance_info>& distances ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -428,7 +428,7 @@ namespace ML::XE_HP
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Enumerate engine distances.
+        /// @brief  Enumerate sub device engines.
         /// @param  distances  engine distances.
         /// @return subDevices sub device count.
         /// @return            operation status.

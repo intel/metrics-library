@@ -86,7 +86,7 @@ namespace ML
         /// @return adapterId  adapter id.
         /// @return            operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetAdapterId( uint32_t& adapterId )
+        ML_INLINE StatusCode GetAdapterId( uint32_t& adapterId ) const
         {
             ML_FUNCTION_LOG_STATIC( StatusCode::Success );
 
@@ -178,7 +178,7 @@ namespace ML
         /// @brief  Returns hw context ids for current process.
         /// @return allowed hw contexts ids and their count.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE TT::Layouts::Configuration::HwContextIds GetHwContextIds()
+        ML_INLINE TT::Layouts::Configuration::HwContextIds GetHwContextIds() const
         {
             const TT::Layouts::Configuration::HwContextIds contexts = {};
 
@@ -305,9 +305,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE TT::Layouts::HwCounters::Query::Mode GetQueryModeOverride() const
         {
-            ML_FUNCTION_LOG( T::Layouts::HwCounters::Query::Mode::Default, &m_Context );
-
-            return log.m_Result;
+            return m_IoControl.GetQueryModeOverride();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -316,9 +314,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE TT::Layouts::HwCounters::Query::ReportCollectingMode GetReportCollectingModeOverride() const
         {
-            ML_FUNCTION_LOG( T::Layouts::HwCounters::Query::ReportCollectingMode::Default, &m_Context );
-
-            return log.m_Result;
+            return m_IoControl.GetReportCollectingModeOverride();
         }
 
     private:
@@ -353,11 +349,11 @@ namespace ML
         ///         Logs a warning if check fails.
         /// @return always success.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode CheckParanoidMode()
+        ML_INLINE StatusCode CheckParanoidMode() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            auto file      = fopen( T::ConstantsOs::Drm::m_ParanoidPath, "r" );
+            auto file      = fopen( T::Layouts::Drm::Stream::m_ParanoidPath, "r" );
             char flag[256] = "";
 
             const bool validFile = file != nullptr;

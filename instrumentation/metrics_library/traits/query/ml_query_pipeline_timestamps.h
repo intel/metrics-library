@@ -271,7 +271,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetReportApi(
             const TT::Layouts::PipelineTimestamps::Timestamps& reportGpu,
-            TT::Layouts::PipelineTimestamps::ReportApi&        reportApi )
+            TT::Layouts::PipelineTimestamps::ReportApi&        reportApi ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 

@@ -166,7 +166,7 @@ namespace ML::BASE
         /// @param  oaBufferState   oa buffer state.
         /// @return                 oa reports count between query begin/end.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint32_t FindOaWindow( const TT::Layouts::OaBuffer::State& oaBufferState )
+        ML_INLINE uint32_t FindOaWindow( const TT::Layouts::OaBuffer::State& oaBufferState ) const
         {
             ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
             ML_ASSERT( m_OaBuffer.IsMapped() );
@@ -215,7 +215,7 @@ namespace ML::BASE
         template <bool begin>
         ML_INLINE StatusCode GetPreReportOffset(
             const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-            uint32_t&                                        offset )
+            uint32_t&                                        offset ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
@@ -240,7 +240,7 @@ namespace ML::BASE
         template <bool begin>
         ML_INLINE StatusCode GetPostReportOffset(
             const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-            uint32_t&                                        offset )
+            uint32_t&                                        offset ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
@@ -321,7 +321,7 @@ namespace ML::BASE
         /// @param  offset  oa report offset.
         /// @return         true if oa report is splitted.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool IsSplitted( const uint32_t offset )
+        ML_INLINE bool IsSplitted( const uint32_t offset ) const
         {
             return ( offset + m_OaBuffer.m_ReportSize ) > m_OaBuffer.m_Size;
         }
