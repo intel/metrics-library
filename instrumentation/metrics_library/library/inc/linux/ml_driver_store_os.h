@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021-2023 Intel Corporation
+Copyright (C) 2021-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 /*
 @file ml_driver_store_os.h
 
-@brief Implements ddi redirecting.
+@brief Implements ddi redirection.
 */
 
 #pragma once
@@ -23,15 +23,17 @@ namespace ML
     {
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns an address of redirected ddi using function name.
+        ///         Not supported on Linux.
         /// @return Null pointer.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static void* GetRedirectedDdi( [[maybe_unused]] const char* functionName )
+        ML_INLINE static void* GetRedirectedDdi( const char* )
         {
             return nullptr;
         }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Free loaded library.
+        ///        Not supported on Linux.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static void UnloadLibrary()
         {

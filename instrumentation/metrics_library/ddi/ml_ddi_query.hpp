@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -52,10 +52,6 @@ namespace ML::BASE
                     log.m_Result = T::Queries::HwCounters::Create( *createData, *handle );
                     break;
 
-                case ObjectType::QueryPipelineTimestamps:
-                    log.m_Result = T::Queries::PipelineTimestamps::Create( *createData, *handle );
-                    break;
-
                 default:
                     ML_ASSERT_ALWAYS();
                     log.m_Result = StatusCode::IncorrectParameter;
@@ -86,19 +82,6 @@ namespace ML::BASE
                     log.Input( handle );
 
                     log.m_Result = T::Queries::HwCounters::Delete( handle );
-                    ML_ASSERT( log.m_Result == StatusCode::Success );
-
-                    return log.m_Result;
-                }
-                case ObjectType::QueryPipelineTimestamps:
-                {
-                    auto& context = T::Queries::HwCounters::FromHandle( handle ).m_Context;
-                    ML_FUNCTION_LOG( StatusCode::Success, &context );
-
-                    // Print input values.
-                    log.Input( handle );
-
-                    log.m_Result = T::Queries::PipelineTimestamps::Delete( handle );
                     ML_ASSERT( log.m_Result == StatusCode::Success );
 
                     return log.m_Result;

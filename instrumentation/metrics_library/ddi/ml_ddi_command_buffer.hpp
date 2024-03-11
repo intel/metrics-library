@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -53,10 +53,6 @@ namespace ML::BASE
 
                 case ObjectType::QueryHwCountersCopyReports:
                     log.m_Result = T::Queries::HwCounters::CopyReports( buffer, data->QueryHwCountersCopyReports );
-                    break;
-
-                case ObjectType::QueryPipelineTimestamps:
-                    log.m_Result = T::Queries::PipelineTimestamps::Write( buffer, data->Allocation, *data );
                     break;
 
                 case ObjectType::OverrideUser:
@@ -119,10 +115,6 @@ namespace ML::BASE
 
                 case ObjectType::QueryHwCountersCopyReports:
                     log.m_Result = T::Queries::HwCounters::CopyReports( buffer, data->QueryHwCountersCopyReports );
-                    break;
-
-                case ObjectType::QueryPipelineTimestamps:
-                    log.m_Result = T::Queries::PipelineTimestamps::Write( buffer, data->Allocation, *data );
                     break;
 
                 case ObjectType::OverrideUser:

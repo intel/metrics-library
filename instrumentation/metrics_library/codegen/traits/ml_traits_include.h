@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -80,7 +80,6 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 #if ML_LINUX
     #include "linux/ml_override_layouts.h"
 #endif
-#include "ml_pipeline_timestamps_layouts.h"
 #include "ml_gpu_registers_layouts.h"
 #if ML_LINUX
     #include "linux/ml_drm_layouts.h"
@@ -155,11 +154,6 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
 #include "ml_query_hw_counters_slot.h"
 #include "ml_query_hw_counters.h"
 #include "ml_query_hw_counters_calculator.h"
-
-//////////////////////////////////////////////////////////////////////////
-/// @brief Pipeline timestamps:
-//////////////////////////////////////////////////////////////////////////
-#include "ml_query_pipeline_timestamps.h"
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Internal features:

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -109,7 +109,6 @@ namespace ML::GEN11::OpenCL
         #if ML_LINUX
             using Override                  = OverrideLayoutsTrait<Traits>;                 //  linux/ml_override_layouts.h
         #endif
-            using PipelineTimestamps        = PipelineTimestampsLayoutsTrait<Traits>;       //  ml_pipeline_timestamps_layouts.h
             using GpuRegisters              = GpuRegistersLayoutsTrait<Traits>;             //  ml_gpu_registers_layouts.h
         #if ML_LINUX
             using Drm                       = DrmLayoutsTrait<Traits>;                      //  linux/ml_drm_layouts.h
@@ -195,11 +194,6 @@ namespace ML::GEN11::OpenCL
             using HwCountersSlot              = QueryHwCountersSlotTrait<Traits>;               //  ml_query_hw_counters_slot.h
             using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
             using HwCountersCalculator        = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Pipeline timestamps.
-        //////////////////////////////////////////////////////////////////////////
-            using PipelineTimestamps          = QueryPipelineTimestampsTrait<Traits>;           //  ml_query_pipeline_timestamps.h
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -257,7 +251,6 @@ namespace ML::GEN11::OpenCL
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using Layouts::Override", Layouts::Override::GetDescription() );
             #endif
-                FunctionLogStatic::Traits( "using Layouts::PipelineTimestamps", Layouts::PipelineTimestamps::GetDescription() );
                 FunctionLogStatic::Traits( "using Layouts::GpuRegisters", Layouts::GpuRegisters::GetDescription() );
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using Layouts::Drm", Layouts::Drm::GetDescription() );
@@ -300,7 +293,6 @@ namespace ML::GEN11::OpenCL
                 FunctionLogStatic::Traits( "using Queries::HwCountersSlot", Queries::HwCountersSlot::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
-                FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
             #if ML_LINUX || ML_RELEASE
                 FunctionLogStatic::Traits( "using InternalFeature", InternalFeature::GetDescription() );
             #endif
@@ -394,7 +386,6 @@ namespace ML::GEN11::OneApi
         #if ML_LINUX
             using Override                  = OverrideLayoutsTrait<Traits>;                 //  linux/ml_override_layouts.h
         #endif
-            using PipelineTimestamps        = PipelineTimestampsLayoutsTrait<Traits>;       //  ml_pipeline_timestamps_layouts.h
             using GpuRegisters              = GpuRegistersLayoutsTrait<Traits>;             //  ml_gpu_registers_layouts.h
         #if ML_LINUX
             using Drm                       = DrmLayoutsTrait<Traits>;                      //  linux/ml_drm_layouts.h
@@ -480,11 +471,6 @@ namespace ML::GEN11::OneApi
             using HwCountersSlot              = QueryHwCountersSlotTrait<Traits>;               //  ml_query_hw_counters_slot.h
             using HwCounters                  = QueryHwCountersTrait<Traits>;                   //  ml_query_hw_counters.h
             using HwCountersCalculator        = QueryHwCountersCalculatorTrait<Traits>;         //  ml_query_hw_counters_calculator.h
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Pipeline timestamps.
-        //////////////////////////////////////////////////////////////////////////
-            using PipelineTimestamps          = QueryPipelineTimestampsTrait<Traits>;           //  ml_query_pipeline_timestamps.h
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -542,7 +528,6 @@ namespace ML::GEN11::OneApi
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using Layouts::Override", Layouts::Override::GetDescription() );
             #endif
-                FunctionLogStatic::Traits( "using Layouts::PipelineTimestamps", Layouts::PipelineTimestamps::GetDescription() );
                 FunctionLogStatic::Traits( "using Layouts::GpuRegisters", Layouts::GpuRegisters::GetDescription() );
             #if ML_LINUX
                 FunctionLogStatic::Traits( "using Layouts::Drm", Layouts::Drm::GetDescription() );
@@ -585,7 +570,6 @@ namespace ML::GEN11::OneApi
                 FunctionLogStatic::Traits( "using Queries::HwCountersSlot", Queries::HwCountersSlot::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::HwCounters", Queries::HwCounters::GetDescription() );
                 FunctionLogStatic::Traits( "using Queries::HwCountersCalculator", Queries::HwCountersCalculator::GetDescription() );
-                FunctionLogStatic::Traits( "using Queries::PipelineTimestamps", Queries::PipelineTimestamps::GetDescription() );
             #if ML_LINUX || ML_RELEASE
                 FunctionLogStatic::Traits( "using InternalFeature", InternalFeature::GetDescription() );
             #endif

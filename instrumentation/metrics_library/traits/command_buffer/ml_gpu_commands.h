@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -558,7 +558,13 @@ namespace ML::BASE
 
             if constexpr( begin )
             {
-                // Do not use mirpc on pre-HeXP platforms because trigger report has valid context id.
+                // Timestamp before triggered report.
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
+                    buffer,
+                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
+                    flags | Flags::EnableMmioRemap ) );
+
+                // Do not use mirpc on pre-XeHP platforms because trigger report has valid context id.
                 if constexpr( !T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers )
                 {
                     // Store report id when mirpc is not used.
@@ -567,12 +573,6 @@ namespace ML::BASE
                         reportId,
                         address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
                         flags ) );
-
-                    // Ticks before triggered report.
-                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
-                        buffer,
-                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
-                        flags | Flags::EnableMmioRemap ) );
                 }
             }
             else
@@ -601,7 +601,13 @@ namespace ML::BASE
             }
             else
             {
-                // Do not use mirpc on pre-HeXP platforms because trigger report has valid context id.
+                // Timestamp after triggered report.
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
+                    buffer,
+                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
+                    flags | Flags::EnableMmioRemap ) );
+
+                // Do not use mirpc on pre-XeHP platforms because trigger report has valid context id.
                 if constexpr( !T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers )
                 {
                     // Store report id when mirpc is not used.
@@ -610,14 +616,8 @@ namespace ML::BASE
                         reportId,
                         address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
                         flags ) );
-
-                    // Ticks after triggered report.
-                    ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
-                        buffer,
-                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
-                        flags | Flags::EnableMmioRemap ) );
                 }
-                else
+                else if constexpr( T::Policy::QueryHwCounters::End::m_UseDoubleTriggers )
                 {
                     // Trigger additional report in oa buffer on query end to make sure the previous one is completed.
                     ML_FUNCTION_CHECK( T::GpuCommands::TriggerQueryReport(
@@ -721,40 +721,6 @@ namespace ML::BASE
                 flags ) );
 
             return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes pipeline timestamp command to gpu command buffer to
-        ///         store 64 bit timestamp in memory.
-        /// @param  buffer          target command buffer.
-        /// @param  memoryAddress   memory address where timestamp should be stored.
-        /// @param  flags           gpu command flags.
-        /// @return                 operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <typename CommandBuffer>
-        ML_INLINE static StatusCode StorePipelineTimestamp(
-            CommandBuffer&               buffer,
-            const uint64_t               memoryAddress,
-            [[maybe_unused]] const Flags flags )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
-
-            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
-            {
-                log.Input( "memoryAddress", memoryAddress );
-            }
-
-            TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
-
-            const uint32_t addressLow  = static_cast<uint32_t>( memoryAddress );
-            const uint32_t addressHigh = static_cast<uint32_t>( memoryAddress >> 32 );
-
-            command.Init();
-            command.SetPostSyncOperation( T::Layouts::GpuCommands::PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP );
-            command.SetAddress( addressLow );
-            command.SetAddressHigh( addressHigh );
-
-            return log.m_Result = buffer.template Write<true>( command );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1168,49 +1134,6 @@ namespace ML::XE_HP
 
                 return log.m_Result = buffer.template Write<true>( command );
             }
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes pipeline timestamp command to gpu command buffer to
-        ///         store 64 bit timestamp in memory.
-        /// @param  buffer          target command buffer.
-        /// @param  memoryAddress   memory address where timestamp should be stored.
-        /// @param  flags           gpu command flags.
-        /// @return                 operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <typename CommandBuffer>
-        ML_INLINE static StatusCode StorePipelineTimestamp(
-            CommandBuffer& buffer,
-            const uint64_t memoryAddress,
-            const Flags    flags = Flags::None )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
-            ML_FUNCTION_CHECK( CheckFlags( flags, Flags::WorkloadPartition ) );
-
-            if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
-            {
-                log.Input( "memoryAddress", memoryAddress );
-                log.Input( "flags", flags );
-            }
-
-            TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
-
-            const uint32_t addressLow  = static_cast<uint32_t>( memoryAddress );
-            const uint32_t addressHigh = static_cast<uint32_t>( memoryAddress >> 32 );
-
-            command.Init();
-            command.SetPostSyncOperation( T::Layouts::GpuCommands::PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP );
-            command.SetAddress( addressLow );
-            command.SetAddressHigh( addressHigh );
-
-            const bool isWorkloadPartitionEnabled = static_cast<uint32_t>( flags & Flags::WorkloadPartition ) != 0;
-
-            if( isWorkloadPartitionEnabled )
-            {
-                command.SetWorkloadPartitionIDOffsetEnable( true );
-            }
-
-            return log.m_Result = buffer.template Write<true>( command );
         }
 
         //////////////////////////////////////////////////////////////////////////

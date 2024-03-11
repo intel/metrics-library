@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -353,8 +353,9 @@ namespace ML::BASE
                 ML_FUNCTION_CHECK( slot.CheckStateConsistency( T::Queries::HwCountersSlot::State::Begun ) ); // Validate query calls sequence correctness.
                 ML_FUNCTION_CHECK( SetGpuMemory( slotIndex, gpuMemory, slot ) );                             // Set gpu memory data.
 
-                slot.ClearReportGpu();      // Clear gpu memory.
-                ResetOaBufferState( slot ); // Reset oa buffer state.
+                slot.m_TriggeredReportGetAttempt = 0; // Clear triggered report attempt counter.
+                slot.ClearReportGpu();                // Clear gpu memory.
+                ResetOaBufferState( slot );           // Reset oa buffer state.
             }
 
             const uint64_t gpuAddress = slot.m_GpuMemory.GpuAddress;
@@ -965,7 +966,7 @@ namespace ML::BASE
             bool               reportOaValid       = false;
             uint32_t           foundTriggers       = 0;
             uint32_t           foundReportOaOffset = 0;
-            constexpr uint32_t expectedTriggers    = ( !begin && T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers )
+            constexpr uint32_t expectedTriggers    = ( !begin && T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers && T::Policy::QueryHwCounters::End::m_UseDoubleTriggers )
                    ? 2
                    : 1;
 
@@ -1039,25 +1040,30 @@ namespace ML::BASE
                     derived.CopyTriggeredOaReport( queryReportOa, reportOa );
 
                     // Reset attempts.
-                    slot.m_TriggeredReportGetAttempt = 0;
+                    if constexpr( expectedTriggers > 1 )
+                    {
+                        slot.m_TriggeredReportGetAttempt = 0;
+                    }
                 }
             }
 
             if( !reportOaValid )
             {
-                if( ++slot.m_TriggeredReportGetAttempt < T::Layouts::HwCounters::m_TriggeredReportGetAttempts )
+                if constexpr( expectedTriggers > 1 )
                 {
-                    log.Debug( "Triggered report is not ready yet, attempt number:", slot.m_TriggeredReportGetAttempt );
-                    log.m_Result = StatusCode::ReportNotReady;
-                }
-                else
-                {
+                    if( ++slot.m_TriggeredReportGetAttempt < T::Layouts::HwCounters::m_TriggeredReportGetAttempts )
+                    {
+                        log.Debug( "Triggered report is not ready yet, attempt number:", slot.m_TriggeredReportGetAttempt );
+                        return log.m_Result = StatusCode::ReportNotReady;
+                    }
+
                     slot.m_TriggeredReportGetAttempt = 0;
-                    queryReport.m_Begin.m_Oa.m_Data  = {};
-                    queryReport.m_End.m_Oa.m_Data    = {};
-                    log.Critical( "Unable to recreate report from triggered oa report" );
-                    log.m_Result = StatusCode::ReportLost;
                 }
+
+                queryReport.m_Begin.m_Oa.m_Data = {};
+                queryReport.m_End.m_Oa.m_Data   = {};
+                log.Critical( "Unable to recreate report from triggered oa report" );
+                log.m_Result = StatusCode::ReportLost;
             }
 
             return log.m_Result;

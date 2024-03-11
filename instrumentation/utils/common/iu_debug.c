@@ -101,13 +101,13 @@ static const char* __IuLogGetModuleInfo()
 #else
 
     static const char* const IU_EMPTY_MODULE_INFO = "";
-    static const char* pModuleInfo = NULL;
+    static const char*       pModuleInfo          = NULL;
 
     if( !pModuleInfo )
     {
         static char moduleInfo[IU_MODULE_NAME_SIZE_MAX] = { 0 };
-        const char* dlName = NULL;
-        char* processName = NULL;
+        const char* dlName                              = NULL;
+        char*       processName                         = NULL;
 
         iu_zeromem( moduleInfo, sizeof( moduleInfo ) );
 
@@ -147,7 +147,6 @@ static const char* __IuLogGetModuleInfo()
 //
 // Description:    Outputs debug information.
 ///////////////////////////////////////////////////////////////////////////////
-
 void __IuLogPrint(
     const uint32_t adapterId,
     const char     sevTag,

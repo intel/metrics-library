@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -244,7 +244,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns activated by metrics discovery mmio user configuration
         ///         from the kernel.
-        ///         Not supported on linux.
+        ///         Not supported on Linux.
         /// @param  userConfiguration   activated mmio user configuration.
         /// @return                     operation status.
         //////////////////////////////////////////////////////////////////////////

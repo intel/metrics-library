@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -2240,8 +2240,7 @@ namespace ML::BASE
             std::ostringstream output;
             output << "CommandBufferMarkerStreamUser_1_0:" << '\n';
             IncrementIndentLevel();
-            output << MemberToString( "Reserved           ", value.Reserved );
-            output << MemberToString( "Value              ", value.Value );
+            output << MemberToString( "Value            ", value.Value );
             DecrementIndentLevel();
             return output.str();
         }

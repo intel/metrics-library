@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -112,16 +112,6 @@ namespace ML::BASE
                 case ParameterType::QueryHwCountersReportGpuSize:
                     *type              = ValueType::Uint32;
                     value->ValueUInt32 = sizeof( TT::Layouts::HwCounters::Query::ReportGpu );
-                    break;
-
-                case ParameterType::QueryPipelineTimestampsReportApiSize:
-                    *type              = ValueType::Uint32;
-                    value->ValueUInt32 = sizeof( TT::Layouts::PipelineTimestamps::ReportApi );
-                    break;
-
-                case ParameterType::QueryPipelineTimestampsReportGpuSize:
-                    *type              = ValueType::Uint32;
-                    value->ValueUInt32 = sizeof( TT::Layouts::PipelineTimestamps::ReportGpu );
                     break;
 
                 case ParameterType::LibraryBuildNumber:

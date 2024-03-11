@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021-2023 Intel Corporation
+Copyright (C) 2021-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -91,7 +91,7 @@ namespace ML
 
             if( !m_Objects.empty() )
             {
-                log.Warning( "Some ddi objects should be deleted, count", m_Objects.size() );
+                log.Info( "Some ddi objects should be deleted, count", m_Objects.size() );
             }
         }
     };

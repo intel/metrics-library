@@ -1,6 +1,6 @@
 #=========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -702,32 +702,32 @@ endif ()
 #################################################################################
 if (${PLATFORM} STREQUAL Windows) # windows
     install (TARGETS ${PROJECT_NAME} RUNTIME
-        DESTINATION Release/lh64
+        DESTINATION Release/bin
         CONFIGURATIONS Release
     )
 
     install (TARGETS ${PROJECT_NAME} RUNTIME
-        DESTINATION Release-Internal/lh64
+        DESTINATION Release-Internal/bin
         CONFIGURATIONS ReleaseInternal
     )
 
     install (TARGETS ${PROJECT_NAME} RUNTIME
-        DESTINATION Debug/lh64
+        DESTINATION Debug/bin
         CONFIGURATIONS Debug
     )
 
     install (FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
-        DESTINATION Release/lh64/pdb
+        DESTINATION Release/pdb
         CONFIGURATIONS Release
     )
 
     install (FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
-        DESTINATION Release-Internal/lh64/pdb
+        DESTINATION Release-Internal/pdb
         CONFIGURATIONS ReleaseInternal
     )
 
     install (FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
-        DESTINATION Debug/lh64/pdb
+        DESTINATION Debug/pdb
         CONFIGURATIONS Debug
     )
 elseif (${PLATFORM} STREQUAL linux) # linux

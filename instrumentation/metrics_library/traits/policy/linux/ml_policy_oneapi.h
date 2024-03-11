@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -71,6 +71,7 @@ namespace ML::BASE
             struct End
             {
                 static constexpr bool m_UseEndTagAsCompletionStatus = true;
+                static constexpr bool m_UseDoubleTriggers           = false;
             };
 
             //////////////////////////////////////////////////////////////////////////
@@ -93,14 +94,6 @@ namespace ML::BASE
             {
                 static constexpr bool m_MirpcOnOagTriggers = false;
             };
-        };
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Stream marker policies.
-        //////////////////////////////////////////////////////////////////////////
-        struct StreamMarker
-        {
-            static constexpr bool m_Use32bitValue = true;
         };
 
         //////////////////////////////////////////////////////////////////////////

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -52,20 +52,16 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            const uint32_t marker = T::Policy::StreamMarker::m_Use32bitValue
-                ? data.Value | ( data.Reserved << Constants::StreamMarker::m_HighBitsShift )
-                : data.Value;
-
             // Load a value to A20 (gen 9) or A19 (gen11+) counter.
             ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                 buffer,
                 T::GpuRegisters::m_StreamMarker,
-                marker ) );
+                data.Value ) );
 
             // Trigger report with report reason 4.
             ML_FUNCTION_CHECK( T::GpuCommands::TriggerStreamReport(
                 buffer,
-                marker ) );
+                data.Value ) );
 
             return log.m_Result;
         }
@@ -119,16 +115,12 @@ namespace ML::XE_HP
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            const uint32_t marker = T::Policy::StreamMarker::m_Use32bitValue
-                ? data.Value | ( data.Reserved << Constants::StreamMarker::m_HighBitsShift )
-                : data.Value;
-
             // Trigger report, which will be stored in oa buffer, in oag.
             // A given marker value will be inserted into the context id field
             // of the generated report.
             ML_FUNCTION_CHECK( T::GpuCommands::TriggerStreamReport(
                 buffer,
-                marker ) );
+                data.Value ) );
 
             return log.m_Result;
         }

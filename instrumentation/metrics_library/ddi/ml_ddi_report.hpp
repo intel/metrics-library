@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -47,19 +47,6 @@ namespace ML::BASE
                     log.Input( *data );
 
                     log.m_Result = T::Queries::HwCounters::GetData( data->Query );
-                    ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
-
-                    return log.m_Result;
-                }
-                case ObjectType::QueryPipelineTimestamps:
-                {
-                    auto& context = T::Queries::PipelineTimestamps::FromHandle( data->Query.Handle ).m_Context;
-                    ML_FUNCTION_LOG( StatusCode::Success, &context );
-
-                    // Print input values.
-                    log.Input( *data );
-
-                    log.m_Result = T::Queries::PipelineTimestamps::GetData( data->Query );
                     ML_ASSERT( log.m_Result == StatusCode::Success || log.m_Result == StatusCode::ReportNotReady );
 
                     return log.m_Result;
