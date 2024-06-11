@@ -238,18 +238,18 @@ namespace ML::XE_HP
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            for( uint32_t i = 0; i < m_Engines.size(); ++i )
+            for( auto& engine : m_Engines )
             {
-                const bool isEngineRender  = m_Engines[i].engine_class == I915_ENGINE_CLASS_RENDER;
-                const bool isEngineCompute = m_Engines[i].engine_class == I915_ENGINE_CLASS_COMPUTE;
+                const bool isEngineRender  = engine.engine_class == I915_ENGINE_CLASS_RENDER;
+                const bool isEngineCompute = engine.engine_class == I915_ENGINE_CLASS_COMPUTE;
 
                 if( isEngineCompute || isEngineRender )
                 {
-                    engineClass    = m_Engines[i].engine_class;
-                    engineInstance = m_Engines[i].engine_instance;
+                    engineClass    = engine.engine_class;
+                    engineInstance = engine.engine_instance;
 
-                    log.Debug( "class   ", engineClass );
-                    log.Debug( "instance", engineInstance );
+                    log.Debug( "Class   ", engineClass );
+                    log.Debug( "Instance", engineInstance );
 
                     return log.m_Result;
                 }

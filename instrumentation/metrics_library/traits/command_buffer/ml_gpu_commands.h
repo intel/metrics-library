@@ -895,22 +895,44 @@ namespace ML::XE_LP
                 log.Input( "flags", flags );
             }
 
-            TT::Layouts::GpuCommands::MI_LOAD_REGISTER_IMM command = {};
-
-            command.Init();
-            command.SetRegisterOffset( registerAddress );
-            command.SetDataDWord( data );
-
+            const bool isStallEnabled     = static_cast<uint32_t>( flags & Flags::EnableStall ) != 0;
+            const bool isPostSyncEnabled  = static_cast<uint32_t>( flags & Flags::EnablePostSync ) != 0;
             const bool isMmioRemapEnabled = static_cast<uint32_t>( flags & Flags::EnableMmioRemap ) != 0;
 
-            if( isMmioRemapEnabled &&
-                registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
-                registerAddress <= T::GpuRegisters::m_RenderMmioRangeEnd )
+            if( isPostSyncEnabled )
             {
-                command.SetMMIORemapEnable( true );
-            }
+                TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
 
-            return log.m_Result = buffer.template Write<false>( command );
+                command.Init();
+                command.SetLRIPostSyncOperation( T::Layouts::GpuCommands::PIPE_CONTROL::LRI_POST_SYNC_OPERATION_MMIO_WRITE_IMMEDIATE_DATA );
+                command.SetAddress( registerAddress );
+                command.SetImmediateData( data );
+
+                if( isStallEnabled )
+                {
+                    command.SetStallAtPixelScoreboard( true );
+                    command.SetCommandStreamerStallEnable( true );
+                }
+
+                return log.m_Result = buffer.template Write<false>( command );
+            }
+            else
+            {
+                TT::Layouts::GpuCommands::MI_LOAD_REGISTER_IMM command = {};
+
+                command.Init();
+                command.SetRegisterOffset( registerAddress );
+                command.SetDataDWord( data );
+
+                if( isMmioRemapEnabled &&
+                    registerAddress >= T::GpuRegisters::m_RenderMmioRangeBegin &&
+                    registerAddress <= T::GpuRegisters::m_RenderMmioRangeEnd )
+                {
+                    command.SetMMIORemapEnable( true );
+                }
+
+                return log.m_Result = buffer.template Write<false>( command );
+            }
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1381,9 +1403,10 @@ namespace ML::XE_HP
             const Flags    flags = Flags::None )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
-            ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync ) );
+            ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync, Flags::EnableStall ) );
 
             const bool isPostSyncEnabled = static_cast<uint32_t>( flags & Flags::EnablePostSync ) != 0;
+            const bool isStallEnabled    = static_cast<uint32_t>( flags & Flags::EnableStall ) != 0;
 
             if( isPostSyncEnabled )
             {
@@ -1399,6 +1422,12 @@ namespace ML::XE_HP
                 command.SetLRIPostSyncOperation( T::Layouts::GpuCommands::PIPE_CONTROL::LRI_POST_SYNC_OPERATION_MMIO_WRITE_IMMEDIATE_DATA );
                 command.SetAddress( T::GpuRegisters::m_OagTrigger );
                 command.SetImmediateData( marker );
+
+                if( isStallEnabled )
+                {
+                    command.SetStallAtPixelScoreboard( true );
+                    command.SetCommandStreamerStallEnable( true );
+                }
 
                 return log.m_Result = buffer.template Write<false>( command );
             }
@@ -1559,6 +1588,60 @@ namespace ML::XE_HPC
                 }
 
                 return log.m_Result = buffer.template Write<false>( command );
+            }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes LOAD_REGISTER_IMM command to trigger oag mmio report
+        ///         with a given marker value.
+        /// @param  buffer  target command buffer.
+        /// @param  marker  marker value.
+        /// @param  flags   gpu command flags.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE static StatusCode TriggerStreamReport(
+            CommandBuffer& buffer,
+            const uint32_t marker,
+            const Flags    flags = Flags::None )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+            ML_FUNCTION_CHECK( CheckFlags( flags, Flags::EnablePostSync, Flags::EnableStall ) );
+
+            const bool isPostSyncEnabled = static_cast<uint32_t>( flags & Flags::EnablePostSync ) != 0;
+            const bool isStallEnabled    = static_cast<uint32_t>( flags & Flags::EnableStall ) != 0;
+
+            if( isPostSyncEnabled )
+            {
+                if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
+                {
+                    log.Input( "marker", marker );
+                    log.Input( "flags", flags );
+                }
+
+                TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
+
+                command.Init();
+                command.SetLRIPostSyncOperation( T::Layouts::GpuCommands::PIPE_CONTROL::LRI_POST_SYNC_OPERATION_MMIO_WRITE_IMMEDIATE_DATA );
+                command.SetAddress( T::GpuRegisters::m_OagTrigger );
+                command.SetImmediateData( marker );
+
+                if( isStallEnabled )
+                {
+                    // Stall at pixel scoreboard is not available on XeHPC.
+                    command.SetCommandStreamerStallEnable( true );
+                }
+
+                return log.m_Result = buffer.template Write<false>( command );
+            }
+            else
+            {
+                ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
+                    buffer,
+                    T::GpuRegisters::m_OagTrigger,
+                    marker ) );
+
+                return log.m_Result;
             }
         }
     };

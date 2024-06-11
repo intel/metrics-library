@@ -678,18 +678,6 @@ namespace ML::BASE
 
             log.Debug( "Report oa begin:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogBeginOffset, FormatFlag::AdjustRight, begin );
             log.Debug( "Report oa end:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndOffset, FormatFlag::AdjustRight, end );
-
-#if 0 // Debug only.
-            if( reportApi.m_GpuTicks != reportApi.m_NoaCounter[1] )
-            {
-                log.Warning( "TEST_OA???    -> IF YES: COUNTERS MISMATCH !!!" );
-            }
-
-            if( reportApi.m_GpuTicks != reportApi.m_OaCounter[0] )
-            {
-                log.Warning( "BUSY_vs_CC??? -> IF YES: COUNTERS MISMATCH !!!");
-            }
-#endif
         }
 
         //////////////////////////////////////////////////////////////////////////
