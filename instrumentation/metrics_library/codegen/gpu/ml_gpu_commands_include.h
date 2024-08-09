@@ -93,3 +93,15 @@ Template:           Tools/MetricsLibraryGenerator/templates/gfx.h
 #undef __CODEGEN_PLATFORM
 #endif // ML_ENABLE_XE_HPC
 
+#if ML_ENABLE_XE2_HPG
+// XE2_HPG IGFX Commands
+#define __CODEGEN_NAMESPACE_CLOSE }; }
+#define __CODEGEN_PLATFORM "XE2_HPG"
+#define __CODEGEN_NAMESPACE_OPEN namespace ML::XE2_HPG { template <typename T> struct GpuCommandsLayoutsTrait {
+#define __CODEGEN_FILE_DIRECTIVES_OPEN ML_STRUCTURE_PACK_BEGIN( 1 )
+#define __CODEGEN_FILE_DIRECTIVES_CLOSE ML_STRUCTURE_PACK_END()
+#include "ml_gpu_commands_xe2_hpg.h"
+#undef __CODEGEN_NAMESPACE_OPEN
+#undef __CODEGEN_PLATFORM
+#endif // ML_ENABLE_XE2_HPG
+

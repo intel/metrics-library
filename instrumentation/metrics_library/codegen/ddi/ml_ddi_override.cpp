@@ -382,3 +382,62 @@ namespace ML::XE_HPC::OneApi
 
 #endif // ML_ENABLE_XE_HPC
 
+#if ML_ENABLE_XE2_HPG
+
+#include "ml_traits_xe2_hpg.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiOverride.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE2_HPG::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for OverrideCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL OverrideCreate_1_0(
+        const OverrideCreateData_1_0* createData,
+        OverrideHandle_1_0*           handle )
+    {
+        return DdiOverride<T>::OverrideCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for OverrideDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL OverrideDelete_1_0(
+        const OverrideHandle_1_0 handle )
+    {
+        return DdiOverride<T>::OverrideDelete_1_0( handle );
+    }
+
+} // namespace ML::XE2_HPG::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE2_HPG::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for OverrideCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL OverrideCreate_1_0(
+        const OverrideCreateData_1_0* createData,
+        OverrideHandle_1_0*           handle )
+    {
+        return DdiOverride<T>::OverrideCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for OverrideDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL OverrideDelete_1_0(
+        const OverrideHandle_1_0 handle )
+    {
+        return DdiOverride<T>::OverrideDelete_1_0( handle );
+    }
+
+} // namespace ML::XE2_HPG::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE2_HPG
+

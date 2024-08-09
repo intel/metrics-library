@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for MarkerStreamUserExtendedExtendedTrait object.
@@ -55,58 +55,4 @@ namespace ML::BASE
             return log.m_Result;
         }
     };
-} // namespace ML::BASE
-
-namespace ML::GEN9
-{
-    template <typename T>
-    struct MarkerStreamUserExtendedTrait : BASE::MarkerStreamUserExtendedTrait<T>
-    {
-        ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct MarkerStreamUserExtendedTrait : GEN9::MarkerStreamUserExtendedTrait<T>
-    {
-        ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct MarkerStreamUserExtendedTrait : GEN11::MarkerStreamUserExtendedTrait<T>
-    {
-        ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, GEN11 );
-    };
-} // namespace ML::XE_LP
-
-namespace ML::XE_HP
-{
-    template <typename T>
-    struct MarkerStreamUserExtendedTrait : XE_LP::MarkerStreamUserExtendedTrait<T>
-    {
-        ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct MarkerStreamUserExtendedTrait : XE_HP::MarkerStreamUserExtendedTrait<T>
-    {
-        ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, XE_HP );
-    };
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    template <typename T>
-    struct MarkerStreamUserExtendedTrait : XE_HPG::MarkerStreamUserExtendedTrait<T>
-    {
-        ML_DECLARE_TRAIT( MarkerStreamUserExtendedTrait, XE_HPG );
-    };
-} // namespace ML::XE_HPC
+} // namespace ML

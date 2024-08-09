@@ -123,6 +123,15 @@ namespace ML::XE_HPC
     };
 } // namespace ML::XE_HPC
 
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct GpuRegistersLayoutsTrait : XE_HPG::GpuRegistersLayoutsTrait<T>
+    {
+        ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, XE_HPG );
+    };
+} // namespace ML::XE2_HPG
+
 ML_STRUCTURE_PACK_END();
 
 // clang-format on

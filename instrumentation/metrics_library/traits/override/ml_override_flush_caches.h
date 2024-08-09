@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for OverrideFlushCachesTrait object.
@@ -54,58 +54,4 @@ namespace ML::BASE
             return log.m_Result;
         }
     };
-} // namespace ML::BASE
-
-namespace ML::GEN9
-{
-    template <typename T>
-    struct OverrideFlushCachesTrait : BASE::OverrideFlushCachesTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideFlushCachesTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct OverrideFlushCachesTrait : GEN9::OverrideFlushCachesTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideFlushCachesTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct OverrideFlushCachesTrait : GEN11::OverrideFlushCachesTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideFlushCachesTrait, GEN11 );
-    };
-} // namespace ML::XE_LP
-
-namespace ML::XE_HP
-{
-    template <typename T>
-    struct OverrideFlushCachesTrait : XE_LP::OverrideFlushCachesTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideFlushCachesTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct OverrideFlushCachesTrait : XE_HP::OverrideFlushCachesTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideFlushCachesTrait, XE_HP );
-    };
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    template <typename T>
-    struct OverrideFlushCachesTrait : XE_HPG::OverrideFlushCachesTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideFlushCachesTrait, XE_HPG );
-    };
-} // namespace ML::XE_HPC
+} // namespace ML

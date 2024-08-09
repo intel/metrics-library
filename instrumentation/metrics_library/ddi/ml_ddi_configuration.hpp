@@ -280,4 +280,14 @@ namespace ML::XE_HPC
     using DdiConfiguration = XE_HPG::DdiConfiguration<T>;
 } // namespace ML::XE_HPC
 
+namespace ML::XE2_HPG
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief XE2_HPG-specific functions for DdiConfiguration.
+    ///        These should ONLY be used for MAJOR algorithm changes.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    using DdiConfiguration = XE_HPG::DdiConfiguration<T>;
+} // namespace ML::XE2_HPG
+
 #pragma endregion

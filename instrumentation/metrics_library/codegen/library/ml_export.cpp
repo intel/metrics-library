@@ -43,6 +43,9 @@ Template:           Tools/MetricsLibraryGenerator/templates/export.h
 #if ML_ENABLE_XE_HPC
 #include "ml_traits_xe_hpc.h"
 #endif
+#if ML_ENABLE_XE2_HPG
+#include "ml_traits_xe2_hpg.h"
+#endif
 
 using namespace ML;
 
@@ -190,6 +193,28 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
         }
     }
 #endif // ML_ENABLE_XE_HPC
+
+#if ML_ENABLE_XE2_HPG
+    if( clientType.Gen == ClientGen::Xe2HPG )
+    {
+        switch( clientType.Api )
+        {
+            #if ML_ENABLE_OPENCL
+            case ClientApi::OpenCL:
+                return &ML_GET_NAMESPACE( XE2_HPG, OpenCL )::DdiFunctionTable<ML_GET_NAMESPACE( XE2_HPG, OpenCL )::Traits>::GetInstance();
+            #endif
+
+            #if ML_ENABLE_ONEAPI
+            case ClientApi::OneApi:
+                return &ML_GET_NAMESPACE( XE2_HPG, OneApi )::DdiFunctionTable<ML_GET_NAMESPACE( XE2_HPG, OneApi )::Traits>::GetInstance();
+            #endif
+
+            default:
+                ML_ASSERT_ALWAYS_NO_ADAPTER();
+                break;
+        }
+    }
+#endif // ML_ENABLE_XE2_HPG
 
     return nullptr;
 }

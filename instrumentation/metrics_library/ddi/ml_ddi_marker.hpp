@@ -158,4 +158,14 @@ namespace ML::XE_HPC
     using DdiMarker = XE_HPG::DdiMarker<T>;
 } // namespace ML::XE_HPC
 
+namespace ML::XE2_HPG
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief XE2_HPG-specific functions for DdiMarker.
+    ///        These should ONLY be used for MAJOR algorithm changes.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    using DdiMarker = XE_HPG::DdiMarker<T>;
+} // namespace ML::XE2_HPG
+
 #pragma endregion

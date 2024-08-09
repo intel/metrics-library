@@ -153,4 +153,14 @@ namespace ML::XE_HPC
     using DdiReport = XE_HPG::DdiReport<T>;
 } // namespace ML::XE_HPC
 
+namespace ML::XE2_HPG
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief XE2_HPG-specific functions for DdiReport.
+    ///        These should ONLY be used for MAJOR algorithm changes.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    using DdiReport = XE_HPG::DdiReport<T>;
+} // namespace ML::XE2_HPG
+
 #pragma endregion

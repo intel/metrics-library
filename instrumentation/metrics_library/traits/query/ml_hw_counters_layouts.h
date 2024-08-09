@@ -348,8 +348,7 @@ namespace ML::XE_HP
         //////////////////////////////////////////////////////////////////////////
         /// @brief Inherited report objects.
         //////////////////////////////////////////////////////////////////////////
-        using ReportGp     = typename Base::ReportGp;
-        using ReportUser   = typename Base::ReportUser;
+        using ReportUser = typename Base::ReportUser;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Constants.
@@ -494,8 +493,7 @@ namespace ML::XE_HP
         {
             ReportHeader    m_Header;
             ReportOaData    m_DataOa;
-            ReportGp        m_DataGp;       // 16 bytes.
-            ReportUser      m_DataUser;     // 16 * 8 + 4 = 132 bytes.
+            ReportUser      m_DataUser; // 16 * 8 + 4 = 132 bytes.
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -514,9 +512,8 @@ namespace ML::XE_HP
             {
                 struct
                 {
-                    ReportOa      m_Oa;      // Oa.
-                    ReportGp      m_Gp;      // 16 bytes.
-                    ReportUser    m_User;    // 16 * 8 + 4 = 132 bytes.
+                    ReportOa      m_Oa;   // Oa.
+                    ReportUser    m_User; // 16 * 8 + 4 = 132 bytes.
                 };
 
                 // OA reports have to be aligned to multiple of 64 bytes.
@@ -633,6 +630,272 @@ namespace ML::XE_HPC
         ML_DECLARE_TRAIT( HwCountersLayoutsTrait, XE_HPG );
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct HwCountersLayoutsTrait : XE_HPG::HwCountersLayoutsTrait<T>
+    {
+        ML_DECLARE_TRAIT( HwCountersLayoutsTrait, XE_HPG );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Inherited report objects.
+        //////////////////////////////////////////////////////////////////////////
+        using ReportUser = typename Base::ReportUser;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Constants.
+        //////////////////////////////////////////////////////////////////////////
+        static constexpr uint32_t m_PerformanceEventCountersCount = 64;
+        static constexpr uint32_t m_VisaCountersCount             = 16;
+        static constexpr uint32_t m_OaReportAlignment             = 576;
+        static constexpr uint32_t m_OaVisaReportAlignment         = 640;
+        static constexpr uint64_t m_MirpcResetValue               = 0xF1E2D3C4B5A69788;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Type of pec counter.
+        //////////////////////////////////////////////////////////////////////////
+        enum class PecType : uint32_t
+        {
+            None = 0x0,
+            Oar  = ML_BIT( 0 ),
+            Oac  = ML_BIT( 1 ),
+            All  = 0xFFFFFFFF
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Report id.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportId
+        {
+            union
+            {
+                uint64_t        m_Value;
+
+                struct
+                {
+                    uint64_t    m_QueryId            : ML_BITFIELD_RANGE( 0,  11 );
+                    uint64_t    m_ContextId          : ML_BITFIELD_RANGE( 12, 31 );
+                    uint64_t    m_Reserved           : ML_BITFIELD_RANGE( 32, 63 );
+                }; // For MI_RPC.
+
+                struct
+                {
+                    uint64_t    m_FrequencyUnslice   : ML_BITFIELD_RANGE(  0,  8 );
+                    uint64_t    m_Reserved1          : ML_BITFIELD_RANGE(  9, 10 );
+                    uint64_t    m_NoaEvents          : ML_BITFIELD_RANGE( 11, 15 );
+                    uint64_t    m_ContextValid       : ML_BITFIELD_BIT  (     16 );
+                    uint64_t    m_ThresholdEnable    : ML_BITFIELD_BIT  (     17 );
+                    uint64_t    m_StartTriggerEvent  : ML_BITFIELD_BIT  (     18 );
+                    uint64_t    m_ReportReason       : ML_BITFIELD_RANGE( 19, 25 );
+                    uint64_t    m_SourceId           : ML_BITFIELD_RANGE( 26, 31 );
+                    uint64_t    m_TileId             : ML_BITFIELD_RANGE( 32, 33 );
+                    uint64_t    m_Reserved2          : ML_BITFIELD_RANGE( 34, 35 );
+                    uint64_t    m_CcsSelectedId      : ML_BITFIELD_RANGE( 36, 40 );
+                    uint64_t    m_Reserved3          : ML_BITFIELD_RANGE( 41, 46 );
+                    uint64_t    m_DelayedReport      : ML_BITFIELD_BIT  (     47 );
+                    uint64_t    m_Reserved4          : ML_BITFIELD_RANGE( 48, 63 );
+                }; // For time based sampling.
+            };
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Report header.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportHeader
+        {
+            ReportId    m_ReportId;
+            uint64_t    m_Timestamp;
+            uint64_t    m_ContextId;
+            uint64_t    m_GpuTicks;
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Pec report data.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportPecData
+        {
+            uint64_t    m_PerformanceEventCounter[m_PerformanceEventCountersCount]; // PEC0 - PEC63.
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Pec visa report data.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportPecVisaData
+        {
+            uint64_t    m_PerformanceEventCounter[m_PerformanceEventCountersCount]; // PEC0 - PEC63.
+            uint32_t    m_VisaCounter[m_VisaCountersCount];                         // VISA0 - VISA15.
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Oa report.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportOa
+        {
+            union
+            {
+                struct
+                {
+                    ReportHeader     m_Header;
+                    ReportPecData    m_Data;
+                };
+
+                uint8_t m_Payload[m_OaReportAlignment];
+            };
+
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Oa visa report.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportOaVisa
+        {
+            union
+            {
+                struct
+                {
+                    ReportHeader         m_Header;
+                    ReportPecVisaData    m_Data;
+                };
+
+                uint8_t m_Payload[m_OaVisaReportAlignment];
+            };
+
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Unaligned report.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportUnaligned
+        {
+            union
+            {
+                ReportOa        m_OaReport;     // 576 bytes.
+                ReportOaVisa    m_OaVisaReport; // 640 bytes.
+            };
+
+            ReportUser    m_DataUser; // 16 * 8 + 4 = 132 bytes.
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Report alignment.
+        //////////////////////////////////////////////////////////////////////////
+        static constexpr uint32_t m_ReportAlignment = ( (sizeof ( ReportUnaligned ) % Base::m_ReportGpuAlignment )
+            ? ( ( sizeof( ReportUnaligned ) / Base::m_ReportGpuAlignment + 1 ) * Base::m_ReportGpuAlignment )
+            : sizeof( ReportUnaligned ) );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Base type for Report object.
+        //////////////////////////////////////////////////////////////////////////
+        struct Report
+        {
+            union
+            {
+                struct
+                {
+                    union
+                    {
+                        ReportOa        m_Oa;     // 576 bytes.
+                        ReportOaVisa    m_OaVisa; // 640 bytes.
+                    };
+
+                    ReportUser    m_User; // 16 * 8 + 4 = 132 bytes.
+                };
+
+                // Pec reports have to be aligned to multiple of 64 bytes.
+                uint8_t m_Payload[m_ReportAlignment];
+            };
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Hw counters structures related to query.
+        //////////////////////////////////////////////////////////////////////////
+        struct Query : Base::Query
+        {
+            using ReportApiFlags = typename Base::Query::ReportApiFlags;
+
+            struct ReportApi
+            {
+                uint64_t                               m_TotalTime;                     // Total query time in nanoseconds.
+                uint64_t                               m_GpuTicks;
+                uint64_t                               m_PerformanceEventCounter[m_PerformanceEventCountersCount];
+                uint64_t                               m_VisaCounter[m_VisaCountersCount];
+                uint64_t                               m_BeginTimestamp;
+                uint64_t                               m_Reserved1;
+                uint64_t                               m_Reserved2;
+                TT::Layouts::OaBuffer::ReportReason    m_MiddleQueryEvents;             // All types of events occurring between query begin and query end.
+                                                                                        // Single event values are defined in ReportReason struct.
+                uint32_t                               m_OverrunOccured;
+                uint64_t                               m_MarkerUser;
+                uint64_t                               m_MarkerDriver;
+
+                uint64_t                               m_SliceFrequency;
+                uint64_t                               m_UnsliceFrequency;
+                uint32_t                               m_SplitOccured;                  // Command buffer split has occurred.
+                uint32_t                               m_CoreFrequencyChanged;          // Core frequency has changed.
+                uint64_t                               m_CoreFrequency;                 // Core frequency during the query.
+                uint32_t                               m_ReportId;
+                uint32_t                               m_ReportsCount;
+
+                uint64_t                               m_UserCounter[Base::m_UserCountersCount];
+                uint32_t                               m_UserCounterConfigurationId;
+                ReportApiFlags                         m_Flags;                         // Report flags are defined in ReportApiFlags.
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Base type for QueryReportGpu object.
+            //////////////////////////////////////////////////////////////////////////
+            struct ReportGpu
+            {
+                // Begin/end report.
+                Report    m_Begin;
+                Report    m_End;
+
+                union
+                {
+                    struct
+                    {
+                        // Query end marker.
+                        uint64_t    m_EndTag;
+
+                        // Command buffer split indicators.
+                        uint32_t    m_DmaFenceIdBegin;
+                        uint32_t    m_DmaFenceIdEnd;
+
+                        // Oa buffer data related.
+                        TT::Layouts::OaBuffer::Register        m_OaBuffer;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPreBegin;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPostBegin;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPreEnd;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPostEnd;
+
+                        // Query id.
+                        uint32_t    m_QueryIdBegin;
+                        uint32_t    m_QueryIdEnd;
+
+                        // Command streamer identificator.
+                        uint32_t    m_CommandStreamerIdentificator;
+
+                        // Frequency change indicators.
+                        uint32_t    m_CoreFrequencyBegin;
+                        uint32_t    m_CoreFrequencyEnd;
+
+                        // Markers.
+                        uint64_t    m_MarkerUser;
+                        uint64_t    m_MarkerDriver;
+                    };
+
+                    uint8_t    m_Payload[Base::m_ReportGpuInfoAlignment];
+                };
+            };
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Sanity check.
+        //////////////////////////////////////////////////////////////////////////
+        ML_STATIC_ASSERT( ( sizeof( typename Query::ReportGpu ) % Base::m_ReportGpuAlignment ) == 0, "Wrong structure size" );
+    };
+} // namespace ML::XE2_HPG
 
 ML_STRUCTURE_PACK_END();
 

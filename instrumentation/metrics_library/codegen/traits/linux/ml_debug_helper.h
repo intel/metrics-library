@@ -392,6 +392,12 @@ namespace ML::BASE
                     output << "Unknown";
                     break;
 
+            #if ML_ENABLE_XE2_HPG
+                case ClientGen::Xe2HPG:
+                    output << "Xe2HPG";
+                    break;
+            #endif
+
             #if ML_ENABLE_XE_HP
                 case ClientGen::XeHP:
                     output << "XeHP";
@@ -2221,7 +2227,7 @@ namespace ML::BASE
         /// @param  value   a given structure to convert.
         /// @return         converted all members values to string.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const CommandBufferMarkerStreamUserExtended_1_0& value )
+        ML_INLINE std::string ToString( [[maybe_unused]] const CommandBufferMarkerStreamUserExtended_1_0& value )
         {
             std::ostringstream output;
             output << "CommandBufferMarkerStreamUserExtended_1_0:" << '\n';
@@ -3203,3 +3209,142 @@ namespace ML::XE_HPC
     };
 } // namespace ML::XE_HPC
 
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct DebugTrait : XE_HPG::DebugTrait<T>
+    {
+        ML_DECLARE_TRAIT( DebugTrait, XE_HPG );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::ToCsv;
+        using Base::ToString;
+        using Base::m_InitializeCsvOutputFile;
+        using Base::m_CsvOutputFile;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Reports.
+        //////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates oa report log.
+        /// @param  oaReport    a given oa report.
+        /// @return             string that contains formatted oa report log.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportOa& oaReport )
+        {
+            const auto&        oaVisaReport = reinterpret_cast<const TT::Layouts::HwCounters::ReportOaVisa&>( oaReport );
+            std::ostringstream output;
+            output << "OA: ";
+            output << "rsn = " << std::setw( Constants::Log::m_MaxReportReasonLength ) << oaReport.m_Header.m_ReportId.m_ReportReason;
+            output << std::hex << std::showbase;
+            output << ", rid = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Header.m_ReportId.m_Value;
+            output << ", tsp = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Header.m_Timestamp;
+            output << ", cid = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Header.m_ContextId;
+            output << ", tic = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Header.m_GpuTicks;
+            output << ", pec0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[0];
+            output << ", pec1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[1];
+            output << ", pec2 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[2];
+            output << ", pec32 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[32];
+            output << ", pec33 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[33];
+            output << ", pec34 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[34];
+            output << ", visa0 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaVisaReport.m_Data.m_VisaCounter[0];
+            output << ", visa1 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaVisaReport.m_Data.m_VisaCounter[1];
+            output << "; ";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates api report log.
+        /// @param  userReport  a given api report.
+        /// @return             string that contains formatted api report log.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::ReportApi& userReport )
+        {
+            std::ostringstream output;
+            std::string        flags;
+
+            flags += userReport.m_Flags.m_ReportLost              ? " lost"              : "";
+            flags += userReport.m_Flags.m_ReportInconsistent      ? " inconsistent"      : "";
+            flags += userReport.m_Flags.m_ReportNotReady          ? " not_ready"         : "";
+            flags += userReport.m_Flags.m_ReportContextSwitchLost ? " no_context_switch" : "";
+            flags += userReport.m_Flags.m_ReportWithoutWorkload   ? " no_workload"       : "";
+            flags += userReport.m_Flags.m_ContextMismatch         ? " context_mismatch"  : "";
+            flags  = flags.length() ? flags : "none";
+
+            output << "QUERY: ";
+            output << std::hex << std::showbase;
+            output << "time = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_TotalTime;
+            output << ", tic = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_GpuTicks;
+            output << ", pec0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[0];
+            output << ", pec1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[1];
+            output << ", pec2 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[2];
+            output << ", pec32 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[32];
+            output << ", pec33 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[33];
+            output << ", pec34 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[34];
+            output << ", visa0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_VisaCounter[0];
+            output << ", visa1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_VisaCounter[1];
+            output << ", mark = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_MarkerUser;
+            output << ", flags = " << flags;
+            output << "; ";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Prints oa report csv log.
+        /// @param context      context.
+        /// @param oaReport     a given oa report.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void ToCsv( TT::Context* context, const TT::Layouts::HwCounters::ReportOa& oaReport )
+        {
+            if( m_InitializeCsvOutputFile )
+            {
+                if( ML_SUCCESS( T::Tools::OpenCsv( "ReportOa", m_CsvOutputFile, context ) ) )
+                {
+                    m_CsvOutputFile << "ReportId,ReportReason,ContextValid,Timestamp,ContextId,GpuTicks,";
+
+                    for( uint32_t i = 0; i < T::Layouts::HwCounters::m_PerformanceEventCountersCount; ++i )
+                    {
+                        m_CsvOutputFile << "Pec" << i << ',';
+                    }
+
+                    for( uint32_t i = 0; i < T::Layouts::HwCounters::m_VisaCountersCount; ++i )
+                    {
+                        m_CsvOutputFile << "Visa" << i << ',';
+                    }
+
+                    m_CsvOutputFile << '\n';
+
+                    m_InitializeCsvOutputFile = false;
+                }
+            }
+
+            if( m_CsvOutputFile.is_open() )
+            {
+                m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_Value << ',';
+                m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ReportReason << ',';
+                m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ContextValid << ',';
+                m_CsvOutputFile << oaReport.m_Header.m_Timestamp << ',';
+                m_CsvOutputFile << oaReport.m_Header.m_ContextId << ',';
+                m_CsvOutputFile << oaReport.m_Header.m_GpuTicks << ',';
+
+                for( uint32_t i = 0; i < T::Layouts::HwCounters::m_PerformanceEventCountersCount; ++i )
+                {
+                    m_CsvOutputFile << oaReport.m_Data.m_PerformanceEventCounter[i] << ',';
+                }
+
+                const auto& oaVisaReport = reinterpret_cast<const TT::Layouts::HwCounters::ReportOaVisa&>( oaReport );
+                for( uint32_t i = 0; i < T::Layouts::HwCounters::m_VisaCountersCount; ++i )
+                {
+                    m_CsvOutputFile << oaVisaReport.m_Data.m_VisaCounter[i] << ',';
+                }
+
+                m_CsvOutputFile << '\n';
+            }
+        }
+    };
+} // namespace ML::XE2_HPG

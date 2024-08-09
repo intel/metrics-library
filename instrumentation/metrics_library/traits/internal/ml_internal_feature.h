@@ -95,3 +95,41 @@ namespace ML::XE_HPC
         ML_DECLARE_TRAIT( InternalFeatureTrait, XE_HPG );
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct InternalFeatureTrait : XE_HPG::InternalFeatureTrait<T>
+    {
+        ML_DECLARE_TRAIT( InternalFeatureTrait, XE_HPG );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Uses provided buffer to override masked pec counters with provided value.
+        /// @param  buffer command buffer.
+        /// @param  type of pec registers to override.
+        /// @param  mask 64-bit mask that dictates what counters will be overwritten
+        ///         lower bytes represent counters at lower offset.
+        /// @param  value value that will be written to the counters.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE static void OverridePecCounters(
+            [[maybe_unused]] CommandBuffer&                         buffer,
+            [[maybe_unused]] const TT::Layouts::HwCounters::PecType type,
+            [[maybe_unused]] const uint64_t                         mask,
+            [[maybe_unused]] const uint64_t                         value )
+        {
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Uses values in the register to override pec counters
+        /// @param  buffer command buffer.
+        /// @param  type of pec registers to override.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE void OverridePecCounters(
+            [[maybe_unused]] CommandBuffer&                         buffer,
+            [[maybe_unused]] const TT::Layouts::HwCounters::PecType type ) const
+        {
+        }
+    };
+} // namespace ML::XE2_HPG

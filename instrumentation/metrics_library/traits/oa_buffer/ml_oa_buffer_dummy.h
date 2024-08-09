@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for OaBufferDummyTrait object.
@@ -183,58 +183,4 @@ namespace ML::BASE
         {
         }
     };
-} // namespace ML::BASE
-
-namespace ML::GEN9
-{
-    template <typename T>
-    struct OaBufferDummyTrait : BASE::OaBufferDummyTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferDummyTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct OaBufferDummyTrait : GEN9::OaBufferDummyTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferDummyTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct OaBufferDummyTrait : GEN11::OaBufferDummyTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferDummyTrait, GEN11 );
-    };
-} // namespace ML::XE_LP
-
-namespace ML::XE_HP
-{
-    template <typename T>
-    struct OaBufferDummyTrait : XE_LP::OaBufferDummyTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct OaBufferDummyTrait : XE_HP::OaBufferDummyTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_HP );
-    };
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    template <typename T>
-    struct OaBufferDummyTrait : XE_HPG::OaBufferDummyTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferDummyTrait, XE_HPG );
-    };
-} // namespace ML::XE_HPC
+} // namespace ML

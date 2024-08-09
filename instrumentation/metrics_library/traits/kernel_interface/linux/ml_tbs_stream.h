@@ -292,3 +292,66 @@ namespace ML::XE_HPC
         ML_DECLARE_TRAIT( TbsStreamTrait, XE_HPG );
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct TbsStreamTrait : BASE::TbsStreamTrait<T>
+    {
+        ML_DECLARE_TRAIT( TbsStreamTrait, BASE );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::IsEnabled;
+        using Base::ReleaseMetricSet;
+        using Base::m_Id;
+        using Base::m_Kernel;
+        using Base::m_MetricSet;
+        using Base::m_MetricSetInternal;
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Enables tbs stream for a given metric set.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode Enable()
+        {
+            drm_xe_ext_set_property properties[DRM_XE_OA_PROPERTY_NO_PREEMPT - DRM_XE_OA_EXTENSION_SET_PROPERTY] = {};
+
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_CHECK( IsEnabled() == false );
+            ML_FUNCTION_CHECK( m_MetricSet != T::ConstantsOs::Tbs::m_Invalid );
+            ML_FUNCTION_CHECK( m_Kernel.m_Tbs.GetStreamProperties( properties, m_MetricSet ) );
+
+            // Enable stream.
+            log.m_Result = m_Kernel.m_IoControl.OpenTbs( properties, m_Id );
+            log.m_Result = ML_STATUS( ML_SUCCESS( log.m_Result ) && IsEnabled() );
+
+            // We want a non-blocking read.
+            if( const int32_t oldFlags = fcntl( m_Id, F_GETFL, 0 );
+                oldFlags != -1 )
+            {
+                if( fcntl( m_Id, F_SETFL, oldFlags | O_CLOEXEC | O_NONBLOCK ) == -1 )
+                {
+                    log.Error( "Cannot set a non-blocking read." );
+                    log.m_Result = StatusCode::Failed;
+                }
+            }
+
+            // Initialize oa buffer mapping if supported.
+            if( ML_SUCCESS( log.m_Result ) )
+            {
+                m_Kernel.m_Tbs.m_OaBufferMapped.Initialize( m_Id );
+            }
+
+            // Disable an internal metric set used to enable tbs.
+            // It will allow metrics discovery to enable another metrics set.
+            if( m_MetricSetInternal )
+            {
+                ReleaseMetricSet( m_MetricSet );
+            }
+
+            return log.m_Result;
+        }
+    };
+} // namespace ML::XE2_HPG

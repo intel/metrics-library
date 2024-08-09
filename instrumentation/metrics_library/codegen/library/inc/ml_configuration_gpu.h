@@ -72,3 +72,12 @@ Template:           Tools/MetricsLibraryGenerator/templates/configuration_gen.h
     #endif
 #endif
 
+// XE2_HPG
+#if !defined( ML_ENABLE_XE2_HPG )
+    #if ML_LINUX
+        #define ML_ENABLE_XE2_HPG 1
+    #else
+        #define ML_ENABLE_XE2_HPG 0
+    #endif
+#endif
+

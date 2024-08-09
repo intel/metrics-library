@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for OverrideUserTrait object.
@@ -77,58 +77,4 @@ namespace ML::BASE
             return StatusCode::NotImplemented;
         }
     };
-} // namespace ML::BASE
-
-namespace ML::GEN9
-{
-    template <typename T>
-    struct OverrideUserTrait : BASE::OverrideUserTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideUserTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct OverrideUserTrait : GEN9::OverrideUserTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideUserTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct OverrideUserTrait : GEN11::OverrideUserTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideUserTrait, GEN11 );
-    };
-} // namespace ML::XE_LP
-
-namespace ML::XE_HP
-{
-    template <typename T>
-    struct OverrideUserTrait : XE_LP::OverrideUserTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideUserTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct OverrideUserTrait : XE_HP::OverrideUserTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideUserTrait, XE_HP );
-    };
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    template <typename T>
-    struct OverrideUserTrait : XE_HPG::OverrideUserTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideUserTrait, XE_HPG );
-    };
-} // namespace ML::XE_HPC
+} // namespace ML

@@ -1371,3 +1371,66 @@ namespace ML::XE_HPC
         ML_DECLARE_TRAIT( QueryHwCountersTrait, XE_HPG );
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct QueryHwCountersTrait : XE_HPG::QueryHwCountersTrait<T>
+    {
+        ML_DECLARE_TRAIT( QueryHwCountersTrait, XE_HPG );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::m_Context;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes oa state.
+        /// @param  begin       begin/end query.
+        /// @param  buffer      target command buffer.
+        /// @param  address     gpu memory address.
+        /// @param  slot        query slot data.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <bool begin, typename CommandBuffer>
+        ML_INLINE StatusCode WriteOaState(
+            CommandBuffer&                     buffer,
+            const uint64_t                     address,
+            const TT::Queries::HwCountersSlot& slot ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            const auto mode = slot.m_ReportCollectingMode;
+
+            // Oa buffer is only used in oag mode.
+            if( mode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag ||
+                mode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended )
+            {
+                Base::template WriteOaState<begin>(
+                    buffer,
+                    address,
+                    slot );
+            }
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks oa report collecting mode.
+        /// @param  buffer  target command buffer.
+        /// @param  slot    query slot data.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE void CheckReportCollectingMode(
+            [[maybe_unused]] CommandBuffer& buffer,
+            TT::Queries::HwCountersSlot&    slot )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            auto& mode = slot.m_ReportCollectingMode;
+            mode       = m_Context.m_Kernel.GetReportCollectingModeOverride();
+
+            log.Debug( "Oa report collecting mode", mode );
+        }
+    };
+} // namespace ML::XE2_HPG

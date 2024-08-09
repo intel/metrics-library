@@ -35,4 +35,5 @@ SPDX-License-Identifier: MIT
 //////////////////////////////////////////////////////////////////////////
 #define __user
 #include "external/drm/i915_drm.h"
+#include "external/drm/xe_drm.h"
 #include "external/drm/xf86drm.h"

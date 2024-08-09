@@ -162,4 +162,14 @@ namespace ML::XE_HPC
     using DdiQuery = XE_HPG::DdiQuery<T>;
 } // namespace ML::XE_HPC
 
+namespace ML::XE2_HPG
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief XE2_HPG-specific functions for DdiQuery.
+    ///        These should ONLY be used for MAJOR algorithm changes.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    using DdiQuery = XE_HPG::DdiQuery<T>;
+} // namespace ML::XE2_HPG
+
 #pragma endregion

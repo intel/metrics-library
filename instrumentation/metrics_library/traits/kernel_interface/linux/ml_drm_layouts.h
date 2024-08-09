@@ -109,4 +109,29 @@ namespace ML::XE_HPC
     };
 } // namespace ML::XE_HPC
 
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct DrmLayoutsTrait : BASE::DrmLayoutsTrait<T>
+    {
+        ML_DECLARE_TRAIT( DrmLayoutsTrait, BASE );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief File constants.
+        //////////////////////////////////////////////////////////////////////////
+        struct File
+        {
+            static constexpr const char* m_Name = "xe";
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Stream constants.
+        //////////////////////////////////////////////////////////////////////////
+        struct Stream
+        {
+            static constexpr const char* m_ParanoidPath = "/proc/sys/dev/xe/observation_paranoid";
+        };
+    };
+} // namespace ML::XE2_HPG
+
 ML_STRUCTURE_PACK_END();

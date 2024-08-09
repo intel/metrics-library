@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for OverridePoshQueryTrait object.
@@ -71,58 +71,4 @@ namespace ML::BASE
             return StatusCode::NotImplemented;
         }
     };
-} // namespace ML::BASE
-
-namespace ML::GEN9
-{
-    template <typename T>
-    struct OverridePoshQueryTrait : BASE::OverridePoshQueryTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverridePoshQueryTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct OverridePoshQueryTrait : GEN9::OverridePoshQueryTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverridePoshQueryTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct OverridePoshQueryTrait : GEN11::OverridePoshQueryTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverridePoshQueryTrait, GEN11 );
-    };
-} // namespace ML::XE_LP
-
-namespace ML::XE_HP
-{
-    template <typename T>
-    struct OverridePoshQueryTrait : XE_LP::OverridePoshQueryTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverridePoshQueryTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct OverridePoshQueryTrait : XE_HP::OverridePoshQueryTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverridePoshQueryTrait, XE_HP );
-    };
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    template <typename T>
-    struct OverridePoshQueryTrait : XE_HPG::OverridePoshQueryTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverridePoshQueryTrait, XE_HPG );
-    };
-} // namespace ML::XE_HPC
+} // namespace ML

@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for SubDeviceCommonTrait object.
@@ -71,58 +71,4 @@ namespace ML::BASE
             return StatusCode::Success;
         }
     };
-} // namespace ML::BASE
-
-namespace ML::GEN9
-{
-    template <typename T>
-    struct SubDeviceCommonTrait : BASE::SubDeviceCommonTrait<T>
-    {
-        ML_DECLARE_TRAIT( SubDeviceCommonTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct SubDeviceCommonTrait : GEN9::SubDeviceCommonTrait<T>
-    {
-        ML_DECLARE_TRAIT( SubDeviceCommonTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct SubDeviceCommonTrait : GEN11::SubDeviceCommonTrait<T>
-    {
-        ML_DECLARE_TRAIT( SubDeviceCommonTrait, GEN11 );
-    };
-} // namespace ML::XE_LP
-
-namespace ML::XE_HP
-{
-    template <typename T>
-    struct SubDeviceCommonTrait : XE_LP::SubDeviceCommonTrait<T>
-    {
-        ML_DECLARE_TRAIT( SubDeviceCommonTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct SubDeviceCommonTrait : XE_HP::SubDeviceCommonTrait<T>
-    {
-        ML_DECLARE_TRAIT( SubDeviceCommonTrait, XE_HP );
-    };
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    template <typename T>
-    struct SubDeviceCommonTrait : XE_HPG::SubDeviceCommonTrait<T>
-    {
-        ML_DECLARE_TRAIT( SubDeviceCommonTrait, XE_HPG );
-    };
-} // namespace ML::XE_HPC
+} // namespace ML

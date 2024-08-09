@@ -91,3 +91,12 @@ namespace ML::XE_HPC
         ML_DECLARE_TRAIT( ExampleGpuTrait, XE_HPG );
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct ExampleGpuTrait : XE_HPG::ExampleGpuTrait<T>
+    {
+        ML_DECLARE_TRAIT( ExampleGpuTrait, XE_HPG );
+    };
+} // namespace ML::XE2_HPG

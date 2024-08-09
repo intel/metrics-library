@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for OverrideLayoutsTrait object.
@@ -42,58 +42,4 @@ namespace ML::BASE
             return "OverrideLayoutsTrait<Traits>";
         }
     };
-} // namespace ML::BASE
-
-namespace ML::GEN9
-{
-    template <typename T>
-    struct OverrideLayoutsTrait : BASE::OverrideLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideLayoutsTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct OverrideLayoutsTrait : GEN9::OverrideLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideLayoutsTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct OverrideLayoutsTrait : GEN11::OverrideLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideLayoutsTrait, GEN11 );
-    };
-} // namespace ML::XE_LP
-
-namespace ML::XE_HP
-{
-    template <typename T>
-    struct OverrideLayoutsTrait : XE_LP::OverrideLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideLayoutsTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct OverrideLayoutsTrait : XE_HP::OverrideLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideLayoutsTrait, XE_HP );
-    };
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    template <typename T>
-    struct OverrideLayoutsTrait : XE_HPG::OverrideLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideLayoutsTrait, XE_HPG );
-    };
-} // namespace ML::XE_HPC
+} // namespace ML

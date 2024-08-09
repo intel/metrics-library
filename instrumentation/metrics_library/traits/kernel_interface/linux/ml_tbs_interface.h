@@ -443,3 +443,96 @@ namespace ML::XE_HPC
         ML_DECLARE_TRAIT( TbsInterfaceTrait, XE_HPG );
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct TbsInterfaceTrait : BASE::TbsInterfaceTrait<T>
+    {
+        ML_DECLARE_TRAIT( TbsInterfaceTrait, BASE );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::GetTimerPeriodExponent;
+        using Base::m_Kernel;
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa report type.
+        /// @return oa report type status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t GetOaReportType() const
+        {
+            ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
+
+            switch( m_Kernel.GetQueryModeOverride() )
+            {
+                case T::Layouts::HwCounters::Query::Mode::Render:
+                case T::Layouts::HwCounters::Query::Mode::Compute:
+                case T::Layouts::HwCounters::Query::Mode::Global:
+                    return log.m_Result = ( DRM_XE_OA_FMT_TYPE_PEC | ( 1 << 8 ) | ( 1 << 16 ) | ( 0 << 24 ) ); // counter select = 1, counter size = 1, bc report = 0
+
+                case T::Layouts::HwCounters::Query::Mode::GlobalExtended:
+                    return log.m_Result = ( DRM_XE_OA_FMT_TYPE_PEC | ( 1 << 8 ) | ( 1 << 16 ) | ( 1 << 24 ) ); // counter select = 1, counter size = 1, bc report = 1
+
+                default:
+                    ML_ASSERT_ALWAYS();
+                    return log.m_Result;
+            }
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns tbs properties.
+        /// @param  metricSet   metric set associated with tbs stream.
+        /// @return properties  tbs properties.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetStreamProperties(
+            drm_xe_ext_set_property properties[],
+            const int32_t           metricSet ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            uint32_t oaUnit       = 0;
+            uint32_t currentIndex = 0;
+            auto&    subDevice    = m_Kernel.m_Context.m_SubDevice;
+
+            auto addProperty = [&]( const uint64_t key, const uint64_t value )
+            {
+                drm_xe_ext_set_property property = {};
+                property.base.name               = DRM_XE_OA_EXTENSION_SET_PROPERTY;
+                property.property                = key;
+                property.value                   = value;
+
+                properties[currentIndex] = property;
+
+                if( currentIndex > 0 )
+                {
+                    properties[currentIndex - 1].base.next_extension = reinterpret_cast<uint64_t>( &properties[currentIndex] );
+                }
+
+                ++currentIndex;
+            };
+
+            ML_FUNCTION_CHECK( subDevice.GetTbsOaUnit( oaUnit ) );
+
+            addProperty( DRM_XE_OA_PROPERTY_OA_UNIT_ID, oaUnit );
+            addProperty( DRM_XE_OA_PROPERTY_SAMPLE_OA, true );
+            addProperty( DRM_XE_OA_PROPERTY_OA_METRIC_SET, static_cast<uint32_t>( metricSet ) );
+            addProperty( DRM_XE_OA_PROPERTY_OA_FORMAT, GetOaReportType() );
+            addProperty( DRM_XE_OA_PROPERTY_OA_PERIOD_EXPONENT, GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
+
+            return log.m_Result;
+        }
+
+    protected:
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Gets maximum supported oa buffer size on a given platform.
+        /// @return maximum supported oa buffer size.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t GetMaxOaBufferSize() const
+        {
+            return ( 16 * Constants::Data::m_Megabyte );
+        }
+    };
+} // namespace ML::XE2_HPG

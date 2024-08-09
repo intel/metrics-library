@@ -382,3 +382,62 @@ namespace ML::XE_HPC::OneApi
 
 #endif // ML_ENABLE_XE_HPC
 
+#if ML_ENABLE_XE2_HPG
+
+#include "ml_traits_xe2_hpg.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiMarker.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE2_HPG::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE2_HPG::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE2_HPG::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE2_HPG::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE2_HPG
+

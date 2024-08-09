@@ -262,3 +262,42 @@ namespace ML::XE_HPC::OneApi
 
 #endif // ML_ENABLE_XE_HPC
 
+#if ML_ENABLE_XE2_HPG
+
+#include "ml_traits_xe2_hpg.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiReport.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE2_HPG::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for GetData_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL GetData_1_0(
+        GetReportData_1_0* data )
+    {
+        return DdiReport<T>::GetData_1_0( data );
+    }
+
+} // namespace ML::XE2_HPG::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE2_HPG::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for GetData_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL GetData_1_0(
+        GetReportData_1_0* data )
+    {
+        return DdiReport<T>::GetData_1_0( data );
+    }
+
+} // namespace ML::XE2_HPG::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE2_HPG
+

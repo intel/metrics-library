@@ -283,3 +283,27 @@ namespace ML::XE_HPC
         ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, XE_HPG );
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct QueryHwCountersSlotTrait : XE_HPG::QueryHwCountersSlotTrait<T>
+    {
+        ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, XE_HPG );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Resets oa report in gpu memory.
+        /// @param  reportGpu   report gpu.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void ResetOaReport( TT::Layouts::HwCounters::Query::ReportGpu& reportGpu ) const
+        {
+            constexpr uint32_t lastPerformanceEventCounterIndex = T::Layouts::HwCounters::m_PerformanceEventCountersCount - 1;
+
+            reportGpu.m_Begin.m_Oa.m_Data.m_PerformanceEventCounter[lastPerformanceEventCounterIndex]     = T::Layouts::HwCounters::m_MirpcResetValue;
+            reportGpu.m_Begin.m_Oa.m_Data.m_PerformanceEventCounter[lastPerformanceEventCounterIndex - 1] = T::Layouts::HwCounters::m_MirpcResetValue;
+
+            reportGpu.m_End.m_Oa.m_Data.m_PerformanceEventCounter[lastPerformanceEventCounterIndex]     = T::Layouts::HwCounters::m_MirpcResetValue;
+            reportGpu.m_End.m_Oa.m_Data.m_PerformanceEventCounter[lastPerformanceEventCounterIndex - 1] = T::Layouts::HwCounters::m_MirpcResetValue;
+        }
+    };
+} // namespace ML::XE2_HPG

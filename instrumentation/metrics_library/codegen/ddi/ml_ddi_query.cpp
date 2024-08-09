@@ -382,3 +382,62 @@ namespace ML::XE_HPC::OneApi
 
 #endif // ML_ENABLE_XE_HPC
 
+#if ML_ENABLE_XE2_HPG
+
+#include "ml_traits_xe2_hpg.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiQuery.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE2_HPG::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryCreate_1_0(
+        const QueryCreateData_1_0* createData,
+        QueryHandle_1_0*           handle )
+    {
+        return DdiQuery<T>::QueryCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryDelete_1_0(
+        const QueryHandle_1_0 handle )
+    {
+        return DdiQuery<T>::QueryDelete_1_0( handle );
+    }
+
+} // namespace ML::XE2_HPG::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE2_HPG::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryCreate_1_0(
+        const QueryCreateData_1_0* createData,
+        QueryHandle_1_0*           handle )
+    {
+        return DdiQuery<T>::QueryCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryDelete_1_0(
+        const QueryHandle_1_0 handle )
+    {
+        return DdiQuery<T>::QueryDelete_1_0( handle );
+    }
+
+} // namespace ML::XE2_HPG::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE2_HPG
+

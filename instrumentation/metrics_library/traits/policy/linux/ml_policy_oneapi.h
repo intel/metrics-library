@@ -238,3 +238,26 @@ namespace ML::XE_HPC
         };
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct PolicyOneApiTrait : XE_HPG::PolicyOneApiTrait<T>
+    {
+        ML_DECLARE_TRAIT( PolicyOneApiTrait, XE_HPG );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Query hw counters policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct QueryHwCounters : Base::QueryHwCounters
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Query get data policies.
+            //////////////////////////////////////////////////////////////////////////
+            struct GetData : Base::QueryHwCounters::GetData
+            {
+                static constexpr bool m_IncludeRenderContextSwitchReports = false; // MI_RPC is not executed on OAG query
+            };
+        };
+    };
+} // namespace ML::XE2_HPG

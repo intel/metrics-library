@@ -48,7 +48,7 @@ namespace ML
         {
             ClientApi api = ClientApi::Unknown;
 
-            const bool validApiVariable = ML_SUCCESS( BASE::ToolsOsTrait<ML_TRAITS_DUMMY>::GetSystemVariable( Constants::Library::m_ApiOverride, api ) );
+            const bool validApiVariable = ML_SUCCESS( ToolsOsTrait<ML_TRAITS_DUMMY>::GetSystemVariable( Constants::Library::m_ApiOverride, api ) );
             const bool validApi         = ( api > ClientApi::Unknown && api < ClientApi::Last );
 
             if( validApiVariable && validApi )
@@ -65,7 +65,7 @@ namespace ML
         {
             ClientGen gpu = ClientGen::Unknown;
 
-            const bool validGpuVariable = ML_SUCCESS( BASE::ToolsOsTrait<ML_TRAITS_DUMMY>::GetSystemVariable( Constants::Library::m_GpuOverride, gpu ) );
+            const bool validGpuVariable = ML_SUCCESS( ToolsOsTrait<ML_TRAITS_DUMMY>::GetSystemVariable( Constants::Library::m_GpuOverride, gpu ) );
             const bool validGpu         = ( gpu > ClientGen::Unknown && gpu < ClientGen::Last );
 
             if( validGpuVariable && validGpu )

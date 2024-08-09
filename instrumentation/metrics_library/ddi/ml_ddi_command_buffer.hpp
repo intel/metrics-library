@@ -221,4 +221,14 @@ namespace ML::XE_HPC
     using DdiCommandBuffer = XE_HPG::DdiCommandBuffer<T>;
 } // namespace ML::XE_HPC
 
+namespace ML::XE2_HPG
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief XE2_HPG-specific functions for DdiCommandBuffer.
+    ///        These should ONLY be used for MAJOR algorithm changes.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    using DdiCommandBuffer = XE_HPG::DdiCommandBuffer<T>;
+} // namespace ML::XE2_HPG
+
 #pragma endregion

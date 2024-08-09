@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for ToolsOsTrait object.
@@ -104,58 +104,4 @@ namespace ML::BASE
             return timeOutput.str();
         }
     };
-} // namespace ML::BASE
-
-namespace ML::GEN9
-{
-    template <typename T>
-    struct ToolsOsTrait : BASE::ToolsOsTrait<T>
-    {
-        ML_DECLARE_TRAIT( ToolsOsTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct ToolsOsTrait : GEN9::ToolsOsTrait<T>
-    {
-        ML_DECLARE_TRAIT( ToolsOsTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct ToolsOsTrait : GEN11::ToolsOsTrait<T>
-    {
-        ML_DECLARE_TRAIT( ToolsOsTrait, GEN11 );
-    };
-} // namespace ML::XE_LP
-
-namespace ML::XE_HP
-{
-    template <typename T>
-    struct ToolsOsTrait : XE_LP::ToolsOsTrait<T>
-    {
-        ML_DECLARE_TRAIT( ToolsOsTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct ToolsOsTrait : XE_HP::ToolsOsTrait<T>
-    {
-        ML_DECLARE_TRAIT( ToolsOsTrait, XE_HP );
-    };
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    template <typename T>
-    struct ToolsOsTrait : XE_HPG::ToolsOsTrait<T>
-    {
-        ML_DECLARE_TRAIT( ToolsOsTrait, XE_HPG );
-    };
-} // namespace ML::XE_HPC
+} // namespace ML

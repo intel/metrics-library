@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for OaBufferMappedTrait object.
@@ -349,58 +349,4 @@ namespace ML::BASE
             return m_ReportSplitted;
         }
     };
-} // namespace ML::BASE
-
-namespace ML::GEN9
-{
-    template <typename T>
-    struct OaBufferMappedTrait : BASE::OaBufferMappedTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferMappedTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct OaBufferMappedTrait : GEN9::OaBufferMappedTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct OaBufferMappedTrait : GEN11::OaBufferMappedTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN11 );
-    };
-} // namespace ML::XE_LP
-
-namespace ML::XE_HP
-{
-    template <typename T>
-    struct OaBufferMappedTrait : XE_LP::OaBufferMappedTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct OaBufferMappedTrait : XE_HP::OaBufferMappedTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HP );
-    };
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    template <typename T>
-    struct OaBufferMappedTrait : XE_HPG::OaBufferMappedTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HPG );
-    };
-} // namespace ML::XE_HPC
+} // namespace ML

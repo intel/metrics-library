@@ -1928,4 +1928,16 @@ namespace ML::XE_HPC
     };
 } // namespace ML::XE_HPC
 
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct GpuRegistersTrait : XE_HPG::GpuRegistersTrait<T>
+    {
+        ML_DECLARE_TRAIT( GpuRegistersTrait, XE_HPG );
+
+        static constexpr uint32_t m_OarPec0 = 0x14000;
+        static constexpr uint32_t m_OacPec0 = 0x15200;
+    };
+} // namespace ML::XE2_HPG
+
 // clang-format on

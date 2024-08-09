@@ -1646,3 +1646,159 @@ namespace ML::XE_HPC
         }
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct GpuCommandsTrait : XE_HPG::GpuCommandsTrait<T>
+    {
+        ML_DECLARE_TRAIT( GpuCommandsTrait, XE_HPG );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types
+        //////////////////////////////////////////////////////////////////////////
+        using Flags = typename Base::Flags;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes PIPE_CONTROL to gpu command buffer to flush gpu caches.
+        /// @param  buffer  target command buffer.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE static StatusCode FlushCaches( CommandBuffer& buffer )
+        {
+            TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
+
+            command.Init();
+            command.SetRenderTargetCacheFlushEnable( true );
+            command.SetDepthCacheFlushEnable( true );
+            command.SetStallAtPixelScoreboard( true );
+            command.SetStateCacheInvalidationEnable( true );
+            command.SetTextureCacheInvalidationEnable( true );
+            command.SetConstantCacheInvalidationEnable( true );
+            command.SetInstructionCacheInvalidateEnable( true );
+            command.SetCommandStreamerStallEnable( true );
+            command.SetVFCacheInvalidationEnable( true );
+
+            return buffer.template Write<false>( command );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes commands to gpu command buffer to store hw counters.
+        /// @param  begin           begin/end query indicator.
+        /// @param  buffer          target command buffer.
+        /// @param  collectingMode  oa report collecting mode.
+        /// @param  address         memory offset.
+        /// @param  reportId        report id.
+        /// @param  queryId         query id.
+        /// @param  flags           gpu command flags.
+        /// @return                 operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <bool begin, typename CommandBuffer>
+        ML_INLINE static StatusCode StoreHwCounters(
+            CommandBuffer&                                             buffer,
+            const TT::Layouts::HwCounters::Query::ReportCollectingMode collectingMode,
+            const uint64_t                                             address,
+            const uint32_t                                             reportId,
+            const uint32_t                                             queryId,
+            const Flags                                                flags = Flags::None )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
+            switch( collectingMode )
+            {
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
+                    ML_FUNCTION_CHECK( T::GpuCommands::template StoreHwCountersViaMirpc<begin>(
+                        buffer,
+                        address,
+                        reportId ) );
+                    break;
+
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
+                    ML_FUNCTION_CHECK( T::GpuCommands::template StoreHwCountersViaOagTriggers<begin>(
+                        buffer,
+                        address,
+                        reportId,
+                        queryId,
+                        flags ) );
+                    break;
+
+                default:
+                    ML_ASSERT_ALWAYS();
+                    return log.m_Result = StatusCode::NotSupported;
+            }
+
+            if constexpr( begin )
+            {
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
+                    buffer,
+                    0,
+                    address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CommandStreamerIdentificator ),
+                    flags ) );
+            }
+            else
+            {
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreCommandStreamerIdentificator(
+                    buffer,
+                    address,
+                    flags ) );
+            }
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes MI_REPORT_PERF_COUNT command to gpu command buffer to
+        ///         store hw counters.
+        /// @param  begin       begin/end query indicator.
+        /// @param  buffer      target command buffer.
+        /// @param  address     memory offset.
+        /// @param  reportId    report id.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <bool begin, typename CommandBuffer>
+        ML_INLINE static StatusCode StoreHwCountersViaMirpc(
+            CommandBuffer& buffer,
+            const uint64_t address,
+            const uint32_t reportId )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
+
+            // Override pec counters.
+            if constexpr( begin )
+            {
+                buffer.m_Context.m_Internal.OverridePecCounters( buffer, T::Layouts::HwCounters::PecType::All );
+            }
+
+            // Call base method to store hw counter via mirpc.
+            ML_FUNCTION_CHECK( Base::template StoreHwCountersViaMirpc<begin>(
+                buffer,
+                address,
+                reportId ) );
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes STORE_REGISTER_MEM commands to gpu command buffer to
+        ///         store hw counters.
+        /// @param  begin       begin/end query indicator.
+        /// @param  buffer      target command buffer.
+        /// @param  address     memory offset.
+        /// @param  reportId    report id.
+        /// @param  flags       gpu command flags.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <bool begin, typename CommandBuffer>
+        ML_INLINE static StatusCode StoreHwCountersViaSrmOar(
+            [[maybe_unused]] CommandBuffer& buffer,
+            [[maybe_unused]] const uint64_t address,
+            [[maybe_unused]] const uint32_t reportId,
+            [[maybe_unused]] const Flags    flags )
+        {
+            ML_ASSERT_ALWAYS_ADAPTER( buffer.m_Context.m_AdapterId );
+            return StatusCode::NotSupported;
+        }
+    };
+} // namespace ML::XE2_HPG

@@ -905,3 +905,436 @@ namespace ML::XE_HPC
         ML_DECLARE_TRAIT( IoControlTrait, XE_HPG );
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct IoControlTrait : BASE::IoControlTrait<T>
+    {
+        ML_DECLARE_TRAIT( IoControlTrait, BASE );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::GenerateQueryGuid;
+        using Base::SendDrm;
+        using Base::m_DrmFile;
+        using Base::m_Kernel;
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Opens tbs stream.
+        /// @param  properties   tbs stream properties.
+        /// @return stream       opened tbs stream id.
+        /// @return              operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode OpenTbs(
+            drm_xe_ext_set_property properties[],
+            int32_t&                stream ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            // Print properties.
+            for( uint32_t i = 0; i < DRM_XE_OA_PROPERTY_NO_PREEMPT - DRM_XE_OA_EXTENSION_SET_PROPERTY; ++i )
+            {
+                std::string propertyName = "";
+
+                switch( properties[i].property )
+                {
+                    case DRM_XE_OA_PROPERTY_OA_UNIT_ID:
+                        propertyName = "Oa unit:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_SAMPLE_OA:
+                        propertyName = "Sample oa:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_OA_METRIC_SET:
+                        propertyName = "Metric set:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_OA_FORMAT:
+                        propertyName = "Oa format:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_OA_PERIOD_EXPONENT:
+                        propertyName = "Period exponent:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_OA_DISABLED:
+                        propertyName = "Oa disabled:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_EXEC_QUEUE_ID:
+                        propertyName = "Exec queue id:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_OA_ENGINE_INSTANCE:
+                        propertyName = "Engine instance:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_NO_PREEMPT:
+                        propertyName = "No preempt:";
+                        break;
+
+                    default:
+                        ML_ASSERT_ALWAYS();
+                        break;
+                }
+
+                log.Info( propertyName, static_cast<uint32_t>( properties[i].value ) );
+
+                if( properties[i].base.next_extension == 0 )
+                {
+                    break;
+                }
+            }
+
+            return log.m_Result = SendXeObservation( DRM_XE_OBSERVATION_OP_STREAM_OPEN, *properties, stream );
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Sets new tbs metric set.
+        /// @param  stream  tbs stream.
+        /// @param  set     metric set to use with tbs stream.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode SetTbsMetricSet(
+            const int32_t stream,
+            int32_t       set ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_CHECK( set != T::ConstantsOs::Tbs::m_Invalid );
+            ML_FUNCTION_CHECK( stream != T::ConstantsOs::Tbs::m_Invalid );
+
+            drm_xe_ext_set_property property = {};
+            property.base.name               = DRM_XE_OA_EXTENSION_SET_PROPERTY;
+            property.property                = DRM_XE_OA_PROPERTY_OA_METRIC_SET;
+            property.value                   = set;
+
+            const int32_t error = drmIoctl( stream, DRM_XE_OBSERVATION_IOCTL_CONFIG, reinterpret_cast<void*>( &property ) );
+            log.m_Result        = ML_STATUS( error != T::ConstantsOs::Tbs::m_Invalid );
+
+            if( ML_FAIL( log.m_Result ) )
+            {
+                log.Debug( "Error id          ", errno );
+                log.Debug( "Error description ", strerror( errno ) );
+            }
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Removes metric set configuration from the kernel.
+        ///         Do not change int64_t to int32_t. Drm uses int32_t to
+        ///         identify metric set. But int64_t is needed to remove
+        ///         metric set configuration.
+        /// @param  set  metric set to remove.
+        /// @return      operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode RemoveMetricSet( int64_t set ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_CHECK( set != T::ConstantsOs::Tbs::m_Invalid );
+
+            int32_t result = T::ConstantsOs::Drm::m_Invalid;
+
+            return log.m_Result = SendXeObservation( DRM_XE_OBSERVATION_OP_REMOVE_CONFIG, set, result );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Gets exact gpu timestamp frequency.
+        /// @param  timestampType  select timestamp domain - oa or cs.
+        /// @return                gpu timestamp frequency.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint64_t GetGpuTimestampFrequency( const TT::Layouts::Configuration::TimestampType timestampType ) const
+        {
+            ML_FUNCTION_LOG( uint64_t{ 0 }, &m_Kernel.m_Context );
+
+            std::vector<uint8_t> buffer = {};
+
+            if( timestampType == T::Layouts::Configuration::TimestampType::Oa )
+            {
+                // Query check.
+                const bool validQuery  = ML_SUCCESS( Query( DRM_XE_DEVICE_QUERY_OA_UNITS, buffer ) );
+                const bool validBuffer = buffer.size() > 0;
+                const auto oaData      = reinterpret_cast<drm_xe_query_oa_units*>( buffer.data() );
+                const bool validData   = ( oaData != nullptr ) && ( oaData->num_oa_units > 0 );
+
+                if( validQuery && validBuffer && validData )
+                {
+                    const auto oaUnit = reinterpret_cast<drm_xe_oa_unit*>( oaData->oa_units );
+
+                    return log.m_Result = oaUnit->oa_timestamp_freq;
+                }
+            }
+            else
+            {
+                // Query check.
+                const bool validQuery  = ML_SUCCESS( Query( DRM_XE_DEVICE_QUERY_GT_LIST, buffer ) );
+                const bool validBuffer = buffer.size() > 0;
+
+                auto gtsData = reinterpret_cast<drm_xe_query_gt_list*>( buffer.data() );
+
+                const bool validData = ( gtsData != nullptr ) && ( gtsData->num_gt > 0 );
+
+                if( validQuery && validBuffer && validData )
+                {
+                    return log.m_Result = gtsData->gt_list[0].reference_clock;
+                }
+            }
+
+            log.Error( "Failed to get timestamp" );
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Queries XE for specific information.
+        /// @param  query   query structure.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode Query( drm_xe_device_query& query ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            return log.m_Result = SendDrm( DRM_IOCTL_XE_DEVICE_QUERY, query );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Queries XE for specific information length.
+        /// @param  id      query id.
+        /// @return         data length.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t QueryLength( const uint32_t id ) const
+        {
+            ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
+
+            auto query = drm_xe_device_query{};
+
+            // Query length.
+            query.query = id;
+
+            const bool validCall   = ML_SUCCESS( Query( query ) );
+            const bool validLength = query.size > 0;
+
+            return log.m_Result = ( validCall && validLength )
+                ? query.size
+                : 0;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Queries XE for specific information.
+        /// @param  id      query id.
+        /// @return data    returned data.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode Query(
+            const uint32_t        id,
+            std::vector<uint8_t>& data ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            auto query = drm_xe_device_query{};
+
+            // Prepare space for query data.
+            data.resize( QueryLength( id ) );
+
+            // Prepare query item.
+            query.query = id;
+            query.size  = data.size();
+            query.data  = reinterpret_cast<uint64_t>( data.data() );
+
+            // Input check.
+            ML_FUNCTION_CHECK( query.size > 0 );
+
+            // Send io control.
+            ML_FUNCTION_CHECK( Query( query ) );
+
+            // Output check.
+            ML_FUNCTION_CHECK( data.size() == static_cast<uint32_t>( query.size ) );
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns  observation module revision.
+        /// @return revision observation module revision.
+        /// @return          operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetDrmRevision( [[maybe_unused]] TT::ConstantsOs::Drm::Revision& revision ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            // XE OA does not support revisions.
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns chipset id.
+        /// @return id  chipset id.
+        /// @return     operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetChipsetId( int32_t& id ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            std::vector<uint8_t> buffer = {};
+
+            ML_FUNCTION_CHECK( Query( DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID, buffer ) );
+            ML_FUNCTION_CHECK( buffer.size() > 0 );
+
+            auto config = reinterpret_cast<drm_xe_query_config*>( buffer.data() );
+
+            ML_FUNCTION_CHECK( config != nullptr );
+
+            id = config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa buffer cpu address.
+        /// @param  stream     tbs stream id.
+        /// @return addressCpu oa buffer mapped cpu address.
+        /// @return size       oa buffer size.
+        /// @return            operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode MapOaBuffer(
+            const int32_t stream,
+            void*&        addressCpu,
+            uint32_t&     size ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            // Obtain oa buffer size / offset.
+            auto properties = drm_xe_oa_stream_info{};
+            log.m_Result    = GetStreamParameter( stream, DRM_XE_OBSERVATION_IOCTL_INFO, properties );
+
+            if( ML_FAIL( log.m_Result ) )
+            {
+                return log.m_Result;
+            }
+
+            // Obtain oa buffer cpu address.
+            size         = properties.oa_buf_size;
+            addressCpu   = mmap( 0, size, PROT_READ, MAP_PRIVATE, stream, 0 );
+            log.m_Result = ML_STATUS( ( addressCpu != nullptr ) && ( addressCpu != reinterpret_cast<void*>( -1 ) ) );
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates dummy metric set configuration.
+        /// @return dummy metric set id.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE int32_t CreateMetricSet() const
+        {
+            ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Tbs::m_Invalid }, &m_Kernel.m_Context );
+
+            const uint32_t    subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
+            const std::string guid           = GenerateQueryGuid( subDeviceIndex );
+            ML_FUNCTION_CHECK_ERROR( guid != "", T::ConstantsOs::Tbs::m_Invalid );
+
+            drm_xe_oa_config configuration         = {};
+            uint32_t         configurationDummy[2] = { T::GpuRegisters::m_OaTrigger2, 0 };
+
+            // Copy guid without ending '\0' (size 36).
+            T::Tools::MemoryCopy( configuration.uuid, sizeof( configuration.uuid ), guid.c_str(), guid.size() );
+
+            // Dummy configuration parameters.
+            configuration.regs_ptr = reinterpret_cast<uint64_t>( configurationDummy );
+            configuration.n_regs   = 1;
+
+            // Send configuration to linux kernel.
+            SendXeObservation( DRM_XE_OBSERVATION_OP_ADD_CONFIG, configuration, log.m_Result );
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns query mode override state.
+        /// @return query mode.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE TT::Layouts::HwCounters::Query::Mode GetQueryModeOverride() const
+        {
+            ML_FUNCTION_LOG( T::Layouts::HwCounters::Query::Mode::Global, &m_Kernel.m_Context );
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns report collecting mode override state.
+        /// @return report collecting mode.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE TT::Layouts::HwCounters::Query::ReportCollectingMode GetReportCollectingModeOverride() const
+        {
+            ML_FUNCTION_LOG( T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag, &m_Kernel.m_Context );
+
+            return log.m_Result;
+        }
+
+    protected:
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Sends xe observation io control to drm.
+        /// @param  operation   xe observation operation type.
+        /// @return parameters  parameters to send.
+        /// @return result      xe observation io control result.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename Data>
+        ML_INLINE StatusCode SendXeObservation(
+            const uint32_t operation,
+            Data&          parameters,
+            int32_t&       result ) const
+        {
+            auto xeObservation = drm_xe_observation_param{};
+
+            xeObservation.observation_type = DRM_XE_OBSERVATION_TYPE_OA;
+            xeObservation.observation_op   = operation;
+            xeObservation.param            = reinterpret_cast<uint64_t>( &parameters );
+
+            return SendDrm( DRM_IOCTL_XE_OBSERVATION, xeObservation, result );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns parameter from the tbs stream.
+        /// @param  stream   tbs stream id.
+        /// @param  request  request type to send.
+        /// @return result   result value.
+        /// @return          operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename Result>
+        ML_INLINE StatusCode GetStreamParameter(
+            const int32_t  stream,
+            const uint32_t request,
+            Result&        result ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_CHECK( stream != T::ConstantsOs::Tbs::m_Invalid );
+
+            // Check parameter availability.
+            switch( request )
+            {
+                case DRM_XE_OBSERVATION_IOCTL_INFO:
+                    break;
+
+                default:
+                    ML_ASSERT_ALWAYS();
+                    return log.m_Result = StatusCode::NotSupported;
+            }
+
+            const int32_t error = drmIoctl( stream, request, &result );
+
+            if( error == T::ConstantsOs::Tbs::m_Invalid )
+            {
+                log.Debug( "Error id          ", errno );
+                log.Debug( "Error description ", strerror( errno ) );
+
+                return log.m_Result = StatusCode::Failed;
+            }
+
+            return log.m_Result = StatusCode::Success;
+        }
+    };
+} // namespace ML::XE2_HPG

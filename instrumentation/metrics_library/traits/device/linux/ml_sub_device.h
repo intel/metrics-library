@@ -494,3 +494,270 @@ namespace ML::XE_HPC
         ML_DECLARE_TRAIT( SubDeviceTrait, XE_HPG );
     };
 } // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct SubDeviceTrait : BASE::SubDeviceTrait<T>
+    {
+        ML_DECLARE_TRAIT( SubDeviceTrait, BASE );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::m_Context;
+        using Base::m_Enabled;
+        using Base::m_IoControl;
+        using Base::m_IsSubDevice;
+        using Base::m_SubDeviceCount;
+        using Base::m_SubDeviceIndex;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Oa unit, class, instance and gt id for a given engine.
+        //////////////////////////////////////////////////////////////////////////
+        struct EngineOaUnitClassInstance
+        {
+            uint16_t m_OaUnit;
+            uint16_t m_Class;
+            uint16_t m_Instance;
+            uint16_t m_GtId;
+
+            EngineOaUnitClassInstance(
+                const uint16_t oaUnit,
+                const uint16_t engineClass,
+                const uint16_t engineInstance,
+                const uint16_t gtId )
+                : m_OaUnit( oaUnit )
+                , m_Class( engineClass )
+                , m_Instance( engineInstance )
+                , m_GtId( gtId )
+            {
+            }
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Members.
+        //////////////////////////////////////////////////////////////////////////
+        std::vector<EngineOaUnitClassInstance> m_Engines;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Sub device constructor.
+        /// @param  context metrics library context.
+        //////////////////////////////////////////////////////////////////////////
+        SubDeviceTrait( TT::Context& context )
+            : Base( context )
+            , m_Engines{}
+        {
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Initializes sub device instance.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode Initialize()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            auto     engines    = std::vector<EngineOaUnitClassInstance>();
+            uint32_t subDevices = 0;
+
+            // Print client options related to sub devices.
+            log.Debug( "Driver client data    " );
+            log.Debug( "    data present      ", m_Context.m_ClientOptions.m_SubDeviceDataPresent );
+            log.Debug( "    is sub device     ", m_IsSubDevice );
+            log.Debug( "    sub devices count ", m_SubDeviceCount );
+            log.Debug( "    sub device index  ", m_SubDeviceIndex );
+
+            // Check client options obtained from the driver.
+            if constexpr( T::Policy::SubDevice::m_DriverClientDataRequired )
+            {
+                ML_FUNCTION_CHECK( m_Context.m_ClientOptions.m_SubDeviceDataPresent );
+            }
+
+            // Enumerate engines.
+            ML_FUNCTION_CHECK( GetEngines( engines ) );
+
+            // Enumerate sub device engines.
+            ML_FUNCTION_CHECK( GetSubDeviceEngines( engines, subDevices ) );
+
+            // Helper data.
+            const bool     isRootDevice           = m_IsSubDevice == false;
+            const bool     isSubDevice            = m_IsSubDevice == true;
+            const bool     isFirstSubDevice       = m_IsSubDevice && ( m_SubDeviceIndex == 0 );
+            constexpr bool isAllowImplicitScaling = T::Policy::SubDevice::m_AllowImplicitScaling;
+
+            // Supported modes.
+            const bool validRootDeviceOneSubDevice   = isRootDevice && ( m_SubDeviceCount == 1 );
+            const bool validRootDeviceManySubDevices = isRootDevice && ( m_SubDeviceCount > 1 ) && isAllowImplicitScaling;
+            const bool validSubDeviceFirst           = isSubDevice && isFirstSubDevice;
+            const bool validSubDeviceRest            = isSubDevice && !isFirstSubDevice;
+            const bool validNoClientData             = !m_Context.m_ClientOptions.m_SubDeviceDataPresent && !T::Policy::SubDevice::m_DriverClientDataRequired;
+
+            m_Enabled =
+                validRootDeviceOneSubDevice ||   // Selected root device with one sub device.
+                validRootDeviceManySubDevices || // Selected root device with many sub devices.
+                validSubDeviceFirst ||           // Selected first sub device.
+                validSubDeviceRest ||            // Selected subsequent sub device.
+                validNoClientData;               // No client data (with sub device information), first tile will be used.
+
+            if( m_Enabled )
+            {
+                if( subDevices != m_SubDeviceCount )
+                {
+                    log.Warning( "Sub devices count mismatch" );
+                    log.Debug( "Driver sub devices      ", m_SubDeviceCount );
+                }
+                log.Debug( "Detected sub devices    ", subDevices );
+                log.Debug( "Detected engines        ", m_Engines.size() );
+                log.Debug( "Is root device          ", isRootDevice );
+                log.Debug( "Is sub device           ", isSubDevice );
+                log.Debug( "Is first sub device     ", isFirstSubDevice );
+                log.Debug( "Device enabled          ", m_Enabled );
+            }
+            else
+            {
+                log.Critical( "Device valid:                               ", m_Enabled );
+                log.Critical( "       Valid root device - one sub device   ", validRootDeviceOneSubDevice );
+                log.Critical( "       Valid root device - many sub devices ", validRootDeviceManySubDevices );
+                log.Critical( "       Valid first sub device               ", validSubDeviceFirst );
+                log.Critical( "       Valid next sub device                ", validSubDeviceRest );
+                log.Critical( "       Valid no client data                 ", validNoClientData );
+                log.Critical( "Detected:                                   " );
+                log.Critical( "       Allow implicit scaling               ", isAllowImplicitScaling );
+                log.Critical( "       Sub device count                     ", subDevices );
+                log.Critical( "       Engines count                        ", m_Engines.size() );
+                log.Critical( "       Is root device                       ", isRootDevice );
+                log.Critical( "       Is sub device                        ", isSubDevice );
+                log.Critical( "       Is first sub device                  ", isFirstSubDevice );
+                log.Critical( "Driver data                                 " );
+                log.Critical( "       Data has been passed from driver     ", m_Context.m_ClientOptions.m_SubDeviceDataPresent );
+                log.Critical( "       Is root device                       ", isRootDevice );
+                log.Critical( "       Is sub device                        ", m_IsSubDevice );
+                log.Critical( "       Sub devices count                    ", m_SubDeviceCount );
+                log.Critical( "       Sub device index                     ", m_SubDeviceIndex );
+            }
+
+            return log.m_Result = ML_STATUS( m_Enabled );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa unit that can be used by tbs.
+        /// @return oaUnit  oa unit id.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetTbsOaUnit( uint32_t& oaUnit ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            for( auto& engine : m_Engines )
+            {
+                const bool isEngineRender  = engine.m_Class == DRM_XE_ENGINE_CLASS_RENDER;
+                const bool isEngineCompute = engine.m_Class == DRM_XE_ENGINE_CLASS_COMPUTE;
+
+                if( isEngineCompute || isEngineRender )
+                {
+                    oaUnit = engine.m_OaUnit;
+
+                    log.Debug( "Oa unit", oaUnit );
+
+                    return log.m_Result;
+                }
+            }
+
+            return log.m_Result = StatusCode::Failed;
+        }
+
+    private:
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Enumerates all available engines.
+        /// @return engines device engines.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetEngines( std::vector<EngineOaUnitClassInstance>& engines ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            auto       buffer     = std::vector<uint8_t>();
+            const bool validQuery = ML_SUCCESS( m_IoControl.Query( DRM_XE_DEVICE_QUERY_OA_UNITS, buffer ) );
+            const auto oaData     = reinterpret_cast<drm_xe_query_oa_units*>( buffer.data() );
+
+            // Query check.
+            ML_FUNCTION_CHECK( validQuery );
+            ML_FUNCTION_CHECK( oaData != nullptr );
+            ML_FUNCTION_CHECK( buffer.size() > 0 );
+
+            auto oaUnitOffset = reinterpret_cast<uint8_t*>( oaData->oa_units );
+
+            for( uint32_t i = 0; i < oaData->num_oa_units; ++i )
+            {
+                const auto& oaUnit = *reinterpret_cast<drm_xe_oa_unit*>( oaUnitOffset );
+
+                if( oaUnit.oa_unit_type == DRM_XE_OA_UNIT_TYPE_OAG ) // Only OAG for query.
+                {
+                    // Copy engine data.
+                    for( uint32_t j = 0; j < oaUnit.num_engines; ++j )
+                    {
+                        engines.emplace_back( oaUnit.oa_unit_id, oaUnit.eci[j].engine_class, oaUnit.eci[j].engine_instance, oaUnit.eci[j].gt_id );
+                    }
+                }
+
+                oaUnitOffset += sizeof( oaUnit ) + oaUnit.num_engines * sizeof( oaUnit.eci[0] );
+            }
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Enumerate sub device engines.
+        /// @param  engines    all sub device engines.
+        /// @return subDevices sub device count.
+        /// @return            operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetSubDeviceEngines(
+            const std::vector<EngineOaUnitClassInstance>& engines,
+            uint32_t&                                     subDevices )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            for( uint32_t i = 0, subDevice = 0; i < engines.size(); ++i )
+            {
+                const bool newDevice =
+                    ( i > 0 ) &&
+                    ( engines[i].m_GtId != engines[i - 1].m_GtId );
+
+                subDevice  = subDevice + ( newDevice ? 1 : 0 );
+                subDevices = subDevice + 1;
+
+                if( subDevice == m_SubDeviceIndex )
+                {
+                    log.Debug(
+                        "Sub device / engine class and instance / gt id / oa unit",
+                        subDevice,
+                        engines[i].m_Class,
+                        engines[i].m_Instance,
+                        engines[i].m_GtId,
+                        engines[i].m_OaUnit );
+
+                    switch( engines[i].m_Class )
+                    {
+                        case DRM_XE_ENGINE_CLASS_RENDER:
+                        case DRM_XE_ENGINE_CLASS_COMPUTE:
+                            m_Engines.push_back( engines[i] );
+                            break;
+
+                        case DRM_XE_ENGINE_CLASS_VIDEO_DECODE:
+                        case DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE:
+                        case DRM_XE_ENGINE_CLASS_COPY:
+                            break;
+
+                        default:
+                            ML_ASSERT_ALWAYS();
+                            break;
+                    }
+                }
+            }
+
+            return log.m_Result;
+        }
+    };
+} // namespace ML::XE2_HPG
