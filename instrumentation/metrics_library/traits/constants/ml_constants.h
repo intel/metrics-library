@@ -81,8 +81,8 @@ namespace ML
         struct Configuration
         {
             static constexpr uint32_t m_InvalidHandle        = 0;
-            static constexpr uint32_t m_MaxOaProlog          = 7;
-            static constexpr uint32_t m_MaxOaEpilog          = 3;
+            static constexpr uint32_t m_MaxOaProlog          = 3;
+            static constexpr uint32_t m_MaxOaEpilog          = 1;
             static constexpr uint32_t m_MaxRegistersBase     = 4096;
             static constexpr uint32_t m_MaxRegisters         = m_MaxRegistersBase + m_MaxOaEpilog + m_MaxOaProlog;
             static constexpr uint32_t m_MaxOverrideRegisters = 256;
@@ -104,6 +104,14 @@ namespace ML
         struct StreamMarker
         {
             static constexpr uint32_t m_HighBitsShift = 25;
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Query constants.
+        //////////////////////////////////////////////////////////////////////////
+        struct Query
+        {
+            static constexpr uint32_t m_DummyContextId = 0xFFFFFFFF;
         };
 
         //////////////////////////////////////////////////////////////////////////

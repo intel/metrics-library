@@ -175,17 +175,6 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns hw context ids for current process.
-        /// @return allowed hw contexts ids and their count.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE TT::Layouts::Configuration::HwContextIds GetHwContextIds() const
-        {
-            const TT::Layouts::Configuration::HwContextIds contexts = {};
-
-            return contexts;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns tbs state.
         /// @return true if tbs is enabled.
         //////////////////////////////////////////////////////////////////////////

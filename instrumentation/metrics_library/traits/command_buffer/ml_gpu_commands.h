@@ -559,21 +559,17 @@ namespace ML::BASE
             if constexpr( begin )
             {
                 // Timestamp before triggered report.
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestampOnOagTriggers(
                     buffer,
                     address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
                     flags | Flags::EnableMmioRemap ) );
 
-                // Do not use mirpc on pre-XeHP platforms because trigger report has valid context id.
-                if constexpr( !T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers )
-                {
-                    // Store report id when mirpc is not used.
-                    ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
-                        buffer,
-                        reportId,
-                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
-                        flags ) );
-                }
+                // Store report id.
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
+                    buffer,
+                    reportId,
+                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
+                    flags ) );
             }
             else
             {
@@ -602,22 +598,19 @@ namespace ML::BASE
             else
             {
                 // Timestamp after triggered report.
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestamp(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestampOnOagTriggers(
                     buffer,
                     address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
                     flags | Flags::EnableMmioRemap ) );
 
-                // Do not use mirpc on pre-XeHP platforms because trigger report has valid context id.
-                if constexpr( !T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers )
-                {
-                    // Store report id when mirpc is not used.
-                    ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
-                        buffer,
-                        reportId,
-                        address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
-                        flags ) );
-                }
-                else if constexpr( T::Policy::QueryHwCounters::End::m_UseDoubleTriggers )
+                // Store report id.
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
+                    buffer,
+                    reportId,
+                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
+                    flags ) );
+
+                if constexpr( T::Policy::QueryHwCounters::End::m_UseDoubleTriggers )
                 {
                     // Trigger additional report in oa buffer on query end to make sure the previous one is completed.
                     ML_FUNCTION_CHECK( T::GpuCommands::TriggerQueryReport(
@@ -721,6 +714,26 @@ namespace ML::BASE
                 flags ) );
 
             return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes gpu timestamp command to gpu command buffer to store
+        ///         32 bit gpu timestamp in memory on OAG query.
+        /// @param  buffer          target command buffer.
+        /// @param  memoryAddress   memory address where gpu timestamp should be stored.
+        /// @param  flags           gpu command flags.
+        /// @return                 operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE static StatusCode StoreTimestampOnOagTriggers(
+            CommandBuffer& buffer,
+            const uint64_t memoryAddress,
+            const Flags    flags = Flags::None )
+        {
+            return T::GpuCommands::StoreTimestamp(
+                buffer,
+                memoryAddress,
+                flags );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1180,6 +1193,15 @@ namespace ML::XE_HP
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
+            if constexpr( begin )
+            {
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
+                    buffer,
+                    0,
+                    address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CommandStreamerIdentificator ),
+                    flags ) );
+            }
+
             switch( collectingMode )
             {
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
@@ -1196,15 +1218,7 @@ namespace ML::XE_HP
                     return log.m_Result = StatusCode::IncorrectParameter;
             }
 
-            if constexpr( begin )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
-                    buffer,
-                    0,
-                    address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CommandStreamerIdentificator ),
-                    flags ) );
-            }
-            else
+            if constexpr( !begin )
             {
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreCommandStreamerIdentificator(
                     buffer,
@@ -1245,16 +1259,6 @@ namespace ML::XE_HP
                     address,
                     queryId,
                     flags ) );
-            }
-
-            // StoreHwCounters via mi rpc to report gpu - to get hw context id and additionally oar/oac data (not used yet).
-            // Mi rpc is needed only when oa buffer is browsed.
-            if constexpr( T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::template StoreHwCountersViaMirpc<begin>(
-                    buffer,
-                    address,
-                    reportId ) );
             }
 
             // StoreHwCounters via trigger to oa buffer and overwrite gpu ticks in report gpu with (x)cs.tick.
@@ -1363,6 +1367,24 @@ namespace ML::XE_HP
                 flags ) );
 
             return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes gpu timestamp command to gpu command buffer to store
+        ///         32 bit gpu timestamp in memory on OAG query.
+        /// @param  buffer          target command buffer.
+        /// @param  memoryAddress   memory address where gpu timestamp should be stored.
+        /// @param  flags           gpu command flags.
+        /// @return                 operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE static StatusCode StoreTimestampOnOagTriggers(
+            [[maybe_unused]] CommandBuffer& buffer,
+            [[maybe_unused]] const uint64_t memoryAddress,
+            [[maybe_unused]] const Flags    flags = Flags::None )
+        {
+            // Storing timestamp in OAG query is not needed on XeHP+.
+            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1705,6 +1727,15 @@ namespace ML::XE2_HPG
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
+            if constexpr( begin )
+            {
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
+                    buffer,
+                    0,
+                    address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CommandStreamerIdentificator ),
+                    flags ) );
+            }
+
             switch( collectingMode )
             {
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
@@ -1729,15 +1760,7 @@ namespace ML::XE2_HPG
                     return log.m_Result = StatusCode::NotSupported;
             }
 
-            if constexpr( begin )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
-                    buffer,
-                    0,
-                    address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CommandStreamerIdentificator ),
-                    flags ) );
-            }
-            else
+            if constexpr( !begin )
             {
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreCommandStreamerIdentificator(
                     buffer,

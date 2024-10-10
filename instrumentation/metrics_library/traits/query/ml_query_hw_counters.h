@@ -762,17 +762,22 @@ namespace ML::BASE
             const uint64_t address,
             const uint64_t marker ) const
         {
-            constexpr uint32_t offset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_MarkerUser );
+            if( marker != 0 )
+            {
+                constexpr uint32_t offset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_MarkerUser );
 
-            const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
-                ? T::GpuCommands::Flags::WorkloadPartition
-                : T::GpuCommands::Flags::None;
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
 
-            return T::GpuCommands::StoreDataToMemory64(
-                buffer,
-                marker,
-                address + offset,
-                flags );
+                return T::GpuCommands::StoreDataToMemory64(
+                    buffer,
+                    marker,
+                    address + offset,
+                    flags );
+            }
+
+            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -788,17 +793,22 @@ namespace ML::BASE
             const uint64_t address,
             const uint64_t marker ) const
         {
-            constexpr uint32_t offset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_MarkerDriver );
+            if( marker != 0 )
+            {
+                constexpr uint32_t offset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_MarkerDriver );
 
-            const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
-                ? T::GpuCommands::Flags::WorkloadPartition
-                : T::GpuCommands::Flags::None;
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
 
-            return T::GpuCommands::StoreDataToMemory64(
-                buffer,
-                marker,
-                address + offset,
-                flags );
+                return T::GpuCommands::StoreDataToMemory64(
+                    buffer,
+                    marker,
+                    address + offset,
+                    flags );
+            }
+
+            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -966,7 +976,7 @@ namespace ML::BASE
             bool               reportOaValid       = false;
             uint32_t           foundTriggers       = 0;
             uint32_t           foundReportOaOffset = 0;
-            constexpr uint32_t expectedTriggers    = ( !begin && T::Policy::QueryHwCounters::Write::m_MirpcOnOagTriggers && T::Policy::QueryHwCounters::End::m_UseDoubleTriggers )
+            constexpr uint32_t expectedTriggers    = ( !begin && T::Policy::QueryHwCounters::End::m_UseDoubleTriggers )
                    ? 2
                    : 1;
 
@@ -1299,23 +1309,11 @@ namespace ML::XE_HP
             TT::Layouts::HwCounters::ReportOa& queryReportOa,
             TT::Layouts::HwCounters::ReportOa& reportTriggered ) const
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-
-            // Store real context id.
-            const auto contextId = queryReportOa.m_Header.m_ContextId;
-            // Copy report (with queryId instead of contextId).
+            // Copy report.
             queryReportOa = reportTriggered;
-            // Restore real context id.
-            queryReportOa.m_Header.m_ContextId = contextId;
 
-            if constexpr( T::Policy::QueryHwCounters::GetData::m_RecoverContextId )
-            {
-                log.Info( "Trigger query id", reportTriggered.m_Header.m_ContextId );
-                log.Info( "Query context id", contextId );
-
-                // (intentionally disabled - only useful for debugging)
-                // reportTriggered.m_Header.m_ContextId = contextId;
-            }
+            // Set dummy context id.
+            queryReportOa.m_Header.m_ContextId = Constants::Query::m_DummyContextId;
         }
 
         //////////////////////////////////////////////////////////////////////////

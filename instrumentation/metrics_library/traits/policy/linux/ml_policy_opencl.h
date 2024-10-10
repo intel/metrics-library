@@ -79,20 +79,9 @@ namespace ML::BASE
             //////////////////////////////////////////////////////////////////////////
             struct GetData
             {
-                static constexpr bool m_AllowEmptyContextId               = true;
-                static constexpr bool m_ResetOaBufferState                = false;
-                static constexpr bool m_AsyncCompute                      = false;
-                static constexpr bool m_RecoverContextId                  = false;
-                static constexpr bool m_IncludeRenderContextSwitchReports = true;
-                static constexpr bool m_CheckConfigurationActivation      = false;
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Query write policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct Write
-            {
-                static constexpr bool m_MirpcOnOagTriggers = false;
+                static constexpr bool m_AllowEmptyContextId          = true;
+                static constexpr bool m_ResetOaBufferState           = false;
+                static constexpr bool m_CheckConfigurationActivation = false;
             };
         };
 
@@ -161,28 +150,6 @@ namespace ML::XE_HP
         ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_LP );
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Query hw counters policies.
-        //////////////////////////////////////////////////////////////////////////
-        struct QueryHwCounters : Base::QueryHwCounters
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Query get data policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct GetData : Base::QueryHwCounters::GetData
-            {
-                static constexpr bool m_IncludeRenderContextSwitchReports = false;
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Query write policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct Write : Base::QueryHwCounters::Write
-            {
-                static constexpr bool m_MirpcOnOagTriggers = true;
-            };
-        };
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief Sub device policies.
         //////////////////////////////////////////////////////////////////////////
         struct SubDevice
@@ -199,20 +166,6 @@ namespace ML::XE_HPG
     struct PolicyOpenCLTrait : XE_HP::PolicyOpenCLTrait<T>
     {
         ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_HP );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Query hw counters policies.
-        //////////////////////////////////////////////////////////////////////////
-        struct QueryHwCounters : Base::QueryHwCounters
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Query get data policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct GetData : Base::QueryHwCounters::GetData
-            {
-                static constexpr bool m_IncludeRenderContextSwitchReports = true;
-            };
-        };
     };
 } // namespace ML::XE_HPG
 
@@ -222,20 +175,6 @@ namespace ML::XE_HPC
     struct PolicyOpenCLTrait : XE_HPG::PolicyOpenCLTrait<T>
     {
         ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_HPG );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Query hw counters policies.
-        //////////////////////////////////////////////////////////////////////////
-        struct QueryHwCounters : Base::QueryHwCounters
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Query get data policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct GetData : Base::QueryHwCounters::GetData
-            {
-                static constexpr bool m_IncludeRenderContextSwitchReports = false;
-            };
-        };
     };
 } // namespace ML::XE_HPC
 
@@ -245,19 +184,5 @@ namespace ML::XE2_HPG
     struct PolicyOpenCLTrait : XE_HPG::PolicyOpenCLTrait<T>
     {
         ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_HPG );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Query hw counters policies.
-        //////////////////////////////////////////////////////////////////////////
-        struct QueryHwCounters : Base::QueryHwCounters
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Query get data policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct GetData : Base::QueryHwCounters::GetData
-            {
-                static constexpr bool m_IncludeRenderContextSwitchReports = false; // MI_RPC is not executed on OAG query
-            };
-        };
     };
 } // namespace ML::XE2_HPG

@@ -166,51 +166,6 @@ namespace ML
                                                   // This is a last element within the structure.
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief HwContextType enumeration.
-        //////////////////////////////////////////////////////////////////////////
-        enum class HwContextType : uint32_t
-        {
-            Render = 0,
-            Present,
-            Internal,
-            // ...
-            Count
-        };
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief NodeType enumeration.
-        //////////////////////////////////////////////////////////////////////////
-        enum class NodeType : uint32_t
-        {
-            Rcs = 0,
-            Vcs,
-            Bcs,
-            Ve,
-            Vcs2,
-            Ccs0,
-            Gsc,
-            // ...
-            Count
-        };
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Base type for HwContextIds structure.
-        //////////////////////////////////////////////////////////////////////////
-        struct HwContextIds
-        {
-            uint32_t                  m_Count;
-            static constexpr uint32_t m_Max = 128;
-
-            struct
-            {
-                uint32_t      m_Pid;
-                uint32_t      m_Id;
-                HwContextType m_Type;
-                NodeType      m_Node;
-            } m_Context[m_Max];
-        };
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief Base type for OverridesState structure.
         //////////////////////////////////////////////////////////////////////////
         struct OverridesState
