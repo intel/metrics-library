@@ -142,7 +142,7 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct PolicyOneApiTrait : XE_LP::PolicyOneApiTrait<T>
@@ -157,15 +157,6 @@ namespace ML::XE_HP
             static constexpr bool m_DriverClientDataRequired = false;
             static constexpr bool m_AllowImplicitScaling     = true;
         };
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct PolicyOneApiTrait : XE_HP::PolicyOneApiTrait<T>
-    {
-        ML_DECLARE_TRAIT( PolicyOneApiTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

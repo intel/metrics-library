@@ -219,21 +219,12 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct OverrideNullHardwareTrait : XE_LP::OverrideNullHardwareTrait<T>
     {
         ML_DECLARE_TRAIT( OverrideNullHardwareTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct OverrideNullHardwareTrait : XE_HP::OverrideNullHardwareTrait<T>
-    {
-        ML_DECLARE_TRAIT( OverrideNullHardwareTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

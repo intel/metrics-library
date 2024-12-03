@@ -145,45 +145,6 @@ namespace ML::XE_LP::OneApi
 
 #endif // ML_ENABLE_XE_LP
 
-#if ML_ENABLE_XE_HP
-
-#include "ml_traits_xe_hp.h"
-
-//////////////////////////////////////////////////////////////////////////
-/// @brief Instantiates functions for DdiReport.
-//////////////////////////////////////////////////////////////////////////
-#if ML_ENABLE_OPENCL
-namespace ML::XE_HP::OpenCL
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief Instantiates template function for GetData_1_0.
-    //////////////////////////////////////////////////////////////////////////
-    StatusCode ML_STDCALL GetData_1_0(
-        GetReportData_1_0* data )
-    {
-        return DdiReport<T>::GetData_1_0( data );
-    }
-
-} // namespace ML::XE_HP::OpenCL
-#endif // ML_ENABLE_OPENCL
-
-#if ML_ENABLE_ONEAPI
-namespace ML::XE_HP::OneApi
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief Instantiates template function for GetData_1_0.
-    //////////////////////////////////////////////////////////////////////////
-    StatusCode ML_STDCALL GetData_1_0(
-        GetReportData_1_0* data )
-    {
-        return DdiReport<T>::GetData_1_0( data );
-    }
-
-} // namespace ML::XE_HP::OneApi
-#endif // ML_ENABLE_ONEAPI
-
-#endif // ML_ENABLE_XE_HP
-
 #if ML_ENABLE_XE_HPG
 
 #include "ml_traits_xe_hpg.h"

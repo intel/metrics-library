@@ -132,16 +132,6 @@ namespace ML::XE_LP
     using DdiQuery = GEN11::DdiQuery<T>;
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HP-specific functions for DdiQuery.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiQuery = XE_LP::DdiQuery<T>;
-} // namespace ML::XE_HP
-
 namespace ML::XE_HPG
 {
     //////////////////////////////////////////////////////////////////////////
@@ -149,7 +139,7 @@ namespace ML::XE_HPG
     ///        These should ONLY be used for MAJOR algorithm changes.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
-    using DdiQuery = XE_HP::DdiQuery<T>;
+    using DdiQuery = XE_LP::DdiQuery<T>;
 } // namespace ML::XE_HPG
 
 namespace ML::XE_HPC

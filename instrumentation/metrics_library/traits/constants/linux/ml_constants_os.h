@@ -40,8 +40,6 @@ namespace ML
         struct Tbs
         {
             static constexpr bool        m_MappingRequired     = false;
-            static constexpr bool        m_PrintOaBuffer       = false;
-            static constexpr bool        m_PrintOaCache        = false;
             static constexpr uint32_t    m_CacheCapacity       = 100;
             static constexpr uint32_t    m_TimerPeriod         = 0xFFFFFFFF;
             static constexpr int64_t     m_Invalid             = -1;

@@ -45,15 +45,6 @@ Template:           Tools/MetricsLibraryGenerator/templates/configuration_gen.h
     #endif
 #endif
 
-// XE_HP
-#if !defined( ML_ENABLE_XE_HP )
-    #if ML_LINUX
-        #define ML_ENABLE_XE_HP 1
-    #else
-        #define ML_ENABLE_XE_HP 0
-    #endif
-#endif
-
 // XE_HPG
 #if !defined( ML_ENABLE_XE_HPG )
     #if ML_LINUX

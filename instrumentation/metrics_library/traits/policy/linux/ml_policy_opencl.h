@@ -61,7 +61,7 @@ namespace ML::BASE
             //////////////////////////////////////////////////////////////////////////
             struct Begin
             {
-                static constexpr bool m_FlushCommandBuffer = true;
+                static constexpr bool m_FlushCommandBuffer = false;
                 static constexpr bool m_ClearGpuMemory     = true;
             };
 
@@ -142,7 +142,7 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct PolicyOpenCLTrait : XE_LP::PolicyOpenCLTrait<T>
@@ -157,15 +157,6 @@ namespace ML::XE_HP
             static constexpr bool m_DriverClientDataRequired = false;
             static constexpr bool m_AllowImplicitScaling     = false;
         };
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct PolicyOpenCLTrait : XE_HP::PolicyOpenCLTrait<T>
-    {
-        ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

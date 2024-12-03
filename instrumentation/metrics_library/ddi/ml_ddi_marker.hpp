@@ -128,16 +128,6 @@ namespace ML::XE_LP
     using DdiMarker = GEN11::DdiMarker<T>;
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HP-specific functions for DdiMarker.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiMarker = XE_LP::DdiMarker<T>;
-} // namespace ML::XE_HP
-
 namespace ML::XE_HPG
 {
     //////////////////////////////////////////////////////////////////////////
@@ -145,7 +135,7 @@ namespace ML::XE_HPG
     ///        These should ONLY be used for MAJOR algorithm changes.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
-    using DdiMarker = XE_HP::DdiMarker<T>;
+    using DdiMarker = XE_LP::DdiMarker<T>;
 } // namespace ML::XE_HPG
 
 namespace ML::XE_HPC

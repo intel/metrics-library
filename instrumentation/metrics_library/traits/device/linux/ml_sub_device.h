@@ -93,7 +93,7 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct SubDeviceTrait : XE_LP::SubDeviceTrait<T>
@@ -474,15 +474,6 @@ namespace ML::XE_HP
 
             return log.m_Result;
         }
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct SubDeviceTrait : XE_HP::SubDeviceTrait<T>
-    {
-        ML_DECLARE_TRAIT( SubDeviceTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

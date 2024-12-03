@@ -65,21 +65,12 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct ExampleGpuTrait : XE_LP::ExampleGpuTrait<T>
     {
         ML_DECLARE_TRAIT( ExampleGpuTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct ExampleGpuTrait : XE_HP::ExampleGpuTrait<T>
-    {
-        ML_DECLARE_TRAIT( ExampleGpuTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

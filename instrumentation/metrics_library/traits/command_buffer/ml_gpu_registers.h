@@ -1833,18 +1833,12 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct GpuRegistersTrait : XE_LP::GpuRegistersTrait<T>
     {
         ML_DECLARE_TRAIT( GpuRegistersTrait, XE_LP );
-
-        // Oar A0 used as render context id cache.
-        static constexpr uint32_t m_ContextId = Base::m_OaPerfA0;
-
-        // Oac A0 used as compute context id cache.
-        static constexpr uint32_t m_ContextIdCompute = 0x15000;
 
         // Oag mmio trigger.
         static constexpr uint32_t m_OagTrigger = 0xDB1C;
@@ -1871,15 +1865,6 @@ namespace ML::XE_HP
         static constexpr uint32_t m_IdentityCCS1 = m_GeneralPurposeRegisterCompute1;
         static constexpr uint32_t m_IdentityCCS2 = m_GeneralPurposeRegisterCompute2;
         static constexpr uint32_t m_IdentityCCS3 = m_GeneralPurposeRegisterCompute3;
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct GpuRegistersTrait : XE_HP::GpuRegistersTrait<T>
-    {
-        ML_DECLARE_TRAIT( GpuRegistersTrait, XE_HP );
 
         // Oag registers.
         static constexpr uint32_t m_OagGpuTicks      = 0xDB70;

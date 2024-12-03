@@ -1221,7 +1221,7 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct QueryHwCountersTrait : XE_LP::QueryHwCountersTrait<T>
@@ -1231,7 +1231,6 @@ namespace ML::XE_HP
         //////////////////////////////////////////////////////////////////////////
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
-        using Base::Derived;
         using Base::m_Context;
 
         //////////////////////////////////////////////////////////////////////////
@@ -1239,10 +1238,18 @@ namespace ML::XE_HP
         /// @param  reportHeader    query report header.
         /// @return                 success if triggered oa report reason is valid.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool ValidateReportReason( [[maybe_unused]] const TT::Layouts::HwCounters::ReportHeader& reportHeader ) const
+        ML_INLINE bool ValidateReportReason( const TT::Layouts::HwCounters::ReportHeader& reportHeader ) const
         {
-            // Accept any report reason due to report reason == 0 for mmio triggers on XeHP.
-            return true;
+            ML_FUNCTION_LOG( false, &m_Context );
+
+            const bool validReportReason = ( reportHeader.m_ReportId.m_ReportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger ) ) != 0;
+
+            if( !validReportReason )
+            {
+                log.Error( "Invalid report reason", reportHeader.m_ReportId.m_ReportReason );
+            }
+
+            return log.m_Result = validReportReason;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1255,7 +1262,7 @@ namespace ML::XE_HP
             [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportQuery,
             [[maybe_unused]] const TT::Layouts::HwCounters::ReportOa&         reportTriggered ) const
         {
-            // Do not validate gpu timestamps because query id in mmio trigger is enough unique.
+            // Do not validate gpu timestamps because query id in mmio trigger is unique enough.
             return true;
         }
 
@@ -1324,39 +1331,6 @@ namespace ML::XE_HP
         {
             // Not supported.
             ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
-        }
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct QueryHwCountersTrait : XE_HP::QueryHwCountersTrait<T>
-    {
-        ML_DECLARE_TRAIT( QueryHwCountersTrait, XE_HP );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Types.
-        //////////////////////////////////////////////////////////////////////////
-        using Base::m_Context;
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Validates triggered oa report against its reason.
-        /// @param  reportHeader    query report header.
-        /// @return                 success if triggered oa report reason is valid.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool ValidateReportReason( const TT::Layouts::HwCounters::ReportHeader& reportHeader ) const
-        {
-            ML_FUNCTION_LOG( false, &m_Context );
-
-            const bool validReportReason = ( reportHeader.m_ReportId.m_ReportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger ) ) != 0;
-
-            if( !validReportReason )
-            {
-                log.Error( "Invalid report reason", reportHeader.m_ReportId.m_ReportReason );
-            }
-
-            return log.m_Result = validReportReason;
         }
     };
 } // namespace ML::XE_HPG

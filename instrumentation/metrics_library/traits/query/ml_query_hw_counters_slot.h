@@ -257,21 +257,12 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct QueryHwCountersSlotTrait : XE_LP::QueryHwCountersSlotTrait<T>
     {
         ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct QueryHwCountersSlotTrait : XE_HP::QueryHwCountersSlotTrait<T>
-    {
-        ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

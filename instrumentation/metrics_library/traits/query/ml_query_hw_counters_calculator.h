@@ -1373,7 +1373,7 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct QueryHwCountersCalculatorTrait : XE_LP::QueryHwCountersCalculatorTrait<T>
@@ -1707,15 +1707,6 @@ namespace ML::XE_HP
 
             return log.m_Result;
         }
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct QueryHwCountersCalculatorTrait : XE_HP::QueryHwCountersCalculatorTrait<T>
-    {
-        ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

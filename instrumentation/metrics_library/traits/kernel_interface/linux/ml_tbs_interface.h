@@ -331,7 +331,7 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct TbsInterfaceTrait : XE_LP::TbsInterfaceTrait<T>
@@ -423,15 +423,6 @@ namespace ML::XE_HP
         {
             return ( 128 * Constants::Data::m_Megabyte );
         }
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct TbsInterfaceTrait : XE_HP::TbsInterfaceTrait<T>
-    {
-        ML_DECLARE_TRAIT( TbsInterfaceTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

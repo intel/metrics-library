@@ -69,21 +69,12 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct InternalFeatureTrait : XE_LP::InternalFeatureTrait<T>
     {
         ML_DECLARE_TRAIT( InternalFeatureTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct InternalFeatureTrait : XE_HP::InternalFeatureTrait<T>
-    {
-        ML_DECLARE_TRAIT( InternalFeatureTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

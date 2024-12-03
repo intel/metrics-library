@@ -398,11 +398,9 @@ namespace ML::BASE
                     break;
             #endif
 
-            #if ML_ENABLE_XE_HP
                 case ClientGen::XeHP:
                     output << "XeHP";
                     break;
-            #endif
 
             #if ML_ENABLE_XE_HPC
                 case ClientGen::XeHPC:
@@ -3067,7 +3065,7 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct DebugTrait : XE_LP::DebugTrait<T>
@@ -3129,7 +3127,7 @@ namespace ML::XE_HP
             {
                 if( ML_SUCCESS( T::Tools::OpenCsv( "ReportOa", m_CsvOutputFile, context ) ) )
                 {
-                    m_CsvOutputFile << "ReportId,ReportReason,ContextValid,Timestamp,ContextId,GpuTicks,";
+                    m_CsvOutputFile << "ReportId,ReportReason,ContextValid,SourceId,Timestamp,ContextId,GpuTicks,";
 
                     for( uint32_t i = 0; i < T::Layouts::HwCounters::m_OagCountersCount; ++i )
                     {
@@ -3152,6 +3150,7 @@ namespace ML::XE_HP
                 m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_Value << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ReportReason << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ContextValid << ',';
+                m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_SourceId << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_Timestamp << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_ContextId << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_GpuTicks << ',';
@@ -3188,15 +3187,6 @@ namespace ML::XE_HP
                 m_CsvOutputFile << '\n';
             }
         }
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct DebugTrait : XE_HP::DebugTrait<T>
-    {
-        ML_DECLARE_TRAIT( DebugTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 
@@ -3305,7 +3295,7 @@ namespace ML::XE2_HPG
             {
                 if( ML_SUCCESS( T::Tools::OpenCsv( "ReportOa", m_CsvOutputFile, context ) ) )
                 {
-                    m_CsvOutputFile << "ReportId,ReportReason,ContextValid,Timestamp,ContextId,GpuTicks,";
+                    m_CsvOutputFile << "ReportId,ReportReason,ContextValid,SourceId,Timestamp,ContextId,GpuTicks,";
 
                     for( uint32_t i = 0; i < T::Layouts::HwCounters::m_PerformanceEventCountersCount; ++i )
                     {
@@ -3328,6 +3318,7 @@ namespace ML::XE2_HPG
                 m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_Value << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ReportReason << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_ContextValid << ',';
+                m_CsvOutputFile << oaReport.m_Header.m_ReportId.m_SourceId << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_Timestamp << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_ContextId << ',';
                 m_CsvOutputFile << oaReport.m_Header.m_GpuTicks << ',';

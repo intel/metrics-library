@@ -250,16 +250,6 @@ namespace ML::XE_LP
     using DdiConfiguration = GEN11::DdiConfiguration<T>;
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HP-specific functions for DdiConfiguration.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiConfiguration = XE_LP::DdiConfiguration<T>;
-} // namespace ML::XE_HP
-
 namespace ML::XE_HPG
 {
     //////////////////////////////////////////////////////////////////////////
@@ -267,7 +257,7 @@ namespace ML::XE_HPG
     ///        These should ONLY be used for MAJOR algorithm changes.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
-    using DdiConfiguration = XE_HP::DdiConfiguration<T>;
+    using DdiConfiguration = XE_LP::DdiConfiguration<T>;
 } // namespace ML::XE_HPG
 
 namespace ML::XE_HPC

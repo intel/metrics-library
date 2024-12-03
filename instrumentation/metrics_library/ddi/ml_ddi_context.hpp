@@ -169,16 +169,6 @@ namespace ML::XE_LP
     using DdiContext = GEN11::DdiContext<T>;
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HP-specific functions for DdiContext.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiContext = XE_LP::DdiContext<T>;
-} // namespace ML::XE_HP
-
 namespace ML::XE_HPG
 {
     //////////////////////////////////////////////////////////////////////////
@@ -186,7 +176,7 @@ namespace ML::XE_HPG
     ///        These should ONLY be used for MAJOR algorithm changes.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
-    using DdiContext = XE_HP::DdiContext<T>;
+    using DdiContext = XE_LP::DdiContext<T>;
 } // namespace ML::XE_HPG
 
 namespace ML::XE_HPC

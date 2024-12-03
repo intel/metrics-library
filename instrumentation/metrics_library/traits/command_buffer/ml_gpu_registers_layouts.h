@@ -96,21 +96,12 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct GpuRegistersLayoutsTrait : XE_LP::GpuRegistersLayoutsTrait<T>
     {
         ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct GpuRegistersLayoutsTrait : XE_HP::GpuRegistersLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

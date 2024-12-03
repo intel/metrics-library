@@ -82,21 +82,12 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct DrmLayoutsTrait : XE_LP::DrmLayoutsTrait<T>
     {
         ML_DECLARE_TRAIT( DrmLayoutsTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct DrmLayoutsTrait : XE_HP::DrmLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( DrmLayoutsTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

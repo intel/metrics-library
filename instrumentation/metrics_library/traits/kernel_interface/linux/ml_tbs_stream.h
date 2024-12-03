@@ -266,21 +266,12 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct TbsStreamTrait : XE_LP::TbsStreamTrait<T>
     {
         ML_DECLARE_TRAIT( TbsStreamTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct TbsStreamTrait : XE_HP::TbsStreamTrait<T>
-    {
-        ML_DECLARE_TRAIT( TbsStreamTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

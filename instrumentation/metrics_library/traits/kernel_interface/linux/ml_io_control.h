@@ -835,21 +835,12 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct IoControlTrait : XE_LP::IoControlTrait<T>
     {
         ML_DECLARE_TRAIT( IoControlTrait, XE_LP );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct IoControlTrait : XE_HP::IoControlTrait<T>
-    {
-        ML_DECLARE_TRAIT( IoControlTrait, XE_HP );
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Types.

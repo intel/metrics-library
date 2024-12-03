@@ -95,7 +95,7 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct MarkerStreamUserTrait : XE_LP::MarkerStreamUserTrait<T>
@@ -124,15 +124,6 @@ namespace ML::XE_HP
 
             return log.m_Result;
         }
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct MarkerStreamUserTrait : XE_HP::MarkerStreamUserTrait<T>
-    {
-        ML_DECLARE_TRAIT( MarkerStreamUserTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 

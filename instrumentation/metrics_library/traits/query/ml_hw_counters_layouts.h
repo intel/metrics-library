@@ -338,7 +338,7 @@ namespace ML::XE_LP
     };
 } // namespace ML::XE_LP
 
-namespace ML::XE_HP
+namespace ML::XE_HPG
 {
     template <typename T>
     struct HwCountersLayoutsTrait : XE_LP::HwCountersLayoutsTrait<T>
@@ -610,15 +610,6 @@ namespace ML::XE_HP
         /// @brief Sanity check.
         //////////////////////////////////////////////////////////////////////////
         ML_STATIC_ASSERT( ( sizeof( typename Query::ReportGpu ) % Base::m_ReportGpuAlignment ) == 0, "Wrong structure size" );
-    };
-} // namespace ML::XE_HP
-
-namespace ML::XE_HPG
-{
-    template <typename T>
-    struct HwCountersLayoutsTrait : XE_HP::HwCountersLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( HwCountersLayoutsTrait, XE_HP );
     };
 } // namespace ML::XE_HPG
 
