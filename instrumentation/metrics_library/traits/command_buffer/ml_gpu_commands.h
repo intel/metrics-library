@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -36,15 +36,6 @@ namespace ML::BASE
             EnablePostSync    = ML_BIT( 2 ),
             WorkloadPartition = ML_BIT( 3 )
         };
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "GpuCommandsTrait<Traits>";
-        }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Writes PIPE_CONTROL to gpu command buffer to complete
@@ -1795,3 +1786,12 @@ namespace ML::XE2_HPG
         }
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct GpuCommandsTrait : XE2_HPG::GpuCommandsTrait<T>
+    {
+        ML_DECLARE_TRAIT( GpuCommandsTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

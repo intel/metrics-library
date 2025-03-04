@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -30,6 +30,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         using Base = TraitObject<T, TT::Queries::HwCountersCalculator>;
         using Base::Derived;
+        using Base::DerivedConst;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
@@ -78,15 +79,6 @@ namespace ML::BASE
                       : T::Layouts::Configuration::TimestampType::Cs )
             , m_GpuTimestampFrequency( m_Kernel.GetGpuTimestampFrequency( m_TimestampType ) )
         {
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "QueryHwCountersCalculatorTrait<Traits>";
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -184,7 +176,7 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( true, &m_Context );
 
-            auto& derived = Derived();
+            const auto& derived = DerivedConst();
 
             // Check if gpu report is ready.
             status = derived.ValidateReportGpu();
@@ -478,7 +470,7 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             TT::Layouts::HwCounters::Query::ReportApi source  = {};
-            auto&                                     derived = Derived();
+            const auto&                               derived = DerivedConst();
 
             do
             {
@@ -572,7 +564,7 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetFrequencySlice(
             const TT::Layouts::HwCounters::ReportId    frequency,
-            TT::Layouts::HwCounters::Query::ReportApi& reportApi )
+            TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -582,7 +574,7 @@ namespace ML::BASE
             // encoding table that is part of the definition of the
             // RP_FREQ_NORMAL register. => (100 / 6)
             reportApi.m_UnsliceFrequency = frequency.m_FrequencyUnslice * 100 / 6;
-            reportApi.m_SliceFrequency   = Derived().ComputeSliceFrequency( frequency );
+            reportApi.m_SliceFrequency   = DerivedConst().ComputeSliceFrequency( frequency );
 
             // Convert MHz to Hz.
             reportApi.m_UnsliceFrequency *= Constants::Time::m_Megahertz;
@@ -607,9 +599,9 @@ namespace ML::BASE
         ML_INLINE void CalculateCounters(
             const TT::Layouts::HwCounters::Report&     begin,
             const TT::Layouts::HwCounters::Report&     end,
-            TT::Layouts::HwCounters::Query::ReportApi& reportApi )
+            TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
         {
-            auto&                                            derived = Derived();
+            const auto&                                      derived = DerivedConst();
             static constexpr TT::Layouts::HwCounters::Report dummy   = {};
 
             if( m_NullBegin )
@@ -638,7 +630,7 @@ namespace ML::BASE
         ML_INLINE void AdjustOaCounters(
             const TT::Layouts::HwCounters::ReportOa&   begin,
             const TT::Layouts::HwCounters::ReportOa&   end,
-            TT::Layouts::HwCounters::Query::ReportApi& reportApi )
+            TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
@@ -652,7 +644,7 @@ namespace ML::BASE
             reportApi.m_GpuTicks = T::Tools::CountersDelta( end.m_Header.m_GpuTicks, begin.m_Header.m_GpuTicks, 32 );
 
             // Oa counters.
-            Derived().OaCountersDelta( begin, end, reportApi );
+            DerivedConst().OaCountersDelta( begin, end, reportApi );
 
             // Noa counters.
             NoaCountersDelta( begin, end, reportApi );
@@ -1121,7 +1113,7 @@ namespace ML::BASE
                 m_OaBufferState.m_ReportCopy[m_OaBufferState.m_ReportCopyIndex] = oaReport;
 
                 // Check overrun condition.
-                overrun = Derived().IsOverrun( oaReport.m_Header.m_Timestamp );
+                overrun = DerivedConst().IsOverrun( oaReport.m_Header.m_Timestamp );
 
                 if( overrun )
                 {
@@ -1251,7 +1243,7 @@ namespace ML::BASE
         /// @brief  Returns true if oa buffer should be used.
         /// @return true if oa buffer should be used to find context switches.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool UseOaBuffer()
+        ML_INLINE bool UseOaBuffer() const
         {
             return true;
         }
@@ -1312,7 +1304,6 @@ namespace ML::XE_LP
         //////////////////////////////////////////////////////////////////////////
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
-        using Base::Derived;
         using Base::AggregateOaCounters;
         using Base::AggregateNoaCounters;
         using Base::AggregateUserCounters;
@@ -1383,15 +1374,15 @@ namespace ML::XE_HPG
         //////////////////////////////////////////////////////////////////////////
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
-        using Base::Derived;
+        using Base::DerivedConst;
         using Base::IsMeasuredContextId;
+        using Base::m_Context;
         using Base::m_ReportGpu;
         using Base::m_ReportBegin;
         using Base::m_ReportEnd;
         using Base::m_OaBuffer;
         using Base::m_OaBufferState;
         using Base::m_QuerySlot;
-        using Base::m_Context;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Function used to sum oa counters between two reports.
@@ -1597,11 +1588,11 @@ namespace ML::XE_HPG
         /// @brief  Returns if gpu report is ready to return api report to the user.
         /// @return success if api report can be exposed to the user.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode ValidateReportGpu()
+        ML_INLINE StatusCode ValidateReportGpu() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            const auto& derived              = Derived();
+            const auto& derived              = DerivedConst();
             const bool  validTags            = m_QuerySlot.m_EndTag == m_ReportGpu.m_EndTag;
             const bool  validCommandStreamer = m_ReportGpu.m_CommandStreamerIdentificator > 0;
             const bool  validMirpc           = derived.IsMirpcCompleted();
@@ -1673,21 +1664,27 @@ namespace ML::XE_HPG
                 ", PreEnd =", oaTailPreEndOffset,
                 ", PostEnd =", oaTailPostEndOffset );
 
-            // Dump all OA reports generated during query.
-            const uint32_t reportSize = m_OaBuffer.GetReportSize();
+            const uint32_t reportSize   = m_OaBuffer.GetReportSize();
+            const uint32_t oaBufferSize = m_OaBuffer.GetSize();
+            const uint32_t oaWindowSize = ( oaTailPreBeginOffset > oaTailPostEndOffset )
+                ? ( oaTailPostEndOffset + ( oaBufferSize - oaTailPreBeginOffset ) ) / reportSize
+                : ( oaTailPostEndOffset - oaTailPreBeginOffset ) / reportSize;
 
+            // Dump all OA reports generated during query.
             log.Debug(
                 "query window reportsOa count:",
                 csDescription,
                 FormatFlag::Decimal,
-                ( oaTailPostEndOffset - oaTailPreBeginOffset ) / reportSize );
+                oaWindowSize );
 
-            for( uint32_t i = oaTailPreBeginOffset; i < oaTailPostEndOffset; i += reportSize )
+            for( uint32_t i = 0; i < oaWindowSize; ++i )
             {
-                auto& reportOa = m_OaBuffer.GetReport( i );
+                const uint32_t oaReportOffset = ( oaTailPreBeginOffset + ( i * reportSize ) ) % oaBufferSize;
+                auto&          reportOa       = m_OaBuffer.GetReport( oaReportOffset );
+
                 log.Debug(
                     "reportOa: ", csDescription,
-                    "(", FormatFlag::Decimal, FormatFlag::SetWidth5, i / reportSize, ")",
+                    "(", FormatFlag::Decimal, FormatFlag::SetWidth5, oaReportOffset / reportSize, ")",
                     reportOa );
             }
 
@@ -1971,7 +1968,7 @@ namespace ML::XE2_HPG
         /// @brief  Returns true if oa buffer should be used.
         /// @return true if oa buffer should be used to find context switches.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool UseOaBuffer()
+        ML_INLINE bool UseOaBuffer() const
         {
             return m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag ||
                 m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended;
@@ -2008,3 +2005,12 @@ namespace ML::XE2_HPG
         }
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct QueryHwCountersCalculatorTrait : XE2_HPG::QueryHwCountersCalculatorTrait<T>
+    {
+        ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

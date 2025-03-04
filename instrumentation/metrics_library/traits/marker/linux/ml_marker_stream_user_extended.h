@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -30,15 +30,6 @@ namespace ML
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base = DdiObject<T, TT::Markers::StreamUserExtended, MarkerHandle_1_0, ObjectType::MarkerStreamUserExtended>;
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "MarkerStreamUserExtendedTrait<Traits>";
-        }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Writes marker stream user extended commands to command buffer.

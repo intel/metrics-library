@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -34,6 +34,7 @@ namespace ML::BASE
         using Base::Allocate;
         using Base::Delete;
         using Base::Derived;
+        using Base::DerivedConst;
         using Base::m_Context;
 
         //////////////////////////////////////////////////////////////////////////
@@ -42,6 +43,7 @@ namespace ML::BASE
         TT::Layouts::HwCounters::Query::GetDataMode m_GetDataMode;
         ConfigurationHandle_1_0                     m_UserConfiguration;
         std::vector<TT::Queries::HwCountersSlot>    m_Slots;
+        bool                                        m_IsUserConfigurationCopied;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief QueryHwCountersTrait constructor.
@@ -52,6 +54,7 @@ namespace ML::BASE
             , m_GetDataMode( context.m_Kernel.GetQueryHwCountersReportingMode() )
             , m_UserConfiguration{ nullptr }
             , m_Slots{}
+            , m_IsUserConfigurationCopied( false )
         {
         }
 
@@ -64,21 +67,12 @@ namespace ML::BASE
 
             if constexpr( T::Policy::QueryHwCounters::Create::m_UserCounters )
             {
-                log.m_Result = m_UserConfiguration.IsValid()
+                log.m_Result = !m_IsUserConfigurationCopied && m_UserConfiguration.IsValid()
                     ? T::Configurations::HwCountersUser::Delete( m_UserConfiguration )
                     : StatusCode::Success;
 
                 ML_ASSERT( ML_SUCCESS( log.m_Result ) );
             }
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "QueryHwCountersTrait<Traits>";
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -155,28 +149,47 @@ namespace ML::BASE
             ML_FUNCTION_CHECK( data.SlotSource + data.SlotCount <= querySource.m_Slots.size() );
             ML_FUNCTION_CHECK( data.SlotTarget + data.SlotCount <= queryTarget.m_Slots.size() );
 
+            // Copy get data mode.
+            queryTarget.m_GetDataMode = querySource.m_GetDataMode;
+
             // Copy user configuration.
-            queryTarget.m_UserConfiguration = querySource.m_UserConfiguration;
+            if( querySource.m_UserConfiguration.IsValid() &&
+                !queryTarget.m_UserConfiguration.IsEqual( querySource.m_UserConfiguration ) )
+            {
+                // Remove old user configuration.
+                if( queryTarget.m_UserConfiguration.IsValid() )
+                {
+                    ML_FUNCTION_CHECK( T::Configurations::HwCountersUser::Delete( queryTarget.m_UserConfiguration ) );
+                }
+
+                // Copy user configuration handle.
+                queryTarget.m_UserConfiguration = querySource.m_UserConfiguration;
+
+                // Mark that the user configuration has been copied to avoid double deleting the same object on the destructor.
+                queryTarget.m_IsUserConfigurationCopied = true;
+            }
 
             // Initialize gpu memory for each target query heap slot.
             // Normally it happens during query begin. But target query
             // was never used.
             for( uint32_t i = 0; i < data.SlotCount; ++i )
             {
-                const uint32_t slotIndex = i + data.SlotTarget;
-                auto&          slot      = queryTarget.GetSlot( slotIndex );
+                const uint32_t slotIndexSource = i + data.SlotSource;
+                const uint32_t slotIndexTarget = i + data.SlotTarget;
+                auto&          slotSource      = querySource.GetSlot( slotIndexSource );
+                auto&          slotTarget      = queryTarget.GetSlot( slotIndexTarget );
 
-                queryTarget.SetGpuMemory( slotIndex, data.AddressTarget, slot );
+                // Copy query slot members.
+                slotTarget = slotSource;
+
+                // Set memory for a query slot.
+                ML_FUNCTION_CHECK( queryTarget.SetGpuMemory( slotIndexTarget, data.AddressTarget, slotTarget ) );
+
+                // Copy query report.
+                ML_FUNCTION_CHECK( queryTarget.Copy( buffer, slotSource, slotTarget ) );
             }
 
-            // Copy query and return a status.
-            return log.m_Result = queryTarget.Copy(
-                       buffer,
-                       data.AddressSource.GpuAddress,
-                       data.AddressTarget.GpuAddress,
-                       data.SlotSource,
-                       data.SlotTarget,
-                       data.SlotCount );
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -235,7 +248,7 @@ namespace ML::BASE
                 }
 
                 // Process calculation status.
-                log.m_Result = ProcessCalculationResult( log.m_Result, calculationResult );
+                log.m_Result = query.ProcessCalculationResult( log.m_Result, calculationResult );
 
                 if( log.m_Result == StatusCode::Failed )
                 {
@@ -391,7 +404,7 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            const auto&    derived    = Derived();
+            const auto&    derived    = DerivedConst();
             auto&          slot       = GetSlot( data.Slot );
             const uint64_t gpuAddress = slot.m_GpuMemory.GpuAddress;
 
@@ -431,32 +444,166 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Copies gpu reports into another query.
-        /// @param  buffer         command buffer.
-        /// @param  source         source query.
-        /// @param  addressSource  source start memory address to copy from.
-        /// @param  addressTarget  target start memory address to copy into.
-        /// @param  slotSource     source query slot index.
-        /// @param  slotTarget     target query slot index.
-        /// @param  slotCount      slot count to copy.
-        /// @return                operation status.
+        /// @brief  Copies gpu report into another query slot.
+        /// @param  buffer      command buffer.
+        /// @param  slotSource  source query slot to copy from.
+        /// @param  slotTarget  target query slot to copy into.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
         template <typename CommandBuffer>
         ML_INLINE StatusCode Copy(
-            CommandBuffer& buffer,
-            const uint64_t addressSource,
-            const uint64_t addressTarget,
-            const uint32_t slotSource,
-            const uint32_t slotTarget,
-            const uint32_t slotCount ) const
+            CommandBuffer&               buffer,
+            TT::Queries::HwCountersSlot& slotSource,
+            TT::Queries::HwCountersSlot& slotTarget ) const
         {
-            constexpr uint32_t reportGpuSize = sizeof( TT::Layouts::HwCounters::Query::ReportGpu );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            return T::GpuCommands::CopyData(
+            // Copy the end tag first to be sure that previous gpu commands completed.
+            constexpr uint32_t reportGpuEndTagOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_EndTag );
+            constexpr uint32_t reportGpuEndTagSize   = sizeof( uint64_t ); // The size of m_EndTag
+
+            ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
                 buffer,
-                addressSource + ( slotSource * reportGpuSize ),
-                addressTarget + ( slotTarget * reportGpuSize ),
-                slotCount * reportGpuSize );
+                slotSource.m_GpuMemory.GpuAddress + reportGpuEndTagOffset,
+                slotTarget.m_GpuMemory.GpuAddress + reportGpuEndTagOffset,
+                reportGpuEndTagSize ) );
+
+            // Copy query information, excluding the end tag.
+            constexpr uint32_t reportGpuInfoOffset = reportGpuEndTagOffset + sizeof( uint64_t );
+            constexpr uint32_t reportGpuInfoSize =
+                offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_MarkerDriver ) -
+                offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdBegin ) +
+                sizeof( uint64_t ); // The size of m_MarkerDriver.
+
+            ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                buffer,
+                slotSource.m_GpuMemory.GpuAddress + reportGpuInfoOffset,
+                slotTarget.m_GpuMemory.GpuAddress + reportGpuInfoOffset,
+                reportGpuInfoSize ) );
+
+            // Copy query user counters.
+            if( m_UserConfiguration.IsValid() )
+            {
+                ML_FUNCTION_CHECK( T::Configurations::HwCountersUser::IsValid( m_UserConfiguration ) );
+
+                const auto&    userRegisters      = T::Configurations::HwCountersUser::FromHandle( m_UserConfiguration ).m_UserRegisters;
+                const uint32_t userRegistersCount = userRegisters.m_RegistersCount;
+
+                if( userRegistersCount > 0 )
+                {
+                    constexpr uint32_t offsetBegin = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_User );
+                    constexpr uint32_t offsetEnd   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_User );
+                    const uint32_t     userSize    = userRegistersCount * sizeof( uint64_t );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetBegin,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetBegin,
+                        userSize ) );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetEnd,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetEnd,
+                        userSize ) );
+                }
+            }
+
+            // Copy query hw counters.
+            ML_FUNCTION_CHECK( DerivedConst().CopyHwCounters(
+                buffer,
+                slotSource,
+                slotTarget ) );
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Copies hw counters into another query slot.
+        /// @param  buffer      command buffer.
+        /// @param  slotSource  source query slot to copy from.
+        /// @param  slotTarget  target query slot to copy into.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE StatusCode CopyHwCounters(
+            CommandBuffer&               buffer,
+            TT::Queries::HwCountersSlot& slotSource,
+            TT::Queries::HwCountersSlot& slotTarget ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            switch( slotTarget.m_ReportCollectingMode )
+            {
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOar:
+                {
+                    constexpr uint32_t offsetWaBegin = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_WaBegin );
+                    constexpr uint32_t offsetWaEnd   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_WaEnd );
+                    constexpr uint32_t waSize        = T::Layouts::HwCounters::m_OaCounters40bitsCount * sizeof( uint32_t );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetWaBegin,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetWaBegin,
+                        waSize ) );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetWaEnd,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetWaEnd,
+                        waSize ) );
+
+                    [[fallthrough]];
+                }
+
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
+                {
+                    constexpr uint32_t offsetOaBegin = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa );
+                    constexpr uint32_t offsetOaEnd   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
+                    constexpr uint32_t oaSize        = sizeof( TT::Layouts::HwCounters::ReportOa );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetOaBegin,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetOaBegin,
+                        oaSize ) );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetOaEnd,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetOaEnd,
+                        oaSize ) );
+
+                    constexpr uint32_t offsetGpBegin = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Gp );
+                    constexpr uint32_t offsetGpEnd   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Gp );
+                    constexpr uint32_t gpSize        = sizeof( TT::Layouts::HwCounters::ReportGp );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetGpBegin,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetGpBegin,
+                        gpSize ) );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetGpEnd,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetGpEnd,
+                        gpSize ) );
+                    break;
+                }
+
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
+                    // Do nothing.
+                    break;
+
+                default:
+                    ML_ASSERT_ALWAYS();
+                    log.m_Result = StatusCode::IncorrectParameter;
+                    break;
+            }
+
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -969,8 +1116,9 @@ namespace ML::BASE
             auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
 
             // OaBuffer data.
-            const uint32_t     oaBufferSize        = m_Context.m_OaBuffer.GetSize();
-            const uint32_t     reportSize          = m_Context.m_OaBuffer.GetReportSize();
+            TT::OaBuffer&      oaBuffer            = m_Context.m_OaBuffer;
+            const uint32_t     oaBufferSize        = oaBuffer.GetSize();
+            const uint32_t     reportSize          = oaBuffer.GetReportSize();
             uint32_t           reportOaOffset      = 0;
             uint32_t           reportOaOffsetPost  = 0;
             bool               reportOaValid       = false;
@@ -981,27 +1129,17 @@ namespace ML::BASE
                    : 1;
 
             // Validate triggered oa report.
-            if( ML_SUCCESS( m_Context.m_OaBuffer.template GetPreReportOffset<begin>( queryReport, reportOaOffset ) ) &&
-                ML_SUCCESS( m_Context.m_OaBuffer.template GetPostReportOffset<begin>( queryReport, reportOaOffsetPost ) ) )
+            if( ML_SUCCESS( oaBuffer.template GetPreReportOffset<begin>( queryReport, reportOaOffset ) ) &&
+                ML_SUCCESS( oaBuffer.template GetPostReportOffset<begin>( queryReport, reportOaOffsetPost ) ) )
             {
-                const auto& derived = Derived();
-
-                // Round down offset before a triggered oa report.
-                reportOaOffset -= reportOaOffset % reportSize;
-
-                // Round up offset after a triggered oa report.
-                const uint32_t remainder = reportOaOffsetPost % reportSize;
-                if( remainder )
-                {
-                    reportOaOffsetPost = ( reportOaOffsetPost + reportSize - remainder ) % oaBufferSize;
-                }
+                const auto& derived = DerivedConst();
 
                 // Number of tries to validate oa report.
                 uint32_t remainingTries = 100;
 
                 while( !reportOaValid && ( reportOaOffset != reportOaOffsetPost ) )
                 {
-                    auto& reportOa = m_Context.m_OaBuffer.GetReport( reportOaOffset );
+                    auto& reportOa = oaBuffer.GetReport( reportOaOffset );
 
                     const uint32_t queryIdExpected = derived.template GetQueryId<begin>( queryReport );
 
@@ -1040,7 +1178,7 @@ namespace ML::BASE
                 // Recreate query report from triggered oa report.
                 if( reportOaValid )
                 {
-                    auto& reportOa = m_Context.m_OaBuffer.GetReport( foundReportOaOffset );
+                    auto& reportOa = oaBuffer.GetReport( foundReportOaOffset );
                     log.Info(
                         "Used reportOa: ",
                         "(", FormatFlag::Decimal, FormatFlag::SetWidth5, foundReportOaOffset, ")",
@@ -1097,7 +1235,9 @@ namespace ML::BASE
         /// @param  previous previous status code.
         /// @param  next     next status code.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static StatusCode ProcessCalculationResult( const StatusCode previous, const StatusCode next )
+        ML_INLINE StatusCode ProcessCalculationResult(
+            const StatusCode previous,
+            const StatusCode next ) const
         {
             switch( previous )
             {
@@ -1218,6 +1358,67 @@ namespace ML::XE_LP
             // General purpose counters are deprecated on XE+.
             return StatusCode::Success;
         }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Recreates oar report from srm reports.
+        /// @param  report  report gpu.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void UseSrmOarReport( [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportGpu& report ) const
+        {
+            // Not supported.
+            ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Copies hw counters into another query slot.
+        /// @param  buffer      command buffer.
+        /// @param  slotSource  source query slot to copy from.
+        /// @param  slotTarget  target query slot to copy into.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE StatusCode CopyHwCounters(
+            CommandBuffer&               buffer,
+            TT::Queries::HwCountersSlot& slotSource,
+            TT::Queries::HwCountersSlot& slotTarget ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            switch( slotTarget.m_ReportCollectingMode )
+            {
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
+                {
+                    constexpr uint32_t offsetOaBegin = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Oa );
+                    constexpr uint32_t offsetOaEnd   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Oa );
+                    constexpr uint32_t oaSize        = sizeof( TT::Layouts::HwCounters::ReportOa );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetOaBegin,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetOaBegin,
+                        oaSize ) );
+
+                    ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
+                        buffer,
+                        slotSource.m_GpuMemory.GpuAddress + offsetOaEnd,
+                        slotTarget.m_GpuMemory.GpuAddress + offsetOaEnd,
+                        oaSize ) );
+                    break;
+                }
+
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
+                    // Do nothing.
+                    break;
+
+                default:
+                    ML_ASSERT_ALWAYS();
+                    log.m_Result = StatusCode::IncorrectParameter;
+                    break;
+            }
+
+            return log.m_Result;
+        }
     };
 } // namespace ML::XE_LP
 
@@ -1322,16 +1523,6 @@ namespace ML::XE_HPG
             // Set dummy context id.
             queryReportOa.m_Header.m_ContextId = Constants::Query::m_DummyContextId;
         }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Recreates oar report from srm reports.
-        /// @param  report  report gpu.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void UseSrmOarReport( [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportGpu& report ) const
-        {
-            // Not supported.
-            ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
-        }
     };
 } // namespace ML::XE_HPG
 
@@ -1406,3 +1597,12 @@ namespace ML::XE2_HPG
         }
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct QueryHwCountersTrait : XE2_HPG::QueryHwCountersTrait<T>
+    {
+        ML_DECLARE_TRAIT( QueryHwCountersTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

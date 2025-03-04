@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -22,69 +22,8 @@ Template:           Tools/MetricsLibraryGenerator/templates/debug.h
 
 namespace ML
 {
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief The flags used to format a string.
-    //////////////////////////////////////////////////////////////////////////
-    enum class FormatFlag : uint32_t
+    struct DebugBase
     {
-        Default,                // Use format predefined in the Metrics Library.
-
-        // Independent flags (switch on):
-        BoolAlpha,              // Alphanumerical bool values.
-        ShowBase,               // Show numerical base prefixes.
-        ShowDecimalPoint,       // Show decimal point.
-        ShowPositiveSigns,      // Show positive signs.
-        SkipWhitespaces,        // Skip whitespaces.
-        FlushAfterInsertions,   // Flush buffer after insertions.
-        UpperCase,              // Generate upper-case letters.
-
-        // Independent flags (switch off):
-        NoBoolAlpha,            // No alphanumerical bool values.
-        NoBase,                 // Do not show numerical base prefixes.
-        NoDecimalPoint,         // Do not show decimal point.
-        NoPositiveSigns,        // Do not show positive signs.
-        NoSkipWhitespaces,      // Do not skip whitespaces.
-        NoForceFlush,           // Do not force flushes after insertions.
-        NoUpperCase,            // Do not generate upper case letters.
-
-        // Numerical base format flags ("basefield" flags):
-        Decimal,                // Use decimal base.
-        Hexadecimal,            // Use hexadecimal base.
-        Octal,                  // Use octal base.
-
-        // Floating-point format flags ("floatfield" flags):
-        Fixed,                  // Use fixed floating-point notation.
-        Scientific,             // Use scientific floating-point notation.
-
-        // Adjustment format flags ("adjustfield" flags):
-        AdjustInternal,         // Adjust field by inserting characters at an internal position.
-        AdjustLeft,             // Adjust output to the left.
-        AdjustRight,            // Adjust output to the right.
-
-        // Sets the field width to be used on output operations.
-        SetWidth2,              // Sets the field width to 2.
-        SetWidth3,              // Sets the field width to 3.
-        SetWidth4,              // Sets the field width to 4.
-        SetWidth5,              // Sets the field width to 5.
-    };
-} // namespace ML
-
-namespace ML::BASE
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief Base type for DebugTrait object.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    struct DebugTrait : TraitObject<T, TT::Debug>
-    {
-        ML_DELETE_DEFAULT_COPY_AND_MOVE( DebugTrait );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Types.
-        //////////////////////////////////////////////////////////////////////////
-        using Base = TraitObject<T, TT::Debug>;
-        using Base::Derived;
-
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
@@ -97,9 +36,9 @@ namespace ML::BASE
         std::ostringstream m_Format;
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief DebugTrait constructor.
+        /// @brief DebugBase constructor.
         //////////////////////////////////////////////////////////////////////////
-        DebugTrait()
+        DebugBase()
             : m_Aligned( false )
             , m_InitializeCsvOutputFile( true )
             , m_UseDefaultFormat( true )
@@ -108,15 +47,6 @@ namespace ML::BASE
             , m_CsvOutputFile{}
             , m_Format{}
         {
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "Debug<Traits>";
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -395,6 +325,12 @@ namespace ML::BASE
             #if ML_ENABLE_XE2_HPG
                 case ClientGen::Xe2HPG:
                     output << "Xe2HPG";
+                    break;
+            #endif
+
+            #if ML_ENABLE_XE3
+                case ClientGen::Xe3:
+                    output << "Xe3";
                     break;
             #endif
 
@@ -997,478 +933,6 @@ namespace ML::BASE
             }
 
             output << " )";
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Converts an enumerator to a string that contains the
-        ///         enumerator name.
-        /// @param  value   a given enumerator to convert.
-        /// @return         converted enumerator name to string.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::GpuCommands::Flags value )
-        {
-            if( value == T::GpuCommands::Flags::None )
-            {
-                return "None";
-            }
-
-            const uint32_t     flag = static_cast<uint32_t>( value );
-            std::ostringstream output;
-
-            if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnableMmioRemap ) )
-            {
-                output << "EnableMmioRemap || ";
-            }
-
-            if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnableStall ) )
-            {
-                output << "EnableStall || ";
-            }
-
-            if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnablePostSync ) )
-            {
-                output << "EnablePostSync || ";
-            }
-
-            if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::WorkloadPartition ) )
-            {
-                output << "WorkloadPartition || ";
-            }
-
-            std::string outputString = output.str();
-            return outputString.substr( 0, outputString.size() - 4 );
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Converts an enumerator of oa buffer type enumeration to
-        ///         a string that contains the enumerator name.
-        /// @param  value   a given enumerator to convert.
-        /// @return         converted enumerator name to string.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::Type value )
-        {
-            std::ostringstream output;
-            output << "OaBufferType"
-                   << "( ";
-
-            switch( value )
-            {
-                case T::Layouts::OaBuffer::Type::Oa:
-                    output << "Oa";
-                    break;
-
-                case T::Layouts::OaBuffer::Type::ContextSwitch:
-                    output << "ContextSwitch";
-                    break;
-
-                default:
-                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
-                    output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
-                    break;
-            }
-            output << " )";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Converts an enumerator of get data mode enumeration to
-        ///         a string that contains the enumerator name.
-        /// @param  value   a given enumerator to convert.
-        /// @return         converted enumerator name to string.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( TT::Layouts::HwCounters::Query::GetDataMode value )
-        {
-            std::ostringstream output;
-            output << "HwCounters::Query::GetDataMode"
-                   << "( ";
-
-            switch( value )
-            {
-                case T::Layouts::HwCounters::Query::GetDataMode::Normal:
-                    output << "Normal";
-                    break;
-
-                case T::Layouts::HwCounters::Query::GetDataMode::Multisampled:
-                    output << "Multisampled";
-                    break;
-
-                case T::Layouts::HwCounters::Query::GetDataMode::Extended:
-                    output << "Extended";
-                    break;
-
-                default:
-                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint64_t>( value );
-                    output << " (" << std::dec << static_cast<uint64_t>( value ) << ")";
-                    break;
-            }
-            output << " )";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Converts an enumerator of oa buffer sampling type enumeration
-        ///         to a string that contains the enumerator name.
-        /// @param  value   a given enumerator to convert.
-        /// @return         converted enumerator name to string.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::SamplingType& value )
-        {
-            std::ostringstream output;
-            output << "Layouts::OaBuffer::SamplingType"
-                   << "( ";
-
-            switch( value )
-            {
-                case T::Layouts::OaBuffer::SamplingType::Disabled:
-                    output << "Disabled";
-                    break;
-
-                case T::Layouts::OaBuffer::SamplingType::Tbs:
-                    output << "Tbs";
-                    break;
-
-                case T::Layouts::OaBuffer::SamplingType::QueryMultisampled:
-                    output << "QueryMultisampled";
-                    break;
-
-                case T::Layouts::OaBuffer::SamplingType::QueryExtended:
-                    output << "QueryExtended";
-                    break;
-
-                default:
-                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint64_t>( value );
-                    output << " (" << std::dec << static_cast<uint64_t>( value ) << ")";
-                    break;
-            }
-            output << " )";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Converts an enumerator of report collecting mode enumeration
-        ///         to a string that contains the enumerator name.
-        /// @param  value   a given enumerator to convert.
-        /// @return         converted enumerator name to string.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::ReportCollectingMode value )
-        {
-            std::ostringstream output;
-            output << "HwCounters::Query::ReportCollectingMode"
-                   << "( ";
-
-            switch( value )
-            {
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
-                    output << "ReportPerformanceCounters";
-                    break;
-
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOar:
-                    output << "StoreRegisterMemoryOar";
-                    break;
-
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag:
-                    output << "StoreRegisterMemoryOag";
-                    break;
-
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
-                    output << "TriggerOag";
-                    break;
-
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
-                    output << "TriggerOagExtended";
-                    break;
-
-                default:
-                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
-                    output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
-                    break;
-            }
-            output << " )";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Converts an enumerator of query mode enumeration
-        ///         to a string that contains the enumerator name.
-        /// @param  value   a given enumerator to convert.
-        /// @return         converted enumerator name to string.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::Mode value )
-        {
-            std::ostringstream output;
-            output << "HwCounters::Query::Mode"
-                   << "( ";
-
-            switch( value )
-            {
-                case T::Layouts::HwCounters::Query::Mode::Render:
-                    output << "Render";
-                    break;
-
-                case T::Layouts::HwCounters::Query::Mode::Compute:
-                    output << "Compute";
-                    break;
-
-                case T::Layouts::HwCounters::Query::Mode::Global:
-                    output << "Global";
-                    break;
-
-                case T::Layouts::HwCounters::Query::Mode::GlobalExtended:
-                    output << "GlobalExtended";
-                    break;
-
-                default:
-                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
-                    output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
-                    break;
-            }
-            output << " )";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Converts an enumerator of log type enumeration to a string
-        ///         that contains the enumerator name.
-        /// @param  value   a given enumerator to convert.
-        /// @return         converted enumerator name to string.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const LogType value )
-        {
-            std::ostringstream output;
-            output << "LogType"
-                   << "( ";
-
-            switch( value )
-            {
-                case LogType::Critical:
-                    output << "Critical";
-                    break;
-
-                case LogType::Error:
-                    output << "Error";
-                    break;
-
-                case LogType::Warning:
-                    output << "Warning";
-                    break;
-
-                case LogType::Info:
-                    output << "Info";
-                    break;
-
-                case LogType::Debug:
-                    output << "Debug";
-                    break;
-
-                case LogType::Traits:
-                    output << "Traits";
-                    break;
-
-                case LogType::Entered:
-                    output << "Entered";
-                    break;
-
-                case LogType::Exiting:
-                    output << "Exiting";
-                    break;
-
-                case LogType::Input:
-                    output << "Input";
-                    break;
-
-                case LogType::Output:
-                    output << "Output";
-                    break;
-
-                default:
-                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
-                    output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
-                    break;
-            }
-            output << " )";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Reports.
-        //////////////////////////////////////////////////////////////////////////
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Creates oa report log.
-        /// @param  oaReport    a given oa report.
-        /// @return             string that contains formatted oa report log.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportOa& oaReport )
-        {
-            std::ostringstream output;
-            output << "OA: ";
-            output << "rsn = " << std::setw( Constants::Log::m_MaxReportReasonLength ) << oaReport.m_Header.m_ReportId.m_ReportReason;
-            output << std::hex << std::showbase;
-            output << ", rid = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_ReportId.m_Value;
-            output << ", tsp = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_Timestamp;
-            output << ", cid = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_ContextId;
-            output << ", tic = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_GpuTicks;
-            output << ", oa0 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[0];
-            output << ", oa1 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[1];
-            output << ", oa6 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[6];
-            output << ", oa7 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[7];
-            output << ", oa8 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[8];
-            output << ", noa0 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[0];
-            output << ", noa1 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[1];
-            output << ", noa2 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[2];
-            output << ", noa13 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[13];
-            output << ", noa14 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[14];
-            output << ", noa15 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[15];
-            output << "; ";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Creates api report log.
-        /// @param  userReport  a given api report.
-        /// @return             string that contains formatted api report log.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::ReportApi& userReport )
-        {
-            std::ostringstream output;
-            std::string        flags;
-
-            flags += userReport.m_Flags.m_ReportLost              ? " lost"              : "";
-            flags += userReport.m_Flags.m_ReportInconsistent      ? " inconsistent"      : "";
-            flags += userReport.m_Flags.m_ReportNotReady          ? " not_ready"         : "";
-            flags += userReport.m_Flags.m_ReportContextSwitchLost ? " no_context_switch" : "";
-            flags += userReport.m_Flags.m_ReportWithoutWorkload   ? " no_workload"       : "";
-            flags += userReport.m_Flags.m_ContextMismatch         ? " context_mismatch"  : "";
-            flags  = flags.length() ? flags : "none";
-
-            output << "QUERY: ";
-            output << std::hex << std::showbase;
-            output << "time = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_TotalTime;
-            output << ", tic = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_GpuTicks;
-            output << ", oa0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_OaCounter[0];
-            output << ", oa1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_OaCounter[1];
-            output << ", noa0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[0];
-            output << ", noa1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[1];
-            output << ", noa2 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[2];
-            output << ", noa3 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[3];
-            output << ", mark = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_MarkerUser;
-            output << ", flags = " << flags;
-            output << "; ";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Creates global purpose counters report log.
-        /// @param  gpReport    a given global purpose report.
-        /// @return             string that contains formatted global purpose
-        ///                     counters report log.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportGp& gpReport )
-        {
-            std::ostringstream output;
-            output << "GP: ";
-            output << std::hex << std::showbase;
-            output << "gp1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << gpReport.m_Counter1;
-            output << ", gp2 = " << std::setw( Constants::Log::m_MaxUint64Length ) << gpReport.m_Counter2;
-            output << "; ";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Creates report reason log.
-        /// @param  reportReason    a given report reason.
-        /// @return                 string that contains formatted report reason.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::ReportReason reportReason )
-        {
-            std::ostringstream output;
-
-            switch( reportReason )
-            {
-                case T::Layouts::OaBuffer::ReportReason::Timer:
-                    output << "Timer";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::User1:
-                    output << "User1";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::User2:
-                    output << "User2";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::ContextSwitch:
-                    output << "ContextSwitch";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::C6:
-                    output << "C6";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::FrequencyChange:
-                    output << "FrequencyChange";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::Empty:
-                    output << "Empty";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::MmioTrigger:
-                    output << "MmioTrigger";
-                    break;
-
-                default:
-                    output << "Illegal report reason: " << std::hex << std::showbase << static_cast<uint32_t>( reportReason );
-                    output << " (" << std::dec << static_cast<uint32_t>( reportReason ) << ")";
-                    break;
-            }
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Creates query slot state log.
-        /// @param  state   a given query slot state.
-        /// @return         string that contains formatted query slot state.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Queries::HwCountersSlot::State state )
-        {
-            std::ostringstream output;
-
-            switch( state )
-            {
-                case T::Queries::HwCountersSlot::State::Initial:
-                    output << "Initial";
-                    break;
-
-                case T::Queries::HwCountersSlot::State::Begun:
-                    output << "Begun";
-                    break;
-
-                case T::Queries::HwCountersSlot::State::Ended:
-                    output << "Ended";
-                    break;
-
-                case T::Queries::HwCountersSlot::State::Resolved:
-                    output << "Resolved";
-                    break;
-
-                default:
-                    output << "Illegal query slot state: " << std::hex << std::showbase << static_cast<uint32_t>( state );
-                    output << " (" << std::dec << static_cast<uint32_t>( state ) << ")";
-                    break;
-            }
-
             return output.str();
         }
 
@@ -2764,7 +2228,7 @@ namespace ML::BASE
             {
                 if( value != nullptr && !std::is_void<ValueT>::value && !std::is_function<ValueT>::value )
                 {
-                    output << Derived().ToString( *value );
+                    output << ToString( *value );
                 }
                 else
                 {
@@ -2818,7 +2282,7 @@ namespace ML::BASE
             }
 
             // Print value.
-            output << Derived().ToString( value );
+            output << ToString( value );
 
             // Add a new line if needed.
             if( output.str().back() != '\n' )
@@ -2880,8 +2344,6 @@ namespace ML::BASE
             {
                 if( ValidatePointer( value, output ) )
                 {
-                    auto& derived = Derived();
-
                     for( uint32_t i = 0; i < arraySize; ++i )
                     {
                         if( m_Aligned )
@@ -2891,7 +2353,7 @@ namespace ML::BASE
                                 output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
                             }
                         }
-                        output << arrayName << "[" << i << "]" << padding << derived.ToString( value[i] );
+                        output << arrayName << "[" << i << "]" << padding << ToString( value[i] );
                     }
                 }
             }
@@ -2903,67 +2365,514 @@ namespace ML::BASE
 
             return output.str();
         }
+    };
+}
+
+namespace ML::BASE
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Base type for DebugTrait object.
+    //////////////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct DebugTrait : DebugBase, TraitObject<T, TT::Debug>
+    {
+        ML_DELETE_DEFAULT_COPY_AND_MOVE( DebugTrait );
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Helper / miscellaneous.
+        /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
+        using Base = TraitObject<T, TT::Debug>;
+        using Base::Derived;
+        using DebugBase::ToString;
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Formats logs.
-        /// @param  values  a given values to format.
-        /// @return         formatted string.
+        /// @brief DebugTrait constructor.
         //////////////////////////////////////////////////////////////////////////
-        template <typename... Values>
-        ML_INLINE std::string Format( const Values&... values )
+        DebugTrait()
+            : DebugBase()
+            , Base()
         {
-            auto&                    derived        = Derived();
-            const uint32_t           indent         = GetIndentLevel();
-            std::vector<std::string> unpackedValues = { derived.ToString( values )... };
-            std::ostringstream       output;
+        }
 
-            if( unpackedValues.size() > 0 )
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Enumerations.
+        //////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Converts an enumerator to a string that contains the
+        ///         enumerator name.
+        /// @param  value   a given enumerator to convert.
+        /// @return         converted enumerator name to string.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::GpuCommands::Flags value )
+        {
+            if( value == T::GpuCommands::Flags::None )
             {
-                auto           value         = unpackedValues.begin();
-                const uint32_t messageLength = static_cast<uint32_t>( value->size() ) + Constants::Log::m_IndentSize * indent;
+                return "None";
+            }
 
-                if( m_Aligned )
-                {
-                    // Apply indentation.
-                    for( uint32_t i = 0; i < indent; ++i )
-                    {
-                        output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
-                    }
-                }
+            const uint32_t     flag = static_cast<uint32_t>( value );
+            std::ostringstream output;
 
-                // Print the first argument - usually a variable name.
-                output << *value;
+            if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnableMmioRemap ) )
+            {
+                output << "EnableMmioRemap || ";
+            }
 
-                // Apply alignment (before printing the next arguments).
-                if( m_Aligned && unpackedValues.size() > 1 )
-                {
-                    if( messageLength < Constants::Log::m_MaxMessageLength )
-                    {
-                        output << std::setw( Constants::Log::m_MaxMessageLength - messageLength ) << ' ';
-                    }
-                }
+            if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnableStall ) )
+            {
+                output << "EnableStall || ";
+            }
 
-                // Print all remaining arguments.
-                while( ++value != unpackedValues.end() )
-                {
-                    if( value->size() > 0 )
-                    {
-                        // Single space has been added to avoid arguments concatenation.
-                        output << ' ';
-                    }
-                    output << *value;
-                }
+            if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnablePostSync ) )
+            {
+                output << "EnablePostSync || ";
+            }
 
-                // Restore default ML format.
-                derived.ToString( FormatFlag::Default );
+            if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::WorkloadPartition ) )
+            {
+                output << "WorkloadPartition || ";
+            }
+
+            std::string outputString = output.str();
+            return outputString.substr( 0, outputString.size() - 4 );
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Converts an enumerator of oa buffer type enumeration to
+        ///         a string that contains the enumerator name.
+        /// @param  value   a given enumerator to convert.
+        /// @return         converted enumerator name to string.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::Type value )
+        {
+            std::ostringstream output;
+            output << "OaBufferType"
+                   << "( ";
+
+            switch( value )
+            {
+                case T::Layouts::OaBuffer::Type::Oa:
+                    output << "Oa";
+                    break;
+
+                case T::Layouts::OaBuffer::Type::ContextSwitch:
+                    output << "ContextSwitch";
+                    break;
+
+                default:
+                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
+                    output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
+                    break;
+            }
+            output << " )";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Converts an enumerator of get data mode enumeration to
+        ///         a string that contains the enumerator name.
+        /// @param  value   a given enumerator to convert.
+        /// @return         converted enumerator name to string.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( TT::Layouts::HwCounters::Query::GetDataMode value )
+        {
+            std::ostringstream output;
+            output << "HwCounters::Query::GetDataMode"
+                   << "( ";
+
+            switch( value )
+            {
+                case T::Layouts::HwCounters::Query::GetDataMode::Normal:
+                    output << "Normal";
+                    break;
+
+                case T::Layouts::HwCounters::Query::GetDataMode::Multisampled:
+                    output << "Multisampled";
+                    break;
+
+                case T::Layouts::HwCounters::Query::GetDataMode::Extended:
+                    output << "Extended";
+                    break;
+
+                default:
+                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint64_t>( value );
+                    output << " (" << std::dec << static_cast<uint64_t>( value ) << ")";
+                    break;
+            }
+            output << " )";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Converts an enumerator of oa buffer sampling type enumeration
+        ///         to a string that contains the enumerator name.
+        /// @param  value   a given enumerator to convert.
+        /// @return         converted enumerator name to string.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::SamplingType& value )
+        {
+            std::ostringstream output;
+            output << "Layouts::OaBuffer::SamplingType"
+                   << "( ";
+
+            switch( value )
+            {
+                case T::Layouts::OaBuffer::SamplingType::Disabled:
+                    output << "Disabled";
+                    break;
+
+                case T::Layouts::OaBuffer::SamplingType::Tbs:
+                    output << "Tbs";
+                    break;
+
+                case T::Layouts::OaBuffer::SamplingType::QueryMultisampled:
+                    output << "QueryMultisampled";
+                    break;
+
+                case T::Layouts::OaBuffer::SamplingType::QueryExtended:
+                    output << "QueryExtended";
+                    break;
+
+                default:
+                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint64_t>( value );
+                    output << " (" << std::dec << static_cast<uint64_t>( value ) << ")";
+                    break;
+            }
+            output << " )";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Converts an enumerator of report collecting mode enumeration
+        ///         to a string that contains the enumerator name.
+        /// @param  value   a given enumerator to convert.
+        /// @return         converted enumerator name to string.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::ReportCollectingMode value )
+        {
+            std::ostringstream output;
+            output << "HwCounters::Query::ReportCollectingMode"
+                   << "( ";
+
+            switch( value )
+            {
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
+                    output << "ReportPerformanceCounters";
+                    break;
+
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOar:
+                    output << "StoreRegisterMemoryOar";
+                    break;
+
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOag:
+                    output << "StoreRegisterMemoryOag";
+                    break;
+
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
+                    output << "TriggerOag";
+                    break;
+
+                case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
+                    output << "TriggerOagExtended";
+                    break;
+
+                default:
+                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
+                    output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
+                    break;
+            }
+            output << " )";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Converts an enumerator of query mode enumeration
+        ///         to a string that contains the enumerator name.
+        /// @param  value   a given enumerator to convert.
+        /// @return         converted enumerator name to string.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::Mode value )
+        {
+            std::ostringstream output;
+            output << "HwCounters::Query::Mode"
+                   << "( ";
+
+            switch( value )
+            {
+                case T::Layouts::HwCounters::Query::Mode::Render:
+                    output << "Render";
+                    break;
+
+                case T::Layouts::HwCounters::Query::Mode::Compute:
+                    output << "Compute";
+                    break;
+
+                case T::Layouts::HwCounters::Query::Mode::Global:
+                    output << "Global";
+                    break;
+
+                case T::Layouts::HwCounters::Query::Mode::GlobalExtended:
+                    output << "GlobalExtended";
+                    break;
+
+                default:
+                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
+                    output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
+                    break;
+            }
+            output << " )";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Converts an enumerator of log type enumeration to a string
+        ///         that contains the enumerator name.
+        /// @param  value   a given enumerator to convert.
+        /// @return         converted enumerator name to string.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const LogType value )
+        {
+            std::ostringstream output;
+            output << "LogType"
+                   << "( ";
+
+            switch( value )
+            {
+                case LogType::Critical:
+                    output << "Critical";
+                    break;
+
+                case LogType::Error:
+                    output << "Error";
+                    break;
+
+                case LogType::Warning:
+                    output << "Warning";
+                    break;
+
+                case LogType::Info:
+                    output << "Info";
+                    break;
+
+                case LogType::Debug:
+                    output << "Debug";
+                    break;
+
+                case LogType::Traits:
+                    output << "Traits";
+                    break;
+
+                case LogType::Entered:
+                    output << "Entered";
+                    break;
+
+                case LogType::Exiting:
+                    output << "Exiting";
+                    break;
+
+                case LogType::Input:
+                    output << "Input";
+                    break;
+
+                case LogType::Output:
+                    output << "Output";
+                    break;
+
+                default:
+                    output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
+                    output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";
+                    break;
+            }
+            output << " )";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Reports.
+        //////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates oa report log.
+        /// @param  oaReport    a given oa report.
+        /// @return             string that contains formatted oa report log.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportOa& oaReport )
+        {
+            std::ostringstream output;
+            output << "OA: ";
+            output << "rsn = " << std::setw( Constants::Log::m_MaxReportReasonLength ) << oaReport.m_Header.m_ReportId.m_ReportReason;
+            output << std::hex << std::showbase;
+            output << ", rid = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_ReportId.m_Value;
+            output << ", tsp = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_Timestamp;
+            output << ", cid = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_ContextId;
+            output << ", tic = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_GpuTicks;
+            output << ", oa0 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[0];
+            output << ", oa1 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[1];
+            output << ", oa6 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[6];
+            output << ", oa7 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[7];
+            output << ", oa8 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_OaCounter[8];
+            output << ", noa0 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[0];
+            output << ", noa1 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[1];
+            output << ", noa2 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[2];
+            output << ", noa13 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[13];
+            output << ", noa14 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[14];
+            output << ", noa15 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Data.m_NoaCounter[15];
+            output << "; ";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates api report log.
+        /// @param  userReport  a given api report.
+        /// @return             string that contains formatted api report log.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::Query::ReportApi& userReport )
+        {
+            std::ostringstream output;
+            std::string        flags;
+
+            flags += userReport.m_Flags.m_ReportLost              ? " lost"              : "";
+            flags += userReport.m_Flags.m_ReportInconsistent      ? " inconsistent"      : "";
+            flags += userReport.m_Flags.m_ReportNotReady          ? " not_ready"         : "";
+            flags += userReport.m_Flags.m_ReportContextSwitchLost ? " no_context_switch" : "";
+            flags += userReport.m_Flags.m_ReportWithoutWorkload   ? " no_workload"       : "";
+            flags += userReport.m_Flags.m_ContextMismatch         ? " context_mismatch"  : "";
+            flags  = flags.length() ? flags : "none";
+
+            output << "QUERY: ";
+            output << std::hex << std::showbase;
+            output << "time = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_TotalTime;
+            output << ", tic = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_GpuTicks;
+            output << ", oa0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_OaCounter[0];
+            output << ", oa1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_OaCounter[1];
+            output << ", noa0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[0];
+            output << ", noa1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[1];
+            output << ", noa2 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[2];
+            output << ", noa3 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_NoaCounter[3];
+            output << ", mark = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_MarkerUser;
+            output << ", flags = " << flags;
+            output << "; ";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates global purpose counters report log.
+        /// @param  gpReport    a given global purpose report.
+        /// @return             string that contains formatted global purpose
+        ///                     counters report log.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportGp& gpReport )
+        {
+            std::ostringstream output;
+            output << "GP: ";
+            output << std::hex << std::showbase;
+            output << "gp1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << gpReport.m_Counter1;
+            output << ", gp2 = " << std::setw( Constants::Log::m_MaxUint64Length ) << gpReport.m_Counter2;
+            output << "; ";
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates report reason log.
+        /// @param  reportReason    a given report reason.
+        /// @return                 string that contains formatted report reason.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::ReportReason reportReason )
+        {
+            std::ostringstream output;
+
+            switch( reportReason )
+            {
+                case T::Layouts::OaBuffer::ReportReason::Timer:
+                    output << "Timer";
+                    break;
+
+                case T::Layouts::OaBuffer::ReportReason::User1:
+                    output << "User1";
+                    break;
+
+                case T::Layouts::OaBuffer::ReportReason::User2:
+                    output << "User2";
+                    break;
+
+                case T::Layouts::OaBuffer::ReportReason::ContextSwitch:
+                    output << "ContextSwitch";
+                    break;
+
+                case T::Layouts::OaBuffer::ReportReason::C6:
+                    output << "C6";
+                    break;
+
+                case T::Layouts::OaBuffer::ReportReason::FrequencyChange:
+                    output << "FrequencyChange";
+                    break;
+
+                case T::Layouts::OaBuffer::ReportReason::Empty:
+                    output << "Empty";
+                    break;
+
+                case T::Layouts::OaBuffer::ReportReason::MmioTrigger:
+                    output << "MmioTrigger";
+                    break;
+
+                default:
+                    output << "Illegal report reason: " << std::hex << std::showbase << static_cast<uint32_t>( reportReason );
+                    output << " (" << std::dec << static_cast<uint32_t>( reportReason ) << ")";
+                    break;
             }
 
             return output.str();
         }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Creates query slot state log.
+        /// @param  state   a given query slot state.
+        /// @return         string that contains formatted query slot state.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string ToString( const TT::Queries::HwCountersSlot::State state )
+        {
+            std::ostringstream output;
+
+            switch( state )
+            {
+                case T::Queries::HwCountersSlot::State::Initial:
+                    output << "Initial";
+                    break;
+
+                case T::Queries::HwCountersSlot::State::Begun:
+                    output << "Begun";
+                    break;
+
+                case T::Queries::HwCountersSlot::State::Ended:
+                    output << "Ended";
+                    break;
+
+                case T::Queries::HwCountersSlot::State::Resolved:
+                    output << "Resolved";
+                    break;
+
+                default:
+                    output << "Illegal query slot state: " << std::hex << std::showbase << static_cast<uint32_t>( state );
+                    output << " (" << std::dec << static_cast<uint32_t>( state ) << ")";
+                    break;
+            }
+
+            return output.str();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Helper / miscellaneous.
+        //////////////////////////////////////////////////////////////////////////
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Prints oa report csv log.
@@ -3339,3 +3248,13 @@ namespace ML::XE2_HPG
         }
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct DebugTrait : XE2_HPG::DebugTrait<T>
+    {
+        ML_DECLARE_TRAIT( DebugTrait, XE2_HPG );
+    };
+} // namespace ML::XE3
+

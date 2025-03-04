@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -32,6 +32,52 @@ namespace ML
         Input    = ML_BIT( 8 ),  // Input parameter.
         Output   = ML_BIT( 9 ),  // Output parameter.
         Csv      = ML_BIT( 10 ), // Csv file dumping.
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief The flags used to format a string.
+    //////////////////////////////////////////////////////////////////////////
+    enum class FormatFlag : uint32_t
+    {
+        Default, // Use format predefined in the Metrics Library.
+
+        // Independent flags (switch on):
+        BoolAlpha,            // Alphanumerical bool values.
+        ShowBase,             // Show numerical base prefixes.
+        ShowDecimalPoint,     // Show decimal point.
+        ShowPositiveSigns,    // Show positive signs.
+        SkipWhitespaces,      // Skip whitespaces.
+        FlushAfterInsertions, // Flush buffer after insertions.
+        UpperCase,            // Generate upper-case letters.
+
+        // Independent flags (switch off):
+        NoBoolAlpha,       // No alphanumerical bool values.
+        NoBase,            // Do not show numerical base prefixes.
+        NoDecimalPoint,    // Do not show decimal point.
+        NoPositiveSigns,   // Do not show positive signs.
+        NoSkipWhitespaces, // Do not skip whitespaces.
+        NoForceFlush,      // Do not force flushes after insertions.
+        NoUpperCase,       // Do not generate upper case letters.
+
+        // Numerical base format flags ("basefield" flags):
+        Decimal,     // Use decimal base.
+        Hexadecimal, // Use hexadecimal base.
+        Octal,       // Use octal base.
+
+        // Floating-point format flags ("floatfield" flags):
+        Fixed,      // Use fixed floating-point notation.
+        Scientific, // Use scientific floating-point notation.
+
+        // Adjustment format flags ("adjustfield" flags):
+        AdjustInternal, // Adjust field by inserting characters at an internal position.
+        AdjustLeft,     // Adjust output to the left.
+        AdjustRight,    // Adjust output to the right.
+
+        // Sets the field width to be used on output operations.
+        SetWidth2, // Sets the field width to 2.
+        SetWidth3, // Sets the field width to 3.
+        SetWidth4, // Sets the field width to 4.
+        SetWidth5, // Sets the field width to 5.
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -96,15 +142,6 @@ namespace ML
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( ToolsTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( ToolsTrait );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "ToolsTrait<Traits>";
-        }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Allocates and constructs object instance wrapped in a unique pointer.
@@ -382,7 +419,7 @@ namespace ML
                 debug.m_Aligned  = IuLogCheckShowMode( IU_DBG_ALIGNED );
 
                 std::vector<std::string> lines;
-                std::istringstream       stream( debug.Format( values... ) );
+                std::istringstream       stream( Format( debug, values... ) );
 
                 // Split message into a separate lines.
                 GetLines( stream, lines, debug );
@@ -413,7 +450,7 @@ namespace ML
             debug.m_Aligned = IuLogCheckShowMode( IU_DBG_ALIGNED );
 
             std::vector<std::string> lines;
-            std::istringstream       stream( debug.Format( values... ) );
+            std::istringstream       stream( Format( debug, values... ) );
 
             // Split message into a separate lines.
             GetLines( stream, lines, debug );
@@ -423,6 +460,65 @@ namespace ML
             {
                 Print( type, functionName, lines[i], IU_ADAPTER_ID_UNKNOWN );
             }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Formats debug logs.
+        /// @param  debug   a reference to debug helper object.
+        /// @param  values  a given values to format.
+        /// @return         a formatted string.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename... Values>
+        ML_INLINE static std::string Format(
+            TT::Debug& debug,
+            const Values&... values )
+        {
+            std::vector<std::string> unpackedValues = { debug.ToString( values )... };
+            std::ostringstream       output;
+
+            if( unpackedValues.size() > 0 )
+            {
+                const uint32_t indent        = debug.GetIndentLevel();
+                auto           value         = unpackedValues.begin();
+                const uint32_t messageLength = static_cast<uint32_t>( value->size() ) + Constants::Log::m_IndentSize * indent;
+
+                if( debug.m_Aligned )
+                {
+                    // Apply indentation.
+                    for( uint32_t i = 0; i < indent; ++i )
+                    {
+                        output << Constants::Log::m_ScopeCharacter << std::setw( Constants::Log::m_IndentSize - 1 ) << ' ';
+                    }
+                }
+
+                // Print the first argument - usually a variable name.
+                output << *value;
+
+                // Apply alignment (before printing the next arguments).
+                if( debug.m_Aligned && unpackedValues.size() > 1 )
+                {
+                    if( messageLength < Constants::Log::m_MaxMessageLength )
+                    {
+                        output << std::setw( Constants::Log::m_MaxMessageLength - messageLength ) << ' ';
+                    }
+                }
+
+                // Print all remaining arguments.
+                while( ++value != unpackedValues.end() )
+                {
+                    if( value->size() > 0 )
+                    {
+                        // Single space has been added to avoid arguments concatenation.
+                        output << ' ';
+                    }
+                    output << *value;
+                }
+
+                // Restore default ML format.
+                debug.ToString( FormatFlag::Default );
+            }
+
+            return output.str();
         }
 
         //////////////////////////////////////////////////////////////////////////

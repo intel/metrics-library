@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2023-2024 Intel Corporation
+Copyright (C) 2023-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -23,13 +23,12 @@ namespace ML::BASE
     struct QueryHwCountersSlotTrait : TraitObject<T, TT::Queries::HwCountersSlot>
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( QueryHwCountersSlotTrait );
-        ML_DELETE_DEFAULT_COPY( QueryHwCountersSlotTrait );
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base = TraitObject<T, TT::Queries::HwCountersSlot>;
-        using Base::Derived;
+        using Base::DerivedConst;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Query state enumeration.
@@ -62,7 +61,8 @@ namespace ML::BASE
         /// @param context  context.
         //////////////////////////////////////////////////////////////////////////
         QueryHwCountersSlotTrait( TT::Context& context )
-            : m_GpuMemory{}
+            : Base()
+            , m_GpuMemory{}
             , m_EndTag( 0 )
             , m_ApiReportIndex( 1 )
             , m_ApiReportsCount( 1 )
@@ -77,11 +77,12 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Slot move constructor.
-        /// @param slot slot.
+        /// @brief Slot copy constructor.
+        /// @param slot slot to copy.
         //////////////////////////////////////////////////////////////////////////
-        QueryHwCountersSlotTrait( QueryHwCountersSlotTrait&& slot )
-            : m_GpuMemory( slot.m_GpuMemory )
+        QueryHwCountersSlotTrait( const QueryHwCountersSlotTrait& slot )
+            : Base()
+            , m_GpuMemory{}
             , m_EndTag( slot.m_EndTag )
             , m_ApiReportIndex( slot.m_ApiReportIndex )
             , m_ApiReportsCount( slot.m_ApiReportsCount )
@@ -91,17 +92,50 @@ namespace ML::BASE
             , m_OaBufferState( slot.m_OaBufferState )
             , m_ReportCollectingMode( slot.m_ReportCollectingMode )
             , m_State( slot.m_State )
-            , m_TriggeredReportGetAttempt( 0 )
+            , m_TriggeredReportGetAttempt( slot.m_TriggeredReportGetAttempt )
         {
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
+        /// @brief Slot move constructor.
+        /// @param slot slot to move.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
+        QueryHwCountersSlotTrait( QueryHwCountersSlotTrait&& slot )
+            : Base()
+            , m_GpuMemory( slot.m_GpuMemory )
+            , m_EndTag( slot.m_EndTag )
+            , m_ApiReportIndex( slot.m_ApiReportIndex )
+            , m_ApiReportsCount( slot.m_ApiReportsCount )
+            , m_WorkloadBegin( slot.m_WorkloadBegin )
+            , m_WorkloadEnd( slot.m_WorkloadEnd )
+            , m_Context( slot.m_Context )
+            , m_OaBufferState( slot.m_OaBufferState )
+            , m_ReportCollectingMode( slot.m_ReportCollectingMode )
+            , m_State( slot.m_State )
+            , m_TriggeredReportGetAttempt( slot.m_TriggeredReportGetAttempt )
         {
-            return "QueryHwCountersSlotTrait<Traits>";
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Slot copy assignment operator. Copies the state of a given slot.
+        /// @param slot slot that its state is copied from.
+        //////////////////////////////////////////////////////////////////////////
+        QueryHwCountersSlotTrait& operator=( const QueryHwCountersSlotTrait& slot )
+        {
+            if( this != &slot )
+            {
+                m_EndTag                    = slot.m_EndTag;
+                m_ApiReportIndex            = slot.m_ApiReportIndex;
+                m_ApiReportsCount           = slot.m_ApiReportsCount;
+                m_WorkloadBegin             = slot.m_WorkloadBegin;
+                m_WorkloadEnd               = slot.m_WorkloadEnd;
+                m_OaBufferState             = slot.m_OaBufferState;
+                m_ReportCollectingMode      = slot.m_ReportCollectingMode;
+                m_State                     = slot.m_State;
+                m_TriggeredReportGetAttempt = slot.m_TriggeredReportGetAttempt;
+            }
+
+            return *this;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -141,7 +175,7 @@ namespace ML::BASE
                     // Reset report oa memory to check mirpc completeness.
                     if( m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters )
                     {
-                        Derived().ResetOaReport( *reportGpu );
+                        DerivedConst().ResetOaReport( *reportGpu );
                     }
                 }
             }
@@ -298,3 +332,12 @@ namespace ML::XE2_HPG
         }
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct QueryHwCountersSlotTrait : XE2_HPG::QueryHwCountersSlotTrait<T>
+    {
+        ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

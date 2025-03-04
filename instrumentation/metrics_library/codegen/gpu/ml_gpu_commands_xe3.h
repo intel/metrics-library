@@ -1,13 +1,13 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_gpu_commands_gen9.h
+@file ml_gpu_commands_xe3.h
 
 @brief auto-generated file
 
@@ -306,7 +306,12 @@ struct MI_STORE_REGISTER_MEM
         struct tagCommon
         {
             __CODEGEN_UINT32         DWordLength                                      : __CODEGEN_BITFIELD( 0,  7)    ; 
-            __CODEGEN_UINT32         Reserved_8                                       : __CODEGEN_BITFIELD( 8, 20)    ; 
+            __CODEGEN_UINT32         Reserved_8                                       : __CODEGEN_BITFIELD( 8, 15)    ; 
+            __CODEGEN_UINT32         WorkloadPartitionIDOffsetEnable                  : __CODEGEN_BITFIELD(16, 16)    ; 
+            __CODEGEN_UINT32         MMIORemapEnable                                  : __CODEGEN_BITFIELD(17, 17)    ; 
+            __CODEGEN_UINT32         Reserved_18                                      : __CODEGEN_BITFIELD(18, 18)    ; 
+            __CODEGEN_UINT32         AddCSMMIOStartOffset                             : __CODEGEN_BITFIELD(19, 19)    ; 
+            __CODEGEN_UINT32         Reserved_20                                      : __CODEGEN_BITFIELD(20, 20)    ; 
             __CODEGEN_UINT32         PredicateEnable                                  : __CODEGEN_BITFIELD(21, 21)    ; 
             __CODEGEN_UINT32         UseGlobalGTT                                     : __CODEGEN_BITFIELD(22, 22)    ; 
             __CODEGEN_UINT32         MICommandOpcode                                  : __CODEGEN_BITFIELD(23, 28)    ; 
@@ -328,6 +333,9 @@ struct MI_STORE_REGISTER_MEM
     __CODEGEN_DebugType( MI_STORE_REGISTER_MEM )
     {
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.DWordLength                                 ,  0,  7, DWORD_LENGTH );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.WorkloadPartitionIDOffsetEnable             , 16, 16 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.MMIORemapEnable                             , 17, 17 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.AddCSMMIOStartOffset                        , 19, 19 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.PredicateEnable                             , 21, 21 );
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.UseGlobalGTT                                , 22, 22 );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
@@ -391,6 +399,45 @@ struct MI_STORE_REGISTER_MEM
     {
         __CODEGEN_ASSERT( index < 4 );
         return TheStructure.RawData[ index ];
+    }
+
+
+    __CODEGEN_INLINE void SetWorkloadPartitionIDOffsetEnable( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.WorkloadPartitionIDOffsetEnable = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetWorkloadPartitionIDOffsetEnable( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.WorkloadPartitionIDOffsetEnable );
+    }
+
+
+    __CODEGEN_INLINE void SetMMIORemapEnable( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.MMIORemapEnable = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetMMIORemapEnable( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.MMIORemapEnable );
+    }
+
+
+    __CODEGEN_INLINE void SetAddCSMMIOStartOffset( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.AddCSMMIOStartOffset = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetAddCSMMIOStartOffset( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.AddCSMMIOStartOffset );
     }
 
 
@@ -469,7 +516,14 @@ struct PIPE_CONTROL
         struct tagCommon
         {
             __CODEGEN_UINT32         DWordLength                                      : __CODEGEN_BITFIELD( 0,  7)    ; 
-            __CODEGEN_UINT32         Reserved_8                                       : __CODEGEN_BITFIELD( 8, 15)    ; 
+            __CODEGEN_UINT32         PredicateEnable                                  : __CODEGEN_BITFIELD( 8,  8)    ; 
+            __CODEGEN_UINT32         DataportFlush                                    : __CODEGEN_BITFIELD( 9,  9)    ; 
+            __CODEGEN_UINT32         L3ReadOnlyCacheInvalidationEnable                : __CODEGEN_BITFIELD(10, 10)    ; 
+            __CODEGEN_UINT32         UntypedDataPortCacheFlush                        : __CODEGEN_BITFIELD(11, 11)    ; 
+            __CODEGEN_UINT32         Reserved_12                                      : __CODEGEN_BITFIELD(12, 12)    ; 
+            __CODEGEN_UINT32         CompressionControlSurface_CCSFlush               : __CODEGEN_BITFIELD(13, 13)    ; 
+            __CODEGEN_UINT32         WorkloadPartitionIDOffsetEnable                  : __CODEGEN_BITFIELD(14, 14)    ; 
+            __CODEGEN_UINT32         Reserved_15                                      : __CODEGEN_BITFIELD(15, 15)    ; 
             __CODEGEN_UINT32         _3DCommandSubOpcode                              : __CODEGEN_BITFIELD(16, 23)    ; 
             __CODEGEN_UINT32         _3DCommandOpcode                                 : __CODEGEN_BITFIELD(24, 26)    ; 
             __CODEGEN_UINT32         CommandSubType                                   : __CODEGEN_BITFIELD(27, 28)    ; 
@@ -480,7 +534,7 @@ struct PIPE_CONTROL
             __CODEGEN_UINT32         StateCacheInvalidationEnable                     : __CODEGEN_BITFIELD( 2,  2)    ; 
             __CODEGEN_UINT32         ConstantCacheInvalidationEnable                  : __CODEGEN_BITFIELD( 3,  3)    ; 
             __CODEGEN_UINT32         VFCacheInvalidationEnable                        : __CODEGEN_BITFIELD( 4,  4)    ; 
-            __CODEGEN_UINT32         DCFlushEnable                                    : __CODEGEN_BITFIELD( 5,  5)    ; 
+            __CODEGEN_UINT32         ForceDeviceCoherency                             : __CODEGEN_BITFIELD( 5,  5)    ; 
             __CODEGEN_UINT32         ProtectedMemoryApplicationID                     : __CODEGEN_BITFIELD( 6,  6)    ; 
             __CODEGEN_UINT32         PipeControlFlushEnable                           : __CODEGEN_BITFIELD( 7,  7)    ; 
             __CODEGEN_UINT32         NotifyEnable                                     : __CODEGEN_BITFIELD( 8,  8)    ; 
@@ -490,19 +544,22 @@ struct PIPE_CONTROL
             __CODEGEN_UINT32         RenderTargetCacheFlushEnable                     : __CODEGEN_BITFIELD(12, 12)    ; 
             __CODEGEN_UINT32         DepthStallEnable                                 : __CODEGEN_BITFIELD(13, 13)    ; 
             __CODEGEN_UINT32         PostSyncOperation                                : __CODEGEN_BITFIELD(14, 15)    ; 
-            __CODEGEN_UINT32         GenericMediaStateClear                           : __CODEGEN_BITFIELD(16, 16)    ; 
-            __CODEGEN_UINT32         Reserved_49                                      : __CODEGEN_BITFIELD(17, 17)    ; 
+            __CODEGEN_UINT32         Reserved_48                                      : __CODEGEN_BITFIELD(16, 16)    ; 
+            __CODEGEN_UINT32         PSSStallSyncEnable                               : __CODEGEN_BITFIELD(17, 17)    ; 
             __CODEGEN_UINT32         TLBInvalidate                                    : __CODEGEN_BITFIELD(18, 18)    ; 
-            __CODEGEN_UINT32         GlobalSnapshotCountReset                         : __CODEGEN_BITFIELD(19, 19)    ; 
+            __CODEGEN_UINT32         DepthStallSyncEnable                             : __CODEGEN_BITFIELD(19, 19)    ; 
             __CODEGEN_UINT32         CommandStreamerStallEnable                       : __CODEGEN_BITFIELD(20, 20)    ; 
             __CODEGEN_UINT32         StoreDataIndex                                   : __CODEGEN_BITFIELD(21, 21)    ; 
             __CODEGEN_UINT32         ProtectedMemoryEnable                            : __CODEGEN_BITFIELD(22, 22)    ; 
             __CODEGEN_UINT32         LRIPostSyncOperation                             : __CODEGEN_BITFIELD(23, 23)    ; 
             __CODEGEN_UINT32         DestinationAddressType                           : __CODEGEN_BITFIELD(24, 24)    ; 
-            __CODEGEN_UINT32         Reserved_57                                      : __CODEGEN_BITFIELD(25, 25)    ; 
-            __CODEGEN_UINT32         FlushLLC                                         : __CODEGEN_BITFIELD(26, 26)    ; 
+            __CODEGEN_UINT32         AMFSFlushEnable                                  : __CODEGEN_BITFIELD(25, 25)    ; 
+            __CODEGEN_UINT32         Reserved_58                                      : __CODEGEN_BITFIELD(26, 26)    ; 
             __CODEGEN_UINT32         ProtectedMemoryDisable                           : __CODEGEN_BITFIELD(27, 27)    ; 
-            __CODEGEN_UINT32         Reserved_60                                      : __CODEGEN_BITFIELD(28, 31)    ; 
+            __CODEGEN_UINT32         Reserved_60                                      : __CODEGEN_BITFIELD(28, 28)    ; 
+            __CODEGEN_UINT32         CommandCacheInvalidateEnable                     : __CODEGEN_BITFIELD(29, 29)    ; 
+            __CODEGEN_UINT32         Reserved_62                                      : __CODEGEN_BITFIELD(30, 30)    ; 
+            __CODEGEN_UINT32         TBIMRForceBatchClosure                           : __CODEGEN_BITFIELD(31, 31)    ; 
 
             __CODEGEN_UINT32         Reserved_64                                      : __CODEGEN_BITFIELD( 0,  1)    ; 
             __CODEGEN_UINT32         Address                                          : __CODEGEN_BITFIELD( 2, 31)    ; 
@@ -520,6 +577,12 @@ struct PIPE_CONTROL
     __CODEGEN_DebugType( PIPE_CONTROL )
     {
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.DWordLength                                 ,  0,  7, DWORD_LENGTH );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.PredicateEnable                             ,  8,  8 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.DataportFlush                               ,  9,  9 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.L3ReadOnlyCacheInvalidationEnable           , 10, 10 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.UntypedDataPortCacheFlush                   , 11, 11 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.CompressionControlSurface_CCSFlush          , 13, 13 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.WorkloadPartitionIDOffsetEnable             , 14, 14 );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common._3DCommandSubOpcode                         , 16, 23, _3D_COMMAND_SUB_OPCODE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common._3DCommandOpcode                            , 24, 26, _3D_COMMAND_OPCODE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandSubType                              , 27, 28, COMMAND_SUBTYPE );
@@ -529,7 +592,7 @@ struct PIPE_CONTROL
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.StateCacheInvalidationEnable                ,  2,  2 );
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.ConstantCacheInvalidationEnable             ,  3,  3 );
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.VFCacheInvalidationEnable                   ,  4,  4 );
-        __CODEGEN_DebugAttributeBool(   TheStructure.Common.DCFlushEnable                               ,  5,  5 );
+        __CODEGEN_DebugAttributeBool(   TheStructure.Common.ForceDeviceCoherency                        ,  5,  5 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.ProtectedMemoryApplicationID                ,  6,  6 );
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.PipeControlFlushEnable                      ,  7,  7 );
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.NotifyEnable                                ,  8,  8 );
@@ -539,16 +602,18 @@ struct PIPE_CONTROL
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.RenderTargetCacheFlushEnable                , 12, 12 );
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.DepthStallEnable                            , 13, 13 );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.PostSyncOperation                           , 14, 15, POST_SYNC_OPERATION );
-        __CODEGEN_DebugAttributeBool(   TheStructure.Common.GenericMediaStateClear                      , 16, 16 );
+        __CODEGEN_DebugAttributeBool(   TheStructure.Common.PSSStallSyncEnable                          , 17, 17 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.TLBInvalidate                               , 18, 18 );
-        __CODEGEN_DebugAttributeEnum(   TheStructure.Common.GlobalSnapshotCountReset                    , 19, 19, GLOBAL_SNAPSHOT_COUNT_RESET );
+        __CODEGEN_DebugAttributeBool(   TheStructure.Common.DepthStallSyncEnable                        , 19, 19 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.CommandStreamerStallEnable                  , 20, 20 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.StoreDataIndex                              , 21, 21 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.ProtectedMemoryEnable                       , 22, 22 );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.LRIPostSyncOperation                        , 23, 23, LRI_POST_SYNC_OPERATION );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.DestinationAddressType                      , 24, 24, DESTINATION_ADDRESS_TYPE );
-        __CODEGEN_DebugAttributeBool(   TheStructure.Common.FlushLLC                                    , 26, 26 );
+        __CODEGEN_DebugAttributeBool(   TheStructure.Common.AMFSFlushEnable                             , 25, 25 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.ProtectedMemoryDisable                      , 27, 27 );
+        __CODEGEN_DebugAttributeBool(   TheStructure.Common.CommandCacheInvalidateEnable                , 29, 29 );
+        __CODEGEN_DebugAttributeEnum(   TheStructure.Common.TBIMRForceBatchClosure                      , 31, 31, TBIMR_FORCE_BATCH_CLOSURE );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.Address                                     ,  2, 31 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.AddressHigh                                 ,  0, 31 );
         __CODEGEN_DebugAttributeUInt64( TheStructure.Common.ImmediateData                               ,  0, 63 );
@@ -588,12 +653,6 @@ struct PIPE_CONTROL
         POST_SYNC_OPERATION_WRITE_TIMESTAMP                              = 3, 
     } POST_SYNC_OPERATION;
 
-    typedef enum tagGLOBAL_SNAPSHOT_COUNT_RESET
-    {
-        GLOBAL_SNAPSHOT_COUNT_RESET_DONT_RESET                           = 0, 
-        GLOBAL_SNAPSHOT_COUNT_RESET_RESET                                = 1, 
-    } GLOBAL_SNAPSHOT_COUNT_RESET;
-
     typedef enum tagLRI_POST_SYNC_OPERATION
     {
         LRI_POST_SYNC_OPERATION_NO_LRI_OPERATION                         = 0, 
@@ -605,6 +664,12 @@ struct PIPE_CONTROL
         DESTINATION_ADDRESS_TYPE_PPGTT                                   = 0, 
         DESTINATION_ADDRESS_TYPE_GGTT                                    = 1, 
     } DESTINATION_ADDRESS_TYPE;
+
+    typedef enum tagTBIMR_FORCE_BATCH_CLOSURE
+    {
+        TBIMR_FORCE_BATCH_CLOSURE_NO_BATCH_CLOSURE                       = 0, 
+        TBIMR_FORCE_BATCH_CLOSURE_CLOSE_BATCH                            = 1, 
+    } TBIMR_FORCE_BATCH_CLOSURE;
 
 
 
@@ -641,12 +706,6 @@ struct PIPE_CONTROL
         __CODEGEN_DebugEnumValue( POST_SYNC_OPERATION_WRITE_TIMESTAMP );
     }
 
-    __CODEGEN_DebugEnum( GLOBAL_SNAPSHOT_COUNT_RESET )
-    {
-        __CODEGEN_DebugEnumValue( GLOBAL_SNAPSHOT_COUNT_RESET_DONT_RESET );
-        __CODEGEN_DebugEnumValue( GLOBAL_SNAPSHOT_COUNT_RESET_RESET );
-    }
-
     __CODEGEN_DebugEnum( LRI_POST_SYNC_OPERATION )
     {
         __CODEGEN_DebugEnumValue( LRI_POST_SYNC_OPERATION_NO_LRI_OPERATION );
@@ -657,6 +716,12 @@ struct PIPE_CONTROL
     {
         __CODEGEN_DebugEnumValue( DESTINATION_ADDRESS_TYPE_PPGTT );
         __CODEGEN_DebugEnumValue( DESTINATION_ADDRESS_TYPE_GGTT );
+    }
+
+    __CODEGEN_DebugEnum( TBIMR_FORCE_BATCH_CLOSURE )
+    {
+        __CODEGEN_DebugEnumValue( TBIMR_FORCE_BATCH_CLOSURE_NO_BATCH_CLOSURE );
+        __CODEGEN_DebugEnumValue( TBIMR_FORCE_BATCH_CLOSURE_CLOSE_BATCH );
     }
 
 
@@ -683,6 +748,84 @@ struct PIPE_CONTROL
     {
         __CODEGEN_ASSERT( index < 6 );
         return TheStructure.RawData[ index ];
+    }
+
+
+    __CODEGEN_INLINE void SetPredicateEnable( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.PredicateEnable = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetPredicateEnable( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.PredicateEnable );
+    }
+
+
+    __CODEGEN_INLINE void SetDataportFlush( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.DataportFlush = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetDataportFlush( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.DataportFlush );
+    }
+
+
+    __CODEGEN_INLINE void SetL3ReadOnlyCacheInvalidationEnable( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.L3ReadOnlyCacheInvalidationEnable = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetL3ReadOnlyCacheInvalidationEnable( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.L3ReadOnlyCacheInvalidationEnable );
+    }
+
+
+    __CODEGEN_INLINE void SetUntypedDataPortCacheFlush( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.UntypedDataPortCacheFlush = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetUntypedDataPortCacheFlush( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.UntypedDataPortCacheFlush );
+    }
+
+
+    __CODEGEN_INLINE void SetCompressionControlSurface_CCSFlush( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.CompressionControlSurface_CCSFlush = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetCompressionControlSurface_CCSFlush( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.CompressionControlSurface_CCSFlush );
+    }
+
+
+    __CODEGEN_INLINE void SetWorkloadPartitionIDOffsetEnable( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.WorkloadPartitionIDOffsetEnable = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetWorkloadPartitionIDOffsetEnable( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.WorkloadPartitionIDOffsetEnable );
     }
 
 
@@ -751,16 +894,16 @@ struct PIPE_CONTROL
     }
 
 
-    __CODEGEN_INLINE void SetDCFlushEnable( const __CODEGEN_BOOL value )
+    __CODEGEN_INLINE void SetForceDeviceCoherency( const __CODEGEN_BOOL value )
     {
         __CODEGEN_SET_MACRO( value );
-        TheStructure.Common.DCFlushEnable = value;
+        TheStructure.Common.ForceDeviceCoherency = value;
     }
 
-    __CODEGEN_INLINE __CODEGEN_BOOL GetDCFlushEnable( void ) const 
+    __CODEGEN_INLINE __CODEGEN_BOOL GetForceDeviceCoherency( void ) const 
     {
         __CODEGEN_GET_MACRO();
-        return ( TheStructure.Common.DCFlushEnable );
+        return ( TheStructure.Common.ForceDeviceCoherency );
     }
 
 
@@ -881,16 +1024,16 @@ struct PIPE_CONTROL
     }
 
 
-    __CODEGEN_INLINE void SetGenericMediaStateClear( const __CODEGEN_BOOL value )
+    __CODEGEN_INLINE void SetPSSStallSyncEnable( const __CODEGEN_BOOL value )
     {
         __CODEGEN_SET_MACRO( value );
-        TheStructure.Common.GenericMediaStateClear = value;
+        TheStructure.Common.PSSStallSyncEnable = value;
     }
 
-    __CODEGEN_INLINE __CODEGEN_BOOL GetGenericMediaStateClear( void ) const 
+    __CODEGEN_INLINE __CODEGEN_BOOL GetPSSStallSyncEnable( void ) const 
     {
         __CODEGEN_GET_MACRO();
-        return ( TheStructure.Common.GenericMediaStateClear );
+        return ( TheStructure.Common.PSSStallSyncEnable );
     }
 
 
@@ -907,16 +1050,16 @@ struct PIPE_CONTROL
     }
 
 
-    __CODEGEN_INLINE void SetGlobalSnapshotCountReset( const GLOBAL_SNAPSHOT_COUNT_RESET value )
+    __CODEGEN_INLINE void SetDepthStallSyncEnable( const __CODEGEN_BOOL value )
     {
         __CODEGEN_SET_MACRO( value );
-        TheStructure.Common.GlobalSnapshotCountReset = value;
+        TheStructure.Common.DepthStallSyncEnable = value;
     }
 
-    __CODEGEN_INLINE GLOBAL_SNAPSHOT_COUNT_RESET GetGlobalSnapshotCountReset( void ) const 
+    __CODEGEN_INLINE __CODEGEN_BOOL GetDepthStallSyncEnable( void ) const 
     {
         __CODEGEN_GET_MACRO();
-        return static_cast<GLOBAL_SNAPSHOT_COUNT_RESET>( TheStructure.Common.GlobalSnapshotCountReset );
+        return ( TheStructure.Common.DepthStallSyncEnable );
     }
 
 
@@ -985,16 +1128,16 @@ struct PIPE_CONTROL
     }
 
 
-    __CODEGEN_INLINE void SetFlushLLC( const __CODEGEN_BOOL value )
+    __CODEGEN_INLINE void SetAMFSFlushEnable( const __CODEGEN_BOOL value )
     {
         __CODEGEN_SET_MACRO( value );
-        TheStructure.Common.FlushLLC = value;
+        TheStructure.Common.AMFSFlushEnable = value;
     }
 
-    __CODEGEN_INLINE __CODEGEN_BOOL GetFlushLLC( void ) const 
+    __CODEGEN_INLINE __CODEGEN_BOOL GetAMFSFlushEnable( void ) const 
     {
         __CODEGEN_GET_MACRO();
-        return ( TheStructure.Common.FlushLLC );
+        return ( TheStructure.Common.AMFSFlushEnable );
     }
 
 
@@ -1008,6 +1151,32 @@ struct PIPE_CONTROL
     {
         __CODEGEN_GET_MACRO();
         return ( TheStructure.Common.ProtectedMemoryDisable );
+    }
+
+
+    __CODEGEN_INLINE void SetCommandCacheInvalidateEnable( const __CODEGEN_BOOL value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.CommandCacheInvalidateEnable = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_BOOL GetCommandCacheInvalidateEnable( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.CommandCacheInvalidateEnable );
+    }
+
+
+    __CODEGEN_INLINE void SetTBIMRForceBatchClosure( const TBIMR_FORCE_BATCH_CLOSURE value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.TBIMRForceBatchClosure = value;
+    }
+
+    __CODEGEN_INLINE TBIMR_FORCE_BATCH_CLOSURE GetTBIMRForceBatchClosure( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return static_cast<TBIMR_FORCE_BATCH_CLOSURE>( TheStructure.Common.TBIMRForceBatchClosure );
     }
 
 
@@ -1067,7 +1236,9 @@ struct MI_STORE_DATA_IMM
         struct tagCommon
         {
             __CODEGEN_UINT32         DWordLength                                      : __CODEGEN_BITFIELD( 0,  9)    ; 
-            __CODEGEN_UINT32         Reserved_10                                      : __CODEGEN_BITFIELD(10, 20)    ; 
+            __CODEGEN_UINT32         ForceWriteCompletionCheck                        : __CODEGEN_BITFIELD(10, 10)    ; 
+            __CODEGEN_UINT32         WorkloadPartitionIDOffsetEnable                  : __CODEGEN_BITFIELD(11, 11)    ; 
+            __CODEGEN_UINT32         Reserved_12                                      : __CODEGEN_BITFIELD(12, 20)    ; 
             __CODEGEN_UINT32         StoreQword                                       : __CODEGEN_BITFIELD(21, 21)    ; 
             __CODEGEN_UINT32         UseGlobalGTT                                     : __CODEGEN_BITFIELD(22, 22)    ; 
             __CODEGEN_UINT32         MICommandOpcode                                  : __CODEGEN_BITFIELD(23, 28)    ; 
@@ -1075,8 +1246,7 @@ struct MI_STORE_DATA_IMM
 
             __CODEGEN_UINT64         CoreModeEnable                                   : __CODEGEN_BITFIELD( 0,  0)    ; 
             __CODEGEN_UINT64         Reserved_33                                      : __CODEGEN_BITFIELD( 1,  1)    ; 
-            __CODEGEN_UINT64         Address                                          : __CODEGEN_BITFIELD( 2, 47)    ; 
-            __CODEGEN_UINT64         Address_Reserved_80                              : __CODEGEN_BITFIELD(48, 63)    ; 
+            __CODEGEN_UINT64         Address                                          : __CODEGEN_BITFIELD( 2, 63)    ; 
 
             __CODEGEN_UINT32         DataDWord0                                                                       ; 
 
@@ -1091,12 +1261,14 @@ struct MI_STORE_DATA_IMM
     __CODEGEN_DebugType( MI_STORE_DATA_IMM )
     {
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.DWordLength                                 ,  0,  9, DWORD_LENGTH );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.ForceWriteCompletionCheck                   , 10, 10 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.WorkloadPartitionIDOffsetEnable             , 11, 11 );
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.StoreQword                                  , 21, 21 );
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.UseGlobalGTT                                , 22, 22 );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandType                                 , 29, 31, COMMAND_TYPE );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.CoreModeEnable                              ,  0,  0 );
-        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.Address                                     ,  2, 47 );
+        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.Address                                     ,  2, 63 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.DataDWord0                                  ,  0, 31 );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.DataDWord1                                  ,  0, 31 );
     }
@@ -1172,6 +1344,32 @@ struct MI_STORE_DATA_IMM
     {
         __CODEGEN_GET_MACRO();
         return static_cast<DWORD_LENGTH>( TheStructure.Common.DWordLength );
+    }
+
+
+    __CODEGEN_INLINE void SetForceWriteCompletionCheck( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.ForceWriteCompletionCheck = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetForceWriteCompletionCheck( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.ForceWriteCompletionCheck );
+    }
+
+
+    __CODEGEN_INLINE void SetWorkloadPartitionIDOffsetEnable( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.WorkloadPartitionIDOffsetEnable = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetWorkloadPartitionIDOffsetEnable( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.WorkloadPartitionIDOffsetEnable );
     }
 
 
@@ -1272,7 +1470,11 @@ struct MI_LOAD_REGISTER_IMM
             __CODEGEN_UINT32         DWordLength                                      : __CODEGEN_BITFIELD( 0,  7)    ; 
             __CODEGEN_UINT32         ByteWriteDisables                                : __CODEGEN_BITFIELD( 8, 11)    ; 
             __CODEGEN_UINT32         ForcePosted                                      : __CODEGEN_BITFIELD(12, 12)    ; 
-            __CODEGEN_UINT32         Reserved_13                                      : __CODEGEN_BITFIELD(13, 22)    ; 
+            __CODEGEN_UINT32         Reserved_13                                      : __CODEGEN_BITFIELD(13, 16)    ; 
+            __CODEGEN_UINT32         MMIORemapEnable                                  : __CODEGEN_BITFIELD(17, 17)    ; 
+            __CODEGEN_UINT32         Reserved_18                                      : __CODEGEN_BITFIELD(18, 18)    ; 
+            __CODEGEN_UINT32         AddCSMMIOStartOffset                             : __CODEGEN_BITFIELD(19, 19)    ; 
+            __CODEGEN_UINT32         Reserved_20                                      : __CODEGEN_BITFIELD(20, 22)    ; 
             __CODEGEN_UINT32         MICommandOpcode                                  : __CODEGEN_BITFIELD(23, 28)    ; 
             __CODEGEN_UINT32         CommandType                                      : __CODEGEN_BITFIELD(29, 31)    ; 
 
@@ -1292,6 +1494,8 @@ struct MI_LOAD_REGISTER_IMM
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.DWordLength                                 ,  0,  7, DWORD_LENGTH );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.ByteWriteDisables                           ,  8, 11 );
         __CODEGEN_DebugAttributeBool(   TheStructure.Common.ForcePosted                                 , 12, 12 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.MMIORemapEnable                             , 17, 17 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.AddCSMMIOStartOffset                        , 19, 19 );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandType                                 , 29, 31, COMMAND_TYPE );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.RegisterOffset                              ,  2, 22 );
@@ -1381,6 +1585,32 @@ struct MI_LOAD_REGISTER_IMM
     }
 
 
+    __CODEGEN_INLINE void SetMMIORemapEnable( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.MMIORemapEnable = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetMMIORemapEnable( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.MMIORemapEnable );
+    }
+
+
+    __CODEGEN_INLINE void SetAddCSMMIOStartOffset( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.AddCSMMIOStartOffset = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetAddCSMMIOStartOffset( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.AddCSMMIOStartOffset );
+    }
+
+
     typedef enum tagREGISTEROFFSET
     {
         REGISTEROFFSET_BIT_SHIFT  = 2,
@@ -1431,12 +1661,10 @@ struct MI_COPY_MEM_MEM
             __CODEGEN_UINT32         CommandType                                      : __CODEGEN_BITFIELD(29, 31)    ; 
 
             __CODEGEN_UINT64         Reserved_32                                      : __CODEGEN_BITFIELD( 0,  1)    ; 
-            __CODEGEN_UINT64         DestinationMemoryAddress                         : __CODEGEN_BITFIELD( 2, 47)    ; 
-            __CODEGEN_UINT64         DestinationMemoryAddress_Reserved_80             : __CODEGEN_BITFIELD(48, 63)    ; 
+            __CODEGEN_UINT64         DestinationMemoryAddress                         : __CODEGEN_BITFIELD( 2, 63)    ; 
 
             __CODEGEN_UINT64         Reserved_96                                      : __CODEGEN_BITFIELD( 0,  1)    ; 
-            __CODEGEN_UINT64         SourceMemoryAddress                              : __CODEGEN_BITFIELD( 2, 47)    ; 
-            __CODEGEN_UINT64         SourceMemoryAddress_Reserved_144                 : __CODEGEN_BITFIELD(48, 63)    ; 
+            __CODEGEN_UINT64         SourceMemoryAddress                              : __CODEGEN_BITFIELD( 2, 63)    ; 
 
         } Common;
         __CODEGEN_UINT32            RawData[ 5 ];
@@ -1451,8 +1679,8 @@ struct MI_COPY_MEM_MEM
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.UseGlobalGTTSource                          , 22, 22, USE_GLOBAL_GTT_SOURCE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandType                                 , 29, 31, COMMAND_TYPE );
-        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.DestinationMemoryAddress                    ,  2, 47 );
-        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.SourceMemoryAddress                         ,  2, 47 );
+        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.DestinationMemoryAddress                    ,  2, 63 );
+        __CODEGEN_DebugAttributeUInt64( TheStructure.Common.SourceMemoryAddress                         ,  2, 63 );
     }
 
 
@@ -1475,7 +1703,7 @@ struct MI_COPY_MEM_MEM
 
     typedef enum tagMI_COMMAND_OPCODE
     {
-        MI_COMMAND_OPCODE_MI_MEM_TO_MEM                                  = 46, 
+        MI_COMMAND_OPCODE_MI_COPY_MEM_MEM                                = 46, 
     } MI_COMMAND_OPCODE;
 
     typedef enum tagCOMMAND_TYPE
@@ -1504,7 +1732,7 @@ struct MI_COPY_MEM_MEM
 
     __CODEGEN_DebugEnum( MI_COMMAND_OPCODE )
     {
-        __CODEGEN_DebugEnumValue( MI_COMMAND_OPCODE_MI_MEM_TO_MEM );
+        __CODEGEN_DebugEnumValue( MI_COMMAND_OPCODE_MI_COPY_MEM_MEM );
     }
 
     __CODEGEN_DebugEnum( COMMAND_TYPE )
@@ -1604,7 +1832,7 @@ struct MI_COPY_MEM_MEM
 } __CODEGEN_ATTRIBUTES_STRUCTURE;
 
 __CODEGEN_C_ASSERT( 20 == sizeof( MI_COPY_MEM_MEM ) );
-
+        
 struct MI_LOAD_REGISTER_REG
 {
     __CODEGEN_ACCESS_SPECIFIER_DEFINITION
@@ -1613,7 +1841,12 @@ struct MI_LOAD_REGISTER_REG
         struct tagCommon
         {
             __CODEGEN_UINT32         DWordLength                                      : __CODEGEN_BITFIELD( 0,  7)    ; 
-            __CODEGEN_UINT32         Reserved_8                                       : __CODEGEN_BITFIELD( 8, 22)    ; 
+            __CODEGEN_UINT32         Reserved_8                                       : __CODEGEN_BITFIELD( 8, 15)    ; 
+            __CODEGEN_UINT32         MMIORemapEnableSource                            : __CODEGEN_BITFIELD(16, 16)    ; 
+            __CODEGEN_UINT32         MMIORemapEnableDestination                       : __CODEGEN_BITFIELD(17, 17)    ; 
+            __CODEGEN_UINT32         AddCSMMIOStartOffsetSource                       : __CODEGEN_BITFIELD(18, 18)    ; 
+            __CODEGEN_UINT32         AddCSMMIOStartOffsetDestination                  : __CODEGEN_BITFIELD(19, 19)    ; 
+            __CODEGEN_UINT32         Reserved_20                                      : __CODEGEN_BITFIELD(20, 22)    ; 
             __CODEGEN_UINT32         MICommandOpcode                                  : __CODEGEN_BITFIELD(23, 28)    ; 
             __CODEGEN_UINT32         CommandType                                      : __CODEGEN_BITFIELD(29, 31)    ; 
 
@@ -1634,6 +1867,10 @@ struct MI_LOAD_REGISTER_REG
     __CODEGEN_DebugType( MI_LOAD_REGISTER_REG )
     {
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.DWordLength                                 ,  0,  7, DWORD_LENGTH );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.MMIORemapEnableSource                       , 16, 16 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.MMIORemapEnableDestination                  , 17, 17 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.AddCSMMIOStartOffsetSource                  , 18, 18 );
+        __CODEGEN_DebugAttributeUInt(   TheStructure.Common.AddCSMMIOStartOffsetDestination             , 19, 19 );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.MICommandOpcode                             , 23, 28, MI_COMMAND_OPCODE );
         __CODEGEN_DebugAttributeEnum(   TheStructure.Common.CommandType                                 , 29, 31, COMMAND_TYPE );
         __CODEGEN_DebugAttributeUInt(   TheStructure.Common.SourceRegisterAddress                       ,  2, 22 );
@@ -1697,6 +1934,58 @@ struct MI_LOAD_REGISTER_REG
     }
 
 
+    __CODEGEN_INLINE void SetMMIORemapEnableSource( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.MMIORemapEnableSource = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetMMIORemapEnableSource( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.MMIORemapEnableSource );
+    }
+
+
+    __CODEGEN_INLINE void SetMMIORemapEnableDestination( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.MMIORemapEnableDestination = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetMMIORemapEnableDestination( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.MMIORemapEnableDestination );
+    }
+
+
+    __CODEGEN_INLINE void SetAddCSMMIOStartOffsetSource( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.AddCSMMIOStartOffsetSource = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetAddCSMMIOStartOffsetSource( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.AddCSMMIOStartOffsetSource );
+    }
+
+
+    __CODEGEN_INLINE void SetAddCSMMIOStartOffsetDestination( const __CODEGEN_UINT32 value )
+    {
+        __CODEGEN_SET_MACRO( value );
+        TheStructure.Common.AddCSMMIOStartOffsetDestination = value;
+    }
+
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetAddCSMMIOStartOffsetDestination( void ) const 
+    {
+        __CODEGEN_GET_MACRO();
+        return ( TheStructure.Common.AddCSMMIOStartOffsetDestination );
+    }
+
+
     typedef enum tagSOURCEREGISTERADDRESS
     {
         SOURCEREGISTERADDRESS_BIT_SHIFT  = 2,
@@ -1737,7 +2026,7 @@ struct MI_LOAD_REGISTER_REG
 } __CODEGEN_ATTRIBUTES_STRUCTURE;
 
 __CODEGEN_C_ASSERT( 12 == sizeof( MI_LOAD_REGISTER_REG ) );
-
+        
 struct MI_NOOP
 {
     __CODEGEN_ACCESS_SPECIFIER_DEFINITION
@@ -1794,7 +2083,7 @@ struct MI_NOOP
         TheStructure.RawData[ 0 ]                                    = 0x0;
     }
 
-    static MI_NOOP sInit( void )
+    static MI_NOOP sInit( void ) 
     {
         MI_NOOP state;
         state.Init();
@@ -1815,7 +2104,7 @@ struct MI_NOOP
         TheStructure.Common.IdentificationNumber = value;
     }
 
-    __CODEGEN_INLINE __CODEGEN_UINT32 GetIdentificationNumber( void ) const
+    __CODEGEN_INLINE __CODEGEN_UINT32 GetIdentificationNumber( void ) const 
     {
         __CODEGEN_GET_MACRO();
         return ( TheStructure.Common.IdentificationNumber );
@@ -1828,7 +2117,7 @@ struct MI_NOOP
         TheStructure.Common.IdentificationNumberRegisterWriteEnable = value;
     }
 
-    __CODEGEN_INLINE __CODEGEN_BOOL GetIdentificationNumberRegisterWriteEnable( void ) const
+    __CODEGEN_INLINE __CODEGEN_BOOL GetIdentificationNumberRegisterWriteEnable( void ) const 
     {
         __CODEGEN_GET_MACRO();
         return ( TheStructure.Common.IdentificationNumberRegisterWriteEnable );

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -92,4 +92,16 @@ Template:           Tools/MetricsLibraryGenerator/templates/gfx.h
 #undef __CODEGEN_NAMESPACE_OPEN
 #undef __CODEGEN_PLATFORM
 #endif // ML_ENABLE_XE2_HPG
+
+#if ML_ENABLE_XE3
+// XE3 IGFX Commands
+#define __CODEGEN_NAMESPACE_CLOSE }; }
+#define __CODEGEN_PLATFORM "XE3"
+#define __CODEGEN_NAMESPACE_OPEN namespace ML::XE3 { template <typename T> struct GpuCommandsLayoutsTrait {
+#define __CODEGEN_FILE_DIRECTIVES_OPEN ML_STRUCTURE_PACK_BEGIN( 1 )
+#define __CODEGEN_FILE_DIRECTIVES_CLOSE ML_STRUCTURE_PACK_END()
+#include "ml_gpu_commands_xe3.h"
+#undef __CODEGEN_NAMESPACE_OPEN
+#undef __CODEGEN_PLATFORM
+#endif // ML_ENABLE_XE3
 

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021-2024 Intel Corporation
+Copyright (C) 2021-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -27,15 +27,6 @@ namespace ML::BASE
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( DrmLayoutsTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( DrmLayoutsTrait );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "DrmLayoutsTrait<Traits>";
-        }
     };
 } // namespace ML::BASE
 
@@ -124,5 +115,14 @@ namespace ML::XE2_HPG
         };
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct DrmLayoutsTrait : XE2_HPG::DrmLayoutsTrait<T>
+    {
+        ML_DECLARE_TRAIT( DrmLayoutsTrait, XE2_HPG );
+    };
+} // namespace ML::XE3
 
 ML_STRUCTURE_PACK_END();

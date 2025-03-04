@@ -1,13 +1,13 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_traits_xe_hpg.h
+@file ml_traits_xe3.h
 
 @brief Auto-generated file. Creates Traits structures for a given gen / os / api.
 
@@ -20,16 +20,16 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits.h
 
 #pragma once
 
-#if ML_ENABLE_XE_HPG
-#define ML_XE_HPG 1
+#if ML_ENABLE_XE3
+#define ML_XE3 1
 
-#include "ml_ddi_xe_hpg.h"
+#include "ml_ddi_xe3.h"
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Instantiates ML traits for XE_HPG.
+/// @brief Instantiates ML traits for XE3.
 //////////////////////////////////////////////////////////////////////////
 #if ML_ENABLE_OPENCL
-namespace ML::XE_HPG::OpenCL
+namespace ML::XE3::OpenCL
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Traits definitions.
@@ -203,11 +203,11 @@ namespace ML::XE_HPG::OpenCL
         using InternalFeature           = InternalFeatureTrait<Traits>;                     //  ml_internal_feature.h
         #endif
     };
-} // namespace ML::XE_HPG::OpenCL
+} // namespace ML::XE3::OpenCL
 #endif //ML_ENABLE_OPENCL
 
 #if ML_ENABLE_ONEAPI
-namespace ML::XE_HPG::OneApi
+namespace ML::XE3::OneApi
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Traits definitions.
@@ -381,8 +381,8 @@ namespace ML::XE_HPG::OneApi
         using InternalFeature           = InternalFeatureTrait<Traits>;                     //  ml_internal_feature.h
         #endif
     };
-} // namespace ML::XE_HPG::OneApi
+} // namespace ML::XE3::OneApi
 #endif //ML_ENABLE_ONEAPI
 
-#undef ML_XE_HPG
-#endif // ML_ENABLE_XE_HPG
+#undef ML_XE3
+#endif // ML_ENABLE_XE3

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML
+namespace ML::BASE
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for OaBufferMappedTrait object.
@@ -30,7 +30,7 @@ namespace ML
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base = TraitObject<T, TT::OaBuffer>;
-        using Base::Derived;
+        using Base::DerivedConst;
 
     private:
         //////////////////////////////////////////////////////////////////////////
@@ -47,20 +47,12 @@ namespace ML
         /// @param kernel   kernel interface.
         //////////////////////////////////////////////////////////////////////////
         OaBufferMappedTrait( TT::KernelInterface& kernel )
-            : m_Kernel( kernel )
+            : Base()
+            , m_Kernel( kernel )
             , m_OaBufferType( T::Layouts::OaBuffer::Type::Oa )
             , m_OaBuffer( kernel.m_Tbs.GetOaBufferMapped( m_OaBufferType ) )
             , m_ReportSplitted{}
         {
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "OaBufferMappedTrait<Traits>";
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -99,22 +91,19 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_ASSERT( IsValid() );
+            ML_FUNCTION_CHECK( GetPreReportOffset<true>( reportGpu, state.m_TailBeginOffset ) );
+            ML_FUNCTION_CHECK( GetPostReportOffset<false>( reportGpu, state.m_TailEndOffset ) );
 
-            const uint32_t base      = reportGpu.m_OaBuffer.GetAllocationOffset();
-            const uint32_t tailBegin = reportGpu.m_OaTailPreBegin.GetOffset();
-            const uint32_t tailEnd   = reportGpu.m_OaTailPostEnd.GetOffset();
+            const uint32_t base       = reportGpu.m_OaBuffer.GetAllocationOffset();
+            const bool     validBegin = ( state.m_TailBeginOffset >= 0 ) && ( state.m_TailBeginOffset < m_OaBuffer.m_Size );
+            const bool     validEnd   = ( state.m_TailEndOffset >= 0 ) && ( state.m_TailEndOffset < m_OaBuffer.m_Size );
 
-            const bool validBegin = tailBegin >= base;
-            const bool validEnd   = tailEnd >= base;
+            log.m_Result = ML_STATUS( validBegin && validEnd );
 
-            state.m_TailBeginOffset = tailBegin - base;
-            state.m_TailEndOffset   = tailEnd - base;
-            log.m_Result            = ML_STATUS( validBegin && validEnd );
-
-            log.Debug( "Base address   ", base );
-            log.Debug( "Tail pre begin ", tailBegin, state.m_TailBeginOffset );
-            log.Debug( "Tail post end  ", tailEnd, state.m_TailEndOffset );
-            log.Debug( "Valid          ", log.m_Result );
+            log.Debug( "Base address  ", base );
+            log.Debug( "Tail pre begin", state.m_TailBeginOffset + base, state.m_TailBeginOffset );
+            log.Debug( "Tail post end ", state.m_TailEndOffset + base, state.m_TailEndOffset );
+            log.Debug( "Valid         ", log.m_Result );
 
             return log.m_Result;
         }
@@ -225,6 +214,9 @@ namespace ML
             const uint32_t size   = m_OaBuffer.m_Size;
             offset                = oaTail.GetOffset() - base;
 
+            // Round down offset before a triggered oa report if incomplete report.
+            DerivedConst().RoundDownReportOffset( offset );
+
             log.Debug( "Offset", offset );
 
             return log.m_Result = ML_STATUS( offset < size );
@@ -250,6 +242,9 @@ namespace ML
             const uint32_t size   = m_OaBuffer.m_Size;
             offset                = oaTail.GetOffset() - base;
 
+            // Round up offset after a triggered oa report if incomplete report.
+            DerivedConst().RoundUpReportOffset( offset );
+
             log.Debug( "Offset", offset );
 
             return log.m_Result = ML_STATUS( offset < size );
@@ -267,10 +262,12 @@ namespace ML
             if( T::Tools::CheckLogLevel( LogType::Csv ) )
             {
                 const auto     emptyReportOa = TT::Layouts::HwCounters::ReportOa{};
-                const uint32_t base          = reportGpu.m_OaBuffer.GetAllocationOffset();
-                const uint32_t beginOffset   = reportGpu.m_OaTailPreBegin.GetOffset() - base;
-                const uint32_t endOffset     = reportGpu.m_OaTailPostEnd.GetOffset() - base;
                 const uint32_t reportSize    = m_OaBuffer.m_ReportSize;
+                uint32_t       beginOffset   = 0;
+                uint32_t       endOffset     = 0;
+
+                ML_FUNCTION_CHECK( GetPreReportOffset<true>( reportGpu, beginOffset ) );
+                ML_FUNCTION_CHECK( GetPostReportOffset<false>( reportGpu, endOffset ) );
 
                 // Print empty report first to distinguish oa buffer reports for different queries.
                 log.Csv( emptyReportOa );
@@ -315,6 +312,28 @@ namespace ML
             }
         }
 
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Rounds down report offset to the nearest report beginning.
+        /// @return offset  report offset to update.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void RoundDownReportOffset( uint32_t& offset ) const
+        {
+            offset -= offset % m_OaBuffer.m_ReportSize;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Rounds up report offset to the nearest report end.
+        /// @return offset  report offset to update.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void RoundUpReportOffset( uint32_t& offset ) const
+        {
+            const uint32_t remainder = offset % m_OaBuffer.m_ReportSize;
+            if( remainder )
+            {
+                offset = ( offset + m_OaBuffer.m_ReportSize - remainder ) % m_OaBuffer.m_Size;
+            }
+        }
+
     private:
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Checks whether oa report is splitted.
@@ -349,4 +368,67 @@ namespace ML
             return m_ReportSplitted;
         }
     };
-} // namespace ML
+} // namespace ML::BASE
+
+namespace ML::GEN9
+{
+    template <typename T>
+    struct OaBufferMappedTrait : BASE::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, BASE );
+    };
+} // namespace ML::GEN9
+
+namespace ML::GEN11
+{
+    template <typename T>
+    struct OaBufferMappedTrait : GEN9::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN9 );
+    };
+} // namespace ML::GEN11
+
+namespace ML::XE_LP
+{
+    template <typename T>
+    struct OaBufferMappedTrait : GEN11::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN11 );
+    };
+} // namespace ML::XE_LP
+
+namespace ML::XE_HPG
+{
+    template <typename T>
+    struct OaBufferMappedTrait : XE_LP::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_LP );
+    };
+} // namespace ML::XE_HPG
+
+namespace ML::XE_HPC
+{
+    template <typename T>
+    struct OaBufferMappedTrait : XE_HPG::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HPG );
+    };
+} // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct OaBufferMappedTrait : XE_HPG::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HPG );
+    };
+} // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct OaBufferMappedTrait : XE2_HPG::OaBufferMappedTrait<T>
+    {
+        ML_DECLARE_TRAIT( OaBufferMappedTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

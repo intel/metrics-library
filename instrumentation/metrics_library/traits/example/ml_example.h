@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -25,15 +25,5 @@ namespace ML
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( ExampleTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( ExampleTrait );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            ML_STATIC_ASSERT_ALWAYS( "Add trait's description" );
-            return "ExampleTrait<Traits>";
-        }
     };
 } // namespace ML

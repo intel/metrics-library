@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021-2024 Intel Corporation
+Copyright (C) 2021-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -25,16 +25,6 @@ namespace ML::BASE
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( ExampleGpuTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( ExampleGpuTrait );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            ML_STATIC_ASSERT_ALWAYS( "Add trait's description" );
-            return "ExampleGpuTrait<Traits>";
-        }
     };
 } // namespace ML::BASE
 
@@ -91,3 +81,12 @@ namespace ML::XE2_HPG
         ML_DECLARE_TRAIT( ExampleGpuTrait, XE_HPG );
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct ExampleGpuTrait : XE2_HPG::ExampleGpuTrait<T>
+    {
+        ML_DECLARE_TRAIT( ExampleGpuTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

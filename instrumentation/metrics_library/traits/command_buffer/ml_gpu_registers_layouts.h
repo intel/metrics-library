@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -28,15 +28,6 @@ namespace ML::BASE
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( GpuRegistersLayoutsTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( GpuRegistersLayoutsTrait );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "GpuRegistersLayoutsTrait<Traits>";
-        }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Oa report trigger.
@@ -122,6 +113,15 @@ namespace ML::XE2_HPG
         ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, XE_HPG );
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct GpuRegistersLayoutsTrait : XE2_HPG::GpuRegistersLayoutsTrait<T>
+    {
+        ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, XE2_HPG );
+    };
+} // namespace ML::XE3
 
 ML_STRUCTURE_PACK_END();
 

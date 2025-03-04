@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -381,4 +381,63 @@ namespace ML::XE2_HPG::OneApi
 #endif // ML_ENABLE_ONEAPI
 
 #endif // ML_ENABLE_XE2_HPG
+
+#if ML_ENABLE_XE3
+
+#include "ml_traits_xe3.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiCommandBuffer.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE3::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for CommandBufferGet_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL CommandBufferGet_1_0(
+        const CommandBufferData_1_0* data )
+    {
+        return DdiCommandBuffer<T>::CommandBufferGet_1_0( data );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for CommandBufferGetSize_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL CommandBufferGetSize_1_0(
+        const CommandBufferData_1_0* data,
+        CommandBufferSize_1_0*       size )
+    {
+        return DdiCommandBuffer<T>::CommandBufferGetSize_1_0( data, size );
+    }
+
+} // namespace ML::XE3::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE3::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for CommandBufferGet_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL CommandBufferGet_1_0(
+        const CommandBufferData_1_0* data )
+    {
+        return DdiCommandBuffer<T>::CommandBufferGet_1_0( data );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for CommandBufferGetSize_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL CommandBufferGetSize_1_0(
+        const CommandBufferData_1_0* data,
+        CommandBufferSize_1_0*       size )
+    {
+        return DdiCommandBuffer<T>::CommandBufferGetSize_1_0( data, size );
+    }
+
+} // namespace ML::XE3::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE3
 

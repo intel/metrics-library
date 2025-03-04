@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -381,4 +381,63 @@ namespace ML::XE2_HPG::OneApi
 #endif // ML_ENABLE_ONEAPI
 
 #endif // ML_ENABLE_XE2_HPG
+
+#if ML_ENABLE_XE3
+
+#include "ml_traits_xe3.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiMarker.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE3::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE3::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE3
 

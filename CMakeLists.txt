@@ -1,6 +1,6 @@
 #=========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -592,7 +592,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         $<$<CONFIG:Release>:
             ${COMMON_COMPILE_OPTIONS}
             /W4     # display warnings level 4
-            /WX     # treat warnings as errors
+            /WX     # treats warnings as errors
             /Ot     # favor fast code
             /O2     # favor speed
             /GL     # whole program optimization
@@ -600,7 +600,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         $<$<CONFIG:ReleaseInternal>:
             ${COMMON_COMPILE_OPTIONS}
             /W4     # display warnings level 4
-            /WX     # treat warnings as errors
+            /WX     # treats warnings as errors
             /Ot     # favor fast code
             /O2     # favor speed
             /GL     # whole program optimization
@@ -619,7 +619,7 @@ elseif (${PLATFORM} STREQUAL linux) # linux
         -fpack-struct=8               # struct member alignment - 8 bytes
         -Wformat                      # enables format string checking warnings during compilation
         -Wformat-security             # warns about potentially insecure format string usages
-        -Werror=format-security       # treat format string security warnings as errors
+        -Werror=format-security       # treats format string security warnings as errors
         -Wno-sequence-point           # disable undefined behavior warning
         -Wno-comment                  # allow multi-line comments
         -Ofast                        # optimize code in the favor of speed 
@@ -635,18 +635,18 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "debug")
         add_definitions (-D_DEBUG)
     elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release-internal" OR
-        "${BUILD_TYPE}" STREQUAL "releaseinternal")
+        "${CMAKE_BUILD_TYPE}" STREQUAL "releaseinternal")
         add_definitions (-D_RELEASE_INTERNAL)
     elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release")
         add_definitions (-D_RELEASE)
     endif ()
-    if ("${BUILD_TYPE}" STREQUAL "release" OR
-        "${BUILD_TYPE}" STREQUAL "release-internal" OR
-        "${BUILD_TYPE}" STREQUAL "releaseinternal")
-        add_definitions (-Werror)                 # treat warning as errors
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "release" OR
+        "${CMAKE_BUILD_TYPE}" STREQUAL "release-internal" OR
+        "${CMAKE_BUILD_TYPE}" STREQUAL "releaseinternal")
+        add_definitions (-Werror)                 # treats warning as errors
         add_definitions (-flto)                   # enables Link-Time Optimization (LTO)
         add_definitions (-fvisibility=hidden)     # hide non-exported symbols
-        add_definitions (-Werror=format-security) # treat format string security warnings as errors
+        add_definitions (-Werror=format-security) # treats format string security warnings as errors
         add_definitions (-fPIC)                   # generates position-independent code during the compilation phase
         add_definitions (-fPIE)                   # generates position-independent executables during the compilation phase
         add_definitions (-pie)                    # produces position-independent executables during the linking phase

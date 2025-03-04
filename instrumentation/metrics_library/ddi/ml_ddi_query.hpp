@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -19,10 +19,10 @@ Template:           Tools/MetricsLibraryGenerator/templates/hpp.h
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Base functions for DdiQuery.
+    /// @brief Functions for DdiQuery.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct DdiQuery
@@ -99,67 +99,4 @@ namespace ML::BASE
             }
         }
     };
-} // namespace ML::BASE
-
-#pragma region Platform Specific Functions for DdiQuery
-namespace ML::GEN9
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief GEN9-specific functions for DdiQuery.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiQuery = BASE::DdiQuery<T>;
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief GEN11-specific functions for DdiQuery.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiQuery = GEN9::DdiQuery<T>;
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_LP-specific functions for DdiQuery.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiQuery = GEN11::DdiQuery<T>;
-} // namespace ML::XE_LP
-
-namespace ML::XE_HPG
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HPG-specific functions for DdiQuery.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiQuery = XE_LP::DdiQuery<T>;
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HPC-specific functions for DdiQuery.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiQuery = XE_HPG::DdiQuery<T>;
-} // namespace ML::XE_HPC
-
-namespace ML::XE2_HPG
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE2_HPG-specific functions for DdiQuery.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiQuery = XE_HPG::DdiQuery<T>;
-} // namespace ML::XE2_HPG
-
-#pragma endregion
+} // namespace ML

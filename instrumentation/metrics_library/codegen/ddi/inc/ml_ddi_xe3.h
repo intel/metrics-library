@@ -1,13 +1,13 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_ddi_xe_hpc.h
+@file ml_ddi_xe3.h
 
 @brief Auto-generated file. Prepares a function table that contains Metrics Library
        entry points for a given os / gen / api.
@@ -21,14 +21,14 @@ Template:           Tools/MetricsLibraryGenerator/templates/function_table.h
 
 #pragma once
 
-#if ML_ENABLE_XE_HPC
+#if ML_ENABLE_XE3
 #include "ml_ddi.h"
 
 #if ML_ENABLE_OPENCL
-namespace ML::XE_HPC::OpenCL
+namespace ML::XE3::OpenCL
 {
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Function signatures for XE_HPC.
+    /// @brief Function signatures for XE3.
     //////////////////////////////////////////////////////////////////////////
     StatusCode ML_STDCALL ContextCreate_1_0( ClientType_1_0, ContextCreateData_1_0*, ContextHandle_1_0* );
     StatusCode ML_STDCALL ContextDelete_1_0( const ContextHandle_1_0 );
@@ -48,13 +48,13 @@ namespace ML::XE_HPC::OpenCL
     StatusCode ML_STDCALL MarkerDelete_1_0( const MarkerHandle_1_0 );
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief DDI function pointers for XE_HPC.
+    /// @brief DDI function pointers for XE3.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct DdiFunctionTable : DdiFunctionTableBase
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Initializes all function pointers for XE_HPC.
+        /// @brief Initializes all function pointers for XE3.
         //////////////////////////////////////////////////////////////////////////
         DdiFunctionTable()
         {
@@ -92,14 +92,14 @@ namespace ML::XE_HPC::OpenCL
             return instance;
         }
     };
-} // namespace ML::XE_HPC::OpenCL
+} // namespace ML::XE3::OpenCL
 #endif // ML_ENABLE_OPENCL
 
 #if ML_ENABLE_ONEAPI
-namespace ML::XE_HPC::OneApi
+namespace ML::XE3::OneApi
 {
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Function signatures for XE_HPC.
+    /// @brief Function signatures for XE3.
     //////////////////////////////////////////////////////////////////////////
     StatusCode ML_STDCALL ContextCreate_1_0( ClientType_1_0, ContextCreateData_1_0*, ContextHandle_1_0* );
     StatusCode ML_STDCALL ContextDelete_1_0( const ContextHandle_1_0 );
@@ -119,13 +119,13 @@ namespace ML::XE_HPC::OneApi
     StatusCode ML_STDCALL MarkerDelete_1_0( const MarkerHandle_1_0 );
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief DDI function pointers for XE_HPC.
+    /// @brief DDI function pointers for XE3.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct DdiFunctionTable : DdiFunctionTableBase
     {
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Initializes all function pointers for XE_HPC.
+        /// @brief Initializes all function pointers for XE3.
         //////////////////////////////////////////////////////////////////////////
         DdiFunctionTable()
         {
@@ -163,7 +163,7 @@ namespace ML::XE_HPC::OneApi
             return instance;
         }
     };
-} // namespace ML::XE_HPC::OneApi
+} // namespace ML::XE3::OneApi
 #endif // ML_ENABLE_ONEAPI
 
-#endif // ML_ENABLE_XE_HPC
+#endif // ML_ENABLE_XE3

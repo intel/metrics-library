@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -69,6 +69,15 @@ Template:           Tools/MetricsLibraryGenerator/templates/configuration_gen.h
         #define ML_ENABLE_XE2_HPG 1
     #else
         #define ML_ENABLE_XE2_HPG 0
+    #endif
+#endif
+
+// XE3
+#if !defined( ML_ENABLE_XE3 )
+    #if ML_LINUX
+        #define ML_ENABLE_XE3 1
+    #else
+        #define ML_ENABLE_XE3 0
     #endif
 #endif
 

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -30,7 +30,6 @@ namespace ML::BASE
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base = TraitObject<T, TT::TbsInterface>;
-        using Base::Derived;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Base type for mapped oa buffer object.
@@ -160,7 +159,8 @@ namespace ML::BASE
         /// @param kernel reference to kernel interface object.
         //////////////////////////////////////////////////////////////////////////
         TbsInterfaceTrait( TT::KernelInterface& kernel )
-            : m_Kernel( kernel )
+            : Base()
+            , m_Kernel( kernel )
             , m_IoControl( kernel.m_IoControl )
             , m_OaBufferMapped( kernel )
             , m_Stream( kernel )
@@ -173,15 +173,6 @@ namespace ML::BASE
         ~TbsInterfaceTrait()
         {
             m_Stream.Disable();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "TbsInterfaceTrait<Traits> (Linux)";
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -271,7 +262,7 @@ namespace ML::GEN9
         //////////////////////////////////////////////////////////////////////////
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
-        using Base::Derived;
+        using Base::DerivedConst;
         using Base::GetTimerPeriodExponent;
         using Base::m_Kernel;
 
@@ -283,7 +274,7 @@ namespace ML::GEN9
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetStreamProperties(
             std::vector<uint64_t>& properties,
-            const int32_t          metricSet )
+            const int32_t          metricSet ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
@@ -295,7 +286,7 @@ namespace ML::GEN9
 
             addProperty( DRM_I915_PERF_PROP_SAMPLE_OA, true );
             addProperty( DRM_I915_PERF_PROP_OA_METRICS_SET, static_cast<uint64_t>( metricSet ) );
-            addProperty( DRM_I915_PERF_PROP_OA_FORMAT, Derived().GetOaReportType() );
+            addProperty( DRM_I915_PERF_PROP_OA_FORMAT, DerivedConst().GetOaReportType() );
             addProperty( DRM_I915_PERF_PROP_OA_EXPONENT, GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
 
             return log.m_Result;
@@ -360,7 +351,7 @@ namespace ML::XE_HPG
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetStreamProperties(
             std::vector<uint64_t>& properties,
-            const int32_t          metricSet )
+            const int32_t          metricSet ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
@@ -513,6 +504,11 @@ namespace ML::XE2_HPG
             addProperty( DRM_XE_OA_PROPERTY_OA_FORMAT, GetOaReportType() );
             addProperty( DRM_XE_OA_PROPERTY_OA_PERIOD_EXPONENT, GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
 
+            if( subDevice.m_IsConfigurableOaBufferSize )
+            {
+                addProperty( DRM_XE_OA_PROPERTY_OA_BUFFER_SIZE, GetMaxOaBufferSize() );
+            }
+
             return log.m_Result;
         }
 
@@ -523,7 +519,16 @@ namespace ML::XE2_HPG
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE uint32_t GetMaxOaBufferSize() const
         {
-            return ( 16 * Constants::Data::m_Megabyte );
+            return ( 128 * Constants::Data::m_Megabyte );
         }
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct TbsInterfaceTrait : XE2_HPG::TbsInterfaceTrait<T>
+    {
+        ML_DECLARE_TRAIT( TbsInterfaceTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

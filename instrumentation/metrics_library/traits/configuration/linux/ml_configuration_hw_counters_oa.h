@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -67,15 +67,6 @@ namespace ML
             , m_Kernel{ context.m_Kernel }
             , m_Id( T::ConstantsOs::Tbs::m_Invalid )
         {
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "ConfigurationHwCountersOaTrait<Traits> (Linux)";
         }
 
         //////////////////////////////////////////////////////////////////////////

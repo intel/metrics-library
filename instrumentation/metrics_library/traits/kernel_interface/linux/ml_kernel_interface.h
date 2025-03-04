@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -53,15 +53,6 @@ namespace ML
             , m_GpuTimestampTickValue( 0 )
             , m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
         {
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "KernelInterfaceTrait<Traits> (Linux)";
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -219,13 +210,14 @@ namespace ML
         /// @return oaConfigurationId oa configuration id.
         /// @return                   operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaConfiguration( int64_t& oaConfigurationId ) const
+        ML_INLINE StatusCode GetOaConfiguration( int64_t& oaConfigurationId )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             oaConfigurationId = m_IoControl.GetKernelMetricSet();
 
             ML_FUNCTION_CHECK( oaConfigurationId != T::ConstantsOs::Tbs::m_Invalid );
+            ML_FUNCTION_CHECK( m_Tbs.m_Stream.UpdateMetricSetInfo() );
 
             return log.m_Result;
         }

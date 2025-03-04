@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021-2024 Intel Corporation
+Copyright (C) 2021-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -49,15 +49,6 @@ namespace ML
         ~DdiObjectsTrait()
         {
             ValidateState();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "DdiObjectsTrait<Traits>";
         }
 
         //////////////////////////////////////////////////////////////////////////

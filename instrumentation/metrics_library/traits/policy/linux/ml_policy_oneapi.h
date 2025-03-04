@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -24,15 +24,6 @@ namespace ML::BASE
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( PolicyOneApiTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( PolicyOneApiTrait );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "PolicyOneApiTrait<Traits>";
-        }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Query hw counters policies.
@@ -177,3 +168,12 @@ namespace ML::XE2_HPG
         ML_DECLARE_TRAIT( PolicyOneApiTrait, XE_HPG );
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct PolicyOneApiTrait : XE2_HPG::PolicyOneApiTrait<T>
+    {
+        ML_DECLARE_TRAIT( PolicyOneApiTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

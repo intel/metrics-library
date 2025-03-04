@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -381,4 +381,63 @@ namespace ML::XE2_HPG::OneApi
 #endif // ML_ENABLE_ONEAPI
 
 #endif // ML_ENABLE_XE2_HPG
+
+#if ML_ENABLE_XE3
+
+#include "ml_traits_xe3.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiQuery.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE3::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryCreate_1_0(
+        const QueryCreateData_1_0* createData,
+        QueryHandle_1_0*           handle )
+    {
+        return DdiQuery<T>::QueryCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryDelete_1_0(
+        const QueryHandle_1_0 handle )
+    {
+        return DdiQuery<T>::QueryDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE3::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryCreate_1_0(
+        const QueryCreateData_1_0* createData,
+        QueryHandle_1_0*           handle )
+    {
+        return DdiQuery<T>::QueryCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryDelete_1_0(
+        const QueryHandle_1_0 handle )
+    {
+        return DdiQuery<T>::QueryDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE3
 

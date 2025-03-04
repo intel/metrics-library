@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -263,15 +263,6 @@ namespace ML
                 m_ContextValid        = true;
             }
         };
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "OaBufferLayoutsTrait<Traits>";
-        }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Sanity check.

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -609,4 +609,101 @@ namespace ML::XE2_HPG::OneApi
 #endif // ML_ENABLE_ONEAPI
 
 #endif // ML_ENABLE_XE2_HPG
+
+#if ML_ENABLE_XE3
+
+#include "ml_traits_xe3.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiConfiguration.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE3::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationCreate_1_0(
+        const ConfigurationCreateData_1_0* createData,
+        ConfigurationHandle_1_0*           handle )
+    {
+        return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationActivate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationActivate_1_0(
+        const ConfigurationHandle_1_0        handle,
+        const ConfigurationActivateData_1_0* activateData )
+    {
+        return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationDeactivate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
+        const ConfigurationHandle_1_0 handle )
+    {
+        return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationDelete_1_0(
+        const ConfigurationHandle_1_0 handle )
+    {
+        return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE3::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationCreate_1_0(
+        const ConfigurationCreateData_1_0* createData,
+        ConfigurationHandle_1_0*           handle )
+    {
+        return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationActivate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationActivate_1_0(
+        const ConfigurationHandle_1_0        handle,
+        const ConfigurationActivateData_1_0* activateData )
+    {
+        return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationDeactivate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
+        const ConfigurationHandle_1_0 handle )
+    {
+        return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationDelete_1_0(
+        const ConfigurationHandle_1_0 handle )
+    {
+        return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE3
 

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -30,15 +30,6 @@ namespace ML
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base = DdiObject<T, TT::Overrides::User, OverrideHandle_1_0, ObjectType::OverrideUser>;
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "OverrideUserTrait<Traits> (Linux)";
-        }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Creates user override configuration.

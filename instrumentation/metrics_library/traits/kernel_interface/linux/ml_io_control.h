@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -29,7 +29,7 @@ namespace ML::BASE
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base = TraitObject<T, TT::IoControl>;
-        using Base::Derived;
+        using Base::DerivedConst;
 
     private:
         //////////////////////////////////////////////////////////////////////////
@@ -57,7 +57,8 @@ namespace ML::BASE
         /// @param kernel
         //////////////////////////////////////////////////////////////////////////
         IoControlTrait( const TT::KernelInterface& kernel )
-            : m_KernelMetricSet( "" )
+            : Base()
+            , m_KernelMetricSet( "" )
             , m_DrmOpenedByUmd( false )
             , m_Kernel( kernel )
             , m_DrmFile( T::ConstantsOs::Drm::m_Invalid )
@@ -74,15 +75,6 @@ namespace ML::BASE
             {
                 CloseDrm();
             }
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "IoControlTrait<Traits> (Linux)";
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -147,7 +139,7 @@ namespace ML::BASE
 
             // Obtain drm performance revision.
             // No check for fail, since old kernels do not support this information.
-            Derived().GetDrmRevision( revision );
+            DerivedConst().GetDrmRevision( revision );
 
             return log.m_Result;
         }
@@ -164,6 +156,35 @@ namespace ML::BASE
             {
                 log.Warning( "Cannot get kernel metric set" );
             }
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns information about the file containing metric set id.
+        /// @return modificationTimestamp   time of last modification of the file.
+        /// @return indexNode               index node of the file.
+        /// @return                         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetKernelMetricSetInfo(
+            uint64_t& modificationTimestamp,
+            uint64_t& indexNode ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            struct stat fileInfo = {};
+
+            if( stat( m_KernelMetricSet.c_str(), &fileInfo ) < 0 )
+            {
+                log.Warning( "Failed to get information about the metric set file", errno, strerror( errno ) );
+                return log.m_Result = StatusCode::Failed;
+            }
+
+            modificationTimestamp = fileInfo.st_mtime;
+            indexNode             = fileInfo.st_ino;
+
+            log.Info( "Modification timestamp", modificationTimestamp );
+            log.Info( "Index node", indexNode );
 
             return log.m_Result;
         }
@@ -967,6 +988,22 @@ namespace ML::XE2_HPG
                         propertyName = "No preempt:";
                         break;
 
+                    case DRM_XE_OA_PROPERTY_NUM_SYNCS:
+                        propertyName = "Num syncs:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_SYNCS:
+                        propertyName = "Syncs:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_OA_BUFFER_SIZE:
+                        propertyName = "OA buffer size:";
+                        break;
+
+                    case DRM_XE_OA_PROPERTY_WAIT_NUM_REPORTS:
+                        propertyName = "Number of reports to wait:";
+                        break;
+
                     default:
                         ML_ASSERT_ALWAYS();
                         break;
@@ -1329,3 +1366,12 @@ namespace ML::XE2_HPG
         }
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct IoControlTrait : XE2_HPG::IoControlTrait<T>
+    {
+        ML_DECLARE_TRAIT( IoControlTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -19,10 +19,10 @@ Template:           Tools/MetricsLibraryGenerator/templates/hpp.h
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Base functions for DdiMarker.
+    /// @brief Functions for DdiMarker.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct DdiMarker
@@ -95,67 +95,4 @@ namespace ML::BASE
             return log.m_Result;
         }
     };
-} // namespace ML::BASE
-
-#pragma region Platform Specific Functions for DdiMarker
-namespace ML::GEN9
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief GEN9-specific functions for DdiMarker.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiMarker = BASE::DdiMarker<T>;
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief GEN11-specific functions for DdiMarker.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiMarker = GEN9::DdiMarker<T>;
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_LP-specific functions for DdiMarker.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiMarker = GEN11::DdiMarker<T>;
-} // namespace ML::XE_LP
-
-namespace ML::XE_HPG
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HPG-specific functions for DdiMarker.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiMarker = XE_LP::DdiMarker<T>;
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HPC-specific functions for DdiMarker.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiMarker = XE_HPG::DdiMarker<T>;
-} // namespace ML::XE_HPC
-
-namespace ML::XE2_HPG
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE2_HPG-specific functions for DdiMarker.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiMarker = XE_HPG::DdiMarker<T>;
-} // namespace ML::XE2_HPG
-
-#pragma endregion
+} // namespace ML

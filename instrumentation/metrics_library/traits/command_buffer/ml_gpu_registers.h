@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -26,15 +26,6 @@ namespace ML::BASE
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( GpuRegistersTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( GpuRegistersTrait );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "GpuRegistersTrait";
-        }
 
         // Common registers.
         static constexpr uint32_t m_ContextId           = 0x2364;
@@ -1924,5 +1915,14 @@ namespace ML::XE2_HPG
         static constexpr uint32_t m_OacPec0 = 0x15200;
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct GpuRegistersTrait : XE2_HPG::GpuRegistersTrait<T>
+    {
+        ML_DECLARE_TRAIT( GpuRegistersTrait, XE2_HPG );
+    };
+} // namespace ML::XE3
 
 // clang-format on

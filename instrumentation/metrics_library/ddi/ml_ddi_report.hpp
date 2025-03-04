@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -19,10 +19,10 @@ Template:           Tools/MetricsLibraryGenerator/templates/hpp.h
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Base functions for DdiReport.
+    /// @brief Functions for DdiReport.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct DdiReport
@@ -90,67 +90,4 @@ namespace ML::BASE
             }
         }
     };
-} // namespace ML::BASE
-
-#pragma region Platform Specific Functions for DdiReport
-namespace ML::GEN9
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief GEN9-specific functions for DdiReport.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiReport = BASE::DdiReport<T>;
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief GEN11-specific functions for DdiReport.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiReport = GEN9::DdiReport<T>;
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_LP-specific functions for DdiReport.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiReport = GEN11::DdiReport<T>;
-} // namespace ML::XE_LP
-
-namespace ML::XE_HPG
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HPG-specific functions for DdiReport.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiReport = XE_LP::DdiReport<T>;
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HPC-specific functions for DdiReport.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiReport = XE_HPG::DdiReport<T>;
-} // namespace ML::XE_HPC
-
-namespace ML::XE2_HPG
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE2_HPG-specific functions for DdiReport.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiReport = XE_HPG::DdiReport<T>;
-} // namespace ML::XE2_HPG
-
-#pragma endregion
+} // namespace ML

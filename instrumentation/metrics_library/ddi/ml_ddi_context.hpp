@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -19,10 +19,10 @@ Template:           Tools/MetricsLibraryGenerator/templates/hpp.h
 
 #pragma once
 
-namespace ML::BASE
+namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Base functions for DdiContext.
+    /// @brief Functions for DdiContext.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct DdiContext
@@ -42,11 +42,10 @@ namespace ML::BASE
             ML_FUNCTION_CHECK( createData != nullptr );
             ML_FUNCTION_CHECK( handle != nullptr );
 
-            // Print traits properties.
-            T::PrintBuildNumber();
-            T::PrintClient();
-            T::PrintGpuType();
-            T::PrintTraits();
+            // Print build number.
+            T::FunctionLogStatic::Traits( "Major number", METRICS_LIBRARY_MAJOR_NUMBER );
+            T::FunctionLogStatic::Traits( "Minor number", METRICS_LIBRARY_MINOR_NUMBER );
+            T::FunctionLogStatic::Traits( "Build number", METRICS_LIBRARY_BUILD_NUMBER );
 
             // Print input values.
             log.Input( clientType );
@@ -136,67 +135,4 @@ namespace ML::BASE
             return log.m_Result;
         }
     };
-} // namespace ML::BASE
-
-#pragma region Platform Specific Functions for DdiContext
-namespace ML::GEN9
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief GEN9-specific functions for DdiContext.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiContext = BASE::DdiContext<T>;
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief GEN11-specific functions for DdiContext.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiContext = GEN9::DdiContext<T>;
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_LP-specific functions for DdiContext.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiContext = GEN11::DdiContext<T>;
-} // namespace ML::XE_LP
-
-namespace ML::XE_HPG
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HPG-specific functions for DdiContext.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiContext = XE_LP::DdiContext<T>;
-} // namespace ML::XE_HPG
-
-namespace ML::XE_HPC
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE_HPC-specific functions for DdiContext.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiContext = XE_HPG::DdiContext<T>;
-} // namespace ML::XE_HPC
-
-namespace ML::XE2_HPG
-{
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief XE2_HPG-specific functions for DdiContext.
-    ///        These should ONLY be used for MAJOR algorithm changes.
-    //////////////////////////////////////////////////////////////////////////
-    template <typename T>
-    using DdiContext = XE_HPG::DdiContext<T>;
-} // namespace ML::XE2_HPG
-
-#pragma endregion
+} // namespace ML

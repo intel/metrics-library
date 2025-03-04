@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -132,6 +132,15 @@ namespace ML
         {
             return *static_cast<Object*>( this );
         }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns derived constant object instance.
+        /// @return derived constant object instance.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE const Object& DerivedConst() const
+        {
+            return *static_cast<const Object*>( this );
+        }
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -148,12 +157,6 @@ namespace ML
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( DdiObject );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( DdiObject );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Types.
-        //////////////////////////////////////////////////////////////////////////
-        using BaseTraitObject = TraitObject<T, Object>;
-        using BaseTraitObject::Derived;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.

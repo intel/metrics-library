@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2023-2024 Intel Corporation
+Copyright (C) 2023-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -37,27 +37,25 @@ namespace ML::BASE
         TT::KernelInterface& m_Kernel;
         int32_t              m_Id;
         int32_t              m_MetricSet;
+        uint64_t             m_MetricSetModificationTimestamp;
+        uint64_t             m_MetricSetIndexNode;
         bool                 m_MetricSetInternal;
+        bool                 m_IsMetricSetUpdateRequired;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Tbs stream constructor.
         /// @param kernel   kernel interface.
         //////////////////////////////////////////////////////////////////////////
         TbsStreamTrait( TT::KernelInterface& kernel )
-            : m_Kernel( kernel )
+            : Base()
+            , m_Kernel( kernel )
             , m_Id( T::ConstantsOs::Tbs::m_Invalid )
             , m_MetricSet( T::ConstantsOs::Tbs::m_Invalid )
+            , m_MetricSetModificationTimestamp( 0 )
+            , m_MetricSetIndexNode( 0 )
             , m_MetricSetInternal( false )
+            , m_IsMetricSetUpdateRequired( true )
         {
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "TbsStreamTrait<Traits> (Linux)";
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -112,13 +110,17 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_FUNCTION_CHECK( IsEnabled() );
 
-            log.Debug( "Used set ", m_MetricSet );
-            log.Debug( "New set  ", set );
+            log.Debug( "Used set", m_MetricSet );
+            log.Debug( "New set", set );
 
-            log.m_Result = m_Kernel.m_IoControl.SetTbsMetricSet( m_Id, set );
-            m_MetricSet  = ML_SUCCESS( log.m_Result ) ? set : m_MetricSet;
+            if( m_IsMetricSetUpdateRequired )
+            {
+                log.m_Result = m_Kernel.m_IoControl.SetTbsMetricSet( m_Id, set );
+            }
 
-            log.Debug( "Current set ", m_MetricSet );
+            m_MetricSet = ML_SUCCESS( log.m_Result ) ? set : m_MetricSet;
+
+            log.Debug( "Current set", m_MetricSet );
 
             return log.m_Result;
         }
@@ -188,6 +190,38 @@ namespace ML::BASE
 
             // Enable stream.
             return log.m_Result = Derived().Enable();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Updates metric set info and checks if tbs metric set needs to
+        ///         be updated on next activate.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode UpdateMetricSetInfo()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            uint64_t modificationTimestamp = 0;
+            uint64_t indexNode             = 0;
+
+            log.Info( "Old modification timestamp", m_MetricSetModificationTimestamp );
+            log.Info( "Old index node", m_MetricSetIndexNode );
+
+            ML_FUNCTION_CHECK( m_Kernel.m_IoControl.GetKernelMetricSetInfo( modificationTimestamp, indexNode ) );
+
+            // OA configuration changed if modification timestamp and index node have initial values or
+            // modification timestamp or index node changed.
+            m_IsMetricSetUpdateRequired =
+                ( m_MetricSetModificationTimestamp == 0 && m_MetricSetIndexNode == 0 ) ||
+                ( m_MetricSetModificationTimestamp != modificationTimestamp ) ||
+                ( m_MetricSetIndexNode != indexNode );
+
+            m_MetricSetModificationTimestamp = modificationTimestamp;
+            m_MetricSetIndexNode             = indexNode;
+
+            log.Info( "Metric set update required", m_IsMetricSetUpdateRequired );
+
+            return log.m_Result;
         }
     };
 } // namespace ML::BASE
@@ -346,3 +380,12 @@ namespace ML::XE2_HPG
         }
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct TbsStreamTrait : XE2_HPG::TbsStreamTrait<T>
+    {
+        ML_DECLARE_TRAIT( TbsStreamTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

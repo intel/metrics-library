@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -30,15 +30,6 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         using Base = DdiObject<T, TT::Overrides::NullHardware, OverrideHandle_1_0, ObjectType::OverrideNullHardware>;
         using Base::m_Context;
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "OverrideNullHardwareTrait<Traits>";
-        }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Writes null hardware override command to command buffer.
@@ -245,3 +236,12 @@ namespace ML::XE2_HPG
         ML_DECLARE_TRAIT( OverrideNullHardwareTrait, BASE );
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct OverrideNullHardwareTrait : XE2_HPG::OverrideNullHardwareTrait<T>
+    {
+        ML_DECLARE_TRAIT( OverrideNullHardwareTrait, XE2_HPG );
+    };
+} // namespace ML::XE3

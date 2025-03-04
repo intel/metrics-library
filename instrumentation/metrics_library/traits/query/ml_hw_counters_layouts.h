@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -30,15 +30,6 @@ namespace ML::BASE
         ML_DELETE_DEFAULT_COPY_AND_MOVE( HwCountersLayoutsTrait );
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns description about itself.
-        /// @return trait name used in library's code.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const std::string GetDescription()
-        {
-            return "HwCountersLayoutsTrait<Traits>";
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief Constants.
         //////////////////////////////////////////////////////////////////////////
         static constexpr uint32_t m_OaCountersCount            = 36;
@@ -63,7 +54,6 @@ namespace ML::BASE
         struct ReportUser
         {
             uint64_t    m_Counter[m_UserCountersCount];
-            uint32_t    m_UserCounterConfigurationId;
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -133,7 +123,7 @@ namespace ML::BASE
             ReportHeader    m_Header;
             ReportOaData    m_DataOa;
             ReportGp        m_DataGp;       // 16 bytes.
-            ReportUser      m_DataUser;     // 16 * 8 + 4 = 132 bytes.
+            ReportUser      m_DataUser;     // 16 * 8 = 128 bytes.
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -154,7 +144,7 @@ namespace ML::BASE
                 {
                     ReportOa      m_Oa;      // Oa.
                     ReportGp      m_Gp;      // 16 bytes.
-                    ReportUser    m_User;    // 16 * 8 + 4 = 132 bytes.
+                    ReportUser    m_User;    // 16 * 8 = 128 bytes.
                 };
 
                 // OA reports have to be aligned to multiple of 64 bytes.
@@ -335,6 +325,60 @@ namespace ML::XE_LP
     struct HwCountersLayoutsTrait : GEN11::HwCountersLayoutsTrait<T>
     {
         ML_DECLARE_TRAIT( HwCountersLayoutsTrait, GEN11 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Inherited report objects.
+        //////////////////////////////////////////////////////////////////////////
+        using Report = typename Base::Report;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Hw counters structures related to query.
+        //////////////////////////////////////////////////////////////////////////
+        struct Query : Base::Query
+        {
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Base type for QueryReportGpu object.
+            //////////////////////////////////////////////////////////////////////////
+            struct ReportGpu
+            {
+                // Begin/end report.
+                Report      m_Begin;
+                Report      m_End;
+
+                union
+                {
+                    struct
+                    {
+                        // Query end marker.
+                        uint64_t    m_EndTag;
+
+                        // Command buffer split indicators.
+                        uint32_t    m_DmaFenceIdBegin;
+                        uint32_t    m_DmaFenceIdEnd;
+
+                        // Oa buffer data related.
+                        TT::Layouts::OaBuffer::Register          m_OaBuffer;
+                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPreBegin;
+                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPostBegin;
+                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPreEnd;
+                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPostEnd;
+
+                        // Unused.
+                        uint32_t    m_Reserved;
+
+                        // Frequency change indicators.
+                        uint32_t    m_CoreFrequencyBegin;
+                        uint32_t    m_CoreFrequencyEnd;
+
+                        // Markers.
+                        uint64_t    m_MarkerUser;
+                        uint64_t    m_MarkerDriver;
+                    };
+
+                    uint8_t    m_Payload[Base::m_ReportGpuAlignment];
+                };
+            };
+        };
     };
 } // namespace ML::XE_LP
 
@@ -493,7 +537,7 @@ namespace ML::XE_HPG
         {
             ReportHeader    m_Header;
             ReportOaData    m_DataOa;
-            ReportUser      m_DataUser; // 16 * 8 + 4 = 132 bytes.
+            ReportUser      m_DataUser; // 16 * 8 = 128 bytes.
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -513,7 +557,7 @@ namespace ML::XE_HPG
                 struct
                 {
                     ReportOa      m_Oa;   // Oa.
-                    ReportUser    m_User; // 16 * 8 + 4 = 132 bytes.
+                    ReportUser    m_User; // 16 * 8 = 128 bytes.
                 };
 
                 // OA reports have to be aligned to multiple of 64 bytes.
@@ -765,7 +809,7 @@ namespace ML::XE2_HPG
                 ReportOaVisa    m_OaVisaReport; // 640 bytes.
             };
 
-            ReportUser    m_DataUser; // 16 * 8 + 4 = 132 bytes.
+            ReportUser    m_DataUser; // 16 * 8 = 128 bytes.
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -790,7 +834,7 @@ namespace ML::XE2_HPG
                         ReportOaVisa    m_OaVisa; // 640 bytes.
                     };
 
-                    ReportUser    m_User; // 16 * 8 + 4 = 132 bytes.
+                    ReportUser    m_User; // 16 * 8 = 128 bytes.
                 };
 
                 // Pec reports have to be aligned to multiple of 64 bytes.
@@ -887,6 +931,15 @@ namespace ML::XE2_HPG
         ML_STATIC_ASSERT( ( sizeof( typename Query::ReportGpu ) % Base::m_ReportGpuAlignment ) == 0, "Wrong structure size" );
     };
 } // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct HwCountersLayoutsTrait : XE2_HPG::HwCountersLayoutsTrait<T>
+    {
+        ML_DECLARE_TRAIT( HwCountersLayoutsTrait, XE2_HPG );
+    };
+} // namespace ML::XE3
 
 ML_STRUCTURE_PACK_END();
 
