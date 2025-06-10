@@ -284,17 +284,13 @@ namespace ML
 
             switch( value )
             {
-            #if ML_ENABLE_GEN11
                 case ClientGen::Gen11:
                     output << "Gen11";
                     break;
-            #endif
 
-            #if ML_ENABLE_GEN11
                 case ClientGen::Gen11LP:
                     output << "Gen11LP";
                     break;
-            #endif
 
             #if ML_ENABLE_XE_LP
                 case ClientGen::Gen12:
@@ -302,17 +298,13 @@ namespace ML
                     break;
             #endif
 
-            #if ML_ENABLE_GEN9
                 case ClientGen::Gen9:
                     output << "Gen9";
                     break;
-            #endif
 
-            #if ML_ENABLE_GEN9
                 case ClientGen::Gen9LP:
                     output << "Gen9LP";
                     break;
-            #endif
 
                 case ClientGen::Last:
                     output << "Last";
@@ -2947,30 +2939,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct DebugTrait : BASE::DebugTrait<T>
     {
         ML_DECLARE_TRAIT( DebugTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct DebugTrait : GEN9::DebugTrait<T>
-    {
-        ML_DECLARE_TRAIT( DebugTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct DebugTrait : GEN11::DebugTrait<T>
-    {
-        ML_DECLARE_TRAIT( DebugTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

@@ -33,30 +33,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct InternalFeatureTrait : BASE::InternalFeatureTrait<T>
     {
         ML_DECLARE_TRAIT( InternalFeatureTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct InternalFeatureTrait : GEN9::InternalFeatureTrait<T>
-    {
-        ML_DECLARE_TRAIT( InternalFeatureTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct InternalFeatureTrait : GEN11::InternalFeatureTrait<T>
-    {
-        ML_DECLARE_TRAIT( InternalFeatureTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

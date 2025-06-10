@@ -370,30 +370,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct OaBufferMappedTrait : BASE::OaBufferMappedTrait<T>
     {
         ML_DECLARE_TRAIT( OaBufferMappedTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct OaBufferMappedTrait : GEN9::OaBufferMappedTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct OaBufferMappedTrait : GEN11::OaBufferMappedTrait<T>
-    {
-        ML_DECLARE_TRAIT( OaBufferMappedTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

@@ -254,10 +254,6 @@ namespace ML::BASE
                 Report      m_Begin;
                 Report      m_End;
 
-                // Required only for WaDoNotUseMIReportPerfCount for BDW+.
-                uint32_t    m_WaBegin[m_OaCounters40bitsCount];
-                uint32_t    m_WaEnd[m_OaCounters40bitsCount];
-
                 union
                 {
                     struct
@@ -301,84 +297,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct HwCountersLayoutsTrait : BASE::HwCountersLayoutsTrait<T>
     {
         ML_DECLARE_TRAIT( HwCountersLayoutsTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct HwCountersLayoutsTrait : GEN9::HwCountersLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( HwCountersLayoutsTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct HwCountersLayoutsTrait : GEN11::HwCountersLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( HwCountersLayoutsTrait, GEN11 );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Inherited report objects.
-        //////////////////////////////////////////////////////////////////////////
-        using Report = typename Base::Report;
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Hw counters structures related to query.
-        //////////////////////////////////////////////////////////////////////////
-        struct Query : Base::Query
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Base type for QueryReportGpu object.
-            //////////////////////////////////////////////////////////////////////////
-            struct ReportGpu
-            {
-                // Begin/end report.
-                Report      m_Begin;
-                Report      m_End;
-
-                union
-                {
-                    struct
-                    {
-                        // Query end marker.
-                        uint64_t    m_EndTag;
-
-                        // Command buffer split indicators.
-                        uint32_t    m_DmaFenceIdBegin;
-                        uint32_t    m_DmaFenceIdEnd;
-
-                        // Oa buffer data related.
-                        TT::Layouts::OaBuffer::Register          m_OaBuffer;
-                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPreBegin;
-                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPostBegin;
-                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPreEnd;
-                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPostEnd;
-
-                        // Unused.
-                        uint32_t    m_Reserved;
-
-                        // Frequency change indicators.
-                        uint32_t    m_CoreFrequencyBegin;
-                        uint32_t    m_CoreFrequencyEnd;
-
-                        // Markers.
-                        uint64_t    m_MarkerUser;
-                        uint64_t    m_MarkerDriver;
-                    };
-
-                    uint8_t    m_Payload[Base::m_ReportGpuAlignment];
-                };
-            };
-        };
     };
 } // namespace ML::XE_LP
 

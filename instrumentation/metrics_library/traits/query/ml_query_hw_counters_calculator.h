@@ -145,10 +145,6 @@ namespace ML::BASE
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
                     break;
 
-                case T::Layouts::HwCounters::Query::ReportCollectingMode::StoreRegisterMemoryOar:
-                    m_Query.UseSrmOarReport( m_ReportGpu );
-                    break;
-
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
                     ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailPreBegin.All.m_Tail != m_ReportGpu.m_OaTailPostBegin.All.m_Tail, StatusCode::ReportLost );
@@ -429,9 +425,6 @@ namespace ML::BASE
                 log.Info( "Report begin (oa):", reportBegin.m_Oa );
                 log.Info( "Report end   (oa):", reportEnd.m_Oa );
 
-                // Copy gp reports.
-                derived.CopyGpReport( reportBegin, reportEnd );
-
                 // If there is more than one report in the query (tbs multi samples type only),
                 // gp counters need to be calculated separately using timestamps
                 // from snapshots as the time range.
@@ -506,7 +499,6 @@ namespace ML::BASE
                 m_ReportApi.m_ReportId     = 1;
                 m_ReportApi.m_ReportsCount = 1;
 
-                derived.AdjustGpCounters( m_ReportGpu.m_Begin, m_ReportGpu.m_End, m_ReportApi );
                 AdjustUserCounters( m_ReportGpu.m_Begin.m_User, m_ReportGpu.m_End.m_User, m_ReportApi );
             }
 
@@ -616,7 +608,6 @@ namespace ML::BASE
 
             if constexpr( calculateGp )
             {
-                derived.AdjustGpCounters( m_NullBegin ? dummy : begin, end, reportApi );
                 AdjustUserCounters( m_NullBegin ? dummy.m_User : begin.m_User, end.m_User, reportApi );
             }
         }
@@ -651,26 +642,6 @@ namespace ML::BASE
 
             log.Debug( "Report oa begin:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogBeginOffset, FormatFlag::AdjustRight, begin );
             log.Debug( "Report oa end:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndOffset, FormatFlag::AdjustRight, end );
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Sums general purpose counters deltas between two reports.
-        /// @param  begin       begin gp data in hw report format.
-        /// @param  end         end gp data in hw report format.
-        /// @return reportApi   report api.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void AdjustGpCounters(
-            const TT::Layouts::HwCounters::Report&     begin,
-            const TT::Layouts::HwCounters::Report&     end,
-            TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-
-            reportApi.m_PerformanceCounter1 = T::Tools::CountersDelta( end.m_Gp.m_Counter1, begin.m_Gp.m_Counter1, 44 ) / reportApi.m_ReportsCount;
-            reportApi.m_PerformanceCounter2 = T::Tools::CountersDelta( end.m_Gp.m_Counter2, begin.m_Gp.m_Counter2, 44 ) / reportApi.m_ReportsCount;
-
-            log.Info( "Gp begin:", begin.m_Gp );
-            log.Info( "Gp end:", end.m_Gp );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -716,11 +687,9 @@ namespace ML::BASE
             const TT::Layouts::HwCounters::Query::ReportApi& source,
             TT::Layouts::HwCounters::Query::ReportApi&       reportApi ) const
         {
-            reportApi.m_GpuTicks            += source.m_GpuTicks;
-            reportApi.m_TotalTime           += source.m_TotalTime;
-            reportApi.m_PerformanceCounter1 += source.m_PerformanceCounter1;
-            reportApi.m_PerformanceCounter2 += source.m_PerformanceCounter2;
-            reportApi.m_OverrunOccured      |= source.m_OverrunOccured;
+            reportApi.m_GpuTicks       += source.m_GpuTicks;
+            reportApi.m_TotalTime      += source.m_TotalTime;
+            reportApi.m_OverrunOccured |= source.m_OverrunOccured;
 
             AggregateOaCounters( source, reportApi );
             AggregateNoaCounters( source, reportApi );
@@ -1181,24 +1150,6 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Copies general purpose counters from gpu report.
-        /// @param  reportBegin report begin.
-        /// @param  reportEnd   report end.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void CopyGpReport(
-            TT::Layouts::HwCounters::Report& reportBegin,
-            TT::Layouts::HwCounters::Report& reportEnd ) const
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-
-            reportBegin.m_Gp = m_ReportGpu.m_Begin.m_Gp;
-            reportEnd.m_Gp   = m_ReportGpu.m_End.m_Gp;
-
-            log.Info( "Report begin (gp):", reportBegin.m_Gp );
-            log.Info( "Report end   (gp):", reportEnd.m_Gp );
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Compares reports timestamps.
         /// @param  value1  first timestamp.
         /// @param  value2  second timestamp.
@@ -1276,91 +1227,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct QueryHwCountersCalculatorTrait : BASE::QueryHwCountersCalculatorTrait<T>
     {
         ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct QueryHwCountersCalculatorTrait : GEN9::QueryHwCountersCalculatorTrait<T>
-    {
-        ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct QueryHwCountersCalculatorTrait : GEN11::QueryHwCountersCalculatorTrait<T>
-    {
-        ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, GEN11 );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Types.
-        //////////////////////////////////////////////////////////////////////////
-        using Base::AggregateOaCounters;
-        using Base::AggregateNoaCounters;
-        using Base::AggregateUserCounters;
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Sums general purpose counters deltas between two reports.
-        /// @param  begin       begin gp data in hw report format.
-        /// @param  end         end gp data in hw report format.
-        /// @return reportApi   report api.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void AdjustGpCounters(
-            [[maybe_unused]] const TT::Layouts::HwCounters::Report&     begin,
-            [[maybe_unused]] const TT::Layouts::HwCounters::Report&     end,
-            [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
-        {
-            // General purpose counters are deprecated on XE+.
-            return;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Aggregates all oa counters gathered using extended query.
-        /// @param  source      query sub data in api format.
-        /// @param  reportApi   aggregated query data in api format.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void AggregateCounters(
-            const TT::Layouts::HwCounters::Query::ReportApi& source,
-            TT::Layouts::HwCounters::Query::ReportApi&       reportApi ) const
-        {
-            reportApi.m_GpuTicks       += source.m_GpuTicks;
-            reportApi.m_TotalTime      += source.m_TotalTime;
-            reportApi.m_OverrunOccured |= source.m_OverrunOccured;
-
-            AggregateOaCounters( source, reportApi );
-            AggregateNoaCounters( source, reportApi );
-            AggregateUserCounters( source, reportApi );
-
-            // Update begin timestamp and slice/unslice frequencies.
-            if( source.m_ReportId == 1 )
-            {
-                reportApi.m_BeginTimestamp    = source.m_BeginTimestamp;
-                reportApi.m_MiddleQueryEvents = source.m_MiddleQueryEvents;
-                reportApi.m_SliceFrequency    = source.m_SliceFrequency;
-                reportApi.m_UnsliceFrequency  = source.m_UnsliceFrequency;
-            }
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Copies general purpose counters from gpu report.
-        /// @param  reportBegin report begin.
-        /// @param  reportEnd   report end.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE void CopyGpReport(
-            [[maybe_unused]] TT::Layouts::HwCounters::Report& reportBegin,
-            [[maybe_unused]] TT::Layouts::HwCounters::Report& reportEnd ) const
-        {
-            // General purpose counters are deprecated on XE+.
-        }
     };
 } // namespace ML::XE_LP
 

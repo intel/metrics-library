@@ -43,7 +43,7 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            // Load a value to A20 (gen 9) or A19 (gen11+) counter.
+            // Load a value to A19 (XeLP+) counter.
             ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
                 buffer,
                 T::GpuRegisters::m_StreamMarker,
@@ -59,30 +59,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct MarkerStreamUserTrait : BASE::MarkerStreamUserTrait<T>
     {
         ML_DECLARE_TRAIT( MarkerStreamUserTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct MarkerStreamUserTrait : GEN9::MarkerStreamUserTrait<T>
-    {
-        ML_DECLARE_TRAIT( MarkerStreamUserTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct MarkerStreamUserTrait : GEN11::MarkerStreamUserTrait<T>
-    {
-        ML_DECLARE_TRAIT( MarkerStreamUserTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

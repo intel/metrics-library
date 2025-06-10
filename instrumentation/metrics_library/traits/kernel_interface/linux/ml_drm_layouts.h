@@ -30,7 +30,7 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct DrmLayoutsTrait : BASE::DrmLayoutsTrait<T>
@@ -52,24 +52,6 @@ namespace ML::GEN9
         {
             static constexpr const char* m_ParanoidPath = "/proc/sys/dev/i915/perf_stream_paranoid";
         };
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct DrmLayoutsTrait : GEN9::DrmLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( DrmLayoutsTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct DrmLayoutsTrait : GEN11::DrmLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( DrmLayoutsTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

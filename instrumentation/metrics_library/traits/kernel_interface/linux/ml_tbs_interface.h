@@ -252,7 +252,7 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct TbsInterfaceTrait : BASE::TbsInterfaceTrait<T>
@@ -301,24 +301,6 @@ namespace ML::GEN9
         {
             return I915_OA_FORMAT_A32u40_A4u32_B8_C8;
         }
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct TbsInterfaceTrait : GEN9::TbsInterfaceTrait<T>
-    {
-        ML_DECLARE_TRAIT( TbsInterfaceTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct TbsInterfaceTrait : GEN11::TbsInterfaceTrait<T>
-    {
-        ML_DECLARE_TRAIT( TbsInterfaceTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

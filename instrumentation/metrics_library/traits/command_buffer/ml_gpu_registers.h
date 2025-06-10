@@ -1255,70 +1255,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct GpuRegistersTrait : BASE::GpuRegistersTrait<T>
     {
         ML_DECLARE_TRAIT( GpuRegistersTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct GpuRegistersTrait : GEN9::GpuRegistersTrait<T>
-    {
-        ML_DECLARE_TRAIT( GpuRegistersTrait, GEN9 );
-
-        // Overrides registers.
-        static constexpr uint32_t m_NullHardwarePoshRegister = 0x180D8;
-        static constexpr uint32_t m_StreamMarker             = Base::m_OaPerfA19;
-
-        // Overrides array.
-        using NullHardwarePoshEnable  = std::array<uint32_t, 2>;
-        using NullHardwarePoshDisable = std::array<uint32_t, 2>;
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns null hardware override for posh enabling registers
-        ///         and values.
-        /// @return null hardware override for posh enabling registers and values.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const NullHardwarePoshEnable& GetNullHardwareEnablingPoshRegisters()
-        {
-            static constexpr NullHardwarePoshEnable nullHardwarePoshEnable =
-            {
-                m_NullHardwarePoshRegister,
-                Base::m_NullHardwareEnable
-            };
-
-            return nullHardwarePoshEnable;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns null hardware override for posh disabling registers
-        ///         and values.
-        /// @return null hardware override for posh disabling registers and values.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static const NullHardwarePoshDisable& GetNullHardwareDisablingPoshRegisters()
-        {
-            static constexpr NullHardwarePoshDisable nullHardwarePoshDisable =
-            {
-                m_NullHardwarePoshRegister,
-                Base::m_NullHardwareDisable
-            };
-
-            return nullHardwarePoshDisable;
-        }
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct GpuRegistersTrait : GEN11::GpuRegistersTrait<T>
-    {
-        ML_DECLARE_TRAIT( GpuRegistersTrait, GEN11 );
 
         // Render registers.
         static constexpr uint32_t m_RenderMmioRangeBegin = 0x2000;

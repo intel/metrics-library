@@ -21,30 +21,6 @@ Template:           Tools/MetricsLibraryGenerator/templates/gfx.h
 #pragma once
 
 
-#if ML_ENABLE_GEN9
-// GEN9 IGFX Commands
-#define __CODEGEN_NAMESPACE_CLOSE }; }
-#define __CODEGEN_PLATFORM "GEN9"
-#define __CODEGEN_NAMESPACE_OPEN namespace ML::GEN9 { template <typename T> struct GpuCommandsLayoutsTrait {
-#define __CODEGEN_FILE_DIRECTIVES_OPEN ML_STRUCTURE_PACK_BEGIN( 1 )
-#define __CODEGEN_FILE_DIRECTIVES_CLOSE ML_STRUCTURE_PACK_END()
-#include "ml_gpu_commands_gen9.h"
-#undef __CODEGEN_NAMESPACE_OPEN
-#undef __CODEGEN_PLATFORM
-#endif // ML_ENABLE_GEN9
-
-#if ML_ENABLE_GEN11
-// GEN11 IGFX Commands
-#define __CODEGEN_NAMESPACE_CLOSE }; }
-#define __CODEGEN_PLATFORM "GEN11"
-#define __CODEGEN_NAMESPACE_OPEN namespace ML::GEN11 { template <typename T> struct GpuCommandsLayoutsTrait {
-#define __CODEGEN_FILE_DIRECTIVES_OPEN ML_STRUCTURE_PACK_BEGIN( 1 )
-#define __CODEGEN_FILE_DIRECTIVES_CLOSE ML_STRUCTURE_PACK_END()
-#include "ml_gpu_commands_gen11.h"
-#undef __CODEGEN_NAMESPACE_OPEN
-#undef __CODEGEN_PLATFORM
-#endif // ML_ENABLE_GEN11
-
 #if ML_ENABLE_XE_LP
 // XE_LP IGFX Commands
 #define __CODEGEN_NAMESPACE_CLOSE }; }

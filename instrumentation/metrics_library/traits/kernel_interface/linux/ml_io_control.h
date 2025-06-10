@@ -428,7 +428,7 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct IoControlTrait : BASE::IoControlTrait<T>
@@ -835,24 +835,6 @@ namespace ML::GEN9
 
             return log.m_Result;
         }
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct IoControlTrait : GEN9::IoControlTrait<T>
-    {
-        ML_DECLARE_TRAIT( IoControlTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct IoControlTrait : GEN11::IoControlTrait<T>
-    {
-        ML_DECLARE_TRAIT( IoControlTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

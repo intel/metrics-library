@@ -28,30 +28,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct ExampleGpuTrait : BASE::ExampleGpuTrait<T>
     {
         ML_DECLARE_TRAIT( ExampleGpuTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct ExampleGpuTrait : GEN9::ExampleGpuTrait<T>
-    {
-        ML_DECLARE_TRAIT( ExampleGpuTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct ExampleGpuTrait : GEN11::ExampleGpuTrait<T>
-    {
-        ML_DECLARE_TRAIT( ExampleGpuTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

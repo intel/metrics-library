@@ -264,30 +264,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct QueryHwCountersSlotTrait : BASE::QueryHwCountersSlotTrait<T>
     {
         ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct QueryHwCountersSlotTrait : GEN9::QueryHwCountersSlotTrait<T>
-    {
-        ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct QueryHwCountersSlotTrait : GEN11::QueryHwCountersSlotTrait<T>
-    {
-        ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

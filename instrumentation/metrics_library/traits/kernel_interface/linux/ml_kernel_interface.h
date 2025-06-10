@@ -107,7 +107,7 @@ namespace ML
                 if( m_OaFrequency == 0 )
                 {
                     ML_ASSERT_ALWAYS();
-                    m_OaFrequency = 12000000; // Default, one tick per 83.333ns.
+                    m_OaFrequency = Constants::ComboTimestamp::m_DefaultGpuFrequency;
                     log.Warning( "Predefined default gpu oa timestamp frequency used", m_CsFrequency );
                 }
             }
@@ -130,7 +130,7 @@ namespace ML
                 if( m_CsFrequency == 0 )
                 {
                     ML_ASSERT_ALWAYS();
-                    m_CsFrequency = 12000000; // Default, one tick per 83.333ns.
+                    m_CsFrequency = Constants::ComboTimestamp::m_DefaultGpuFrequency;
                     log.Warning( "Predefined default gpu cs timestamp frequency used", m_CsFrequency );
                 }
             }

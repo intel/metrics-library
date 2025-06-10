@@ -60,10 +60,11 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct ComboTimestamp
         {
-            static constexpr uint32_t m_CpuShift  = 32u;
-            static constexpr uint64_t m_GpuMask56 = 0x00FFFFFFFFFFFFFFLL; // Only 56 bits are available in gpu timestamp in 64-bit counter.
-            static constexpr uint64_t m_GpuMask32 = 0x00000000FFFFFFFFLL; // Only 32 bits are available in gpu timestamp in 32-bit counter.
-            static constexpr uint64_t m_GpuMask29 = 0x000000001FFFFFFFLL; // We need to extend the range, thus we use also cpu timestamp to create combo value.
+            static constexpr uint32_t m_CpuShift            = 32u;
+            static constexpr uint64_t m_GpuMask56           = 0x00FFFFFFFFFFFFFFLL; // Only 56 bits are available in gpu timestamp in 64-bit counter.
+            static constexpr uint64_t m_GpuMask32           = 0x00000000FFFFFFFFLL; // Only 32 bits are available in gpu timestamp in 32-bit counter.
+            static constexpr uint64_t m_GpuMask29           = 0x000000001FFFFFFFLL; // We need to extend the range, thus we use also cpu timestamp to create combo value.
+            static constexpr uint32_t m_DefaultGpuFrequency = 19200000;             // Default, one tick per 52.083ns.
         };
 
         //////////////////////////////////////////////////////////////////////////

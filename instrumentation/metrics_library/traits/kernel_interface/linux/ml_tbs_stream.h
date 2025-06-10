@@ -226,7 +226,7 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct TbsStreamTrait : BASE::TbsStreamTrait<T>
@@ -279,24 +279,6 @@ namespace ML::GEN9
 
             return log.m_Result;
         }
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct TbsStreamTrait : GEN9::TbsStreamTrait<T>
-    {
-        ML_DECLARE_TRAIT( TbsStreamTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct TbsStreamTrait : GEN11::TbsStreamTrait<T>
-    {
-        ML_DECLARE_TRAIT( TbsStreamTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

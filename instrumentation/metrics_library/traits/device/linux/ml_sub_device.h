@@ -57,30 +57,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct SubDeviceTrait : BASE::SubDeviceTrait<T>
     {
         ML_DECLARE_TRAIT( SubDeviceTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct SubDeviceTrait : GEN9::SubDeviceTrait<T>
-    {
-        ML_DECLARE_TRAIT( SubDeviceTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct SubDeviceTrait : GEN11::SubDeviceTrait<T>
-    {
-        ML_DECLARE_TRAIT( SubDeviceTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

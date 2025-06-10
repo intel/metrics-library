@@ -25,12 +25,6 @@ Template:           Tools/MetricsLibraryGenerator/templates/export.h
 #include "ml_library_configuration.h"
 #include "ml_export.h"
 #include "ml_driver_store_os.h"
-#if ML_ENABLE_GEN9
-#include "ml_traits_gen9.h"
-#endif
-#if ML_ENABLE_GEN11
-#include "ml_traits_gen11.h"
-#endif
 #if ML_ENABLE_XE_LP
 #include "ml_traits_xe_lp.h"
 #endif
@@ -56,50 +50,6 @@ using namespace ML;
 //////////////////////////////////////////////////////////////////////////
 const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
 {
-#if ML_ENABLE_GEN9
-    if( clientType.Gen == ClientGen::Gen9 )
-    {
-        switch( clientType.Api )
-        {
-            #if ML_ENABLE_OPENCL
-            case ClientApi::OpenCL:
-                return &GEN9::OpenCL::DdiFunctionTable<GEN9::OpenCL::Traits>::GetInstance();
-            #endif
-
-            #if ML_ENABLE_ONEAPI
-            case ClientApi::OneApi:
-                return &GEN9::OneApi::DdiFunctionTable<GEN9::OneApi::Traits>::GetInstance();
-            #endif
-
-            default:
-                ML_ASSERT_ALWAYS_NO_ADAPTER();
-                break;
-        }
-    }
-#endif // ML_ENABLE_GEN9
-
-#if ML_ENABLE_GEN11
-    if( clientType.Gen == ClientGen::Gen11 )
-    {
-        switch( clientType.Api )
-        {
-            #if ML_ENABLE_OPENCL
-            case ClientApi::OpenCL:
-                return &GEN11::OpenCL::DdiFunctionTable<GEN11::OpenCL::Traits>::GetInstance();
-            #endif
-
-            #if ML_ENABLE_ONEAPI
-            case ClientApi::OneApi:
-                return &GEN11::OneApi::DdiFunctionTable<GEN11::OneApi::Traits>::GetInstance();
-            #endif
-
-            default:
-                ML_ASSERT_ALWAYS_NO_ADAPTER();
-                break;
-        }
-    }
-#endif // ML_ENABLE_GEN11
-
 #if ML_ENABLE_XE_LP
     if( clientType.Gen == ClientGen::Gen12 )
     {
@@ -221,25 +171,7 @@ namespace ML
     //////////////////////////////////////////////////////////////////////////
     ML_INLINE void TranslateToSupportedGpuType( [[maybe_unused]] ClientGen& clientGen )
     {
-    #if( ML_ENABLE_GEN9 || ML_ENABLE_GEN11 )
-        switch( clientGen )
-        {
-        #if ML_ENABLE_GEN9
-            case ClientGen::Gen9LP:
-                clientGen = ClientGen::Gen9;
-                break;
-        #endif // ML_ENABLE_GEN9
 
-        #if ML_ENABLE_GEN11
-            case ClientGen::Gen11LP:
-                clientGen = ClientGen::Gen11;
-                break;
-        #endif // ML_ENABLE_GEN11
-
-            default:
-                break;
-        }
-    #endif
     }
 
     //////////////////////////////////////////////////////////////////////////

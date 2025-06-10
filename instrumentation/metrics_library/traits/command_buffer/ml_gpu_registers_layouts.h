@@ -60,30 +60,12 @@ namespace ML::BASE
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct GpuRegistersLayoutsTrait : BASE::GpuRegistersLayoutsTrait<T>
     {
         ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct GpuRegistersLayoutsTrait : GEN9::GpuRegistersLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct GpuRegistersLayoutsTrait : GEN11::GpuRegistersLayoutsTrait<T>
-    {
-        ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, GEN11 );
     };
 } // namespace ML::XE_LP
 

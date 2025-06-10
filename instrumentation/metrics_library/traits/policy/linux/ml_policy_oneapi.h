@@ -86,50 +86,18 @@ namespace ML::BASE
             //////////////////////////////////////////////////////////////////////////
             struct Activate
             {
-                static constexpr bool m_RestartTbs = true;
+                static constexpr bool m_RestartTbs = false;
             };
         };
     };
 } // namespace ML::BASE
 
-namespace ML::GEN9
+namespace ML::XE_LP
 {
     template <typename T>
     struct PolicyOneApiTrait : BASE::PolicyOneApiTrait<T>
     {
         ML_DECLARE_TRAIT( PolicyOneApiTrait, BASE );
-    };
-} // namespace ML::GEN9
-
-namespace ML::GEN11
-{
-    template <typename T>
-    struct PolicyOneApiTrait : GEN9::PolicyOneApiTrait<T>
-    {
-        ML_DECLARE_TRAIT( PolicyOneApiTrait, GEN9 );
-    };
-} // namespace ML::GEN11
-
-namespace ML::XE_LP
-{
-    template <typename T>
-    struct PolicyOneApiTrait : GEN11::PolicyOneApiTrait<T>
-    {
-        ML_DECLARE_TRAIT( PolicyOneApiTrait, GEN11 );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Configuration oa policies.
-        //////////////////////////////////////////////////////////////////////////
-        struct ConfigurationOa : Base::ConfigurationOa
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Configuration activation policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct Activate
-            {
-                static constexpr bool m_RestartTbs = false;
-            };
-        };
     };
 } // namespace ML::XE_LP
 

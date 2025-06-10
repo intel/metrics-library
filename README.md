@@ -13,13 +13,36 @@ https://opensource.org/licenses/MIT
 
 ## Supported Platforms
 
-- Intel(R) Processors with Gen12 graphics devices
-- Intel(R) Processors with Gen11 graphics devices
-- Intel(R) Processors with Gen9 graphics devices
+- Intel(R) Processors with Xe3 graphics devices (formerly Panther Lake)
+- Intel(R) Processors with Xe2 graphics devices (formerly Lunar Lake)
+- Intel(R) Processors with Arc graphics devices (formerly Alchemist, Battlemage)
+- Intel(R) Processors with Xe graphics devices (formerly Tiger Lake, Rocket Lake, DG1, Alder Lake, Ponte Vecchio, Meteor Lake, Arrow Lake)
+
+Since version 1.0.198, support for Gen9 and Gen11 platforms has been discontinued. For these platforms, use version 1.0.196 or earlier.
 
 ## Supported Operating Systems
 
-Intel(R) Metrics Library for MDAPI is supported on Linux family operating systems with minimum kernel version 4.14.
+Intel(R) Metrics Library for MDAPI is supported on Linux family operating systems with minimum kernel version 5.7.
+
+### Detailed minimum version requirements
+
+| Platform | Code Name | Minimum Linux Kernel Version |
+|--|--|--|
+| Xe3-LPG | Panther Lake | 6.15 |
+| Xe2-HPG | Battlemage | 6.11 |
+| Xe2-LPG | Lunar Lake | 6.11 |
+| Xe-LPG | Arrow Lake-H | 6.9 |
+| Xe-LPG | Arrow Lake-S | 6.7 |
+| Xe-LPG | Arrow Lake-U | 6.9 |
+| Xe-LPG | Meteor Lake | 6.7 |
+| Xe-HPG | Alchemist | 6.2 |
+| Xe-HPC | Ponte Vecchio | 5.20 |
+| Xe-LP | Alder Lake-S | 5.16 |
+| Xe-LP | Alder Lake-N | 5.18 |
+| Xe-LP | Alder Lake-P | 5.17 |
+| Xe-LP | DG1 | 5.16 |
+| Xe-LP | Rocket Lake | 5.13 |
+| Xe-LP | Tiger Lake | 5.7 |
 
 ## Build and Install
 Not a stand alone software component. Serves as a helper library for particular Intel drivers.
