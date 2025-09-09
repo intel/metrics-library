@@ -701,7 +701,6 @@ namespace ML::XE2_HPG
 
                 uint8_t m_Payload[m_OaReportAlignment];
             };
-
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -719,7 +718,6 @@ namespace ML::XE2_HPG
 
                 uint8_t m_Payload[m_OaVisaReportAlignment];
             };
-
         };
 
         //////////////////////////////////////////////////////////////////////////

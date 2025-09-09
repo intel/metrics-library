@@ -287,7 +287,7 @@ namespace ML::BASE
 
             log.m_Result = FindTriggeredOaReport<true>( slot, report );
             log.m_Result = ML_SUCCESS( log.m_Result ) ? FindTriggeredOaReport<false>( slot, report ) : log.m_Result;
-            log.m_Result = ML_SUCCESS( log.m_Result ) ? m_Context.m_OaBuffer.DumpReports( report ) : log.m_Result;
+            log.m_Result = ML_SUCCESS( log.m_Result ) ? m_Context.m_OaBuffer.DumpReports( slot.m_OaBufferState ) : log.m_Result;
 
             return log.m_Result;
         }
@@ -1031,8 +1031,8 @@ namespace ML::BASE
             TT::OaBuffer&      oaBuffer            = m_Context.m_OaBuffer;
             const uint32_t     oaBufferSize        = oaBuffer.GetSize();
             const uint32_t     reportSize          = oaBuffer.GetReportSize();
-            uint32_t           reportOaOffset      = 0;
-            uint32_t           reportOaOffsetPost  = 0;
+            uint32_t           reportOaOffset      = begin ? slot.m_OaBufferState.m_TailPreBeginOffset : slot.m_OaBufferState.m_TailPreEndOffset;
+            uint32_t           reportOaOffsetPost  = begin ? slot.m_OaBufferState.m_TailPostBeginOffset : slot.m_OaBufferState.m_TailPostEndOffset;
             bool               reportOaValid       = false;
             uint32_t           foundTriggers       = 0;
             uint32_t           foundReportOaOffset = 0;
@@ -1041,69 +1041,65 @@ namespace ML::BASE
                    : 1;
 
             // Validate triggered oa report.
-            if( ML_SUCCESS( oaBuffer.template GetPreReportOffset<begin>( queryReport, reportOaOffset ) ) &&
-                ML_SUCCESS( oaBuffer.template GetPostReportOffset<begin>( queryReport, reportOaOffsetPost ) ) )
+            const auto& derived = DerivedConst();
+
+            // Number of tries to validate oa report.
+            uint32_t remainingTries = 100;
+
+            while( !reportOaValid && ( reportOaOffset != reportOaOffsetPost ) )
             {
-                const auto& derived = DerivedConst();
+                auto& reportOa = oaBuffer.GetReport( reportOaOffset );
 
-                // Number of tries to validate oa report.
-                uint32_t remainingTries = 100;
+                const uint32_t queryIdExpected = derived.template GetQueryId<begin>( queryReport );
 
-                while( !reportOaValid && ( reportOaOffset != reportOaOffsetPost ) )
-                {
-                    auto& reportOa = oaBuffer.GetReport( reportOaOffset );
+                reportOaValid =
+                    derived.ValidateReportReason( reportOa.m_Header ) &&
+                    derived.ValidateQueryId( reportOa.m_Header, reportOaOffset, queryIdExpected ) &&
+                    derived.ValidateGpuTimestamps( queryReport, reportOa );
 
-                    const uint32_t queryIdExpected = derived.template GetQueryId<begin>( queryReport );
-
-                    reportOaValid =
-                        derived.ValidateQueryId( reportOa.m_Header, reportOaOffset, queryIdExpected ) &&
-                        derived.ValidateReportReason( reportOa.m_Header ) &&
-                        derived.ValidateGpuTimestamps( queryReport, reportOa );
-
-                    if( reportOaValid )
-                    {
-                        if( ++foundTriggers == 1 )
-                        {
-                            // Keep the offset of the first found oa report.
-                            foundReportOaOffset = reportOaOffset;
-                        }
-
-                        if( foundTriggers < expectedTriggers )
-                        {
-                            // Set report to not valid and advance offset if more triggers are expected.
-                            reportOaValid  = false;
-                            reportOaOffset = ( reportOaOffset + reportSize ) % oaBufferSize;
-                        }
-                    }
-                    else
-                    {
-                        reportOaOffset = ( reportOaOffset + reportSize ) % oaBufferSize;
-
-                        if( --remainingTries == 0 )
-                        {
-                            log.Critical( "Exhausted maximum number of retries" );
-                            break;
-                        }
-                    }
-                }
-
-                // Recreate query report from triggered oa report.
                 if( reportOaValid )
                 {
-                    auto& reportOa = oaBuffer.GetReport( foundReportOaOffset );
-                    log.Info(
-                        "Used reportOa: ",
-                        "(", FormatFlag::Decimal, FormatFlag::SetWidth5, foundReportOaOffset, ")",
-                        reportOa );
-
-                    // Copy triggered oa report into query oa report.
-                    derived.CopyTriggeredOaReport( queryReportOa, reportOa );
-
-                    // Reset attempts.
-                    if constexpr( expectedTriggers > 1 )
+                    if( ++foundTriggers == 1 )
                     {
-                        slot.m_TriggeredReportGetAttempt = 0;
+                        // Keep the offset of the first found oa report.
+                        foundReportOaOffset = reportOaOffset;
                     }
+
+                    if( foundTriggers < expectedTriggers )
+                    {
+                        // Set report to not valid and advance offset if more triggers are expected.
+                        reportOaValid  = false;
+                        reportOaOffset = ( reportOaOffset + reportSize ) % oaBufferSize;
+                    }
+                }
+                else
+                {
+                    reportOaOffset = ( reportOaOffset + reportSize ) % oaBufferSize;
+
+                    if( --remainingTries == 0 )
+                    {
+                        log.Critical( "Exhausted maximum number of retries" );
+                        break;
+                    }
+                }
+            }
+
+            // Recreate query report from triggered oa report.
+            if( reportOaValid )
+            {
+                auto& reportOa = oaBuffer.GetReport( foundReportOaOffset );
+                log.Info(
+                    "Used reportOa: ",
+                    "(", FormatFlag::Decimal, FormatFlag::SetWidth5, foundReportOaOffset, ")",
+                    reportOa );
+
+                // Copy triggered oa report into query oa report.
+                derived.CopyTriggeredOaReport( queryReportOa, reportOa );
+
+                // Reset attempts.
+                if constexpr( expectedTriggers > 1 )
+                {
+                    slot.m_TriggeredReportGetAttempt = 0;
                 }
             }
 
@@ -1205,16 +1201,7 @@ namespace ML::XE_HPG
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE bool ValidateReportReason( const TT::Layouts::HwCounters::ReportHeader& reportHeader ) const
         {
-            ML_FUNCTION_LOG( false, &m_Context );
-
-            const bool validReportReason = ( reportHeader.m_ReportId.m_ReportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger ) ) != 0;
-
-            if( !validReportReason )
-            {
-                log.Error( "Invalid report reason", reportHeader.m_ReportId.m_ReportReason );
-            }
-
-            return log.m_Result = validReportReason;
+            return ( reportHeader.m_ReportId.m_ReportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger ) ) != 0;
         }
 
         //////////////////////////////////////////////////////////////////////////

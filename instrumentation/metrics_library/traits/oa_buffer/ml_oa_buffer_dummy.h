@@ -155,10 +155,10 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Dumps oa buffer reports between query begin / query end.
-        /// @param  reportGpu   gpu query report.
-        /// @return             operation status.
+        /// @param  state   oa buffer state.
+        /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode DumpReports( [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu ) const
+        ML_INLINE StatusCode DumpReports( [[maybe_unused]] const TT::Layouts::OaBuffer::State& state ) const
         {
             return StatusCode::Success;
         }

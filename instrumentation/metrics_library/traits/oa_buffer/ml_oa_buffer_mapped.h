@@ -32,7 +32,7 @@ namespace ML::BASE
         using Base = TraitObject<T, TT::OaBuffer>;
         using Base::DerivedConst;
 
-    private:
+    protected:
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
@@ -91,18 +91,20 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_ASSERT( IsValid() );
-            ML_FUNCTION_CHECK( GetPreReportOffset<true>( reportGpu, state.m_TailBeginOffset ) );
-            ML_FUNCTION_CHECK( GetPostReportOffset<false>( reportGpu, state.m_TailEndOffset ) );
+            ML_FUNCTION_CHECK( GetPreReportOffset<true>( reportGpu, state.m_TailPreBeginOffset ) );
+            ML_FUNCTION_CHECK( GetPostReportOffset<true>( reportGpu, state.m_TailPostBeginOffset ) );
+            ML_FUNCTION_CHECK( GetPreReportOffset<false>( reportGpu, state.m_TailPreEndOffset ) );
+            ML_FUNCTION_CHECK( GetPostReportOffset<false>( reportGpu, state.m_TailPostEndOffset ) );
 
             const uint32_t base       = reportGpu.m_OaBuffer.GetAllocationOffset();
-            const bool     validBegin = ( state.m_TailBeginOffset >= 0 ) && ( state.m_TailBeginOffset < m_OaBuffer.m_Size );
-            const bool     validEnd   = ( state.m_TailEndOffset >= 0 ) && ( state.m_TailEndOffset < m_OaBuffer.m_Size );
+            const bool     validBegin = ( state.m_TailPreBeginOffset >= 0 ) && ( state.m_TailPreBeginOffset < m_OaBuffer.m_Size );
+            const bool     validEnd   = ( state.m_TailPostEndOffset >= 0 ) && ( state.m_TailPostEndOffset < m_OaBuffer.m_Size );
 
             log.m_Result = ML_STATUS( validBegin && validEnd );
 
             log.Debug( "Base address  ", base );
-            log.Debug( "Tail pre begin", state.m_TailBeginOffset + base, state.m_TailBeginOffset );
-            log.Debug( "Tail post end ", state.m_TailEndOffset + base, state.m_TailEndOffset );
+            log.Debug( "Tail pre begin", state.m_TailPreBeginOffset + base, state.m_TailPreBeginOffset );
+            log.Debug( "Tail post end ", state.m_TailPostEndOffset + base, state.m_TailPostEndOffset );
             log.Debug( "Valid         ", log.m_Result );
 
             return log.m_Result;
@@ -161,11 +163,11 @@ namespace ML::BASE
             ML_ASSERT( m_OaBuffer.IsMapped() );
 
             const uint32_t reportSize     = m_OaBuffer.m_ReportSize;
-            const uint32_t oaWindow       = oaBufferState.m_TailEndOffset - oaBufferState.m_TailBeginOffset;
-            const uint32_t oaReportsCount = ( ( ( oaBufferState.m_TailEndOffset < oaBufferState.m_TailBeginOffset ) ? m_OaBuffer.m_Size : 0 ) + oaWindow ) / reportSize;
+            const uint32_t oaWindow       = ( oaBufferState.m_TailPostEndOffset + m_OaBuffer.m_Size - oaBufferState.m_TailPreBeginOffset ) % m_OaBuffer.m_Size;
+            const uint32_t oaReportsCount = oaWindow / reportSize;
 
-            log.Info( "Oa tail begin offset", FormatFlag::Decimal, oaBufferState.m_TailBeginOffset );
-            log.Info( "Oa tail end offset  ", FormatFlag::Decimal, oaBufferState.m_TailEndOffset );
+            log.Info( "Oa tail begin offset", FormatFlag::Decimal, oaBufferState.m_TailPreBeginOffset );
+            log.Info( "Oa tail end offset  ", FormatFlag::Decimal, oaBufferState.m_TailPostEndOffset );
             log.Info( "Oa reports count    ", FormatFlag::Decimal, oaReportsCount );
 
             return log.m_Result = oaReportsCount;
@@ -209,13 +211,20 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_FUNCTION_CHECK( m_OaBuffer.IsMapped() );
 
-            const auto&    oaTail = begin ? reportGpu.m_OaTailPreBegin : reportGpu.m_OaTailPreEnd;
-            const uint32_t base   = reportGpu.m_OaBuffer.GetAllocationOffset();
-            const uint32_t size   = m_OaBuffer.m_Size;
-            offset                = oaTail.GetOffset() - base;
+            const auto&    derived = DerivedConst();
+            const auto&    oaTail  = begin ? reportGpu.m_OaTailPreBegin : reportGpu.m_OaTailPreEnd;
+            const uint32_t base    = reportGpu.m_OaBuffer.GetAllocationOffset();
+            const uint32_t size    = m_OaBuffer.m_Size;
+            offset                 = oaTail.GetOffset() - base;
+
+            // Roll back offset before begin report to know the measured context on query begin.
+            if constexpr( begin )
+            {
+                derived.RollBackOffset( offset );
+            }
 
             // Round down offset before a triggered oa report if incomplete report.
-            DerivedConst().RoundDownReportOffset( offset );
+            derived.RoundDownReportOffset( offset );
 
             log.Debug( "Offset", offset );
 
@@ -252,10 +261,10 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Dumps oa buffer reports between query begin / query end.
-        /// @param  reportGpu   gpu query report.
-        /// @return             operation status.
+        /// @param  state   oa buffer state.
+        /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode DumpReports( const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu )
+        ML_INLINE StatusCode DumpReports( const TT::Layouts::OaBuffer::State& state )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
@@ -263,11 +272,8 @@ namespace ML::BASE
             {
                 const auto     emptyReportOa = TT::Layouts::HwCounters::ReportOa{};
                 const uint32_t reportSize    = m_OaBuffer.m_ReportSize;
-                uint32_t       beginOffset   = 0;
-                uint32_t       endOffset     = 0;
-
-                ML_FUNCTION_CHECK( GetPreReportOffset<true>( reportGpu, beginOffset ) );
-                ML_FUNCTION_CHECK( GetPostReportOffset<false>( reportGpu, endOffset ) );
+                const uint32_t beginOffset   = state.m_TailPreBeginOffset;
+                const uint32_t endOffset     = state.m_TailPostEndOffset;
 
                 // Print empty report first to distinguish oa buffer reports for different queries.
                 log.Csv( emptyReportOa );
@@ -334,6 +340,15 @@ namespace ML::BASE
             }
         }
 
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Rolls back report offset to the nearest context switch before
+        ///         query begin report.
+        /// @return offset  report offset to update.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void RollBackOffset( [[maybe_unused]] uint32_t& offset ) const
+        {
+        }
+
     private:
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Checks whether oa report is splitted.
@@ -385,6 +400,29 @@ namespace ML::XE_HPG
     struct OaBufferMappedTrait : XE_LP::OaBufferMappedTrait<T>
     {
         ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_LP );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::m_OaBuffer;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Rolls back report offset to the nearest context switch before
+        ///         query begin report.
+        /// @return offset  report offset to update.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void RollBackOffset( uint32_t& offset ) const
+        {
+            if( offset < m_OaBuffer.m_ReportSize * Constants::OaBuffer::m_ReportsBeforeQueryBegin )
+            {
+                // If offset is less than the size of required reports, roll it back to reports at the end of oa buffer.
+                offset = m_OaBuffer.m_Size - ( m_OaBuffer.m_ReportSize * Constants::OaBuffer::m_ReportsBeforeQueryBegin - offset );
+            }
+            else
+            {
+                offset -= m_OaBuffer.m_ReportSize * Constants::OaBuffer::m_ReportsBeforeQueryBegin;
+            }
+        }
     };
 } // namespace ML::XE_HPG
 

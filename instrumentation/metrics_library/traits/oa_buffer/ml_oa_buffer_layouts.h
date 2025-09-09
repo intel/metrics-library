@@ -221,8 +221,10 @@ namespace ML
             uint32_t                                m_NextAfterLastOffset; // Offset of next after last report from the oa buffer.
             uint32_t                                m_FirstOffset;         // Offset of oldest report in the oa buffer.
 
-            uint32_t                                m_TailBeginOffset;     // First oa report after query begin.
-            uint32_t                                m_TailEndOffset;       // First oa report after query end.
+            uint32_t                                m_TailPreBeginOffset;  // First oa report before query begin.
+            uint32_t                                m_TailPostBeginOffset; // First oa report after query begin.
+            uint32_t                                m_TailPreEndOffset;    // First oa report before query end.
+            uint32_t                                m_TailPostEndOffset;   // First oa report after query end.
 
             uint32_t                                m_LogBeginOffset;      // Offset of the begin report from the current slot.
             uint32_t                                m_LogEndOffset;        // Offset of the end report from the current slot.
@@ -240,8 +242,10 @@ namespace ML
                 : m_CurrentOffset( Constants::OaBuffer::m_InvalidOffset )
                 , m_NextAfterLastOffset( Constants::OaBuffer::m_InvalidOffset )
                 , m_FirstOffset( Constants::OaBuffer::m_InvalidOffset )
-                , m_TailBeginOffset( 0 )
-                , m_TailEndOffset( 0 )
+                , m_TailPreBeginOffset( 0 )
+                , m_TailPostBeginOffset( 0 )
+                , m_TailPreEndOffset( 0 )
+                , m_TailPostEndOffset( 0 )
                 , m_LogBeginOffset( 0 )
                 , m_LogEndOffset( 0 )
                 , m_ReportCopy{}
