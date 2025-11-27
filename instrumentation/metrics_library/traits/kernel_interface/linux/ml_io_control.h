@@ -1357,3 +1357,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( IoControlTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct IoControlTrait : XE3::IoControlTrait<T>
+    {
+        ML_DECLARE_TRAIT( IoControlTrait, XE3 );
+    };
+} // namespace ML::XE3P

@@ -54,13 +54,10 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Updates oa buffer state kept by hw counters query.
-        /// @param  state       oa buffer state.
-        /// @param  reportGpu   query report gpu.
+        /// @param  calculator  hw counters calculator.
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode UpdateQuery(
-            [[maybe_unused]] TT::Layouts::OaBuffer::State&              state,
-            [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportGpu& reportGpu ) const
+        ML_INLINE StatusCode UpdateQuery( [[maybe_unused]] TT::Queries::HwCountersCalculator& calculator ) const
         {
             return StatusCode::Success;
         }
@@ -124,14 +121,16 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns first oa report associated with query begin/end report.
         /// @param  begin       query begin/end.
-        /// @param  reportGpu   gpu report collected by query.
+        /// @param  calculator  hw counters calculator.
+        /// @param  rollback    if true, roll back offset to the nearest context switch.
         /// @return offset      oa tail offset.
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
         template <bool begin>
         ML_INLINE StatusCode GetPreReportOffset(
-            [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-            [[maybe_unused]] uint32_t&                                        offset ) const
+            [[maybe_unused]] const TT::Queries::HwCountersCalculator& calculator,
+            [[maybe_unused]] const bool                               rollback,
+            [[maybe_unused]] uint32_t&                                offset ) const
         {
             ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
             return StatusCode::Failed;
@@ -140,14 +139,14 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns last oa report associated with query begin/end report.
         /// @param  begin       query begin/end.
-        /// @param  reportGpu   gpu report collected by query.
+        /// @param  calculator  hw counters calculator.
         /// @return offset      oa tail offset.
         /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
         template <bool begin>
         ML_INLINE StatusCode GetPostReportOffset(
-            [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& reportGpu,
-            [[maybe_unused]] uint32_t&                                        offset ) const
+            [[maybe_unused]] const TT::Queries::HwCountersCalculator& calculator,
+            [[maybe_unused]] uint32_t&                                offset ) const
         {
             ML_ASSERT_ALWAYS_ADAPTER( m_Context.m_AdapterId );
             return StatusCode::Failed;

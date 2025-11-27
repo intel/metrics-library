@@ -371,3 +371,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( TbsStreamTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct TbsStreamTrait : XE3::TbsStreamTrait<T>
+    {
+        ML_DECLARE_TRAIT( TbsStreamTrait, XE3 );
+    };
+} // namespace ML::XE3P

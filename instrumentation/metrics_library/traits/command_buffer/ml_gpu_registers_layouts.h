@@ -105,6 +105,15 @@ namespace ML::XE3
     };
 } // namespace ML::XE3
 
+namespace ML::XE3P
+{
+    template <typename T>
+    struct GpuRegistersLayoutsTrait : XE3::GpuRegistersLayoutsTrait<T>
+    {
+        ML_DECLARE_TRAIT( GpuRegistersLayoutsTrait, XE3 );
+    };
+} // namespace ML::XE3P
+
 ML_STRUCTURE_PACK_END();
 
 // clang-format on

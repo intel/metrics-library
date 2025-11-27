@@ -49,7 +49,10 @@ namespace ML::BASE
             TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
 
             command.Init();
-            command.SetStallAtPixelScoreboard( true );
+            if( buffer.m_Type != GpuCommandBufferType::Compute )
+            {
+                command.SetStallAtPixelScoreboard( true );
+            }
             command.SetCommandStreamerStallEnable( true );
 
             return buffer.template Write<false>( command );
@@ -295,7 +298,10 @@ namespace ML::BASE
 
                 if( isStallEnabled )
                 {
-                    command.SetStallAtPixelScoreboard( true );
+                    if( buffer.m_Type != GpuCommandBufferType::Compute )
+                    {
+                        command.SetStallAtPixelScoreboard( true );
+                    }
                     command.SetCommandStreamerStallEnable( true );
                 }
 
@@ -1175,7 +1181,10 @@ namespace ML::XE_HPG
 
                 if( isStallEnabled )
                 {
-                    command.SetStallAtPixelScoreboard( true );
+                    if( buffer.m_Type != GpuCommandBufferType::Compute )
+                    {
+                        command.SetStallAtPixelScoreboard( true );
+                    }
                     command.SetCommandStreamerStallEnable( true );
                 }
 
@@ -1511,3 +1520,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( GpuCommandsTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct GpuCommandsTrait : XE3::GpuCommandsTrait<T>
+    {
+        ML_DECLARE_TRAIT( GpuCommandsTrait, XE3 );
+    };
+} // namespace ML::XE3P

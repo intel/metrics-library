@@ -514,3 +514,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( TbsInterfaceTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct TbsInterfaceTrait : XE3::TbsInterfaceTrait<T>
+    {
+        ML_DECLARE_TRAIT( TbsInterfaceTrait, XE3 );
+    };
+} // namespace ML::XE3P

@@ -145,3 +145,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( PolicyOneApiTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct PolicyOneApiTrait : XE3::PolicyOneApiTrait<T>
+    {
+        ML_DECLARE_TRAIT( PolicyOneApiTrait, XE3 );
+    };
+} // namespace ML::XE3P

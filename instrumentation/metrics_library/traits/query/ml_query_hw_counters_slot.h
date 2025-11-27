@@ -323,3 +323,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct QueryHwCountersSlotTrait : XE3::QueryHwCountersSlotTrait<T>
+    {
+        ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( QueryHwCountersSlotTrait, XE3 );
+    };
+} // namespace ML::XE3P

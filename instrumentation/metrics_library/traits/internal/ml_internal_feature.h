@@ -106,3 +106,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( InternalFeatureTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct InternalFeatureTrait : XE3::InternalFeatureTrait<T>
+    {
+        ML_DECLARE_TRAIT( InternalFeatureTrait, XE3 );
+    };
+} // namespace ML::XE3P

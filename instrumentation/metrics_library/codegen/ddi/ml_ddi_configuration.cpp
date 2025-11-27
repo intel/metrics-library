@@ -513,3 +513,100 @@ namespace ML::XE3::OneApi
 
 #endif // ML_ENABLE_XE3
 
+#if ML_ENABLE_XE3P
+
+#include "ml_traits_xe3p.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiConfiguration.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE3P::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationCreate_1_0(
+        const ConfigurationCreateData_1_0* createData,
+        ConfigurationHandle_1_0*           handle )
+    {
+        return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationActivate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationActivate_1_0(
+        const ConfigurationHandle_1_0        handle,
+        const ConfigurationActivateData_1_0* activateData )
+    {
+        return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationDeactivate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
+        const ConfigurationHandle_1_0 handle )
+    {
+        return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationDelete_1_0(
+        const ConfigurationHandle_1_0 handle )
+    {
+        return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3P::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE3P::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationCreate_1_0(
+        const ConfigurationCreateData_1_0* createData,
+        ConfigurationHandle_1_0*           handle )
+    {
+        return DdiConfiguration<T>::ConfigurationCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationActivate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationActivate_1_0(
+        const ConfigurationHandle_1_0        handle,
+        const ConfigurationActivateData_1_0* activateData )
+    {
+        return DdiConfiguration<T>::ConfigurationActivate_1_0( handle, activateData );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationDeactivate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationDeactivate_1_0(
+        const ConfigurationHandle_1_0 handle )
+    {
+        return DdiConfiguration<T>::ConfigurationDeactivate_1_0( handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ConfigurationDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ConfigurationDelete_1_0(
+        const ConfigurationHandle_1_0 handle )
+    {
+        return DdiConfiguration<T>::ConfigurationDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3P::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE3P
+

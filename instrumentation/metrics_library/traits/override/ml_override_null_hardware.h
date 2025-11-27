@@ -148,3 +148,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( OverrideNullHardwareTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct OverrideNullHardwareTrait : XE3::OverrideNullHardwareTrait<T>
+    {
+        ML_DECLARE_TRAIT( OverrideNullHardwareTrait, XE3 );
+    };
+} // namespace ML::XE3P

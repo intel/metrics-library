@@ -1867,4 +1867,13 @@ namespace ML::XE3
     };
 } // namespace ML::XE3
 
+namespace ML::XE3P
+{
+    template <typename T>
+    struct GpuRegistersTrait : XE3::GpuRegistersTrait<T>
+    {
+        ML_DECLARE_TRAIT( GpuRegistersTrait, XE3 );
+    };
+} // namespace ML::XE3P
+
 // clang-format on

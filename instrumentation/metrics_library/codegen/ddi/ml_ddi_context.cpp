@@ -443,3 +443,86 @@ namespace ML::XE3::OneApi
 
 #endif // ML_ENABLE_XE3
 
+#if ML_ENABLE_XE3P
+
+#include "ml_traits_xe3p.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiContext.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE3P::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ContextCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ContextCreate_1_0(
+        ClientType_1_0         clientType,
+        ContextCreateData_1_0* createData,
+        ContextHandle_1_0*     handle )
+    {
+        return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ContextDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ContextDelete_1_0(
+        const ContextHandle_1_0 handle )
+    {
+        return DdiContext<T>::ContextDelete_1_0( handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for GetParameter_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL GetParameter_1_0(
+        const ParameterType parameter,
+        ValueType*          type,
+        TypedValue_1_0*     value )
+    {
+        return DdiContext<T>::GetParameter_1_0( parameter, type, value );
+    }
+
+} // namespace ML::XE3P::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE3P::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ContextCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ContextCreate_1_0(
+        ClientType_1_0         clientType,
+        ContextCreateData_1_0* createData,
+        ContextHandle_1_0*     handle )
+    {
+        return DdiContext<T>::ContextCreate_1_0( clientType, createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for ContextDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL ContextDelete_1_0(
+        const ContextHandle_1_0 handle )
+    {
+        return DdiContext<T>::ContextDelete_1_0( handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for GetParameter_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL GetParameter_1_0(
+        const ParameterType parameter,
+        ValueType*          type,
+        TypedValue_1_0*     value )
+    {
+        return DdiContext<T>::GetParameter_1_0( parameter, type, value );
+    }
+
+} // namespace ML::XE3P::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE3P
+

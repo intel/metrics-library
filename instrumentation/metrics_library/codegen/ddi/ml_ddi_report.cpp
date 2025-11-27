@@ -223,3 +223,42 @@ namespace ML::XE3::OneApi
 
 #endif // ML_ENABLE_XE3
 
+#if ML_ENABLE_XE3P
+
+#include "ml_traits_xe3p.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiReport.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE3P::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for GetData_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL GetData_1_0(
+        GetReportData_1_0* data )
+    {
+        return DdiReport<T>::GetData_1_0( data );
+    }
+
+} // namespace ML::XE3P::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE3P::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for GetData_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL GetData_1_0(
+        GetReportData_1_0* data )
+    {
+        return DdiReport<T>::GetData_1_0( data );
+    }
+
+} // namespace ML::XE3P::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE3P
+

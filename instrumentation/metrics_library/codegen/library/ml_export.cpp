@@ -40,6 +40,9 @@ Template:           Tools/MetricsLibraryGenerator/templates/export.h
 #if ML_ENABLE_XE3
 #include "ml_traits_xe3.h"
 #endif
+#if ML_ENABLE_XE3P
+#include "ml_traits_xe3p.h"
+#endif
 
 using namespace ML;
 
@@ -159,6 +162,28 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
         }
     }
 #endif // ML_ENABLE_XE3
+
+#if ML_ENABLE_XE3P
+    if( clientType.Gen == ClientGen::Xe3P )
+    {
+        switch( clientType.Api )
+        {
+            #if ML_ENABLE_OPENCL
+            case ClientApi::OpenCL:
+                return &XE3P::OpenCL::DdiFunctionTable<XE3P::OpenCL::Traits>::GetInstance();
+            #endif
+
+            #if ML_ENABLE_ONEAPI
+            case ClientApi::OneApi:
+                return &XE3P::OneApi::DdiFunctionTable<XE3P::OneApi::Traits>::GetInstance();
+            #endif
+
+            default:
+                ML_ASSERT_ALWAYS_NO_ADAPTER();
+                break;
+        }
+    }
+#endif // ML_ENABLE_XE3P
 
     return nullptr;
 }

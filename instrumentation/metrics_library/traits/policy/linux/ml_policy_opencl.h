@@ -145,3 +145,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct PolicyOpenCLTrait : XE3::PolicyOpenCLTrait<T>
+    {
+        ML_DECLARE_TRAIT( PolicyOpenCLTrait, XE3 );
+    };
+} // namespace ML::XE3P

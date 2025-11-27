@@ -72,14 +72,12 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct Configuration
         {
-            static constexpr uint32_t m_InvalidHandle        = 0;
-            static constexpr uint32_t m_MaxOaProlog          = 3;
-            static constexpr uint32_t m_MaxOaEpilog          = 1;
-            static constexpr uint32_t m_MaxRegistersBase     = 4096;
-            static constexpr uint32_t m_MaxRegisters         = m_MaxRegistersBase + m_MaxOaEpilog + m_MaxOaProlog;
-            static constexpr uint32_t m_MaxOverrideRegisters = 256;
-            static constexpr uint32_t m_MaxUserRegisters     = 16;
-            static constexpr uint32_t m_MaxInitRegisters     = 20;
+            static constexpr uint32_t m_InvalidHandle    = 0;
+            static constexpr uint32_t m_MaxOaProlog      = 3;
+            static constexpr uint32_t m_MaxOaEpilog      = 1;
+            static constexpr uint32_t m_MaxRegistersBase = 4096;
+            static constexpr uint32_t m_MaxRegisters     = m_MaxRegistersBase + m_MaxOaEpilog + m_MaxOaProlog;
+            static constexpr uint32_t m_MaxUserRegisters = 16;
         };
 
         //////////////////////////////////////////////////////////////////////////
@@ -87,8 +85,7 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct OaBuffer
         {
-            static constexpr uint32_t m_InvalidOffset           = 0xFFFFFFFF;
-            static constexpr uint32_t m_ReportsBeforeQueryBegin = 3;
+            static constexpr uint32_t m_InvalidOffset = 0xFFFFFFFF;
         };
 
         //////////////////////////////////////////////////////////////////////////

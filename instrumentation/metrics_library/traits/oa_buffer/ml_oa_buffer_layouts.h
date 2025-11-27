@@ -61,19 +61,6 @@ namespace ML
         };
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Oa sampling mode enumeration.
-        //////////////////////////////////////////////////////////////////////////
-        enum class SamplingMode : uint32_t
-        {
-            Off = 0,
-            Event,
-            Timer,
-            Dma,
-            // ...
-            Count
-        };
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief Oa buffer sampling type enumeration.
         //////////////////////////////////////////////////////////////////////////
         enum class SamplingType : uint32_t
@@ -221,10 +208,11 @@ namespace ML
             uint32_t                                m_NextAfterLastOffset; // Offset of next after last report from the oa buffer.
             uint32_t                                m_FirstOffset;         // Offset of oldest report in the oa buffer.
 
-            uint32_t                                m_TailPreBeginOffset;  // First oa report before query begin.
-            uint32_t                                m_TailPostBeginOffset; // First oa report after query begin.
-            uint32_t                                m_TailPreEndOffset;    // First oa report before query end.
-            uint32_t                                m_TailPostEndOffset;   // First oa report after query end.
+            uint32_t                                m_TailPreBeginOffset;            // First oa report before query begin.
+            uint32_t                                m_TailPreBeginOffsetRolledBack;  // First oa report before query begin, rolled back to the nearest context switch.
+            uint32_t                                m_TailPostBeginOffset;           // First oa report after query begin.
+            uint32_t                                m_TailPreEndOffset;              // First oa report before query end.
+            uint32_t                                m_TailPostEndOffset;             // First oa report after query end.
 
             uint32_t                                m_LogBeginOffset;      // Offset of the begin report from the current slot.
             uint32_t                                m_LogEndOffset;        // Offset of the end report from the current slot.
@@ -243,6 +231,7 @@ namespace ML
                 , m_NextAfterLastOffset( Constants::OaBuffer::m_InvalidOffset )
                 , m_FirstOffset( Constants::OaBuffer::m_InvalidOffset )
                 , m_TailPreBeginOffset( 0 )
+                , m_TailPreBeginOffsetRolledBack( 0 )
                 , m_TailPostBeginOffset( 0 )
                 , m_TailPreEndOffset( 0 )
                 , m_TailPostEndOffset( 0 )

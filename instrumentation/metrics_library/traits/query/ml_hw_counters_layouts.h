@@ -40,15 +40,6 @@ namespace ML::BASE
         static constexpr uint32_t m_TriggeredReportGetAttempts = 10;
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Report gp.
-        //////////////////////////////////////////////////////////////////////////
-        struct ReportGp
-        {
-            uint64_t    m_Counter1;
-            uint64_t    m_Counter2;
-        };
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief Report user.
         //////////////////////////////////////////////////////////////////////////
         struct ReportUser
@@ -122,7 +113,6 @@ namespace ML::BASE
         {
             ReportHeader    m_Header;
             ReportOaData    m_DataOa;
-            ReportGp        m_DataGp;       // 16 bytes.
             ReportUser      m_DataUser;     // 16 * 8 = 128 bytes.
         };
 
@@ -143,7 +133,6 @@ namespace ML::BASE
                 struct
                 {
                     ReportOa      m_Oa;      // Oa.
-                    ReportGp      m_Gp;      // 16 bytes.
                     ReportUser    m_User;    // 16 * 8 = 128 bytes.
                 };
 
@@ -195,9 +184,9 @@ namespace ML::BASE
 
                 uint64_t                               m_SliceFrequency;
                 uint64_t                               m_UnsliceFrequency;
-                uint64_t                               m_PerformanceCounter1;           // ODLAT Performance monitor counter 1.
-                uint64_t                               m_PerformanceCounter2;           // ODLAT Performance monitor counter 2.
-                uint32_t                               m_SplitOccured;                  // Command buffer split has occurred.
+                uint64_t                               m_Reserved3;
+                uint64_t                               m_Reserved4;
+                uint32_t                               m_SplitOccured;                  // Obsolete.
                 uint32_t                               m_CoreFrequencyChanged;          // Core frequency has changed.
                 uint64_t                               m_CoreFrequency;                 // Core frequency during the query.
                 uint32_t                               m_ReportId;
@@ -261,10 +250,6 @@ namespace ML::BASE
                         // Query end marker.
                         uint64_t    m_EndTag;
 
-                        // Command buffer split indicators.
-                        uint32_t    m_DmaFenceIdBegin;
-                        uint32_t    m_DmaFenceIdEnd;
-
                         // Oa buffer data related.
                         TT::Layouts::OaBuffer::Register          m_OaBuffer;
                         TT::Layouts::OaBuffer::TailRegister      m_OaTailPreBegin;
@@ -273,7 +258,10 @@ namespace ML::BASE
                         TT::Layouts::OaBuffer::TailRegister      m_OaTailPostEnd;
 
                         // Unused.
-                        uint32_t    m_Reserved;
+                        uint64_t    m_Reserved1;
+
+                        // Unused.
+                        uint32_t    m_Reserved2;
 
                         // Frequency change indicators.
                         uint32_t    m_CoreFrequencyBegin;
@@ -336,7 +324,6 @@ namespace ML::XE_HPG
         static constexpr uint32_t m_OaCounter35                      = 35;
         static constexpr uint32_t m_OaCounter36                      = 36;
         static constexpr uint32_t m_OaCounter37                      = 37;
-        static constexpr uint32_t m_ReportGpuInfoAlignment           = Base::m_ReportGpuAlignment * 2;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Command streamer constants.
@@ -515,7 +502,7 @@ namespace ML::XE_HPG
                 uint64_t                               m_UnsliceFrequency;
                 uint64_t                               m_Reserved3;
                 uint64_t                               m_Reserved4;
-                uint32_t                               m_SplitOccured;                  // Command buffer split has occurred.
+                uint32_t                               m_SplitOccured;                  // Obsolete.
                 uint32_t                               m_CoreFrequencyChanged;          // Core frequency has changed.
                 uint64_t                               m_CoreFrequency;                 // Core frequency during the query.
                 uint32_t                               m_ReportId;
@@ -542,10 +529,6 @@ namespace ML::XE_HPG
                         // Query end marker.
                         uint64_t    m_EndTag;
 
-                        // Command buffer split indicators.
-                        uint32_t    m_DmaFenceIdBegin;
-                        uint32_t    m_DmaFenceIdEnd;
-
                         // Oa buffer data related.
                         TT::Layouts::OaBuffer::Register          m_OaBuffer;
                         TT::Layouts::OaBuffer::TailRegister      m_OaTailPreBegin;
@@ -569,7 +552,7 @@ namespace ML::XE_HPG
                         uint64_t    m_MarkerDriver;
                     };
 
-                    uint8_t     m_Payload[m_ReportGpuInfoAlignment];
+                    uint8_t    m_Payload[Base::m_ReportGpuAlignment];
                 };
             };
         };
@@ -788,7 +771,7 @@ namespace ML::XE2_HPG
 
                 uint64_t                               m_SliceFrequency;
                 uint64_t                               m_UnsliceFrequency;
-                uint32_t                               m_SplitOccured;                  // Command buffer split has occurred.
+                uint32_t                               m_SplitOccured;                  // Obsolete.
                 uint32_t                               m_CoreFrequencyChanged;          // Core frequency has changed.
                 uint64_t                               m_CoreFrequency;                 // Core frequency during the query.
                 uint32_t                               m_ReportId;
@@ -815,10 +798,6 @@ namespace ML::XE2_HPG
                         // Query end marker.
                         uint64_t    m_EndTag;
 
-                        // Command buffer split indicators.
-                        uint32_t    m_DmaFenceIdBegin;
-                        uint32_t    m_DmaFenceIdEnd;
-
                         // Oa buffer data related.
                         TT::Layouts::OaBuffer::Register        m_OaBuffer;
                         TT::Layouts::OaBuffer::TailRegister    m_OaTailPreBegin;
@@ -842,7 +821,7 @@ namespace ML::XE2_HPG
                         uint64_t    m_MarkerDriver;
                     };
 
-                    uint8_t    m_Payload[Base::m_ReportGpuInfoAlignment];
+                    uint8_t    m_Payload[Base::m_ReportGpuAlignment];
                 };
             };
         };
@@ -862,6 +841,15 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( HwCountersLayoutsTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct HwCountersLayoutsTrait : XE3::HwCountersLayoutsTrait<T>
+    {
+        ML_DECLARE_TRAIT( HwCountersLayoutsTrait, XE3 );
+    };
+} // namespace ML::XE3P
 
 ML_STRUCTURE_PACK_END();
 

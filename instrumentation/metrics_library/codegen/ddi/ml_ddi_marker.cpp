@@ -323,3 +323,62 @@ namespace ML::XE3::OneApi
 
 #endif // ML_ENABLE_XE3
 
+#if ML_ENABLE_XE3P
+
+#include "ml_traits_xe3p.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiMarker.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE3P::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3P::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE3P::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3P::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE3P
+

@@ -330,7 +330,7 @@ namespace ML
             const uint32_t bitsize )
         {
             constexpr uint32_t maxBitsize = 64;
-            const uint64_t     mask       = ( bitsize != maxBitsize ) ? ( ( ML_BIT( bitsize ) ) - 1 ) : -1;
+            const uint64_t     mask       = ( bitsize != maxBitsize ) ? ( ML_BIT( bitsize ) - 1 ) : -1;
 
             ML_ASSERT_NO_ADAPTER( bitsize <= maxBitsize );
 
@@ -343,7 +343,7 @@ namespace ML
             }
             else
             {
-                return end + ( ( bitsize != maxBitsize ) ? ( ML_BIT( bitsize ) ) : 0 ) - begin;
+                return end + ( ( bitsize != maxBitsize ) ? ML_BIT( bitsize ) : 0 ) - begin;
             }
         }
 

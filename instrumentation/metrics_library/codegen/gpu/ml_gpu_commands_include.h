@@ -81,3 +81,15 @@ Template:           Tools/MetricsLibraryGenerator/templates/gfx.h
 #undef __CODEGEN_PLATFORM
 #endif // ML_ENABLE_XE3
 
+#if ML_ENABLE_XE3P
+// XE3P IGFX Commands
+#define __CODEGEN_NAMESPACE_CLOSE }; }
+#define __CODEGEN_PLATFORM "XE3P"
+#define __CODEGEN_NAMESPACE_OPEN namespace ML::XE3P { template <typename T> struct GpuCommandsLayoutsTrait {
+#define __CODEGEN_FILE_DIRECTIVES_OPEN ML_STRUCTURE_PACK_BEGIN( 1 )
+#define __CODEGEN_FILE_DIRECTIVES_CLOSE ML_STRUCTURE_PACK_END()
+#include "ml_gpu_commands_xe3p.h"
+#undef __CODEGEN_NAMESPACE_OPEN
+#undef __CODEGEN_PLATFORM
+#endif // ML_ENABLE_XE3P
+

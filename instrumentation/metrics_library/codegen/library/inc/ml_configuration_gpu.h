@@ -63,3 +63,12 @@ Template:           Tools/MetricsLibraryGenerator/templates/configuration_gen.h
     #endif
 #endif
 
+// XE3P
+#if !defined( ML_ENABLE_XE3P )
+    #if ML_LINUX
+        #define ML_ENABLE_XE3P 1
+    #else
+        #define ML_ENABLE_XE3P 0
+    #endif
+#endif
+

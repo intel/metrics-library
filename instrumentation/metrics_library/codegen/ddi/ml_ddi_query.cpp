@@ -323,3 +323,62 @@ namespace ML::XE3::OneApi
 
 #endif // ML_ENABLE_XE3
 
+#if ML_ENABLE_XE3P
+
+#include "ml_traits_xe3p.h"
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Instantiates functions for DdiQuery.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_OPENCL
+namespace ML::XE3P::OpenCL
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryCreate_1_0(
+        const QueryCreateData_1_0* createData,
+        QueryHandle_1_0*           handle )
+    {
+        return DdiQuery<T>::QueryCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryDelete_1_0(
+        const QueryHandle_1_0 handle )
+    {
+        return DdiQuery<T>::QueryDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3P::OpenCL
+#endif // ML_ENABLE_OPENCL
+
+#if ML_ENABLE_ONEAPI
+namespace ML::XE3P::OneApi
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryCreate_1_0(
+        const QueryCreateData_1_0* createData,
+        QueryHandle_1_0*           handle )
+    {
+        return DdiQuery<T>::QueryCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for QueryDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL QueryDelete_1_0(
+        const QueryHandle_1_0 handle )
+    {
+        return DdiQuery<T>::QueryDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3P::OneApi
+#endif // ML_ENABLE_ONEAPI
+
+#endif // ML_ENABLE_XE3P
+

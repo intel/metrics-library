@@ -2757,24 +2757,6 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Creates global purpose counters report log.
-        /// @param  gpReport    a given global purpose report.
-        /// @return             string that contains formatted global purpose
-        ///                     counters report log.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportGp& gpReport )
-        {
-            std::ostringstream output;
-            output << "GP: ";
-            output << std::hex << std::showbase;
-            output << "gp1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << gpReport.m_Counter1;
-            output << ", gp2 = " << std::setw( Constants::Log::m_MaxUint64Length ) << gpReport.m_Counter2;
-            output << "; ";
-
-            return output.str();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Creates report reason log.
         /// @param  reportReason    a given report reason.
         /// @return                 string that contains formatted report reason.
@@ -3232,3 +3214,11 @@ namespace ML::XE3
     };
 } // namespace ML::XE3
 
+namespace ML::XE3P
+{
+    template <typename T>
+    struct DebugTrait : XE3::DebugTrait<T>
+    {
+        ML_DECLARE_TRAIT( DebugTrait, XE3 );
+    };
+} // namespace ML::XE3P

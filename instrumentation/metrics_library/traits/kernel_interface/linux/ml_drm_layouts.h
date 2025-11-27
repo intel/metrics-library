@@ -107,4 +107,13 @@ namespace ML::XE3
     };
 } // namespace ML::XE3
 
+namespace ML::XE3P
+{
+    template <typename T>
+    struct DrmLayoutsTrait : XE3::DrmLayoutsTrait<T>
+    {
+        ML_DECLARE_TRAIT( DrmLayoutsTrait, XE3 );
+    };
+} // namespace ML::XE3P
+
 ML_STRUCTURE_PACK_END();

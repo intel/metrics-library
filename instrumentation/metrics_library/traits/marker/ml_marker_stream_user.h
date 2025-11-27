@@ -126,3 +126,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( MarkerStreamUserTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct MarkerStreamUserTrait : XE3::MarkerStreamUserTrait<T>
+    {
+        ML_DECLARE_TRAIT( MarkerStreamUserTrait, XE3 );
+    };
+} // namespace ML::XE3P

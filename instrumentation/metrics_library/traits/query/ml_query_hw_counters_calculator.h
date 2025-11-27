@@ -149,7 +149,7 @@ namespace ML::BASE
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
                     ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailPreBegin.All.m_Tail != m_ReportGpu.m_OaTailPostBegin.All.m_Tail, StatusCode::ReportLost );
                     ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailPreEnd.All.m_Tail != m_ReportGpu.m_OaTailPostEnd.All.m_Tail, StatusCode::ReportLost );
-                    ML_FUNCTION_CHECK_ERROR( m_OaBuffer.UpdateQuery( m_OaBufferState, m_ReportGpu ), StatusCode::NotInitialized );
+                    ML_FUNCTION_CHECK_ERROR( m_OaBuffer.UpdateQuery( Derived() ), StatusCode::NotInitialized );
 
                     log.m_Result = m_Query.GetTriggeredOaReports( m_QuerySlot, m_ReportGpu );
 
@@ -429,9 +429,9 @@ namespace ML::BASE
                 log.Info( "Report end   (oa):", reportEnd.m_Oa );
 
                 // If there is more than one report in the query (tbs multi samples type only),
-                // gp counters need to be calculated separately using timestamps
+                // user counters need to be calculated separately using timestamps
                 // from snapshots as the time range.
-                // Only approximated (average) values are available, because gp counters
+                // Only approximated (average) values are available, because user counters
                 // are not collected in oa buffer.
                 reportBegin.m_Oa.m_Header.m_Timestamp = m_ReportGpu.m_Begin.m_Oa.m_Header.m_Timestamp;
                 reportEnd.m_Oa.m_Header.m_Timestamp   = m_ReportGpu.m_End.m_Oa.m_Header.m_Timestamp;
@@ -445,12 +445,9 @@ namespace ML::BASE
             reportApi.m_MiddleQueryEvents = events;
             reportApi.m_OverrunOccured    = overrun;
             reportApi.m_BeginTimestamp    = derived.GetBeginTimestamp( oaBegin->m_Header.m_Timestamp );
-            reportApi.m_SplitOccured      = m_ReportGpu.m_DmaFenceIdBegin != m_ReportGpu.m_DmaFenceIdEnd;
 
             // Output logs.
             log.Info( "Report api:", reportApi );
-            log.Debug( "Begin dma fence:", m_ReportGpu.m_DmaFenceIdBegin );
-            log.Debug( "End dma fence:", m_ReportGpu.m_DmaFenceIdEnd );
             log.Debug( "Events:", events );
             log.Debug( "Overrun:", overrun );
 
@@ -489,7 +486,6 @@ namespace ML::BASE
                         derived.AggregateCounters( source, m_ReportApi );
                     }
 
-                    m_ReportApi.m_SplitOccured         |= source.m_SplitOccured;
                     m_ReportApi.m_CoreFrequencyChanged |= source.m_CoreFrequencyChanged;
                     m_ReportApi.m_CoreFrequency         = source.m_CoreFrequency;
                 }
@@ -585,12 +581,12 @@ namespace ML::BASE
         /// @brief  Calculates counters delta values between two reports.
         ///         Handles context switches which can occur between reports.
         /// @param  calculateOa     flag to indicate if oa counters need to be calculated.
-        /// @param  calculateGp     flag to indicate if gp or user counters need to be calculated.
+        /// @param  calculateUser   flag to indicate if user counters need to be calculated.
         /// @param  begin           begin hw counters report.
         /// @param  end             end hw counters report.
         /// @return reportApi       api report.
         //////////////////////////////////////////////////////////////////////////
-        template <bool calculateOa, bool calculateGp>
+        template <bool calculateOa, bool calculateUser>
         ML_INLINE void CalculateCounters(
             const TT::Layouts::HwCounters::Report&     begin,
             const TT::Layouts::HwCounters::Report&     end,
@@ -609,7 +605,7 @@ namespace ML::BASE
                 derived.AdjustOaCounters( m_NullBegin ? dummy.m_Oa : begin.m_Oa, end.m_Oa, reportApi );
             }
 
-            if constexpr( calculateGp )
+            if constexpr( calculateUser )
             {
                 AdjustUserCounters( m_NullBegin ? dummy.m_User : begin.m_User, end.m_User, reportApi );
             }
@@ -973,7 +969,7 @@ namespace ML::BASE
 
                 for( uint32_t i = 0; i < oaReportsCount; ++i )
                 {
-                    const uint32_t oaReportOffset = ( m_OaBufferState.m_TailPreBeginOffset + ( i * reportSize ) ) % oaBufferSize;
+                    const uint32_t oaReportOffset = ( m_OaBufferState.m_TailPreBeginOffsetRolledBack + ( i * reportSize ) ) % oaBufferSize;
                     const auto&    oaReport       = m_OaBuffer.GetReport( oaReportOffset );
 
                     derived.SetContextIds( oaReport, currentContextId );
@@ -989,7 +985,7 @@ namespace ML::BASE
                         frequency = oaReport.m_Header.m_ReportId;
                         log.Info( "oaReport (skip end):   ", "(", FormatFlag::Decimal, oaReportOffset, ")", oaReport );
 
-                        const uint32_t oaReportPostEndOffset = ( m_OaBufferState.m_TailPreBeginOffset + ( ( i + 1 ) * reportSize ) ) % oaBufferSize;
+                        const uint32_t oaReportPostEndOffset = ( m_OaBufferState.m_TailPreBeginOffsetRolledBack + ( ( i + 1 ) * reportSize ) ) % oaBufferSize;
                         const auto&    oaReportPostEnd       = m_OaBuffer.GetReport( oaReportPostEndOffset );
                         log.Debug( "oaReport (post end):   ", "(", FormatFlag::Decimal, oaReportPostEndOffset, ")", oaReportPostEnd );
                         break;
@@ -1232,8 +1228,6 @@ namespace ML::BASE
             log.Debug( "    m_Begin.m_Oa        ", m_ReportGpu.m_Begin.m_Oa );
             log.Debug( "    m_End.m_Oa          ", m_ReportGpu.m_End.m_Oa );
             log.Debug( "    m_EndTag            ", m_ReportGpu.m_EndTag );
-            log.Debug( "    m_DmaFenceIdBegin   ", m_ReportGpu.m_DmaFenceIdBegin );
-            log.Debug( "    m_DmaFenceIdEnd     ", m_ReportGpu.m_DmaFenceIdEnd );
             log.Debug( "    m_OaBuffer          ", m_ReportGpu.m_OaBuffer.All.m_ReportBufferOffset );
             log.Debug( "    m_OaTailPreBegin    ", m_ReportGpu.m_OaTailPreBegin.All.m_Tail );
             log.Debug( "    m_OaTailPostBegin   ", m_ReportGpu.m_OaTailPostBegin.All.m_Tail );
@@ -1405,10 +1399,11 @@ namespace ML::XE_HPG
                 //    Only reports with the ContextValid flag set are considered.
                 if( reason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::ContextSwitch ) )
                 {
-                    const auto commandBufferType = GetCommandBufferType();
-                    const bool isRcsContext      = IsRcsContext( static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId ) ) && commandBufferType == GpuCommandBufferType::Render;
-                    const bool isCcsContext      = IsCcsContext( static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId ) ) && commandBufferType == GpuCommandBufferType::Compute;
-                    const bool isContextValid    = reportOa.m_Header.m_ReportId.m_ContextValid;
+                    const uint32_t sourceId          = static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId );
+                    const auto     commandBufferType = GetCommandBufferType();
+                    const bool     isRcsContext      = IsRcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Render;
+                    const bool     isCcsContext      = IsCcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Compute;
+                    const bool     isContextValid    = reportOa.m_Header.m_ReportId.m_ContextValid;
 
                     if( IsMeasuredContextId( static_cast<uint32_t>( reportOa.m_Header.m_ContextId ) ) )
                     {
@@ -1485,10 +1480,11 @@ namespace ML::XE_HPG
             const TT::Layouts::HwCounters::ReportOa& reportOa,
             uint32_t&                                currentContextId )
         {
-            const auto commandBufferType = GetCommandBufferType();
-            const bool isRcsContext      = IsRcsContext( static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId ) ) && commandBufferType == GpuCommandBufferType::Render;
-            const bool isCcsContext      = IsCcsContext( static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId ) ) && commandBufferType == GpuCommandBufferType::Compute;
-            const bool isContextValid    = reportOa.m_Header.m_ReportId.m_ContextValid;
+            const uint32_t sourceId          = static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId );
+            const auto     commandBufferType = GetCommandBufferType();
+            const bool     isRcsContext      = IsRcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Render;
+            const bool     isCcsContext      = IsCcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Compute;
+            const bool     isContextValid    = reportOa.m_Header.m_ReportId.m_ContextValid;
 
             if( ( isRcsContext || isCcsContext ) && isContextValid )
             {
@@ -1564,7 +1560,7 @@ namespace ML::XE_HPG
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            const uint32_t oaTailPreBeginOffset  = m_OaBufferState.m_TailPreBeginOffset;
+            const uint32_t oaTailPreBeginOffset  = m_OaBufferState.m_TailPreBeginOffsetRolledBack;
             const uint32_t oaTailPostBeginOffset = m_OaBufferState.m_TailPostBeginOffset;
             const uint32_t oaTailPreEndOffset    = m_OaBufferState.m_TailPreEndOffset;
             const uint32_t oaTailPostEndOffset   = m_OaBufferState.m_TailPostEndOffset;
@@ -1609,8 +1605,6 @@ namespace ML::XE_HPG
             log.Info( "    m_End.m_Oa", csDescription, m_ReportGpu.m_End.m_Oa );
 
             log.Debug( "    m_EndTag              ", m_ReportGpu.m_EndTag );
-            log.Debug( "    m_DmaFenceIdBegin     ", m_ReportGpu.m_DmaFenceIdBegin );
-            log.Debug( "    m_DmaFenceIdEnd       ", m_ReportGpu.m_DmaFenceIdEnd );
             log.Debug( "    m_OaBuffer            ", m_ReportGpu.m_OaBuffer.All.m_ReportBufferOffset );
             log.Debug( "    m_CoreFrequencyBegin  ", m_ReportGpu.m_CoreFrequencyBegin );
             log.Debug( "    m_CoreFrequencyEnd    ", m_ReportGpu.m_CoreFrequencyEnd );
@@ -1904,8 +1898,6 @@ namespace ML::XE2_HPG
                 log.Debug( "    m_Begin.m_Oa        ", m_ReportGpu.m_Begin.m_Oa );
                 log.Debug( "    m_End.m_Oa          ", m_ReportGpu.m_End.m_Oa );
                 log.Debug( "    m_EndTag            ", m_ReportGpu.m_EndTag );
-                log.Debug( "    m_DmaFenceIdBegin   ", m_ReportGpu.m_DmaFenceIdBegin );
-                log.Debug( "    m_DmaFenceIdEnd     ", m_ReportGpu.m_DmaFenceIdEnd );
                 log.Debug( "    m_CoreFrequencyBegin", m_ReportGpu.m_CoreFrequencyBegin );
                 log.Debug( "    m_CoreFrequencyEnd  ", m_ReportGpu.m_CoreFrequencyEnd );
                 log.Debug( "    m_MarkerUser        ", m_ReportGpu.m_MarkerUser );
@@ -1929,3 +1921,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct QueryHwCountersCalculatorTrait : XE3::QueryHwCountersCalculatorTrait<T>
+    {
+        ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, XE3 );
+    };
+} // namespace ML::XE3P

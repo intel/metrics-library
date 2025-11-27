@@ -361,7 +361,6 @@ namespace ML::BASE
             const uint64_t gpuAddress = slot.m_GpuMemory.GpuAddress;
 
             ML_FUNCTION_CHECK( FlushCommandStreamer<true>( buffer ) );
-            ML_FUNCTION_CHECK( WriteNopId<true>( buffer, gpuAddress ) );
             ML_FUNCTION_CHECK( WriteCoreFrequency<true>( buffer, gpuAddress ) );
             ML_FUNCTION_CHECK( derived.template WriteOaState<true>( buffer, gpuAddress, slot ) );
             ML_FUNCTION_CHECK( WriteUserCounters<true>( buffer, gpuAddress ) );
@@ -414,7 +413,6 @@ namespace ML::BASE
             ML_FUNCTION_CHECK( WriteHwCounters<false>( buffer, gpuAddress, slot ) );
             ML_FUNCTION_CHECK( WriteUserCounters<false>( buffer, gpuAddress ) );
             ML_FUNCTION_CHECK( derived.template WriteOaState<false>( buffer, gpuAddress, slot ) );
-            ML_FUNCTION_CHECK( WriteNopId<false>( buffer, gpuAddress ) );
             ML_FUNCTION_CHECK( WriteCoreFrequency<false>( buffer, gpuAddress ) );
             ML_FUNCTION_CHECK( WriteUserMarker( buffer, gpuAddress, data.MarkerUser ) );
             ML_FUNCTION_CHECK( WriteDriverMarker( buffer, gpuAddress, data.MarkerDriver ) );
@@ -457,7 +455,7 @@ namespace ML::BASE
             constexpr uint32_t reportGpuInfoOffset = reportGpuEndTagOffset + sizeof( uint64_t );
             constexpr uint32_t reportGpuInfoSize =
                 offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_MarkerDriver ) -
-                offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdBegin ) +
+                offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaBuffer ) +
                 sizeof( uint64_t ); // The size of m_MarkerDriver.
 
             ML_FUNCTION_CHECK( T::GpuCommands::CopyData(
@@ -664,33 +662,6 @@ namespace ML::BASE
                 buffer,
                 registerAddress,
                 memoryAddress + offset,
-                flags );
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes noop id register.
-        /// @param  begin   begin/end query.
-        /// @param  buffer  target command buffer.
-        /// @param  address gpu memory address.
-        /// @return         operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <bool begin, typename CommandBuffer>
-        ML_INLINE StatusCode WriteNopId(
-            CommandBuffer& buffer,
-            const uint64_t address ) const
-        {
-            constexpr uint32_t offset = begin
-                ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdBegin )
-                : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_DmaFenceIdEnd );
-
-            const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
-                ? T::GpuCommands::Flags::WorkloadPartition
-                : T::GpuCommands::Flags::None;
-
-            return T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                T::GpuRegisters::m_NopId,
-                address + offset,
                 flags );
         }
 
@@ -1357,3 +1328,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( QueryHwCountersTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct QueryHwCountersTrait : XE3::QueryHwCountersTrait<T>
+    {
+        ML_DECLARE_TRAIT( QueryHwCountersTrait, XE3 );
+    };
+} // namespace ML::XE3P

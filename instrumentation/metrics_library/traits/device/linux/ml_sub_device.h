@@ -738,3 +738,12 @@ namespace ML::XE3
         ML_DECLARE_TRAIT( SubDeviceTrait, XE2_HPG );
     };
 } // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct SubDeviceTrait : XE3::SubDeviceTrait<T>
+    {
+        ML_DECLARE_TRAIT( SubDeviceTrait, XE3 );
+    };
+} // namespace ML::XE3P
