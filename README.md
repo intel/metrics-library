@@ -13,7 +13,8 @@ https://opensource.org/licenses/MIT
 
 ## Supported Platforms
 
-- Intel(R) Processors with Xe3 graphics devices (formerly Panther Lake)
+- Intel(R) Processors with Xe3P graphics devices (formerly Crescent Island)
+- Intel(R) Processors with Xe3 graphics devices (formerly Panther Lake, Wildcat Lake, Nova Lake)
 - Intel(R) Processors with Xe2 graphics devices (formerly Lunar Lake)
 - Intel(R) Processors with Arc graphics devices (formerly Alchemist, Battlemage)
 - Intel(R) Processors with Xe graphics devices (formerly Tiger Lake, Rocket Lake, DG1, Alder Lake, Ponte Vecchio, Meteor Lake, Arrow Lake)
@@ -28,6 +29,9 @@ Intel(R) Metrics Library for MDAPI is supported on Linux family operating system
 
 | Platform | Code Name | Minimum Linux Kernel Version |
 |--|--|--|
+| Xe3P-XPC | Crescent Island | 6.19 |
+| Xe3-LPG | Nova Lake | 6.19 |
+| Xe3-LPG | Wildcat Lake | 6.18 |
 | Xe3-LPG | Panther Lake | 6.15 |
 | Xe2-HPG | Battlemage | 6.11 |
 | Xe2-LPG | Lunar Lake | 6.11 |
