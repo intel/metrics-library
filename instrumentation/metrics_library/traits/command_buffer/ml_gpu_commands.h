@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -38,8 +38,9 @@ namespace ML::BASE
         };
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes PIPE_CONTROL to gpu command buffer to complete
-        ///         current draw call on render pipeline.
+        /// @brief  Writes PIPE_CONTROL to gpu command buffer to flush the current
+        ///         workload on render or compute pipeline.
+        ///         For render, a stall at the pixel scoreboard is required.
         /// @param  buffer  target command buffer.
         /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
@@ -519,14 +520,6 @@ namespace ML::BASE
                     reportId,
                     address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
                     flags ) );
-
-                if constexpr( T::Policy::QueryHwCounters::End::m_UseDoubleTriggers )
-                {
-                    // Trigger additional report in oa buffer on query end to make sure the previous one is completed.
-                    ML_FUNCTION_CHECK( T::GpuCommands::TriggerQueryReport(
-                        buffer,
-                        queryId ) );
-                }
             }
 
             return log.m_Result;
@@ -1527,5 +1520,33 @@ namespace ML::XE3P
     struct GpuCommandsTrait : XE3::GpuCommandsTrait<T>
     {
         ML_DECLARE_TRAIT( GpuCommandsTrait, XE3 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Writes PIPE_CONTROL to gpu command buffer to flush the current
+        ///         workload on render or compute pipeline.
+        ///         For render, a stall at the pixel scoreboard is issued.
+        ///         For compute, L1 cache flush is performed.
+        /// @param  buffer  target command buffer.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename CommandBuffer>
+        ML_INLINE static StatusCode FlushCommandStreamer( CommandBuffer& buffer )
+        {
+            TT::Layouts::GpuCommands::PIPE_CONTROL command = {};
+
+            command.Init();
+            if( buffer.m_Type != GpuCommandBufferType::Compute )
+            {
+                command.SetStallAtPixelScoreboard( true );
+            }
+            else
+            {
+                command.SetDataportFlush( true );
+                command.SetUntypedDataPortCacheFlush( true );
+            }
+            command.SetCommandStreamerStallEnable( true );
+
+            return buffer.template Write<false>( command );
+        }
     };
 } // namespace ML::XE3P

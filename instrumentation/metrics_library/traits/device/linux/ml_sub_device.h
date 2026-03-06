@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2021-2025 Intel Corporation
+Copyright (C) 2021-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -118,12 +118,6 @@ namespace ML::XE_HPG
             log.Debug( "    sub devices count ", m_SubDeviceCount );
             log.Debug( "    sub device index  ", m_SubDeviceIndex );
 
-            // Check client options obtained from the driver.
-            if constexpr( T::Policy::SubDevice::m_DriverClientDataRequired )
-            {
-                ML_FUNCTION_CHECK( m_Context.m_ClientOptions.m_SubDeviceDataPresent );
-            }
-
             // Enumerate engines.
             ML_FUNCTION_CHECK( GetEngines( engines ) );
 
@@ -148,7 +142,7 @@ namespace ML::XE_HPG
             const bool validRootDeviceManySubDevices = isRootDevice && ( m_SubDeviceCount > 1 ) && isAllowImplicitScaling;
             const bool validSubDeviceFirst           = isSubDevice && isFirstSubDevice;
             const bool validSubDeviceRest            = isSubDevice && !isFirstSubDevice && isKernelSupport;
-            const bool validNoClientData             = !m_Context.m_ClientOptions.m_SubDeviceDataPresent && !T::Policy::SubDevice::m_DriverClientDataRequired;
+            const bool validNoClientData             = !m_Context.m_ClientOptions.m_SubDeviceDataPresent;
 
             m_Enabled =
                 validRootDeviceOneSubDevice ||   // Selected root device with one sub device.
@@ -469,6 +463,7 @@ namespace ML::XE2_HPG
         //////////////////////////////////////////////////////////////////////////
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
+        using Base::Derived;
         using Base::m_Context;
         using Base::m_Enabled;
         using Base::m_IoControl;
@@ -534,14 +529,8 @@ namespace ML::XE2_HPG
             log.Debug( "    sub devices count ", m_SubDeviceCount );
             log.Debug( "    sub device index  ", m_SubDeviceIndex );
 
-            // Check client options obtained from the driver.
-            if constexpr( T::Policy::SubDevice::m_DriverClientDataRequired )
-            {
-                ML_FUNCTION_CHECK( m_Context.m_ClientOptions.m_SubDeviceDataPresent );
-            }
-
             // Enumerate engines.
-            ML_FUNCTION_CHECK( GetEngines( engines ) );
+            ML_FUNCTION_CHECK( Derived().GetEngines( engines ) );
 
             // Enumerate sub device engines.
             ML_FUNCTION_CHECK( GetSubDeviceEngines( engines, subDevices ) );
@@ -557,7 +546,7 @@ namespace ML::XE2_HPG
             const bool validRootDeviceManySubDevices = isRootDevice && ( m_SubDeviceCount > 1 ) && isAllowImplicitScaling;
             const bool validSubDeviceFirst           = isSubDevice && isFirstSubDevice;
             const bool validSubDeviceRest            = isSubDevice && !isFirstSubDevice;
-            const bool validNoClientData             = !m_Context.m_ClientOptions.m_SubDeviceDataPresent && !T::Policy::SubDevice::m_DriverClientDataRequired;
+            const bool validNoClientData             = !m_Context.m_ClientOptions.m_SubDeviceDataPresent;
 
             m_Enabled =
                 validRootDeviceOneSubDevice ||   // Selected root device with one sub device.

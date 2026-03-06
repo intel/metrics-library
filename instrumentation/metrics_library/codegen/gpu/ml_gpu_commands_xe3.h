@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2025 Intel Corporation
+Copyright (C) 2025-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -79,7 +79,7 @@ DO NOT EDIT
 #endif 
 
 #ifndef __CODEGEN_DebugType
-#define __CODEGEN_DebugType( type )  static __CODEGEN_INLINE void DebugStruct( type s )
+#define __CODEGEN_DebugType( type )  static __CODEGEN_INLINE void DebugStruct( [[maybe_unused]] type s )
 #endif 
 
 #ifndef __CODEGEN_DebugAttributeEnum
@@ -111,7 +111,7 @@ DO NOT EDIT
 #endif 
 
 #ifndef __CODEGEN_DebugEnum
-#define __CODEGEN_DebugEnum( type ) static __CODEGEN_INLINE void DebugEnum( type e )
+#define __CODEGEN_DebugEnum( type ) static __CODEGEN_INLINE void DebugEnum( [[maybe_unused]] type e )
 #endif 
 
 #ifndef __CODEGEN_DebugEnumValue
@@ -127,7 +127,7 @@ DO NOT EDIT
 #endif 
 
 #ifndef __CODEGEN_C_ASSERT
-#define __CODEGEN_C_ASSERT( x )
+#define __CODEGEN_C_ASSERT( x ) static_assert( x )
 #endif 
 
 #ifndef __CODEGEN_ASSERT

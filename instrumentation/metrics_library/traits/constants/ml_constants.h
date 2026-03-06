@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -102,6 +102,7 @@ namespace ML
         struct Query
         {
             static constexpr uint32_t m_DummyContextId = 0xFFFFFFFF;
+            static constexpr uint32_t m_QuerySourceId  = 0xC0000000;
         };
 
         //////////////////////////////////////////////////////////////////////////

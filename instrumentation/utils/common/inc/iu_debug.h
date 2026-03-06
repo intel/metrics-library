@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -35,8 +35,9 @@ extern "C"
 #if defined( _DEBUG ) || defined( _RELEASE_INTERNAL )
     #define IU_DEBUG_LOGS 1
 #else
+    #define IU_DEBUG_LOGS 0
 // Uncomment following line to compile debug & info logs also in release build
-// Note, that it is not needed for critical & error logs - they are always included
+// Note, that it is not needed for critical, error & warning logs - they are always included
 // #define IU_DEBUG_LOGS 1
 #endif
 
@@ -264,7 +265,11 @@ extern "C"
             }                                                                                                                                               \
         }
 #else
-    #define IU_ASSERT_TAGGED( adapter, expr, layer, tag )
+    #define IU_ASSERT_TAGGED( adapter, expr, layer, tag ) \
+        do                                                \
+        {                                                 \
+            (void) ( adapter );                           \
+        } while( 0 );
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////

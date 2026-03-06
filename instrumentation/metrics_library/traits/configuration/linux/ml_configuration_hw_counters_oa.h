@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -106,14 +106,9 @@ namespace ML
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
 
-            auto&          oaBuffer   = m_Kernel.m_Tbs.GetOaBufferMapped( T::Layouts::OaBuffer::Type::Oa );
-            constexpr bool restartTbs = T::Policy::ConfigurationOa::Activate::m_RestartTbs;
-
             m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter++;
 
-            return log.m_Result = ( restartTbs && !oaBuffer.m_Mapped )
-                ? m_Kernel.m_Tbs.m_Stream.Restart()
-                : m_Kernel.LoadOaConfigurationToGpu( m_Id );
+            return log.m_Result = m_Kernel.LoadOaConfigurationToGpu( m_Id );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -129,9 +124,7 @@ namespace ML
 
             m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter--;
 
-            return log.m_Result = T::Policy::ConfigurationOa::Activate::m_RestartTbs
-                ? StatusCode::Success
-                : m_Kernel.UnloadOaConfigurationFromGpu( m_Id );
+            return log.m_Result = m_Kernel.UnloadOaConfigurationFromGpu( m_Id );
         }
 
     private:

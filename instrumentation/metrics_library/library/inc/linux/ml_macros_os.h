@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -34,7 +34,8 @@ SPDX-License-Identifier: MIT
 /// @brief ML_LINUX.
 //////////////////////////////////////////////////////////////////////////
 #if defined( __linux__ )
-    #define ML_LINUX 1
+    #define ML_LINUX   1
+    #define ML_WINDOWS 0
 #else
     #define ML_LINUX 0
 #endif

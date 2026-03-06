@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2023-2025 Intel Corporation
+Copyright (C) 2023-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -37,9 +37,9 @@ namespace ML::BASE
         TT::KernelInterface& m_Kernel;
         int32_t              m_Id;
         int32_t              m_MetricSet;
+        int32_t              m_MetricSetInternal;
         uint64_t             m_MetricSetModificationTimestamp;
         uint64_t             m_MetricSetIndexNode;
-        bool                 m_MetricSetInternal;
         bool                 m_IsMetricSetUpdateRequired;
 
         //////////////////////////////////////////////////////////////////////////
@@ -51,9 +51,9 @@ namespace ML::BASE
             , m_Kernel( kernel )
             , m_Id( T::ConstantsOs::Tbs::m_Invalid )
             , m_MetricSet( T::ConstantsOs::Tbs::m_Invalid )
+            , m_MetricSetInternal( T::ConstantsOs::Tbs::m_Invalid )
             , m_MetricSetModificationTimestamp( 0 )
             , m_MetricSetIndexNode( 0 )
-            , m_MetricSetInternal( false )
             , m_IsMetricSetUpdateRequired( true )
         {
         }
@@ -84,8 +84,7 @@ namespace ML::BASE
             // Otherwise, create an internal metric set to enable tbs.
             if( m_MetricSet == T::ConstantsOs::Tbs::m_Invalid )
             {
-                m_MetricSet         = m_Kernel.m_IoControl.CreateMetricSet();
-                m_MetricSetInternal = m_MetricSet != T::ConstantsOs::Tbs::m_Invalid;
+                m_MetricSetInternal = m_Kernel.m_IoControl.CreateMetricSet();
             }
 
             return log.m_Result = Derived().Enable();
@@ -133,17 +132,17 @@ namespace ML::BASE
         ML_INLINE StatusCode ReleaseMetricSet( const int32_t set )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-            ML_ASSERT( m_MetricSet == set );
+            ML_ASSERT( m_MetricSet == set || m_MetricSetInternal == set );
 
-            if( m_MetricSet != set )
+            if( m_MetricSet != set && m_MetricSetInternal != set )
             {
                 return log.m_Result = StatusCode::Failed;
             }
 
-            if( m_MetricSetInternal )
+            if( m_MetricSetInternal != T::ConstantsOs::Tbs::m_Invalid )
             {
-                m_Kernel.m_IoControl.RemoveMetricSet( m_MetricSet );
-                m_MetricSetInternal = false;
+                m_Kernel.m_IoControl.RemoveMetricSet( m_MetricSetInternal );
+                m_MetricSetInternal = T::ConstantsOs::Tbs::m_Invalid;
             }
 
             m_MetricSet = T::ConstantsOs::Tbs::m_Invalid;
@@ -172,24 +171,6 @@ namespace ML::BASE
             }
 
             return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Restarts tbs stream.
-        /// @return operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode Restart()
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-            // Disable stream.
-            Disable();
-
-            // Try to obtain metric set activated by metrics discovery.
-            m_MetricSet = m_Kernel.m_IoControl.GetKernelMetricSet();
-
-            // Enable stream.
-            return log.m_Result = Derived().Enable();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -253,8 +234,8 @@ namespace ML::XE_LP
 
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_FUNCTION_CHECK( IsEnabled() == false );
-            ML_FUNCTION_CHECK( m_MetricSet != T::ConstantsOs::Tbs::m_Invalid );
-            ML_FUNCTION_CHECK( m_Kernel.m_Tbs.GetStreamProperties( properties, m_MetricSet ) );
+            ML_FUNCTION_CHECK( m_MetricSet != T::ConstantsOs::Tbs::m_Invalid || m_MetricSetInternal != T::ConstantsOs::Tbs::m_Invalid );
+            ML_FUNCTION_CHECK( m_Kernel.m_Tbs.GetStreamProperties( properties, m_MetricSet != T::ConstantsOs::Tbs::m_Invalid ? m_MetricSet : m_MetricSetInternal ) );
 
             // Enable stream.
             do
@@ -272,9 +253,9 @@ namespace ML::XE_LP
 
             // Disable an internal metric set used to enable tbs.
             // It will allow metrics discovery to enable another metrics set.
-            if( m_MetricSetInternal )
+            if( m_MetricSetInternal != T::ConstantsOs::Tbs::m_Invalid )
             {
-                ReleaseMetricSet( m_MetricSet );
+                ReleaseMetricSet( m_MetricSetInternal );
             }
 
             return log.m_Result;
@@ -317,18 +298,18 @@ namespace ML::XE2_HPG
         using Base::m_MetricSet;
         using Base::m_MetricSetInternal;
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Enables tbs stream for a given metric set.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Enable()
         {
-            drm_xe_ext_set_property properties[DRM_XE_OA_PROPERTY_NO_PREEMPT - DRM_XE_OA_EXTENSION_SET_PROPERTY] = {};
+            drm_xe_ext_set_property properties[DRM_XE_OA_PROPERTY_WAIT_NUM_REPORTS - DRM_XE_OA_EXTENSION_SET_PROPERTY] = {};
 
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_FUNCTION_CHECK( IsEnabled() == false );
-            ML_FUNCTION_CHECK( m_MetricSet != T::ConstantsOs::Tbs::m_Invalid );
-            ML_FUNCTION_CHECK( m_Kernel.m_Tbs.GetStreamProperties( properties, m_MetricSet ) );
+            ML_FUNCTION_CHECK( m_MetricSet != T::ConstantsOs::Tbs::m_Invalid || m_MetricSetInternal != T::ConstantsOs::Tbs::m_Invalid );
+            ML_FUNCTION_CHECK( m_Kernel.m_Tbs.GetStreamProperties( properties, m_MetricSet != T::ConstantsOs::Tbs::m_Invalid ? m_MetricSet : m_MetricSetInternal ) );
 
             // Enable stream.
             log.m_Result = m_Kernel.m_IoControl.OpenTbs( properties, m_Id );
@@ -353,9 +334,9 @@ namespace ML::XE2_HPG
 
             // Disable an internal metric set used to enable tbs.
             // It will allow metrics discovery to enable another metrics set.
-            if( m_MetricSetInternal )
+            if( m_MetricSetInternal != T::ConstantsOs::Tbs::m_Invalid )
             {
-                ReleaseMetricSet( m_MetricSet );
+                ReleaseMetricSet( m_MetricSetInternal );
             }
 
             return log.m_Result;

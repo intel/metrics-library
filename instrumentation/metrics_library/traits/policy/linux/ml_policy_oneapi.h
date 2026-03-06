@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -31,14 +31,6 @@ namespace ML::BASE
         struct QueryHwCounters
         {
             //////////////////////////////////////////////////////////////////////////
-            /// @brief Common query policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct Common
-            {
-                static constexpr bool m_PatchGpuMemory = false;
-            };
-
-            //////////////////////////////////////////////////////////////////////////
             /// @brief Query creation policies.
             //////////////////////////////////////////////////////////////////////////
             struct Create
@@ -53,16 +45,6 @@ namespace ML::BASE
             struct Begin
             {
                 static constexpr bool m_FlushCommandBuffer = false;
-                static constexpr bool m_ClearGpuMemory     = true;
-            };
-
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Query end policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct End
-            {
-                static constexpr bool m_UseEndTagAsCompletionStatus = true;
-                static constexpr bool m_UseDoubleTriggers           = false;
             };
 
             //////////////////////////////////////////////////////////////////////////
@@ -70,23 +52,7 @@ namespace ML::BASE
             //////////////////////////////////////////////////////////////////////////
             struct GetData
             {
-                static constexpr bool m_AllowEmptyContextId          = true;
-                static constexpr bool m_ResetOaBufferState           = true;
                 static constexpr bool m_CheckConfigurationActivation = true;
-            };
-        };
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Configuration oa policies.
-        //////////////////////////////////////////////////////////////////////////
-        struct ConfigurationOa
-        {
-            //////////////////////////////////////////////////////////////////////////
-            /// @brief Configuration activation policies.
-            //////////////////////////////////////////////////////////////////////////
-            struct Activate
-            {
-                static constexpr bool m_RestartTbs = false;
             };
         };
     };
@@ -113,8 +79,7 @@ namespace ML::XE_HPG
         //////////////////////////////////////////////////////////////////////////
         struct SubDevice
         {
-            static constexpr bool m_DriverClientDataRequired = false;
-            static constexpr bool m_AllowImplicitScaling     = true;
+            static constexpr bool m_AllowImplicitScaling = true;
         };
     };
 } // namespace ML::XE_HPG

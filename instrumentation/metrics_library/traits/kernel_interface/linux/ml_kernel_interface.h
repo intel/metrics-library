@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -37,6 +37,7 @@ namespace ML
         uint64_t                                               m_CsFrequency;
         uint64_t                                               m_GpuTimestampTickValue;
         int32_t                                                m_DeviceId;
+        bool                                                   m_DenseMode;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief KernelInterfaceTrait constructor.
@@ -52,6 +53,7 @@ namespace ML
             , m_CsFrequency( 0 )
             , m_GpuTimestampTickValue( 0 )
             , m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
+            , m_DenseMode( false )
         {
         }
 
@@ -151,21 +153,6 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Gets gpu timestamp tick value.
-        /// @param  timestampType  select timestamp domain - oa or cs.
-        /// @return                gpu timestamp tick value.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE uint64_t GetGpuTimestampTick( const TT::Layouts::Configuration::TimestampType timestampType )
-        {
-            if( m_GpuTimestampTickValue == 0 )
-            {
-                m_GpuTimestampTickValue = Constants::Time::m_SecondInNanoseconds / GetGpuTimestampFrequency( timestampType );
-            }
-
-            return m_GpuTimestampTickValue;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns tbs state.
         /// @return true if tbs is enabled.
         //////////////////////////////////////////////////////////////////////////
@@ -184,7 +171,22 @@ namespace ML
         ML_INLINE StatusCode LoadOaConfigurationToGpu( const int64_t oaConfigurationId )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfigurationId ) );
+
+            if( !m_DenseMode )
+            {
+                ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfigurationId ) );
+            }
+            else
+            {
+                // In dense mode we need to restart stream and unmap/map oa buffer after changing report format to dense.
+                m_Tbs.m_OaBufferMapped.Unmap();
+                m_Tbs.m_Stream.Disable();
+
+                m_Tbs.m_Stream.m_MetricSet = oaConfigurationId;
+
+                m_Tbs.m_Stream.Enable();
+                m_Tbs.m_OaBufferMapped.Map();
+            }
 
             return log.m_Result;
         }
@@ -278,6 +280,17 @@ namespace ML
             ML_FUNCTION_LOG( false, &m_Context );
 
             return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns dense mode state.
+        /// @return true if dense mode has been enabled.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsDenseMode() const
+        {
+            ML_FUNCTION_LOG( false, &m_Context );
+
+            return log.m_Result = m_DenseMode;
         }
 
         //////////////////////////////////////////////////////////////////////////

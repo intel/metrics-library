@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2023-2025 Intel Corporation
+Copyright (C) 2023-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -164,19 +164,16 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE void ClearReportGpu()
         {
-            if constexpr( T::Policy::QueryHwCounters::Begin::m_ClearGpuMemory )
+            auto reportGpu = static_cast<TT::Layouts::HwCounters::Query::ReportGpu*>( m_GpuMemory.CpuAddress );
+
+            if( reportGpu != nullptr )
             {
-                auto reportGpu = static_cast<TT::Layouts::HwCounters::Query::ReportGpu*>( m_GpuMemory.CpuAddress );
+                *reportGpu = {};
 
-                if( reportGpu != nullptr )
+                // Reset report oa memory to check mirpc completeness.
+                if( m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters )
                 {
-                    *reportGpu = {};
-
-                    // Reset report oa memory to check mirpc completeness.
-                    if( m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters )
-                    {
-                        DerivedConst().ResetOaReport( *reportGpu );
-                    }
+                    DerivedConst().ResetOaReport( *reportGpu );
                 }
             }
         }

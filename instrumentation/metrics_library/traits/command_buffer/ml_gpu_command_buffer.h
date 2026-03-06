@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -31,7 +31,6 @@ namespace ML
         void*                      m_Buffer;
         uint32_t                   m_Size;
         uint32_t                   m_Usage;
-        uint32_t                   m_MemoryPatchesCount;
         const GpuCommandBufferType m_Type;
         const GpuMemory_1_0&       m_GpuMemory;
         TT::Context&               m_Context;
@@ -54,7 +53,6 @@ namespace ML
             : m_Buffer( buffer )
             , m_Size( size )
             , m_Usage( 0 )
-            , m_MemoryPatchesCount( 0 )
             , m_Type( type )
             , m_GpuMemory( memory )
             , m_Context( context )
@@ -70,9 +68,8 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE void GetSizeRequirements( CommandBufferSize_1_0& requirements ) const
         {
-            requirements                       = {};
-            requirements.GpuMemorySize         = m_Usage;
-            requirements.GpuMemoryPatchesCount = m_MemoryPatchesCount;
+            requirements               = {};
+            requirements.GpuMemorySize = m_Usage;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -95,20 +92,6 @@ namespace ML
                 T::Tools::MemoryCopy( static_cast<uint8_t*>( m_Buffer ) + m_Usage, m_Size, &command, commandSize );
 
                 m_Usage += commandSize;
-
-                if constexpr( patchMemory && T::Policy::QueryHwCounters::Common::m_PatchGpuMemory )
-                {
-                    m_MemoryPatchesCount++;
-
-                    const ClientMemoryHandle_1_0 memoryHandle  = m_GpuMemory.HandleMemory;
-                    const uint64_t               memoryAddress = GetMemoryAddress( command );
-                    const uint64_t               commandOffset = reinterpret_cast<uint64_t>( m_Buffer ) + m_Usage;
-
-                    if( memoryAddress != 0 )
-                    {
-                        ML_FUNCTION_CHECK( PatchGpuMemory( memoryHandle, memoryAddress, commandOffset ) );
-                    }
-                }
             }
 
             ML_ASSERT( validBuffer );
@@ -158,30 +141,6 @@ namespace ML
         {
             return 0;
         }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Calls gpu memory patch callback.
-        /// @param  handle          allocation info.
-        /// @param  memoryOffset    gpu memory offset.
-        /// @param  commandOffset   command buffer memory offset.
-        /// @return                 operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode PatchGpuMemory(
-            const ClientMemoryHandle_1_0 handle,
-            const uint64_t               memoryOffset,
-            const uint64_t               commandOffset ) const
-        {
-            if constexpr( T::Policy::QueryHwCounters::Common::m_PatchGpuMemory )
-            {
-                if( const auto callback = m_Context.m_ClientCallbacks.GpuMemoryPatch;
-                    callback != nullptr )
-                {
-                    return callback( m_Context.m_ClientHandle, handle, memoryOffset, commandOffset );
-                }
-            }
-
-            return StatusCode::Success;
-        }
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -197,7 +156,6 @@ namespace ML
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
         uint32_t                   m_Usage;
-        uint32_t                   m_MemoryPatchesCount;
         const GpuCommandBufferType m_Type;
         TT::Context&               m_Context;
 
@@ -210,7 +168,6 @@ namespace ML
             const GpuCommandBufferType type,
             TT::Context&               context )
             : m_Usage( 0 )
-            , m_MemoryPatchesCount( 0 )
             , m_Type( type )
             , m_Context( context )
         {
@@ -223,9 +180,8 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE void GetSizeRequirements( CommandBufferSize_1_0& requirements ) const
         {
-            requirements                       = {};
-            requirements.GpuMemorySize         = m_Usage;
-            requirements.GpuMemoryPatchesCount = m_MemoryPatchesCount;
+            requirements               = {};
+            requirements.GpuMemorySize = m_Usage;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -238,11 +194,6 @@ namespace ML
         ML_INLINE StatusCode Write( const GpuCommand& command )
         {
             m_Usage += sizeof( command );
-
-            if constexpr( patchMemory && T::Policy::QueryHwCounters::Common::m_PatchGpuMemory )
-            {
-                m_MemoryPatchesCount++;
-            }
 
             return StatusCode::Success;
         }

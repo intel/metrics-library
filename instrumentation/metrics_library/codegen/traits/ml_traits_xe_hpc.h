@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -51,7 +51,7 @@ namespace ML::XE_HPC::OpenCL
         /// @brief Constants.
         //////////////////////////////////////////////////////////////////////////
         #if ML_LINUX
-        using ConstantsOs                    = ConstantsOsTrait<Traits>;                    //  linux/ml_constants_os.h
+        using ConstantsOs                   = ConstantsOsTrait<Traits>;                     //  linux/ml_constants_os.h
         #endif
 
         //////////////////////////////////////////////////////////////////////////
@@ -229,7 +229,7 @@ namespace ML::XE_HPC::OneApi
         /// @brief Constants.
         //////////////////////////////////////////////////////////////////////////
         #if ML_LINUX
-        using ConstantsOs                    = ConstantsOsTrait<Traits>;                    //  linux/ml_constants_os.h
+        using ConstantsOs                   = ConstantsOsTrait<Traits>;                     //  linux/ml_constants_os.h
         #endif
 
         //////////////////////////////////////////////////////////////////////////

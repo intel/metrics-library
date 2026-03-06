@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -185,18 +185,18 @@ struct TraitsDummy
 //////////////////////////////////////////////////////////////////////////
 /// @brief Metrics library object declaration macros
 //////////////////////////////////////////////////////////////////////////
-#define ML_DELETE_DEFAULT_CONSTRUCTOR( T )        T() = delete;
+#define ML_DELETE_DEFAULT_CONSTRUCTOR( T )        T() = delete
 
 #define ML_DELETE_DEFAULT_COPY( TypeName )           \
     TypeName( const TypeName& )            = delete; \
-    TypeName& operator=( const TypeName& ) = delete;
+    TypeName& operator=( const TypeName& ) = delete
 
 #define ML_DELETE_DEFAULT_MOVE( TypeName )      \
     TypeName( TypeName&& )            = delete; \
-    TypeName& operator=( TypeName&& ) = delete;
+    TypeName& operator=( TypeName&& ) = delete
 
 #define ML_DELETE_DEFAULT_COPY_AND_MOVE( TypeName ) \
-    ML_DELETE_DEFAULT_COPY( TypeName )              \
+    ML_DELETE_DEFAULT_COPY( TypeName );             \
     ML_DELETE_DEFAULT_MOVE( TypeName )
 
 #define ML_INHERIT_CONSTRUCTORS( This, Base ) \
@@ -208,12 +208,12 @@ struct TraitsDummy
 
 #define ML_DECLARE_TRAIT( This, BaseTypeName ) \
     using Base = BaseTypeName::This<T>;        \
-    ML_INHERIT_CONSTRUCTORS( This, Base );     \
+    ML_INHERIT_CONSTRUCTORS( This, Base )      \
     ML_DELETE_DEFAULT_COPY_AND_MOVE( This )
 
 #define ML_DECLARE_TRAIT_WITH_COPY_AND_MOVE( This, BaseTypeName ) \
     using Base = BaseTypeName::This<T>;                           \
-    ML_INHERIT_CONSTRUCTORS( This, Base );
+    ML_INHERIT_CONSTRUCTORS( This, Base )
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Structure pack definition macros.

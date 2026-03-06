@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -35,15 +35,15 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        std::string m_KernelMetricSet;
-        bool        m_DrmOpenedByUmd;
+        bool m_DrmOpenedByUmd;
 
     protected:
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
-        const TT::KernelInterface& m_Kernel;
-        int32_t                    m_DrmFile;
+        TT::KernelInterface& m_Kernel;
+        std::string          m_KernelMetricSet;
+        int32_t              m_DrmFile;
 
     public:
         //////////////////////////////////////////////////////////////////////////
@@ -56,11 +56,11 @@ namespace ML::BASE
         /// @brief IoControlTrait constructor.
         /// @param kernel
         //////////////////////////////////////////////////////////////////////////
-        IoControlTrait( const TT::KernelInterface& kernel )
+        IoControlTrait( TT::KernelInterface& kernel )
             : Base()
-            , m_KernelMetricSet( "" )
             , m_DrmOpenedByUmd( false )
             , m_Kernel( kernel )
+            , m_KernelMetricSet( "" )
             , m_DrmFile( T::ConstantsOs::Drm::m_Invalid )
             , m_DrmCard( T::ConstantsOs::Drm::m_Invalid )
         {
@@ -237,7 +237,17 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_FUNCTION_CHECK( stream != T::ConstantsOs::Tbs::m_Invalid );
 
-            close( stream );
+            log.Debug( "Closing oa stream", stream );
+
+            int32_t result = close( stream );
+
+            log.m_Result = ML_STATUS( result != T::ConstantsOs::Drm::m_Invalid );
+
+            if( ML_FAIL( log.m_Result ) )
+            {
+                log.Debug( "Error id", errno );
+                log.Debug( "Error description", strerror( errno ) );
+            }
 
             return log.m_Result;
         }
@@ -388,8 +398,12 @@ namespace ML::BASE
 
             if( ML_FAIL( log.m_Result ) )
             {
-                log.Debug( "Error id          ", errno );
-                log.Debug( "Error description ", strerror( errno ) );
+                log.Debug( "Error id", errno );
+                log.Debug( "Error description", strerror( errno ) );
+            }
+            else
+            {
+                log.Debug( "Ioctl result", result );
             }
 
             return log.m_Result;
@@ -928,7 +942,7 @@ namespace ML::XE2_HPG
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
             // Print properties.
-            for( uint32_t i = 0; i < DRM_XE_OA_PROPERTY_NO_PREEMPT - DRM_XE_OA_EXTENSION_SET_PROPERTY; ++i )
+            for( uint32_t i = 0; i < DRM_XE_OA_PROPERTY_WAIT_NUM_REPORTS - DRM_XE_OA_EXTENSION_SET_PROPERTY; ++i )
             {
                 std::string propertyName = "";
 

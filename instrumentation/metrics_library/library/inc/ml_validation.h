@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -32,7 +32,7 @@ namespace ML::Validation
     /// @return         always fail, only bool/StatusCode conditions are supported.
     //////////////////////////////////////////////////////////////////////////
     template <typename ResultT>
-    ML_INLINE StatusCode CheckResult( const ResultT result )
+    ML_INLINE StatusCode CheckResult( [[maybe_unused]] const ResultT result )
     {
         static_assert( DummyResult<ResultT>::value, "Incorrect condition type (bool/StatusCode are allowed)." );
         return StatusCode::Failed;

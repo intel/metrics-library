@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -28,21 +28,22 @@ namespace ML::BASE
         ML_DELETE_DEFAULT_COPY_AND_MOVE( GpuRegistersTrait );
 
         // Common registers.
-        static constexpr uint32_t m_ContextId           = 0x2364;
-        static constexpr uint32_t m_NopId               = 0x2094;
-        static constexpr uint32_t m_GpuTicks            = 0x2910;
-        static constexpr uint32_t m_CoreFrequency       = 0xA01C;
-        static constexpr uint32_t m_TimestampLow        = 0x2358;
-        static constexpr uint32_t m_TimestampHigh       = 0x235C;
-        static constexpr uint32_t m_OaContextControl    = 0x2360;
-        static constexpr uint32_t m_OaStatus            = 0x2B08;
-        static constexpr uint32_t m_OaHead              = 0x2B0C;
-        static constexpr uint32_t m_OaTail              = 0x2B10;
-        static constexpr uint32_t m_OaBuffer            = 0x2B14;
-        static constexpr uint32_t m_GpCounter           = 0x91b8;
-        static constexpr uint32_t m_OaTrigger2          = 0x2744;
-        static constexpr uint32_t m_OaTrigger6          = 0x2754;
-        static constexpr uint32_t m_RpstatFrequencyMask = 0xFF800000;
+        static constexpr uint32_t m_ContextId            = 0x2364;
+        static constexpr uint32_t m_NopId                = 0x2094;
+        static constexpr uint32_t m_GpuTicks             = 0x2910;
+        static constexpr uint32_t m_CoreFrequency        = 0xA01C;
+        static constexpr uint32_t m_TimestampLow         = 0x2358;
+        static constexpr uint32_t m_TimestampHigh        = 0x235C;
+        static constexpr uint32_t m_OaContextControl     = 0x2360;
+        static constexpr uint32_t m_OaStatus             = 0x2B08;
+        static constexpr uint32_t m_OaHead               = 0x2B0C;
+        static constexpr uint32_t m_OaTail               = 0x2B10;
+        static constexpr uint32_t m_OaBuffer             = 0x2B14;
+        static constexpr uint32_t m_GpCounter            = 0x91b8;
+        static constexpr uint32_t m_OaTrigger2           = 0x2744;
+        static constexpr uint32_t m_OaTrigger6           = 0x2754;
+        static constexpr uint32_t m_RpstatFrequencyMask  = 0xFF800000;
+        static constexpr uint32_t m_RpstatFrequencyShift = 23;
 
         // Oa counters low.
         static constexpr uint32_t m_OaPerfA0  = 0x2800;
@@ -1024,13 +1025,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const EuThrottlingEnable& GetEuThrottlingEnablingRegisters()
         {
-            static constexpr EuThrottlingEnable EuThrottlingEnable =
+            static constexpr EuThrottlingEnable euThrottlingEnable =
             {
                 m_EuThrottlingRegister,
                 m_EuThrottlingEnable
             };
 
-            return EuThrottlingEnable;
+            return euThrottlingEnable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1040,13 +1041,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const EuThrottlingDisable& GetEuThrottlingDisablingRegisters()
         {
-            static constexpr EuThrottlingDisable EuThrottlingDisable =
+            static constexpr EuThrottlingDisable euThrottlingDisable =
             {
                 m_EuThrottlingRegister,
                 m_EuThrottlingDisable
             };
 
-            return EuThrottlingDisable;
+            return euThrottlingDisable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1057,13 +1058,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const RcpbeThrottlingEnable& GetRcpbeThrottlingEnablingRegisters()
         {
-            static constexpr RcpbeThrottlingEnable RcpbeThrottlingEnable =
+            static constexpr RcpbeThrottlingEnable rcpbeThrottlingEnable =
             {
                 m_RcpbeThrottlingRegister,
                 m_RcpbeThrottlingEnable
             };
 
-            return RcpbeThrottlingEnable;
+            return rcpbeThrottlingEnable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1074,13 +1075,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const RcpbeThrottlingDisable& GetRcpbeThrottlingDisablingRegisters()
         {
-            static constexpr RcpbeThrottlingDisable RcpbeThrottlingDisable =
+            static constexpr RcpbeThrottlingDisable rcpbeThrottlingDisable =
             {
                 m_RcpbeThrottlingRegister,
                 m_RcpbeThrottlingDisable
             };
 
-            return RcpbeThrottlingDisable;
+            return rcpbeThrottlingDisable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1091,13 +1092,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const SfWmThrottlingEnable& GetSfWmThrottlingEnablingRegisters()
         {
-            static constexpr SfWmThrottlingEnable SfWmThrottlingEnable =
+            static constexpr SfWmThrottlingEnable sfWmThrottlingEnable =
             {
                 m_SfWmThrottlingRegister,
                 m_SfWmThrottlingEnable
             };
 
-            return SfWmThrottlingEnable;
+            return sfWmThrottlingEnable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1108,13 +1109,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const SfWmThrottlingDisable& GetSfWmThrottlingDisablingRegisters()
         {
-            static constexpr SfWmThrottlingDisable SfWmThrottlingDisable =
+            static constexpr SfWmThrottlingDisable sfWmThrottlingDisable =
             {
                 m_SfWmThrottlingRegister,
                 m_SfWmThrottlingDisable
             };
 
-            return SfWmThrottlingDisable;
+            return sfWmThrottlingDisable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1125,13 +1126,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const SfSbeThrottlingEnable& GetSfSbeThrottlingEnablingRegisters()
         {
-            static constexpr SfSbeThrottlingEnable SfSbeThrottlingEnable =
+            static constexpr SfSbeThrottlingEnable sfSbeThrottlingEnable =
             {
                 m_SfSbeThrottlingRegister,
                 m_SfSbeThrottlingEnable
             };
 
-            return SfSbeThrottlingEnable;
+            return sfSbeThrottlingEnable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1142,13 +1143,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const SfSbeThrottlingDisable& GetSfSbeThrottlingDisablingRegisters()
         {
-            static constexpr SfSbeThrottlingDisable SfSbeThrottlingDisable =
+            static constexpr SfSbeThrottlingDisable sfSbeThrottlingDisable =
             {
                 m_SfSbeThrottlingRegister,
                 m_SfSbeThrottlingDisable
             };
 
-            return SfSbeThrottlingDisable;
+            return sfSbeThrottlingDisable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1159,13 +1160,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const ClSfThrottlingEnable& GetClSfThrottlingEnablingRegisters()
         {
-            static constexpr ClSfThrottlingEnable ClSfThrottlingEnable =
+            static constexpr ClSfThrottlingEnable clSfThrottlingEnable =
             {
                 m_ClSfThrottlingRegister,
                 m_ClSfThrottlingEnable
             };
 
-            return ClSfThrottlingEnable;
+            return clSfThrottlingEnable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1176,13 +1177,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const ClSfThrottlingDisable& GetClSfThrottlingDisablingRegisters()
         {
-            static constexpr ClSfThrottlingDisable ClSfThrottlingDisable =
+            static constexpr ClSfThrottlingDisable clSfThrottlingDisable =
             {
                 m_ClSfThrottlingRegister,
                 m_ClSfThrottlingDisable
             };
 
-            return ClSfThrottlingDisable;
+            return clSfThrottlingDisable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1193,13 +1194,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const WmfeWmbeThrottlingEnable& GetWmfeWmbeThrottlingEnablingRegisters()
         {
-            static constexpr WmfeWmbeThrottlingEnable WmfeWmbeThrottlingEnable =
+            static constexpr WmfeWmbeThrottlingEnable wmfeWmbeThrottlingEnable =
             {
                 m_WmfeWmbeThrottlingRegister,
                 m_WmfeWmbeThrottlingEnable
             };
 
-            return WmfeWmbeThrottlingEnable;
+            return wmfeWmbeThrottlingEnable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1210,13 +1211,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const WmfeWmbeThrottlingDisable& GetWmfeWmbeThrottlingDisablingRegisters()
         {
-            static constexpr WmfeWmbeThrottlingDisable WmfeWmbeThrottlingDisable =
+            static constexpr WmfeWmbeThrottlingDisable wmfeWmbeThrottlingDisable =
             {
                 m_WmfeWmbeThrottlingRegister,
                 m_WmfeWmbeThrottlingDisable
             };
 
-            return WmfeWmbeThrottlingDisable;
+            return wmfeWmbeThrottlingDisable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1227,13 +1228,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const HizThrottlingEnable& GetHizThrottlingEnablingRegisters()
         {
-            static constexpr HizThrottlingEnable HizThrottlingEnable =
+            static constexpr HizThrottlingEnable hizThrottlingEnable =
             {
                 m_HizThrottlingRegister,
                 m_HizThrottlingEnable
             };
 
-            return HizThrottlingEnable;
+            return hizThrottlingEnable;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1244,13 +1245,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const HizThrottlingDisable& GetHizThrottlingDisablingRegisters()
         {
-            static constexpr HizThrottlingDisable HizThrottlingDisable =
+            static constexpr HizThrottlingDisable hizThrottlingDisable =
             {
                 m_HizThrottlingRegister,
                 m_HizThrottlingDisable
             };
 
-            return HizThrottlingDisable;
+            return hizThrottlingDisable;
         }
     };
 } // namespace ML::BASE

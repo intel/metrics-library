@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -323,6 +323,12 @@ namespace ML
             #if ML_ENABLE_XE3
                 case ClientGen::Xe3:
                     output << "Xe3";
+                    break;
+            #endif
+
+            #if ML_ENABLE_XE3P
+                case ClientGen::Xe3P:
+                    output << "Xe3P";
                     break;
             #endif
 

@@ -1,12 +1,15 @@
 #=========================== begin_copyright_notice ============================
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 #============================ end_copyright_notice =============================
 
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required (VERSION 3.14)
+
+# Uncomment for logs during build (during 'make' command)
+#set (CMAKE_VERBOSE_MAKEFILE ON)
 
 #################################################################################
 # PROJECT
@@ -19,13 +22,16 @@ set (LIB_NAME libigdml)
 
 set (SOME_COMMON_INCLUDES FALSE)
 
-# uncomment for logs during build (during 'make' command)
-# set (CMAKE_VERBOSE_MAKEFILE ON)
+#################################################################################
+# CONFIGURE C++ STANDARD
+#################################################################################
+set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # instrumentation common settings & macros
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     include (ml_cmake_adapter.cmake NO_POLICY_SCOPE)
-else()
+else ()
     include (../instr.cmake NO_POLICY_SCOPE) # windows and others
 endif()
 
@@ -62,12 +68,6 @@ else ()
 endif ()
 
 set (LIB_VERSION ${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_BUILD_VERSION})
-
-#################################################################################
-# CONFIGURE C++ STANDARD
-#################################################################################
-set (CMAKE_CXX_STANDARD 17)
-set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #################################################################################
 # MACROS
@@ -194,14 +194,15 @@ if (${PLATFORM} STREQUAL Windows) # windows
         )
 
     set (_SOURCES ${_SOURCES} ${_LINUX_SOURCES_ON_WINDOWS})
-elseif (${PLATFORM} STREQUAL linux)
+
+elseif (${PLATFORM} STREQUAL linux) # linux
     set (_SOURCES ${_SOURCES}
         # debug logs framework
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_os.cpp
         ${BS_DIR_INSTRUMENTATION}/utils/linux/iu_std.cpp
         )
-else()
-    message("-- Using platform is ${PLATFORM}")
+else ()
+    message ("-- Using platform is ${PLATFORM}")
 endif ()
 
 set (SOURCES ${_SOURCES})
@@ -375,7 +376,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm/*.h
         )
     set (_HEADERS ${_HEADERS} ${_IU_LINUX_HEADERS} ${_EXTERNAL_HEADERS})
-elseif (${PLATFORM} STREQUAL "linux") # linux
+elseif (${PLATFORM} STREQUAL linux) # linux
     # instrumentation utils headers
     file (GLOB _IU_OS_HEADERS
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/*.h
@@ -390,7 +391,7 @@ elseif (${PLATFORM} STREQUAL "linux") # linux
 
     ml_add_headers("linux")
 else ()
-    message("-- Using platform is ${PLATFORM}")
+    message ("-- Using platform is ${PLATFORM}")
 endif ()
 
 set (HEADERS ${_HEADERS})
@@ -491,36 +492,38 @@ elseif (${PLATFORM} STREQUAL linux) # linux
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_os.h
         ${BS_DIR_INSTRUMENTATION}/utils/linux/inc/iu_i915_perf.h
     )
-else()
-    message("-- Using platform is ${PLATFORM}")
+else ()
+    message ("-- Using platform is ${PLATFORM}")
 endif ()
 
 #################################################################################
 # TARGET FLAGS (add_library & link_libraries)
 #################################################################################
 # add library
-add_library (${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES})
-
-# version
-set_target_properties (${PROJECT_NAME} PROPERTIES VERSION ${LIB_VERSION} SOVERSION ${LIB_MAJOR_VERSION})
+add_library (${PROJECT_NAME} SHARED ${SOURCES})
+target_sources (${PROJECT_NAME} PRIVATE ${HEADERS})
 
 # project specific target settings
 if (${PLATFORM} STREQUAL Windows) # windows
     instr_target_settings (${PROJECT_NAME})
-    set_property (TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME ${LIB}${ARCH})
     set (CMAKE_CXX_STANDARD_LIBRARIES "")
     set (CMAKE_C_STANDARD_LIBRARIES "")
+    set_target_properties (${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${LIB}${ARCH})
     set_target_properties (${PROJECT_NAME} PROPERTIES VS_GLOBAL_DriverTargetPlatform Universal)
     set_target_properties (${PROJECT_NAME} PROPERTIES VS_PLATFORM_TOOLSET "WindowsApplicationForDrivers10.0")
     target_link_libraries (${PROJECT_NAME}
-            onecoreuap.lib
-            )
+        onecoreuap.lib
+        )
     windows_apps_props_universal (${PROJECT_NAME})
 elseif (${PLATFORM} STREQUAL linux) # linux
-    set_property (TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME ${LIB})
-else()
-    message("-- Using platform is ${PLATFORM}")
+    set_target_properties (${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties (${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${LIB})
+else ()
+    message ("-- Using platform is ${PLATFORM}")
 endif ()
+
+# version
+set_target_properties (${PROJECT_NAME} PROPERTIES VERSION ${LIB_VERSION} SOVERSION ${LIB_MAJOR_VERSION})
 
 #################################################################################
 # INCLUDES
@@ -567,16 +570,18 @@ elseif (${PLATFORM} STREQUAL linux) # linux
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux
         ${BS_DIR_INSTRUMENTATION}/metrics_library/library/inc/linux/external/drm
         )
-else()
-    message("-- Using platform is ${PLATFORM}")
+else ()
+    message ("-- Using platform is ${PLATFORM}")
 endif ()
 
 #################################################################################
 # COMPILER FLAGS
 #################################################################################
+# platform specific
 if (${PLATFORM} STREQUAL Windows) # windows
     bs_set_extra_target_properties (${PROJECT_NAME}
         USERMODE_DRIVER
+        STD_CALL
         )
     set (COMMON_COMPILE_OPTIONS
         /Zp8        # struct member alignment - 8 bytes
@@ -595,6 +600,7 @@ if (${PLATFORM} STREQUAL Windows) # windows
             /WX     # treats warnings as errors
             /Ot     # favor fast code
             /O2     # favor speed
+            /Gy     # function-level linking
             /GL     # whole program optimization
         >
         $<$<CONFIG:ReleaseInternal>:
@@ -603,57 +609,101 @@ if (${PLATFORM} STREQUAL Windows) # windows
             /WX     # treats warnings as errors
             /Ot     # favor fast code
             /O2     # favor speed
+            /Gy     # function-level linking
             /GL     # whole program optimization
         >
         $<$<CONFIG:Debug>:
             ${COMMON_COMPILE_OPTIONS}
         >
         )
+
 elseif (${PLATFORM} STREQUAL linux) # linux
-    target_compile_options (
-        ${PROJECT_NAME} PRIVATE
-        -Wall                         # enables all compiler's warning messages
-        #-Wfatal-errors               # abort compilation on the first error occurred
-        -Wextra                       # enables a comprehensive set of warning options, providing a high level of warning coverage for potential issues
-        -Wno-unknown-pragmas          # allow unknown pragmas (such as #pragma region)
-        -fpack-struct=8               # struct member alignment - 8 bytes
-        -Wformat                      # enables format string checking warnings during compilation
-        -Wformat-security             # warns about potentially insecure format string usages
-        -Werror=format-security       # treats format string security warnings as errors
-        -Wno-sequence-point           # disable undefined behavior warning
-        -Wno-comment                  # allow multi-line comments
-        -Ofast                        # optimize code in the favor of speed 
-        -fstack-protector-strong      # enables stack protection for vulnerable functions that contain: An array of any size and type
-        -Wno-unused-but-set-parameter # disable parameter set but not used warning
+    set (COMMON_COMPILE_OPTIONS
+        -Wall                    # enables all compiler's warning messages
+        #-Wfatal-errors          # abort compilation on the first error occurred
+        -Wextra                  # enables a comprehensive set of warning options, providing a high level of warning coverage for potential issues
+        -Wno-unknown-pragmas     # allows unknown pragmas (such as #pragma region)
+        -fpack-struct=8          # struct member alignment - 8 bytes
+        -Wformat                 # enables format string checking warnings during compilation
+        -Wformat-security        # warns about potentially insecure format string usages
+        -Werror=format-security  # treats format string security warnings as errors
+        -Wno-comment             # allows multi-line comments
+        -fstack-protector-strong # enables stack protection for vulnerable functions that contain: An array of any size and type
+        -fdiagnostics-color=auto # color=auto only to colorize compiler output
+        #-pedantic               # warns on language extensions not in the standard
+        #-pedantic-errors        # treats those warnings as errors
+        -Wshadow                 # warns when a variable shadows another
+        -Wcast-qual              # warns on casts that remove type qualifiers (e.g. const)
+        -Wcast-align             # warns on potentially misaligned pointer casts
+        #-Wstrict-aliasing=2     # strict aliasing rule violations
+        #-Wundef                 # warns when an undefined macro is used in #if
+        -Wunused                 # warns on any unused entity
+        #-Wnon-virtual-dtor      # warns on non-virtual destructors in polymorphic classes
+        #-Woverloaded-virtual    # warns when a derived class hides a virtual function
         )
+
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        add_definitions (-Wno-extern-c-compat) # disable "empty struct has size 0 in C, size 1 in C++" warning
+        set (COMMON_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS}
+            -Wno-extern-c-compat # disables "empty struct has size 0 in C, size 1 in C++" warning
+            )
     endif ()
-    if ("${TARGET_ARCH}" STREQUAL "32")
-        add_definitions (-m32)
-    endif ()
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "debug")
-        add_definitions (-D_DEBUG)
+
+    # configuration specific defines
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "release")
+        set (COMMON_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS}
+            -D_RELEASE
+            )
     elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release-internal" OR
         "${CMAKE_BUILD_TYPE}" STREQUAL "releaseinternal")
-        add_definitions (-D_RELEASE_INTERNAL)
-    elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "release")
-        add_definitions (-D_RELEASE)
+        set (COMMON_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS}
+            -D_RELEASE_INTERNAL
+            )
+    elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "debug")
+        set (COMMON_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS}
+            -D_DEBUG
+            -g
+            )
     endif ()
+
+    # configuration specific defines
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "release" OR
         "${CMAKE_BUILD_TYPE}" STREQUAL "release-internal" OR
         "${CMAKE_BUILD_TYPE}" STREQUAL "releaseinternal")
-        add_definitions (-Werror)                 # treats warning as errors
-        add_definitions (-flto)                   # enables Link-Time Optimization (LTO)
-        add_definitions (-fvisibility=hidden)     # hide non-exported symbols
-        add_definitions (-Werror=format-security) # treats format string security warnings as errors
-        add_definitions (-fPIC)                   # generates position-independent code during the compilation phase
-        add_definitions (-fPIE)                   # generates position-independent executables during the compilation phase
-        add_definitions (-pie)                    # produces position-independent executables during the linking phase
+        set (COMMON_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS}
+            -O3                 # optimize for speed with conforming optimizations
+            -ffast-math         # enable fast-math optimizations (equivalent intent to -Ofast)
+            -Werror             # treats warning as errors
+            -fvisibility=hidden # hides non-exported symbols
+            -flto               # enables Link-Time Optimization (LTO)
+            -fPIC               # generates position-independent code during the compilation phase
+            )
     endif ()
-else()
-    message("-- Using platform is ${PLATFORM}")
+
+    if (NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+        set (COMMON_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS}
+            -msse
+            )
+    endif ()
+
+    if ("${TARGET_ARCH}" STREQUAL "32")
+        set (COMMON_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS}
+            -m32 # to enable x86 build on x64 host
+            )
+    elseif("${TARGET_ARCH}" STREQUAL "64" AND ${HOST_ARCH} STREQUAL "32")
+        set (COMMON_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS}
+            -m64 # to enable x64 build on x86 host
+            )
+    endif ()
+
+    target_compile_options (
+        ${PROJECT_NAME} PRIVATE
+        ${COMMON_COMPILE_OPTIONS}
+        )
+
+else ()
+    message ("-- Using platform is ${PLATFORM}")
 endif ()
+
 #################################################################################
 # GENERATOR
 #################################################################################
@@ -668,32 +718,50 @@ endif ()
 #################################################################################
 if (${PLATFORM} STREQUAL Windows) # windows
     # dummy linker flags to override the need to forcefully add them this way
-    set (CMAKE_SHARED_LINKER_FLAGS_RELEASEINTERNAL "/LTCG /INCREMENTAL:NO /OPT:ICF")
-    set (CMAKE_SHARED_LINKER_FLAGS_RELEASE         "/LTCG /INCREMENTAL:NO /OPT:ICF")
+    set (CMAKE_SHARED_LINKER_FLAGS_RELEASEINTERNAL "/LTCG /INCREMENTAL:NO /OPT:ICF /OPT:REF")
+    set (CMAKE_SHARED_LINKER_FLAGS_RELEASE         "/LTCG /INCREMENTAL:NO /OPT:ICF /OPT:REF")
     set (CMAKE_SHARED_LINKER_FLAGS_DEBUG           "")
     set (CMAKE_SHARED_LINKER_FLAGS                 "")
 elseif (${PLATFORM} STREQUAL linux) # linux
-    set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-    set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,defs")
-    set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,noexecstack")
-    set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,relro")
-    set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,now")
-    # to enable x86 build on x64 host
+    set (COMMON_LINK_OPTIONS
+        LINKER:--no-undefined
+        LINKER:-z,defs
+        LINKER:-z,noexecstack
+        LINKER:-z,relro
+        LINKER:-z,now
+        )
     if ("${TARGET_ARCH}" STREQUAL "32")
-        set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
+        set (COMMON_LINK_OPTIONS ${COMMON_LINK_OPTIONS}
+            LINKER:-m32 # to enable x86 build on x64 host
+            )
+    elseif("${TARGET_ARCH}" STREQUAL "64" AND ${HOST_ARCH} STREQUAL "32")
+        set (COMMON_LINK_OPTIONS ${COMMON_LINK_OPTIONS}
+            LINKER:-m64 # to enable x64 build on x86 host
+            )
     endif ()
-else()
-    message("-- Using platform is ${PLATFORM}")
+    target_link_options (
+        ${PROJECT_NAME} PRIVATE
+        ${COMMON_LINK_OPTIONS}
+        )
+else ()
+    message ("-- Using platform is ${PLATFORM}")
 endif ()
 
 #################################################################################
 # LINK LIBRARIES
 #################################################################################
 if (${PLATFORM} STREQUAL linux)
-    set (DRM_LIB_PATH drm)
+    # find libdrm-dev
+    find_library (libdrm drm)
+    if (${libdrm} STREQUAL libdrm-NOTFOUND)
+        message (FATAL_ERROR "You need to install libdrm-dev")
+    else ()
+        message (STATUS "libdrm-dev found as ${libdrm}")
+    endif ()
+
     target_link_libraries (
-        ${PROJECT_NAME}     # metrics_library
-        ${DRM_LIB_PATH}     # drm
+        ${PROJECT_NAME}
+        drm
     )
 endif ()
 
@@ -838,8 +906,8 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     set (CPACK_COMPONENTS_ALL metrics-library-pkgconfig metrics-library-devel metrics-library)
 
     include (CPack)
-else()
-    message("-- Using platform is ${PLATFORM}")
+else ()
+    message ("-- Using platform is ${PLATFORM}")
 endif ()
 
 #################################################################################
@@ -867,13 +935,13 @@ elseif (${PLATFORM} STREQUAL linux) # linux
     message ("INFO: TARGET_ARCH            = ${TARGET_ARCH}")
     message ("INFO: DUMP_DIR               = ${DUMP_DIR}")
     message ("INFO: LIB_INSTALL_DIR        = ${CMAKE_INSTALL_FULL_LIBDIR}")
-    message ("INFO: LIBDRM_SRC             = ${LIBDRM_SRC}")
     message ("INFO: DRM_LIB_PATH           = ${DRM_LIB_PATH}")
     message ("INFO: BS_DIR_INSTRUMENTATION = ${BS_DIR_INSTRUMENTATION}")
     message ("INFO: BS_DIR_INC             = ${BS_DIR_INC}")
     message ("INFO: BS_DIR_EXTERNAL        = ${BS_DIR_EXTERNAL}")
     message ("INFO: CMAKE_C_FLAGS          = ${CMAKE_C_FLAGS}")
     message ("INFO: CMAKE_CXX_FLAGS        = ${CMAKE_CXX_FLAGS}")
-else()
-    message("-- Using platform is ${PLATFORM}")
+    message ("INFO: CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
+else ()
+    message ("-- Using platform is ${PLATFORM}")
 endif ()

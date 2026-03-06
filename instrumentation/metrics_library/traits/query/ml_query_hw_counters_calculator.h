@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -46,9 +46,10 @@ namespace ML::BASE
         TT::OaBuffer&                                   m_OaBuffer;
         TT::KernelInterface&                            m_Kernel;
         const ConfigurationHandle_1_0&                  m_UserConfiguration;
-        const bool                                      m_NullBegin;
         const TT::Layouts::Configuration::TimestampType m_TimestampType;
         const uint64_t                                  m_GpuTimestampFrequency;
+        const bool                                      m_NullBegin;
+        const bool                                      m_DenseModeEnabled;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Hw counters query report constructor.
@@ -72,12 +73,13 @@ namespace ML::BASE
             , m_OaBuffer( m_Context.m_OaBuffer )
             , m_Kernel( m_Context.m_Kernel )
             , m_UserConfiguration( query.m_UserConfiguration )
-            , m_NullBegin( m_Kernel.IsNullBeginOverride() )
             , m_TimestampType(
                   m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag || m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended
                       ? T::Layouts::Configuration::TimestampType::Oa
                       : T::Layouts::Configuration::TimestampType::Cs )
             , m_GpuTimestampFrequency( m_Kernel.GetGpuTimestampFrequency( m_TimestampType ) )
+            , m_NullBegin( m_Kernel.IsNullBeginOverride() )
+            , m_DenseModeEnabled( m_Kernel.IsDenseMode() )
         {
         }
 
@@ -95,13 +97,6 @@ namespace ML::BASE
             // Validate gpu report completeness.
             if( IsReportGpuReady( log.m_Result ) )
             {
-                // Reset oa buffer state if required (dx12/vulkan/oneapi).
-                if constexpr( T::Policy::QueryHwCounters::GetData::m_ResetOaBufferState )
-                {
-                    m_OaBufferState.Reset();
-                    m_QuerySlot.Reset();
-                }
-
                 // Handle each sampling mode.
                 switch( m_Query.m_GetDataMode )
                 {
@@ -152,6 +147,12 @@ namespace ML::BASE
                     ML_FUNCTION_CHECK_ERROR( m_OaBuffer.UpdateQuery( Derived() ), StatusCode::NotInitialized );
 
                     log.m_Result = m_Query.GetTriggeredOaReports( m_QuerySlot, m_ReportGpu );
+
+                    if( ML_SUCCESS( log.m_Result ) )
+                    {
+                        m_ReportGpu.m_CoreFrequencyBegin = static_cast<uint32_t>( m_ReportGpu.m_Begin.m_Oa.m_Header.m_ReportId.m_FrequencyUnslice << T::GpuRegisters::m_RpstatFrequencyShift );
+                        m_ReportGpu.m_CoreFrequencyEnd   = static_cast<uint32_t>( m_ReportGpu.m_End.m_Oa.m_Header.m_ReportId.m_FrequencyUnslice << T::GpuRegisters::m_RpstatFrequencyShift );
+                    }
 
                     break;
 
@@ -296,22 +297,18 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            // Validate contexts.
-            // Compute command streamer always returns context id equals to zero.
-            // Also Linux may use zero context id.
-            constexpr bool useNullContext = T::Policy::QueryHwCounters::GetData::m_AllowEmptyContextId;
-            const bool     validBegin     = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
-            const bool     validEnd       = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
-            const bool     equalContexts  = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
-            const bool     validContexts  = ( validBegin && validEnd ) || useNullContext;
+            const bool validBegin    = m_ReportBegin.m_Oa.m_Header.m_ContextId != 0;
+            const bool validEnd      = m_ReportEnd.m_Oa.m_Header.m_ContextId != 0;
+            const bool equalContexts = m_ReportBegin.m_Oa.m_Header.m_ContextId == m_ReportEnd.m_Oa.m_Header.m_ContextId;
+            const bool validContexts = ( validBegin && validEnd );
 
             if( !( validContexts && equalContexts ) )
             {
                 log.Error(
                     "validContexts =", validContexts,
                     ", equalContexts =", equalContexts,
-                    ", begin.contextId = ", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId,
-                    ", end.contextId =", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId );
+                    ", begin.contextId =", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_ReportBegin.m_Oa.m_Header.m_ContextId,
+                    ", end.contextId =", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_ReportEnd.m_Oa.m_Header.m_ContextId );
 
                 log.m_Result = StatusCode::ContextMismatch;
             }
@@ -628,7 +625,7 @@ namespace ML::BASE
             const uint64_t timestampEnd   = end.m_Header.m_Timestamp;
 
             // Total time in nanoseconds.
-            reportApi.m_TotalTime += T::Tools::CountersDelta( timestampEnd, timestampBegin, 32 ) * m_Kernel.GetGpuTimestampTick( m_TimestampType );
+            reportApi.m_TotalTime += ( T::Tools::CountersDelta( timestampEnd, timestampBegin, 32 ) * Constants::Time::m_SecondInNanoseconds ) / m_GpuTimestampFrequency;
 
             // Gpu ticks.
             reportApi.m_GpuTicks = T::Tools::CountersDelta( end.m_Header.m_GpuTicks, begin.m_Header.m_GpuTicks, 32 );
@@ -947,10 +944,6 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_ASSERT( m_OaBufferState.m_CurrentOffset == Constants::OaBuffer::m_InvalidOffset );
 
-            // Reset oa buffer and query slot state.
-            m_OaBufferState.Reset();
-            m_QuerySlot.Reset();
-
             // Check if oa buffer contains reports.
             if( !m_OaBuffer.IsValid() )
             {
@@ -1019,7 +1012,7 @@ namespace ML::BASE
                 }
 
                 // Validate query begin and query end contexts.
-                log.m_Result = ML_SUCCESS( log.m_Result ) ? derived.ValidateReportGpuContexts() : log.m_Result;
+                log.m_Result = ML_SUCCESS( log.m_Result ) ? ValidateReportGpuContexts() : log.m_Result;
 
                 // Set the first report.
                 m_OaBufferState.m_CurrentOffset      = m_OaBufferState.m_FirstOffset;
@@ -1353,34 +1346,6 @@ namespace ML::XE_HPG
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Validates gpu report contexts.
-        /// @return true if gpu report contexts is valid.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode ValidateReportGpuContexts() const
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-
-            constexpr bool useNullContext = T::Policy::QueryHwCounters::GetData::m_AllowEmptyContextId;
-            const bool     validBegin     = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId != 0;
-            const bool     validEnd       = m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId != 0;
-            const bool     equalContexts  = m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId == m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId;
-            const bool     validContexts  = ( validBegin && validEnd ) || useNullContext;
-
-            if( !( validContexts && equalContexts ) )
-            {
-                log.Error(
-                    "validContexts =", validContexts,
-                    ", equalContexts = ", equalContexts,
-                    ", begin.contextId = ", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_ReportGpu.m_Begin.m_Oa.m_Header.m_ContextId,
-                    ", end.contextId =", FormatFlag::Hexadecimal, FormatFlag::ShowBase, m_ReportGpu.m_End.m_Oa.m_Header.m_ContextId );
-
-                log.m_Result = StatusCode::ContextMismatch;
-            }
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Validates if oa report taken from oa buffer meets all
         ///         requirements to be taken into consideration.
         /// @param  oaReport        oa report from oa buffer to compare.
@@ -1636,6 +1601,7 @@ namespace ML::XE2_HPG
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base::AggregateUserCounters;
+        using Base::DerivedConst;
         using Base::m_Context;
         using Base::m_GpuTimestampFrequency;
         using Base::m_Kernel;
@@ -1662,13 +1628,13 @@ namespace ML::XE2_HPG
             const uint64_t timestampEnd   = end.m_Header.m_Timestamp;
 
             // Total time in nanoseconds.
-            reportApi.m_TotalTime += T::Tools::CountersDelta( timestampEnd, timestampBegin, 64 ) * m_Kernel.GetGpuTimestampTick( m_TimestampType );
+            reportApi.m_TotalTime += ( T::Tools::CountersDelta( timestampEnd, timestampBegin, 64 ) * Constants::Time::m_SecondInNanoseconds ) / m_GpuTimestampFrequency;
 
             // Gpu ticks.
             reportApi.m_GpuTicks = T::Tools::CountersDelta( end.m_Header.m_GpuTicks, begin.m_Header.m_GpuTicks, 64 );
 
             // Pec counters.
-            PecCountersDelta( begin, end, reportApi );
+            DerivedConst().PecCountersDelta( begin, end, reportApi );
 
             // Visa counters.
             if( m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended )
@@ -1695,7 +1661,7 @@ namespace ML::XE2_HPG
             reportApi.m_TotalTime      += source.m_TotalTime;
             reportApi.m_OverrunOccured |= source.m_OverrunOccured;
 
-            AggregatePecCounters( source, reportApi );
+            DerivedConst().AggregatePecCounters( source, reportApi );
             AggregateUserCounters( source, reportApi );
 
             if( m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended )

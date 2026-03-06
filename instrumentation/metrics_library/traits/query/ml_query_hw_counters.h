@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -355,13 +355,14 @@ namespace ML::BASE
 
                 slot.m_TriggeredReportGetAttempt = 0; // Clear triggered report attempt counter.
                 slot.ClearReportGpu();                // Clear gpu memory.
+                slot.Reset();                         // Reset slot state.
                 ResetOaBufferState( slot );           // Reset oa buffer state.
             }
 
             const uint64_t gpuAddress = slot.m_GpuMemory.GpuAddress;
 
             ML_FUNCTION_CHECK( FlushCommandStreamer<true>( buffer ) );
-            ML_FUNCTION_CHECK( WriteCoreFrequency<true>( buffer, gpuAddress ) );
+            ML_FUNCTION_CHECK( WriteCoreFrequency<true>( buffer, gpuAddress, slot ) );
             ML_FUNCTION_CHECK( derived.template WriteOaState<true>( buffer, gpuAddress, slot ) );
             ML_FUNCTION_CHECK( WriteUserCounters<true>( buffer, gpuAddress ) );
             ML_FUNCTION_CHECK( WriteHwCounters<true>( buffer, gpuAddress, slot ) );
@@ -393,14 +394,7 @@ namespace ML::BASE
             auto&          slot       = GetSlot( data.Slot );
             const uint64_t gpuAddress = slot.m_GpuMemory.GpuAddress;
 
-            if constexpr( T::Policy::QueryHwCounters::End::m_UseEndTagAsCompletionStatus )
-            {
-                slot.m_EndTag = 1;
-            }
-            else
-            {
-                slot.m_EndTag = data.EndTag;
-            }
+            slot.m_EndTag = ( data.EndTag == 0 ) ? 1 : data.EndTag;
 
             if constexpr( std::is_same<CommandBuffer, TT::GpuCommandBuffer>() )
             {
@@ -413,7 +407,7 @@ namespace ML::BASE
             ML_FUNCTION_CHECK( WriteHwCounters<false>( buffer, gpuAddress, slot ) );
             ML_FUNCTION_CHECK( WriteUserCounters<false>( buffer, gpuAddress ) );
             ML_FUNCTION_CHECK( derived.template WriteOaState<false>( buffer, gpuAddress, slot ) );
-            ML_FUNCTION_CHECK( WriteCoreFrequency<false>( buffer, gpuAddress ) );
+            ML_FUNCTION_CHECK( WriteCoreFrequency<false>( buffer, gpuAddress, slot ) );
             ML_FUNCTION_CHECK( WriteUserMarker( buffer, gpuAddress, data.MarkerUser ) );
             ML_FUNCTION_CHECK( WriteDriverMarker( buffer, gpuAddress, data.MarkerDriver ) );
             ML_FUNCTION_CHECK( WriteEndTag( buffer, gpuAddress, slot ) );
@@ -670,26 +664,34 @@ namespace ML::BASE
         /// @param  begin   begin/end query.
         /// @param  buffer  target command buffer.
         /// @param  address gpu memory address.
+        /// @param  slot    query slot data.
         /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
         template <bool begin, typename CommandBuffer>
         ML_INLINE StatusCode WriteCoreFrequency(
-            CommandBuffer& buffer,
-            const uint64_t address ) const
+            CommandBuffer&                     buffer,
+            const uint64_t                     address,
+            const TT::Queries::HwCountersSlot& slot ) const
         {
-            constexpr uint32_t offset = begin
-                ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CoreFrequencyBegin )
-                : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CoreFrequencyEnd );
+            if( slot.m_ReportCollectingMode != T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag &&
+                slot.m_ReportCollectingMode != T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended )
+            {
+                constexpr uint32_t offset = begin
+                    ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CoreFrequencyBegin )
+                    : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CoreFrequencyEnd );
 
-            const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
-                ? T::GpuCommands::Flags::WorkloadPartition
-                : T::GpuCommands::Flags::None;
+                const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
+                    ? T::GpuCommands::Flags::WorkloadPartition
+                    : T::GpuCommands::Flags::None;
 
-            return T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                T::GpuRegisters::m_CoreFrequency,
-                address + offset,
-                flags );
+                return T::GpuCommands::StoreRegisterToMemory32(
+                    buffer,
+                    T::GpuRegisters::m_CoreFrequency,
+                    address + offset,
+                    flags );
+            }
+
+            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -707,7 +709,7 @@ namespace ML::BASE
             const TT::Queries::HwCountersSlot& slot )
         {
             const auto     collectingMode = slot.m_ReportCollectingMode;
-            const uint32_t queryId        = static_cast<const uint32_t>( T::Tools::GetHash( reinterpret_cast<const uintptr_t>( buffer.GetBuffer() ) ) );
+            const uint32_t queryId        = static_cast<const uint32_t>( T::Tools::GetHash( reinterpret_cast<const uintptr_t>( buffer.GetBuffer() ) ) ) | Constants::Query::m_QuerySourceId;
 
             const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
                 ? T::GpuCommands::Flags::WorkloadPartition
@@ -1007,9 +1009,7 @@ namespace ML::BASE
             bool               reportOaValid       = false;
             uint32_t           foundTriggers       = 0;
             uint32_t           foundReportOaOffset = 0;
-            constexpr uint32_t expectedTriggers    = ( !begin && T::Policy::QueryHwCounters::End::m_UseDoubleTriggers )
-                   ? 2
-                   : 1;
+            constexpr uint32_t expectedTriggers    = 1;
 
             // Validate triggered oa report.
             const auto& derived = DerivedConst();

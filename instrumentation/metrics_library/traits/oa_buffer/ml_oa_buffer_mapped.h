@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -218,7 +218,7 @@ namespace ML::BASE
         template <bool begin>
         ML_INLINE StatusCode GetPreReportOffset(
             const TT::Queries::HwCountersCalculator& calculator,
-            const bool                               rollback,
+            [[maybe_unused]] const bool              rollback,
             uint32_t&                                offset )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );

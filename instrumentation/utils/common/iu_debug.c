@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2024 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -95,13 +95,13 @@ static const char* __IuLogGetModuleInfo()
 
         dlName = IuOsGetModuleInfo( &processName );
 
-        if( ( processName ) && ( ( iu_strnlen_s( moduleInfo, IU_MODULE_NAME_SIZE_MAX ) + iu_strnlen_s( processName, IU_MODULE_NAME_SIZE_MAX ) + 1 ) // 1 => '\0'
+        if( ( processName ) && ( ( iu_strnlen_s( moduleInfo, IU_MODULE_NAME_SIZE_MAX - 1 ) + iu_strnlen_s( processName, IU_MODULE_NAME_SIZE_MAX - 1 ) + 1 ) // 1 => '\0'
                                  < IU_MODULE_NAME_SIZE_MAX ) )
         {
             iu_strcat_s( moduleInfo, sizeof( moduleInfo ), processName );
         }
 
-        if( ( dlName ) && ( ( iu_strnlen_s( moduleInfo, IU_MODULE_NAME_SIZE_MAX ) + iu_strnlen_s( dlName, IU_MODULE_NAME_SIZE_MAX ) + 3 ) // 3 => '(' + ')' + '\0'
+        if( ( dlName ) && ( ( iu_strnlen_s( moduleInfo, IU_MODULE_NAME_SIZE_MAX - 1 ) + iu_strnlen_s( dlName, IU_MODULE_NAME_SIZE_MAX - 1 ) + 3 ) // 3 => '(' + ')' + '\0'
                             < IU_MODULE_NAME_SIZE_MAX ) )
         {
             iu_strcat_s( moduleInfo, sizeof( moduleInfo ), "(" );
@@ -109,7 +109,7 @@ static const char* __IuLogGetModuleInfo()
             iu_strcat_s( moduleInfo, sizeof( moduleInfo ), ")" );
         }
 
-        if( iu_strnlen_s( moduleInfo, IU_MODULE_NAME_SIZE_MAX ) )
+        if( iu_strnlen_s( moduleInfo, IU_MODULE_NAME_SIZE_MAX - 1 ) )
         {
             pModuleInfo = moduleInfo;
         }

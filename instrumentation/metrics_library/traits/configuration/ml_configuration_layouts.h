@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2025 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -14,6 +14,8 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
+ML_STRUCTURE_PACK_BEGIN( 4 );
+
 namespace ML
 {
     //////////////////////////////////////////////////////////////////////////
@@ -24,7 +26,6 @@ namespace ML
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( ConfigurationLayoutsTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( ConfigurationLayoutsTrait );
-        ML_STRUCTURE_PACK_BEGIN( 4 );
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Timestamp type.
@@ -104,7 +105,7 @@ namespace ML
             uint32_t m_Global[T::Layouts::Override::Type::Last];
             uint32_t m_Query[T::Layouts::Override::Type::Last];
         };
-
-        ML_STRUCTURE_PACK_END();
     };
 } // namespace ML
+
+ML_STRUCTURE_PACK_END();
