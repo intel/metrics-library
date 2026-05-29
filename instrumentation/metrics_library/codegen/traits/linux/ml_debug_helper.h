@@ -2364,7 +2364,7 @@ namespace ML
             return output.str();
         }
     };
-}
+} // namespace ML
 
 namespace ML::BASE
 {
@@ -2414,26 +2414,33 @@ namespace ML::BASE
 
             if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnableMmioRemap ) )
             {
-                output << "EnableMmioRemap || ";
+                output << "EnableMmioRemap | ";
             }
 
             if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnableStall ) )
             {
-                output << "EnableStall || ";
+                output << "EnableStall | ";
             }
 
             if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::EnablePostSync ) )
             {
-                output << "EnablePostSync || ";
+                output << "EnablePostSync | ";
             }
 
             if( flag & static_cast<uint32_t>( T::GpuCommands::Flags::WorkloadPartition ) )
             {
-                output << "WorkloadPartition || ";
+                output << "WorkloadPartition | ";
+            }
+
+            if( output.str().empty() )
+            {
+                output << "Illegal gpu command flag: " << std::hex << std::showbase << static_cast<uint32_t>( flag );
+                output << " (" << std::dec << static_cast<uint32_t>( flag ) << ")";
+                return output.str();
             }
 
             std::string outputString = output.str();
-            return outputString.substr( 0, outputString.size() - 4 );
+            return outputString.substr( 0, outputString.size() - 3 );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -2764,54 +2771,63 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Creates report reason log.
-        /// @param  reportReason    a given report reason.
-        /// @return                 string that contains formatted report reason.
+        /// @param  value   a given report reason.
+        /// @return         string that contains formatted report reason.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::ReportReason reportReason )
+        ML_INLINE std::string ToString( const TT::Layouts::OaBuffer::ReportReason value )
         {
-            std::ostringstream output;
-
-            switch( reportReason )
+            if( value == T::Layouts::OaBuffer::ReportReason::Empty )
             {
-                case T::Layouts::OaBuffer::ReportReason::Timer:
-                    output << "Timer";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::User1:
-                    output << "User1";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::User2:
-                    output << "User2";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::ContextSwitch:
-                    output << "ContextSwitch";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::C6:
-                    output << "C6";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::FrequencyChange:
-                    output << "FrequencyChange";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::Empty:
-                    output << "Empty";
-                    break;
-
-                case T::Layouts::OaBuffer::ReportReason::MmioTrigger:
-                    output << "MmioTrigger";
-                    break;
-
-                default:
-                    output << "Illegal report reason: " << std::hex << std::showbase << static_cast<uint32_t>( reportReason );
-                    output << " (" << std::dec << static_cast<uint32_t>( reportReason ) << ")";
-                    break;
+                return "Empty";
             }
 
-            return output.str();
+            const uint32_t     reportReason = static_cast<uint32_t>( value );
+            std::ostringstream output;
+
+            if( reportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::Timer ) )
+            {
+                output << "Timer | ";
+            }
+
+            if( reportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::ConfigurationUpdate ) )
+            {
+                output << "ConfigurationUpdate | ";
+            }
+
+            if( reportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::WaBbC6 ) )
+            {
+                output << "WaBbC6 | ";
+            }
+
+            if( reportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::ContextSwitch ) )
+            {
+                output << "ContextSwitch | ";
+            }
+
+            if( reportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::C6 ) )
+            {
+                output << "C6 | ";
+            }
+
+            if( reportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::FrequencyChange ) )
+            {
+                output << "FrequencyChange | ";
+            }
+
+            if( reportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::MmioTrigger ) )
+            {
+                output << "MmioTrigger | ";
+            }
+
+            if( output.str().empty() )
+            {
+                output << "Illegal report reason: " << std::hex << std::showbase << static_cast<uint32_t>( reportReason );
+                output << " (" << std::dec << static_cast<uint32_t>( reportReason ) << ")";
+                return output.str();
+            }
+
+            std::string outputString = output.str();
+            return outputString.substr( 0, outputString.size() - 3 );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -3096,14 +3112,13 @@ namespace ML::XE2_HPG
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE std::string ToString( const TT::Layouts::HwCounters::ReportOa& oaReport )
         {
-            const auto&        oaVisaReport = reinterpret_cast<const TT::Layouts::HwCounters::ReportOaVisa&>( oaReport );
             std::ostringstream output;
             output << "OA: ";
             output << "rsn = " << std::setw( Constants::Log::m_MaxReportReasonLength ) << oaReport.m_Header.m_ReportId.m_ReportReason;
             output << std::hex << std::showbase;
             output << ", rid = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Header.m_ReportId.m_Value;
             output << ", tsp = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Header.m_Timestamp;
-            output << ", cid = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Header.m_ContextId;
+            output << ", cid = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaReport.m_Header.m_ContextId;
             output << ", tic = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Header.m_GpuTicks;
             output << ", pec0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[0];
             output << ", pec1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[1];
@@ -3111,8 +3126,6 @@ namespace ML::XE2_HPG
             output << ", pec32 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[32];
             output << ", pec33 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[33];
             output << ", pec34 = " << std::setw( Constants::Log::m_MaxUint64Length ) << oaReport.m_Data.m_PerformanceEventCounter[34];
-            output << ", visa0 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaVisaReport.m_Data.m_VisaCounter[0];
-            output << ", visa1 = " << std::setw( Constants::Log::m_MaxUint32Length ) << oaVisaReport.m_Data.m_VisaCounter[1];
             output << "; ";
 
             return output.str();
@@ -3128,27 +3141,25 @@ namespace ML::XE2_HPG
             std::ostringstream output;
             std::string        flags;
 
-            flags += userReport.m_Flags.m_ReportLost              ? " lost"              : "";
-            flags += userReport.m_Flags.m_ReportInconsistent      ? " inconsistent"      : "";
-            flags += userReport.m_Flags.m_ReportNotReady          ? " not_ready"         : "";
-            flags += userReport.m_Flags.m_ReportContextSwitchLost ? " no_context_switch" : "";
-            flags += userReport.m_Flags.m_ReportWithoutWorkload   ? " no_workload"       : "";
-            flags += userReport.m_Flags.m_ContextMismatch         ? " context_mismatch"  : "";
+            flags += userReport.m_Flags.m_ReportLost              ? " lost"                : "";
+            flags += userReport.m_Flags.m_ReportInconsistent      ? " inconsistent"        : "";
+            flags += userReport.m_Flags.m_ReportNotReady          ? " not_ready"           : "";
+            flags += userReport.m_Flags.m_ReportContextSwitchLost ? " no_context_switch"   : "";
+            flags += userReport.m_Flags.m_ReportWithoutWorkload   ? " no_workload"         : "";
+            flags += userReport.m_Flags.m_ContextMismatch         ? " context_mismatch"    : "";
+            flags += userReport.m_Flags.m_QueryModeMismatch       ? " query_mode_mismatch" : "";
             flags  = flags.length() ? flags : "none";
 
             output << "QUERY: ";
             output << std::hex << std::showbase;
-            output << "time = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_TotalTime;
-            output << ", tic = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_GpuTicks;
-            output << ", pec0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[0];
-            output << ", pec1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[1];
-            output << ", pec2 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[2];
-            output << ", pec32 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[32];
-            output << ", pec33 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[33];
-            output << ", pec34 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_PerformanceEventCounter[34];
-            output << ", visa0 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_VisaCounter[0];
-            output << ", visa1 = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_VisaCounter[1];
-            output << ", mark = " << std::setw( Constants::Log::m_MaxUint64Length ) << userReport.m_MarkerUser;
+            output << "time = " << std::setw( Constants::Log::m_MaxUint32Length ) << userReport.m_TotalTime;
+            output << ", tic = " << std::setw( Constants::Log::m_MaxUint32Length ) << userReport.m_GpuTicks;
+            output << ", pec0 = " << std::setw( Constants::Log::m_MaxUint32Length ) << userReport.m_PerformanceEventCounter[0];
+            output << ", pec1 = " << std::setw( Constants::Log::m_MaxUint32Length ) << userReport.m_PerformanceEventCounter[1];
+            output << ", pec2 = " << std::setw( Constants::Log::m_MaxUint32Length ) << userReport.m_PerformanceEventCounter[2];
+            output << ", pec32 = " << std::setw( Constants::Log::m_MaxUint32Length ) << userReport.m_PerformanceEventCounter[32];
+            output << ", pec33 = " << std::setw( Constants::Log::m_MaxUint32Length ) << userReport.m_PerformanceEventCounter[33];
+            output << ", pec34 = " << std::setw( Constants::Log::m_MaxUint32Length ) << userReport.m_PerformanceEventCounter[34];
             output << ", flags = " << flags;
             output << "; ";
 
@@ -3228,3 +3239,4 @@ namespace ML::XE3P
         ML_DECLARE_TRAIT( DebugTrait, XE3 );
     };
 } // namespace ML::XE3P
+

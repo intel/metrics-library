@@ -97,8 +97,8 @@ namespace ML::BASE
             ML_FUNCTION_CHECK( GetPreReportOffset<false>( calculator, false, state.m_TailPreEndOffset ) );
             ML_FUNCTION_CHECK( GetPostReportOffset<false>( calculator, state.m_TailPostEndOffset ) );
 
-            // Do not roll back pre begin offset if there are no reports between begin and end.
-            if( state.m_TailPostBeginOffset == state.m_TailPreEndOffset )
+            // Do not roll back pre begin offset if there are no context switches between begin and end in the same command streamer.
+            if( !Derived().IsRollBackNeeded( calculator, state ) )
             {
                 state.m_TailPreBeginOffsetRolledBack = state.m_TailPreBeginOffset;
             }
@@ -186,9 +186,11 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns oa report from oa buffer.
-        /// @param  offset  oa report offset within oa buffer.
-        /// @return         a reference to oa report.
+        /// @param  logReport   true if oa report needs to be logged.
+        /// @param  offset      oa report offset within oa buffer.
+        /// @return             reference to oa report.
         //////////////////////////////////////////////////////////////////////////
+        template <bool logReport>
         ML_INLINE TT::Layouts::HwCounters::ReportOa& GetReport( const uint32_t offset )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
@@ -201,8 +203,11 @@ namespace ML::BASE
                 : *reinterpret_cast<TT::Layouts::HwCounters::ReportOa*>( static_cast<uint8_t*>( m_OaBuffer.m_CpuAddress ) + offset );
 
             log.Debug( "Oa report offset", FormatFlag::Decimal, offset );
-            log.Debug( "Oa report split", oaReportSplit );
-            log.Debug( "Oa report", oaReport );
+
+            if constexpr( logReport )
+            {
+                log.Debug( "Oa report", oaReport );
+            }
 
             return oaReport;
         }
@@ -303,7 +308,7 @@ namespace ML::BASE
 
                     do
                     {
-                        log.Csv( GetReport( offset ) );
+                        log.Csv( GetReport<false>( offset ) );
                         offset = ( offset + reportSize ) % oaBufferSize;
                     }
                     while( offset != endOffset );
@@ -329,7 +334,7 @@ namespace ML::BASE
 
             for( uint32_t i = 0; i < count; ++i )
             {
-                const auto& oaReport = GetReport( offset + ( i * reportSize ) );
+                const auto& oaReport = GetReport<false>( offset + ( i * reportSize ) );
                 log.Debug( "Oa report", i, oaReport );
             }
         }
@@ -366,6 +371,20 @@ namespace ML::BASE
             [[maybe_unused]] const TT::Queries::HwCountersCalculator& calculator,
             [[maybe_unused]] uint32_t&                                offset ) const
         {
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks whether report offset roll back is needed to get the correct
+        ///         context on query begin.
+        /// @param  calculator  hw counters calculator.
+        /// @param  state       oa buffer state.
+        /// @return true if roll back is needed, false otherwise.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsRollBackNeeded(
+            [[maybe_unused]] const TT::Queries::HwCountersCalculator& calculator,
+            [[maybe_unused]] const TT::Layouts::OaBuffer::State&      state ) const
+        {
+            return false;
         }
 
     private:
@@ -423,7 +442,7 @@ namespace ML::XE_HPG
         //////////////////////////////////////////////////////////////////////////
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
-        using Base::GetReport;
+        using Base::m_Kernel;
         using Base::m_OaBuffer;
 
         //////////////////////////////////////////////////////////////////////////
@@ -436,18 +455,17 @@ namespace ML::XE_HPG
             const TT::Queries::HwCountersCalculator& calculator,
             uint32_t&                                offset )
         {
-            const uint32_t oaReportsCount    = m_OaBuffer.m_Size / m_OaBuffer.m_ReportSize;
-            const auto     commandBufferType = calculator.GetCommandBufferType();
+            const uint32_t oaReportsCount = m_OaBuffer.m_Size / m_OaBuffer.m_ReportSize;
 
             // Roll back offset to the nearest context switch before query begin report.
             for( uint32_t i = 0; i < oaReportsCount; ++i )
             {
                 // If report is a context switch and command buffer type matches with source id, stop rolling back.
-                const auto& report = GetReport( offset );
+                const auto& report = Base::template GetReport<true>( offset );
 
                 const uint32_t sourceId       = static_cast<uint32_t>( report.m_Header.m_ReportId.m_SourceId );
-                const bool     isRcsContext   = calculator.IsRcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Render;
-                const bool     isCcsContext   = calculator.IsCcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Compute;
+                const bool     isRcsContext   = calculator.IsRcsContext( sourceId ) && calculator.m_CommandBufferType == GpuCommandBufferType::Render;
+                const bool     isCcsContext   = calculator.IsCcsContext( sourceId ) && calculator.m_CommandBufferType == GpuCommandBufferType::Compute;
                 const bool     isContextValid = report.m_Header.m_ReportId.m_ContextValid; // Context id is valid only for context switch reports when entering into a context.
 
                 if( ( isRcsContext || isCcsContext ) && isContextValid )
@@ -458,6 +476,51 @@ namespace ML::XE_HPG
                 // Roll back offset to the previous report.
                 offset = ( offset + m_OaBuffer.m_Size - m_OaBuffer.m_ReportSize ) % m_OaBuffer.m_Size;
             }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks whether report offset roll back is needed to get the correct
+        ///         context on query begin.
+        /// @param  calculator  hw counters calculator.
+        /// @param  state       oa buffer state.
+        /// @return true if roll back is needed, false otherwise.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsRollBackNeeded(
+            const TT::Queries::HwCountersCalculator& calculator,
+            const TT::Layouts::OaBuffer::State&      state )
+        {
+            ML_FUNCTION_LOG( false, &m_Kernel.m_Context );
+
+            // If there is a report between post begin and pre end, it means there could be a context switch between query begin and end.
+            if( state.m_TailPostBeginOffset != state.m_TailPreEndOffset )
+            {
+                uint32_t reportOaOffset = state.m_TailPreEndOffset;
+
+                do
+                {
+                    reportOaOffset = ( reportOaOffset + m_OaBuffer.m_Size - m_OaBuffer.m_ReportSize ) % m_OaBuffer.m_Size;
+
+                    const auto& report = Base::template GetReport<true>( reportOaOffset );
+
+                    if( const bool isContextSwitch = ( report.m_Header.m_ReportId.m_ReportReason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::ContextSwitch ) ) != 0;
+                        isContextSwitch )
+                    {
+                        const uint32_t sourceId     = static_cast<uint32_t>( report.m_Header.m_ReportId.m_SourceId );
+                        const bool     isRcsContext = calculator.IsRcsContext( sourceId ) && calculator.m_CommandBufferType == GpuCommandBufferType::Render;
+                        const bool     isCcsContext = calculator.IsCcsContext( sourceId ) && calculator.m_CommandBufferType == GpuCommandBufferType::Compute;
+
+                        if( isRcsContext || isCcsContext )
+                        {
+                            // Context switch report with matching command streamer is found, roll back is needed.
+                            log.m_Result = true;
+                            break;
+                        }
+                    }
+                }
+                while( reportOaOffset != state.m_TailPostBeginOffset );
+            }
+
+            return log.m_Result;
         }
     };
 } // namespace ML::XE_HPG

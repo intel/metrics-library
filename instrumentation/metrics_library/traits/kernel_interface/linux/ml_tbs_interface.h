@@ -173,6 +173,17 @@ namespace ML::BASE
         ~TbsInterfaceTrait()
         {
             m_Stream.Disable();
+
+            // Remove metric set activated by metrics discovery if used for query.
+            if( !m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled )
+            {
+                const int32_t metricSet = m_IoControl.GetKernelMetricSet();
+
+                if( metricSet != T::ConstantsOs::Tbs::m_Invalid )
+                {
+                    m_IoControl.RemoveMetricSet( metricSet );
+                }
+            }
         }
 
         //////////////////////////////////////////////////////////////////////////

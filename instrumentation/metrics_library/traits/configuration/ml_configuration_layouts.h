@@ -102,8 +102,10 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct OverridesState
         {
-            uint32_t m_Global[T::Layouts::Override::Type::Last];
-            uint32_t m_Query[T::Layouts::Override::Type::Last];
+            static constexpr uint32_t m_OverrideCount = static_cast<uint32_t>( T::Layouts::Override::Type::Last );
+
+            uint32_t m_Global[m_OverrideCount];
+            uint32_t m_Query[m_OverrideCount];
         };
     };
 } // namespace ML

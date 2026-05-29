@@ -110,9 +110,11 @@ namespace ML
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns oa report from oa buffer.
-        /// @param  offset  oa report offset within oa buffer.
-        /// @return         reference to oa report.
+        /// @param  logReport   true if oa report needs to be logged.
+        /// @param  offset      oa report offset within oa buffer.
+        /// @return             reference to oa report.
         //////////////////////////////////////////////////////////////////////////
+        template <bool logReport>
         ML_INLINE TT::Layouts::HwCounters::ReportOa& GetReport( [[maybe_unused]] const uint32_t offset )
         {
             return m_OaReportDummy;

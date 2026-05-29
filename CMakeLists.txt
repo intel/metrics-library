@@ -6,7 +6,7 @@
 #
 #============================ end_copyright_notice =============================
 
-cmake_minimum_required (VERSION 3.14)
+cmake_minimum_required (VERSION 3.20)
 
 # Uncomment for logs during build (during 'make' command)
 #set (CMAKE_VERBOSE_MAKEFILE ON)
@@ -25,7 +25,11 @@ set (SOME_COMMON_INCLUDES FALSE)
 #################################################################################
 # CONFIGURE C++ STANDARD
 #################################################################################
-set (CMAKE_CXX_STANDARD 17)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10)
+    set (CMAKE_CXX_STANDARD 17)
+else ()
+    set (CMAKE_CXX_STANDARD 20)
+endif ()
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # instrumentation common settings & macros
@@ -610,7 +614,6 @@ if (${PLATFORM} STREQUAL Windows) # windows
             /Ot     # favor fast code
             /O2     # favor speed
             /Gy     # function-level linking
-            /GL     # whole program optimization
         >
         $<$<CONFIG:Debug>:
             ${COMMON_COMPILE_OPTIONS}

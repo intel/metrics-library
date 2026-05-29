@@ -29,6 +29,7 @@ Intel(R) Metrics Library for MDAPI is supported on Linux family operating system
 
 | Platform | Code Name | Minimum Linux Kernel Version |
 |--|--|--|
+| Xe3P-LPG | Nova Lake-P | 7.1 |
 | Xe3P-XPC | Crescent Island | 6.19 |
 | Xe3-LPG | Nova Lake | 6.19 |
 | Xe3-LPG | Wildcat Lake | 6.18 |

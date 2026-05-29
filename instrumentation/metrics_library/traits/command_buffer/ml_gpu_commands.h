@@ -461,6 +461,9 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
+            constexpr uint32_t oaBufferOffset        = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaBuffer );
+            constexpr uint32_t oaTailPreBeginOffset  = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPreBegin );
+            constexpr uint32_t oaTailPostEndOffset   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPostEnd );
             constexpr uint32_t oaTailPostBeginOffset = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPostBegin );
             constexpr uint32_t oaTailPreEndOffset    = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_OaTailPreEnd );
             constexpr uint32_t oaReportOffset        = begin
@@ -480,6 +483,13 @@ namespace ML::BASE
                     buffer,
                     reportId,
                     address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
+                    flags ) );
+
+                // OaTail before triggered report.
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
+                    buffer,
+                    T::GpuRegisters::m_OaTail,
+                    address + oaTailPreBeginOffset,
                     flags ) );
             }
             else
@@ -508,6 +518,13 @@ namespace ML::BASE
             }
             else
             {
+                // OaTail after triggered report.
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
+                    buffer,
+                    T::GpuRegisters::m_OaTail,
+                    address + oaTailPostEndOffset,
+                    flags ) );
+
                 // Timestamp after triggered report.
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestampOnOagTriggers(
                     buffer,
@@ -519,6 +536,13 @@ namespace ML::BASE
                     buffer,
                     reportId,
                     address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
+                    flags ) );
+
+                // Store oa buffer base address.
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
+                    buffer,
+                    T::GpuRegisters::m_OaBuffer,
+                    address + oaBufferOffset,
                     flags ) );
             }
 

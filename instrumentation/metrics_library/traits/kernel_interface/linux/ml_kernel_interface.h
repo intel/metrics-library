@@ -250,28 +250,6 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns null begin override state.
-        /// @return true if null begin override has been enabled.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool IsNullBeginOverride() const
-        {
-            ML_FUNCTION_LOG( false, &m_Context );
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns null query override state.
-        /// @return true if null query override is enabled.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool IsNullQueryOverride() const
-        {
-            ML_FUNCTION_LOG( false, &m_Context );
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns posh query override state.
         /// @return true if posh query override has been enabled.
         //////////////////////////////////////////////////////////////////////////

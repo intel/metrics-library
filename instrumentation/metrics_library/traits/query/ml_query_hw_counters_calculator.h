@@ -45,10 +45,10 @@ namespace ML::BASE
         TT::Layouts::OaBuffer::State&                   m_OaBufferState;
         TT::OaBuffer&                                   m_OaBuffer;
         TT::KernelInterface&                            m_Kernel;
+        GpuCommandBufferType                            m_CommandBufferType;
         const ConfigurationHandle_1_0&                  m_UserConfiguration;
         const TT::Layouts::Configuration::TimestampType m_TimestampType;
         const uint64_t                                  m_GpuTimestampFrequency;
-        const bool                                      m_NullBegin;
         const bool                                      m_DenseModeEnabled;
 
         //////////////////////////////////////////////////////////////////////////
@@ -72,13 +72,13 @@ namespace ML::BASE
             , m_OaBufferState( m_QuerySlot.m_OaBufferState )
             , m_OaBuffer( m_Context.m_OaBuffer )
             , m_Kernel( m_Context.m_Kernel )
+            , m_CommandBufferType( GpuCommandBufferType::Last )
             , m_UserConfiguration( query.m_UserConfiguration )
             , m_TimestampType(
                   m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag || m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended
                       ? T::Layouts::Configuration::TimestampType::Oa
                       : T::Layouts::Configuration::TimestampType::Cs )
             , m_GpuTimestampFrequency( m_Kernel.GetGpuTimestampFrequency( m_TimestampType ) )
-            , m_NullBegin( m_Kernel.IsNullBeginOverride() )
             , m_DenseModeEnabled( m_Kernel.IsDenseMode() )
         {
         }
@@ -135,6 +135,9 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
+            auto& derived       = Derived();
+            m_CommandBufferType = derived.GetCommandBufferType();
+
             switch( m_QuerySlot.m_ReportCollectingMode )
             {
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
@@ -144,7 +147,7 @@ namespace ML::BASE
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOagExtended:
                     ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailPreBegin.All.m_Tail != m_ReportGpu.m_OaTailPostBegin.All.m_Tail, StatusCode::ReportLost );
                     ML_FUNCTION_CHECK_ERROR( m_ReportGpu.m_OaTailPreEnd.All.m_Tail != m_ReportGpu.m_OaTailPostEnd.All.m_Tail, StatusCode::ReportLost );
-                    ML_FUNCTION_CHECK_ERROR( m_OaBuffer.UpdateQuery( Derived() ), StatusCode::NotInitialized );
+                    ML_FUNCTION_CHECK_ERROR( m_OaBuffer.UpdateQuery( derived ), StatusCode::NotInitialized );
 
                     log.m_Result = m_Query.GetTriggeredOaReports( m_QuerySlot, m_ReportGpu );
 
@@ -468,20 +471,8 @@ namespace ML::BASE
 
                 if( ML_SUCCESS( log.m_Result ) )
                 {
-                    if( m_NullBegin )
-                    {
-                        if( source.m_ReportId == source.m_ReportsCount )
-                        {
-                            // Use only last counters partial differentials.
-                            log.Info( "Null begin override with query extended is used." );
-                            derived.AggregateCounters( source, m_ReportApi );
-                        }
-                    }
-                    else
-                    {
-                        // Aggregate all counters partial differentials.
-                        derived.AggregateCounters( source, m_ReportApi );
-                    }
+                    // Aggregate all counters partial differentials.
+                    derived.AggregateCounters( source, m_ReportApi );
 
                     m_ReportApi.m_CoreFrequencyChanged |= source.m_CoreFrequencyChanged;
                     m_ReportApi.m_CoreFrequency         = source.m_CoreFrequency;
@@ -533,10 +524,10 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            log.Debug( "Gpu frequency begin/end:", m_ReportGpu.m_CoreFrequencyBegin, m_ReportGpu.m_CoreFrequencyEnd );
-
             const uint32_t frequencyBegin = GetGpuClock( m_ReportGpu.m_CoreFrequencyBegin );
             const uint32_t frequencyEnd   = GetGpuClock( m_ReportGpu.m_CoreFrequencyEnd );
+
+            log.Debug( "Gpu frequency begin/end:", frequencyBegin, frequencyEnd );
 
             frequencyChanged |= ( frequencyBegin != frequencyEnd );
             frequency         = static_cast<uint64_t>( frequencyEnd ) * Constants::Time::m_Megahertz;
@@ -555,8 +546,6 @@ namespace ML::BASE
             TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-
-            log.Debug( "Gpu frequency:", frequency.m_Value );
 
             // Ratio encoding in this field can be decoded using the ratio
             // encoding table that is part of the definition of the
@@ -589,22 +578,14 @@ namespace ML::BASE
             const TT::Layouts::HwCounters::Report&     end,
             TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
         {
-            const auto&                                      derived = DerivedConst();
-            static constexpr TT::Layouts::HwCounters::Report dummy   = {};
-
-            if( m_NullBegin )
-            {
-                reportApi.m_ReportsCount = 1;
-            }
-
             if constexpr( calculateOa )
             {
-                derived.AdjustOaCounters( m_NullBegin ? dummy.m_Oa : begin.m_Oa, end.m_Oa, reportApi );
+                DerivedConst().AdjustOaCounters( begin.m_Oa, end.m_Oa, reportApi );
             }
 
             if constexpr( calculateUser )
             {
-                AdjustUserCounters( m_NullBegin ? dummy.m_User : begin.m_User, end.m_User, reportApi );
+                AdjustUserCounters( begin.m_User, end.m_User, reportApi );
             }
         }
 
@@ -636,8 +617,8 @@ namespace ML::BASE
             // Noa counters.
             NoaCountersDelta( begin, end, reportApi );
 
-            log.Debug( "Report oa begin:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogBeginOffset, FormatFlag::AdjustRight, begin );
-            log.Debug( "Report oa end:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndOffset, FormatFlag::AdjustRight, end );
+            log.Debug( "Report oa begin:", "(", FormatFlag::Decimal, m_OaBufferState.m_LogBeginOffset, ")", begin );
+            log.Debug( "Report oa end:", "(", FormatFlag::Decimal, m_OaBufferState.m_LogEndOffset, ")", end );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -963,7 +944,7 @@ namespace ML::BASE
                 for( uint32_t i = 0; i < oaReportsCount; ++i )
                 {
                     const uint32_t oaReportOffset = ( m_OaBufferState.m_TailPreBeginOffsetRolledBack + ( i * reportSize ) ) % oaBufferSize;
-                    const auto&    oaReport       = m_OaBuffer.GetReport( oaReportOffset );
+                    const auto&    oaReport       = m_OaBuffer.template GetReport<false>( oaReportOffset );
 
                     derived.SetContextIds( oaReport, currentContextId );
 
@@ -979,7 +960,7 @@ namespace ML::BASE
                         log.Info( "oaReport (skip end):   ", "(", FormatFlag::Decimal, oaReportOffset, ")", oaReport );
 
                         const uint32_t oaReportPostEndOffset = ( m_OaBufferState.m_TailPreBeginOffsetRolledBack + ( ( i + 1 ) * reportSize ) ) % oaBufferSize;
-                        const auto&    oaReportPostEnd       = m_OaBuffer.GetReport( oaReportPostEndOffset );
+                        const auto&    oaReportPostEnd       = m_OaBuffer.template GetReport<false>( oaReportPostEndOffset );
                         log.Debug( "oaReport (post end):   ", "(", FormatFlag::Decimal, oaReportPostEndOffset, ")", oaReportPostEnd );
                         break;
                     }
@@ -1043,7 +1024,7 @@ namespace ML::BASE
                 // This is the first report, use data from begin report:
                 reportBegin                      = &m_ReportBegin.m_Oa;
                 m_OaBufferState.m_LogBeginOffset = 0;
-                log.Debug( "Mirpc begin:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndOffset, FormatFlag::AdjustRight, *reportBegin );
+                log.Debug( "Mirpc begin:", *reportBegin );
             }
             else
             {
@@ -1056,7 +1037,7 @@ namespace ML::BASE
                 m_OaBufferState.m_LogBeginOffset = m_OaBufferState.m_CurrentOffset != m_OaBufferState.m_FirstOffset
                     ? m_OaBufferState.m_CurrentOffset - reportSize
                     : m_OaBufferState.m_NextAfterLastOffset - reportSize;
-                log.Debug( "Oa begin:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndOffset, FormatFlag::AdjustRight, *reportBegin );
+                log.Debug( "Oa begin:", "(", FormatFlag::Decimal, m_OaBufferState.m_LogBeginOffset, ")", *reportBegin );
             }
 
             return log.m_Result;
@@ -1084,7 +1065,7 @@ namespace ML::BASE
 
             if( m_OaBufferState.m_CurrentOffset != m_OaBufferState.m_NextAfterLastOffset )
             {
-                const auto& oaReport = m_OaBuffer.GetReport( m_OaBufferState.m_CurrentOffset % oaBufferSize );
+                const auto& oaReport = m_OaBuffer.template GetReport<false>( m_OaBufferState.m_CurrentOffset % oaBufferSize );
 
                 // Switch Oa report copy.
                 m_OaBufferState.m_ReportCopyIndex = ( m_OaBufferState.m_ReportCopyIndex + 1 ) % 2;
@@ -1100,7 +1081,7 @@ namespace ML::BASE
                     log.Warning( "Buffer overrun by get next." );
                     reportEnd                      = &m_ReportEnd.m_Oa;
                     m_OaBufferState.m_LogEndOffset = 0;
-                    log.Debug( "Mirpc end:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndOffset, FormatFlag::AdjustRight, *reportEnd );
+                    log.Debug( "Mirpc end:", *reportEnd );
 
                     m_OaBufferState.m_CurrentOffset = Constants::OaBuffer::m_InvalidOffset;
                     m_QuerySlot.m_ApiReportIndex    = m_QuerySlot.m_ApiReportsCount;
@@ -1109,7 +1090,7 @@ namespace ML::BASE
                 {
                     reportEnd                      = &m_OaBufferState.m_ReportCopy[m_OaBufferState.m_ReportCopyIndex];
                     m_OaBufferState.m_LogEndOffset = m_OaBufferState.m_CurrentOffset;
-                    log.Debug( "Oa end:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndOffset, FormatFlag::AdjustRight, *reportEnd );
+                    log.Debug( "Oa end:", "(", FormatFlag::Decimal, m_OaBufferState.m_LogEndOffset, ")", *reportEnd );
                 }
             }
             else
@@ -1118,7 +1099,7 @@ namespace ML::BASE
                 // This is the last api report.
                 reportEnd                      = &m_ReportEnd.m_Oa;
                 m_OaBufferState.m_LogEndOffset = 0;
-                log.Debug( "Mirpc end:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndOffset, FormatFlag::AdjustRight, *reportEnd );
+                log.Debug( "Mirpc end:", *reportEnd );
             }
 
             return log.m_Result;
@@ -1258,6 +1239,7 @@ namespace ML::XE_HPG
         using Base::DerivedConst;
         using Base::EqualOaReport;
         using Base::IsMeasuredContextId;
+        using Base::m_CommandBufferType;
         using Base::m_Context;
         using Base::m_ReportGpu;
         using Base::m_ReportBegin;
@@ -1364,11 +1346,10 @@ namespace ML::XE_HPG
                 //    Only reports with the ContextValid flag set are considered.
                 if( reason & static_cast<uint32_t>( T::Layouts::OaBuffer::ReportReason::ContextSwitch ) )
                 {
-                    const uint32_t sourceId          = static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId );
-                    const auto     commandBufferType = GetCommandBufferType();
-                    const bool     isRcsContext      = IsRcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Render;
-                    const bool     isCcsContext      = IsCcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Compute;
-                    const bool     isContextValid    = reportOa.m_Header.m_ReportId.m_ContextValid;
+                    const uint32_t sourceId       = static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId );
+                    const bool     isRcsContext   = IsRcsContext( sourceId ) && m_CommandBufferType == GpuCommandBufferType::Render;
+                    const bool     isCcsContext   = IsCcsContext( sourceId ) && m_CommandBufferType == GpuCommandBufferType::Compute;
+                    const bool     isContextValid = reportOa.m_Header.m_ReportId.m_ContextValid;
 
                     if( IsMeasuredContextId( static_cast<uint32_t>( reportOa.m_Header.m_ContextId ) ) )
                     {
@@ -1445,11 +1426,10 @@ namespace ML::XE_HPG
             const TT::Layouts::HwCounters::ReportOa& reportOa,
             uint32_t&                                currentContextId )
         {
-            const uint32_t sourceId          = static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId );
-            const auto     commandBufferType = GetCommandBufferType();
-            const bool     isRcsContext      = IsRcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Render;
-            const bool     isCcsContext      = IsCcsContext( sourceId ) && commandBufferType == GpuCommandBufferType::Compute;
-            const bool     isContextValid    = reportOa.m_Header.m_ReportId.m_ContextValid;
+            const uint32_t sourceId       = static_cast<uint32_t>( reportOa.m_Header.m_ReportId.m_SourceId );
+            const bool     isRcsContext   = IsRcsContext( sourceId ) && m_CommandBufferType == GpuCommandBufferType::Render;
+            const bool     isCcsContext   = IsCcsContext( sourceId ) && m_CommandBufferType == GpuCommandBufferType::Compute;
+            const bool     isContextValid = reportOa.m_Header.m_ReportId.m_ContextValid;
 
             if( ( isRcsContext || isCcsContext ) && isContextValid )
             {
@@ -1533,7 +1513,7 @@ namespace ML::XE_HPG
             const auto csDescription = T::Layouts::HwCounters::GetCommandStreamerDescription( m_ReportGpu.m_CommandStreamerIdentificator, m_Context );
 
             log.Info(
-                "oaTails:", csDescription,
+                "OaTails:", csDescription,
                 FormatFlag::Decimal,
                 "PreBegin =", oaTailPreBeginOffset,
                 ", PostBegin =", oaTailPostBeginOffset,
@@ -1547,20 +1527,16 @@ namespace ML::XE_HPG
                 : ( oaTailPostEndOffset - oaTailPreBeginOffset ) / reportSize;
 
             // Dump all OA reports generated during query.
-            log.Debug(
-                "query window reportsOa count:",
-                csDescription,
-                FormatFlag::Decimal,
-                oaWindowSize );
+            log.Debug( "Query window reportsOa count:", FormatFlag::Decimal, oaWindowSize );
 
             for( uint32_t i = 0; i < oaWindowSize; ++i )
             {
                 const uint32_t oaReportOffset = ( oaTailPreBeginOffset + ( i * reportSize ) ) % oaBufferSize;
-                auto&          reportOa       = m_OaBuffer.GetReport( oaReportOffset );
+                auto&          reportOa       = m_OaBuffer.template GetReport<false>( oaReportOffset );
 
                 log.Debug(
-                    "reportOa: ", csDescription,
-                    "(", FormatFlag::Decimal, FormatFlag::SetWidth5, oaReportOffset / reportSize, ")",
+                    "reportOa:", csDescription,
+                    "(", FormatFlag::SetWidth5, oaReportOffset / reportSize, ")",
                     reportOa );
             }
 
@@ -1569,12 +1545,12 @@ namespace ML::XE_HPG
             log.Info( "    m_Begin.m_Oa", csDescription, m_ReportGpu.m_Begin.m_Oa );
             log.Info( "    m_End.m_Oa", csDescription, m_ReportGpu.m_End.m_Oa );
 
-            log.Debug( "    m_EndTag              ", m_ReportGpu.m_EndTag );
-            log.Debug( "    m_OaBuffer            ", m_ReportGpu.m_OaBuffer.All.m_ReportBufferOffset );
-            log.Debug( "    m_CoreFrequencyBegin  ", m_ReportGpu.m_CoreFrequencyBegin );
-            log.Debug( "    m_CoreFrequencyEnd    ", m_ReportGpu.m_CoreFrequencyEnd );
-            log.Debug( "    m_MarkerUser          ", m_ReportGpu.m_MarkerUser );
-            log.Debug( "    m_MarkerDriver        ", m_ReportGpu.m_MarkerDriver );
+            log.Debug( "    m_EndTag            ", m_ReportGpu.m_EndTag );
+            log.Debug( "    m_OaBuffer          ", m_ReportGpu.m_OaBuffer.All.m_ReportBufferOffset );
+            log.Debug( "    m_CoreFrequencyBegin", m_ReportGpu.m_CoreFrequencyBegin );
+            log.Debug( "    m_CoreFrequencyEnd  ", m_ReportGpu.m_CoreFrequencyEnd );
+            log.Debug( "    m_MarkerUser        ", m_ReportGpu.m_MarkerUser );
+            log.Debug( "    m_MarkerDriver      ", m_ReportGpu.m_MarkerDriver );
 
             return log.m_Result;
         }
@@ -1641,11 +1617,11 @@ namespace ML::XE2_HPG
             {
                 const auto& beginVisa = reinterpret_cast<const TT::Layouts::HwCounters::ReportOaVisa&>( begin );
                 const auto& endVisa   = reinterpret_cast<const TT::Layouts::HwCounters::ReportOaVisa&>( end );
-                VisaCountersDelta( beginVisa, endVisa, reportApi );
+                DerivedConst().VisaCountersDelta( beginVisa, endVisa, reportApi );
             }
 
-            log.Info( "Report pec begin:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogBeginOffset, FormatFlag::AdjustRight, begin );
-            log.Info( "Report pec end:", FormatFlag::SetWidth5, FormatFlag::AdjustLeft, m_OaBufferState.m_LogEndOffset, FormatFlag::AdjustRight, end );
+            log.Info( "Report pec begin:", "(", FormatFlag::Decimal, m_OaBufferState.m_LogBeginOffset, ")", begin );
+            log.Info( "Report pec end:", "(", FormatFlag::Decimal, m_OaBufferState.m_LogEndOffset, ")", end );
         }
 
         //////////////////////////////////////////////////////////////////////////
