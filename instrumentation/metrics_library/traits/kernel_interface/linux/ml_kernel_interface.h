@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 #pragma once
 
-namespace ML
+namespace ML::BASE
 {
     //////////////////////////////////////////////////////////////////////////
     /// @brief Base type for KernelInterfaceTrait object.
@@ -37,7 +37,6 @@ namespace ML
         uint64_t                                               m_CsFrequency;
         uint64_t                                               m_GpuTimestampTickValue;
         int32_t                                                m_DeviceId;
-        bool                                                   m_DenseMode;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief KernelInterfaceTrait constructor.
@@ -46,14 +45,13 @@ namespace ML
         KernelInterfaceTrait( TT::Context& context )
             : m_Context( context )
             , m_Revision( T::ConstantsOs::Drm::Revision::Unsupported )
-            , m_IoControl( *this )
-            , m_Tbs( *this )
+            , m_IoControl( static_cast<TT::KernelInterface&>( *this ) )
+            , m_Tbs( static_cast<TT::KernelInterface&>( *this ) )
             , m_ConfigurationManager{}
             , m_OaFrequency( 0 )
             , m_CsFrequency( 0 )
             , m_GpuTimestampTickValue( 0 )
             , m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
-            , m_DenseMode( false )
         {
         }
 
@@ -168,25 +166,10 @@ namespace ML
         /// @param  oaConfigurationId  oa configuration id.
         /// @return                    operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode LoadOaConfigurationToGpu( const int64_t oaConfigurationId )
+        ML_INLINE StatusCode LoadOaConfigurationToGpu( const int32_t oaConfigurationId )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-
-            if( !m_DenseMode )
-            {
-                ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfigurationId ) );
-            }
-            else
-            {
-                // In dense mode we need to restart stream and unmap/map oa buffer after changing report format to dense.
-                m_Tbs.m_OaBufferMapped.Unmap();
-                m_Tbs.m_Stream.Disable();
-
-                m_Tbs.m_Stream.m_MetricSet = oaConfigurationId;
-
-                m_Tbs.m_Stream.Enable();
-                m_Tbs.m_OaBufferMapped.Map();
-            }
+            ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfigurationId ) );
 
             return log.m_Result;
         }
@@ -198,7 +181,7 @@ namespace ML
         /// @param  oaConfigurationId  oa configuration id.
         /// @return                    operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode UnloadOaConfigurationFromGpu( const int64_t oaConfigurationId )
+        ML_INLINE StatusCode UnloadOaConfigurationFromGpu( const int32_t oaConfigurationId )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( m_Tbs.m_Stream.ReleaseMetricSet( oaConfigurationId ) );
@@ -212,13 +195,13 @@ namespace ML
         /// @return oaConfigurationId oa configuration id.
         /// @return                   operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaConfiguration( int64_t& oaConfigurationId )
+        ML_INLINE StatusCode GetOaConfiguration( int32_t& oaConfigurationId )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             oaConfigurationId = m_IoControl.GetKernelMetricSet();
 
-            ML_FUNCTION_CHECK( oaConfigurationId != T::ConstantsOs::Tbs::m_Invalid );
+            ML_FUNCTION_CHECK( oaConfigurationId != T::ConstantsOs::Drm::m_Invalid );
             ML_FUNCTION_CHECK( m_Tbs.m_Stream.UpdateMetricSetInfo() );
 
             return log.m_Result;
@@ -241,6 +224,43 @@ namespace ML
         }
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief  Loads oa mert configuration to gpu through tbs interface.
+        /// @param  oaMertConfigurationId   oa mert configuration id.
+        /// @return                         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode LoadOaMertConfigurationToGpu( [[maybe_unused]] const int32_t oaMertConfigurationId )
+        {
+            // Not supported.
+            return StatusCode::Success;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Releases oa mert metric set. If metric set has been used previously
+        ///         then reference counter will be decreased. If reference counter
+        ///         will become zero then another metric set can be used.
+        /// @param  oaMertConfigurationId   oa mert configuration id.
+        /// @return                         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode UnloadOaMertConfigurationFromGpu( [[maybe_unused]] const int32_t oaMertConfigurationId )
+        {
+            // Not supported.
+            return StatusCode::Success;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns activated by metrics discovery oa mert configuration
+        ///         from the kernel.
+        /// @return oaMertConfigurationId   oa mert configuration id.
+        /// @return                         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetOaMertConfiguration( [[maybe_unused]] int32_t& oaMertConfigurationId )
+        {
+            // Not supported.
+            oaMertConfigurationId = T::ConstantsOs::Drm::m_Invalid;
+            return StatusCode::Success;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns auto sampling mode for hw counters.
         /// @return hw counters auto sampling mode.
         //////////////////////////////////////////////////////////////////////////
@@ -258,17 +278,6 @@ namespace ML
             ML_FUNCTION_LOG( false, &m_Context );
 
             return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns dense mode state.
-        /// @return true if dense mode has been enabled.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool IsDenseMode() const
-        {
-            ML_FUNCTION_LOG( false, &m_Context );
-
-            return log.m_Result = m_DenseMode;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -355,4 +364,157 @@ namespace ML
             return log.m_Result = StatusCode::Success;
         }
     };
-} // namespace ML
+} // namespace ML::BASE
+
+namespace ML::XE_LP
+{
+    template <typename T>
+    struct KernelInterfaceTrait : BASE::KernelInterfaceTrait<T>
+    {
+        ML_DECLARE_TRAIT( KernelInterfaceTrait, BASE );
+    };
+} // namespace ML::XE_LP
+
+namespace ML::XE_HPG
+{
+    template <typename T>
+    struct KernelInterfaceTrait : XE_LP::KernelInterfaceTrait<T>
+    {
+        ML_DECLARE_TRAIT( KernelInterfaceTrait, XE_LP );
+    };
+} // namespace ML::XE_HPG
+
+namespace ML::XE_HPC
+{
+    template <typename T>
+    struct KernelInterfaceTrait : XE_HPG::KernelInterfaceTrait<T>
+    {
+        ML_DECLARE_TRAIT( KernelInterfaceTrait, XE_HPG );
+    };
+} // namespace ML::XE_HPC
+
+namespace ML::XE2_HPG
+{
+    template <typename T>
+    struct KernelInterfaceTrait : XE_HPG::KernelInterfaceTrait<T>
+    {
+        ML_DECLARE_TRAIT( KernelInterfaceTrait, XE_HPG );
+    };
+} // namespace ML::XE2_HPG
+
+namespace ML::XE3
+{
+    template <typename T>
+    struct KernelInterfaceTrait : XE2_HPG::KernelInterfaceTrait<T>
+    {
+        ML_DECLARE_TRAIT( KernelInterfaceTrait, XE2_HPG );
+    };
+} // namespace ML::XE3
+
+namespace ML::XE3P
+{
+    template <typename T>
+    struct KernelInterfaceTrait : XE3::KernelInterfaceTrait<T>
+    {
+        ML_DECLARE_TRAIT( KernelInterfaceTrait, XE3 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::m_Context;
+        using Base::m_IoControl;
+        using Base::m_Tbs;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Members.
+        //////////////////////////////////////////////////////////////////////////
+        bool m_IsOaMertSupported;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief KernelInterfaceTrait constructor.
+        /// @param context  metrics library context.
+        //////////////////////////////////////////////////////////////////////////
+        KernelInterfaceTrait( TT::Context& context )
+            : Base( context )
+            , m_IsOaMertSupported( false )
+        {
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Loads oa mert configuration to gpu through tbs interface.
+        /// @param  oaMertConfigurationId   oa mert configuration id.
+        /// @return                         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode LoadOaMertConfigurationToGpu( const int32_t oaMertConfigurationId )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            if( m_IsOaMertSupported && oaMertConfigurationId != T::ConstantsOs::Drm::m_Invalid )
+            {
+                ML_FUNCTION_CHECK( m_Tbs.m_StreamMert.SetMetricSet( oaMertConfigurationId ) );
+            }
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Releases oa mert metric set. If metric set has been used previously
+        ///         then reference counter will be decreased. If reference counter
+        ///         will become zero then another metric set can be used.
+        /// @param  oaMertConfigurationId   oa mert configuration id.
+        /// @return                         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode UnloadOaMertConfigurationFromGpu( const int32_t oaMertConfigurationId )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            if( m_IsOaMertSupported && oaMertConfigurationId != T::ConstantsOs::Drm::m_Invalid )
+            {
+                ML_FUNCTION_CHECK( m_Tbs.m_StreamMert.ReleaseMetricSet( oaMertConfigurationId ) );
+            }
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns activated by metrics discovery oa mert configuration
+        ///         from the kernel.
+        /// @return oaMertConfigurationId   oa mert configuration id.
+        /// @return                         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetOaMertConfiguration( int32_t& oaMertConfigurationId )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            if( m_IsOaMertSupported )
+            {
+                oaMertConfigurationId = m_IoControl.GetKernelMertMetricSet();
+
+                if( oaMertConfigurationId != T::ConstantsOs::Drm::m_Invalid )
+                {
+                    ML_FUNCTION_CHECK( m_Tbs.m_StreamMert.UpdateMetricSetInfo() );
+                }
+                else
+                {
+                    log.Info( "Oa mert is not activated" );
+                }
+            }
+            else
+            {
+                oaMertConfigurationId = T::ConstantsOs::Drm::m_Invalid;
+                log.Info( "Oa mert is not supported" );
+            }
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa mert support state.
+        /// @return true if oa mert is supported.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsOaMertSupported() const
+        {
+            return m_IsOaMertSupported;
+        }
+    };
+} // namespace ML::XE3P

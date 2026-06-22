@@ -143,7 +143,10 @@ namespace ML::XE_HPC::OpenCL
         using TbsInterface                  = TbsInterfaceTrait<Traits>;                    //  linux/ml_tbs_interface.h
         #endif
         #if ML_LINUX
-        using TbsStream                     = TbsStreamTrait<Traits>;                       //  linux/ml_tbs_stream.h
+        using TbsStream                     = TbsStreamTrait<Traits, false>;                //  linux/ml_tbs_stream.h
+        #endif
+        #if ML_LINUX
+        using TbsStreamMert                 = TbsStreamTrait<Traits, true>;                 //  linux/ml_tbs_stream.h
         #endif
         #if ML_LINUX
         using IoControl                     = IoControlTrait<Traits>;                       //  linux/ml_io_control.h
@@ -321,7 +324,10 @@ namespace ML::XE_HPC::OneApi
         using TbsInterface                  = TbsInterfaceTrait<Traits>;                    //  linux/ml_tbs_interface.h
         #endif
         #if ML_LINUX
-        using TbsStream                     = TbsStreamTrait<Traits>;                       //  linux/ml_tbs_stream.h
+        using TbsStream                     = TbsStreamTrait<Traits, false>;                //  linux/ml_tbs_stream.h
+        #endif
+        #if ML_LINUX
+        using TbsStreamMert                 = TbsStreamTrait<Traits, true>;                 //  linux/ml_tbs_stream.h
         #endif
         #if ML_LINUX
         using IoControl                     = IoControlTrait<Traits>;                       //  linux/ml_io_control.h

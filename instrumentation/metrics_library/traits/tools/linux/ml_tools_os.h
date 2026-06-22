@@ -26,35 +26,6 @@ namespace ML
         ML_DELETE_DEFAULT_COPY_AND_MOVE( ToolsOsTrait );
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns process id.
-        /// @return process id.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static uint32_t GetProcessId()
-        {
-            return getpid();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns cpu timestamp.
-        /// @return timestamp value.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static uint64_t GetCpuTimestamp()
-        {
-            struct timespec time = {};
-            clock_gettime( CLOCK_MONOTONIC, &time );
-            return static_cast<uint64_t>( time.tv_nsec ) + static_cast<uint64_t>( time.tv_sec ) * Constants::Time::m_SecondInNanoseconds;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Gets exact cpu timestamp frequency.
-        /// @return cpu timestamp frequency.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE static uint64_t GetCpuTimestampFrequency()
-        {
-            return Constants::Time::m_SecondInNanoseconds;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Reads system settings.
         /// @param  name    system variable name.
         /// @return data    system variable value.

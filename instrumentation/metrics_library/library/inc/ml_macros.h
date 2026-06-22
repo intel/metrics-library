@@ -215,6 +215,11 @@ struct TraitsDummy
     using Base = BaseTypeName::This<T>;                           \
     ML_INHERIT_CONSTRUCTORS( This, Base )
 
+#define ML_DECLARE_TRAIT_WITH_TEMPLATE_ARG( This, BaseTypeName, TemplateArg ) \
+    using Base = BaseTypeName::This<T, TemplateArg>;                          \
+    ML_INHERIT_CONSTRUCTORS( This, Base )                                     \
+    ML_DELETE_DEFAULT_COPY_AND_MOVE( This )
+
 //////////////////////////////////////////////////////////////////////////
 /// @brief Structure pack definition macros.
 //////////////////////////////////////////////////////////////////////////

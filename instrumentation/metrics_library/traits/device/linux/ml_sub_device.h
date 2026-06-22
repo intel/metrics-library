@@ -519,6 +519,7 @@ namespace ML::XE2_HPG
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
+            auto&    derived    = Derived();
             auto     engines    = std::vector<EngineOaUnitClassInstance>();
             uint32_t subDevices = 0;
 
@@ -530,10 +531,10 @@ namespace ML::XE2_HPG
             log.Debug( "    sub device index  ", m_SubDeviceIndex );
 
             // Enumerate engines.
-            ML_FUNCTION_CHECK( Derived().GetEngines( engines ) );
+            ML_FUNCTION_CHECK( derived.GetEngines( engines ) );
 
             // Enumerate sub device engines.
-            ML_FUNCTION_CHECK( GetSubDeviceEngines( engines, subDevices ) );
+            ML_FUNCTION_CHECK( derived.GetSubDeviceEngines( engines, subDevices ) );
 
             // Helper data.
             const bool     isRootDevice           = m_IsSubDevice == false;
@@ -622,7 +623,7 @@ namespace ML::XE2_HPG
             return log.m_Result = StatusCode::Failed;
         }
 
-    private:
+    protected:
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Enumerates all available engines.
         /// @return engines device engines.
@@ -647,15 +648,20 @@ namespace ML::XE2_HPG
             {
                 const auto& oaUnit = *reinterpret_cast<drm_xe_oa_unit*>( oaUnitOffset );
 
-                if( oaUnit.oa_unit_type == DRM_XE_OA_UNIT_TYPE_OAG ) // Only OAG for query.
+                switch( oaUnit.oa_unit_type )
                 {
-                    // Copy engine data.
-                    for( uint32_t j = 0; j < oaUnit.num_engines; ++j )
-                    {
-                        engines.emplace_back( oaUnit.oa_unit_id, oaUnit.eci[j].engine_class, oaUnit.eci[j].engine_instance, oaUnit.eci[j].gt_id );
-                    }
+                    case DRM_XE_OA_UNIT_TYPE_OAG: // OAG unit for query.
+                        for( uint32_t j = 0; j < oaUnit.num_engines; ++j )
+                        {
+                            engines.emplace_back( oaUnit.oa_unit_id, oaUnit.eci[j].engine_class, oaUnit.eci[j].engine_instance, oaUnit.eci[j].gt_id );
+                        }
 
-                    m_IsConfigurableOaBufferSize = oaUnit.capabilities & DRM_XE_OA_CAPS_OA_BUFFER_SIZE;
+                        m_IsConfigurableOaBufferSize = oaUnit.capabilities & DRM_XE_OA_CAPS_OA_BUFFER_SIZE;
+                        break;
+
+                    default:
+                        log.Info( "Unsupported OA unit type", oaUnit.oa_unit_type );
+                        break;
                 }
 
                 oaUnitOffset += sizeof( oaUnit ) + oaUnit.num_engines * sizeof( oaUnit.eci[0] );
@@ -734,5 +740,147 @@ namespace ML::XE3P
     struct SubDeviceTrait : XE3::SubDeviceTrait<T>
     {
         ML_DECLARE_TRAIT( SubDeviceTrait, XE3 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using EngineOaUnitClassInstance = typename Base::EngineOaUnitClassInstance;
+        using Base::m_Context;
+        using Base::m_Engines;
+        using Base::m_IoControl;
+        using Base::m_IsConfigurableOaBufferSize;
+        using Base::m_SubDeviceIndex;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Enumerate sub device engines.
+        /// @param  engines    all sub device engines.
+        /// @return subDevices sub device count.
+        /// @return            operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetSubDeviceEngines(
+            const std::vector<EngineOaUnitClassInstance>& engines,
+            uint32_t&                                     subDevices )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            for( uint32_t i = 0, subDevice = 0; i < engines.size(); ++i )
+            {
+                const bool newDevice =
+                    ( i > 0 ) &&
+                    ( engines[i].m_GtId != engines[i - 1].m_GtId );
+
+                subDevice  = subDevice + ( newDevice ? 1 : 0 );
+                subDevices = subDevice + 1;
+
+                if( subDevice == m_SubDeviceIndex )
+                {
+                    log.Debug(
+                        "Sub device / engine class and instance / gt id / oa unit",
+                        subDevice,
+                        engines[i].m_Class,
+                        engines[i].m_Instance,
+                        engines[i].m_GtId,
+                        engines[i].m_OaUnit );
+
+                    switch( engines[i].m_Class )
+                    {
+                        case DRM_XE_ENGINE_CLASS_RENDER:
+                        case DRM_XE_ENGINE_CLASS_COMPUTE:
+                        case T::Layouts::Drm::EngineClass::m_Mert:
+                            m_Engines.push_back( engines[i] );
+                            break;
+
+                        case DRM_XE_ENGINE_CLASS_VIDEO_DECODE:
+                        case DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE:
+                        case DRM_XE_ENGINE_CLASS_COPY:
+                            break;
+
+                        default:
+                            ML_ASSERT_ALWAYS();
+                            break;
+                    }
+                }
+            }
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Enumerates all available engines.
+        /// @return engines device engines.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetEngines( std::vector<EngineOaUnitClassInstance>& engines )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            auto       buffer     = std::vector<uint8_t>();
+            const bool validQuery = ML_SUCCESS( m_IoControl.Query( DRM_XE_DEVICE_QUERY_OA_UNITS, buffer ) );
+            const auto oaData     = reinterpret_cast<drm_xe_query_oa_units*>( buffer.data() );
+
+            // Query check.
+            ML_FUNCTION_CHECK( validQuery );
+            ML_FUNCTION_CHECK( oaData != nullptr );
+            ML_FUNCTION_CHECK( buffer.size() > 0 );
+
+            auto oaUnitOffset = reinterpret_cast<uint8_t*>( oaData->oa_units );
+
+            for( uint32_t i = 0; i < oaData->num_oa_units; ++i )
+            {
+                const auto& oaUnit = *reinterpret_cast<drm_xe_oa_unit*>( oaUnitOffset );
+
+                switch( oaUnit.oa_unit_type )
+                {
+                    case DRM_XE_OA_UNIT_TYPE_OAG: // OAG unit for query.
+                        for( uint32_t j = 0; j < oaUnit.num_engines; ++j )
+                        {
+                            engines.emplace_back( oaUnit.oa_unit_id, oaUnit.eci[j].engine_class, oaUnit.eci[j].engine_instance, oaUnit.eci[j].gt_id );
+                        }
+
+                        m_IsConfigurableOaBufferSize = oaUnit.capabilities & DRM_XE_OA_CAPS_OA_BUFFER_SIZE;
+                        break;
+
+                    case DRM_XE_OA_UNIT_TYPE_MERT: // OA MERT counters need to be included in query reports.
+                        engines.emplace_back( oaUnit.oa_unit_id, T::Layouts::Drm::EngineClass::m_Mert, 0, oaUnit.gt_id );
+
+                        m_Context.m_Kernel.m_IsOaMertSupported = true;
+                        break;
+
+                    default:
+                        log.Info( "Unsupported OA unit type", oaUnit.oa_unit_type );
+                        break;
+                }
+
+                oaUnitOffset += sizeof( oaUnit ) + oaUnit.num_engines * sizeof( oaUnit.eci[0] );
+            }
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa mert unit that can be used by tbs.
+        /// @return oaUnit  oa mert unit id.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetTbsOaMertUnit( uint32_t& oaUnit ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            for( auto& engine : m_Engines )
+            {
+                const bool isEngineMert = engine.m_Class == T::Layouts::Drm::EngineClass::m_Mert;
+
+                if( isEngineMert )
+                {
+                    oaUnit = engine.m_OaUnit;
+
+                    log.Debug( "Oa mert unit", oaUnit );
+
+                    return log.m_Result;
+                }
+            }
+
+            return log.m_Result = StatusCode::Failed;
+        }
     };
 } // namespace ML::XE3P

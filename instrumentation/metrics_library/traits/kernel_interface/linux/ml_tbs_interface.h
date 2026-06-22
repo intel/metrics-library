@@ -43,7 +43,7 @@ namespace ML::BASE
             void*                      m_CpuAddress;
             uint32_t                   m_Size;
             uint32_t                   m_ReportSize;
-            int32_t                    m_Stream;
+            int32_t                    m_StreamId;
             bool                       m_Mapped;
 
             //////////////////////////////////////////////////////////////////////////
@@ -55,7 +55,7 @@ namespace ML::BASE
                 , m_CpuAddress( nullptr )
                 , m_Size( 0 )
                 , m_ReportSize( sizeof( TT::Layouts::HwCounters::ReportOa ) )
-                , m_Stream( T::ConstantsOs::Tbs::m_Invalid )
+                , m_StreamId( T::ConstantsOs::Drm::m_Invalid )
                 , m_Mapped( false )
             {
             }
@@ -81,9 +81,9 @@ namespace ML::BASE
             ML_INLINE StatusCode Initialize( const int32_t stream )
             {
                 ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_FUNCTION_CHECK( stream != T::ConstantsOs::Tbs::m_Invalid );
+                ML_FUNCTION_CHECK( stream != T::ConstantsOs::Drm::m_Invalid );
 
-                m_Stream = stream;
+                m_StreamId = stream;
 
                 return log.m_Result;
             }
@@ -104,10 +104,10 @@ namespace ML::BASE
             ML_INLINE StatusCode Map()
             {
                 ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-                ML_FUNCTION_CHECK( m_Stream != T::ConstantsOs::Tbs::m_Invalid );
+                ML_FUNCTION_CHECK( m_StreamId != T::ConstantsOs::Drm::m_Invalid );
 
                 // Obtain oa buffer properties.
-                log.m_Result = m_Kernel.m_IoControl.MapOaBuffer( m_Stream, m_CpuAddress, m_Size );
+                log.m_Result = m_Kernel.m_IoControl.MapOaBuffer( m_StreamId, m_CpuAddress, m_Size );
 
                 // Validate obtain data.
                 ML_FUNCTION_CHECK( log.m_Result );
@@ -140,7 +140,7 @@ namespace ML::BASE
                 m_CpuAddress = nullptr;
                 m_Size       = 0;
                 m_Mapped     = false;
-                m_Stream     = T::ConstantsOs::Tbs::m_Invalid;
+                m_StreamId   = T::ConstantsOs::Drm::m_Invalid;
 
                 return log.m_Result;
             }
@@ -179,7 +179,7 @@ namespace ML::BASE
             {
                 const int32_t metricSet = m_IoControl.GetKernelMetricSet();
 
-                if( metricSet != T::ConstantsOs::Tbs::m_Invalid )
+                if( metricSet != T::ConstantsOs::Drm::m_Invalid )
                 {
                     m_IoControl.RemoveMetricSet( metricSet );
                 }
@@ -532,5 +532,126 @@ namespace ML::XE3P
     struct TbsInterfaceTrait : XE3::TbsInterfaceTrait<T>
     {
         ML_DECLARE_TRAIT( TbsInterfaceTrait, XE3 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::GetTimerPeriodExponent;
+        using Base::m_Kernel;
+        using Base::m_IoControl;
+        using Base::m_Stream;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Members.
+        //////////////////////////////////////////////////////////////////////////
+        TT::TbsStreamMert m_StreamMert;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief TbsInterfaceTrait constructor.
+        /// @param kernel reference to kernel interface object.
+        //////////////////////////////////////////////////////////////////////////
+        TbsInterfaceTrait( TT::KernelInterface& kernel )
+            : Base( kernel )
+            , m_StreamMert( kernel )
+        {
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief TbsInterfaceTrait destructor.
+        //////////////////////////////////////////////////////////////////////////
+        ~TbsInterfaceTrait()
+        {
+            if( m_Kernel.IsOaMertSupported() )
+            {
+                m_StreamMert.Disable();
+
+                // Remove metric set activated by metrics discovery if used for query.
+                if( !m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled )
+                {
+                    const int32_t metricSet = m_IoControl.GetKernelMertMetricSet();
+
+                    if( metricSet != T::ConstantsOs::Drm::m_Invalid )
+                    {
+                        m_IoControl.RemoveMetricSet( metricSet );
+                    }
+                }
+            }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Initializes tbs interface.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode Initialize()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_CHECK( m_Stream.Initialize() );
+
+            if( m_Kernel.IsOaMertSupported() )
+            {
+                if( ML_FAIL( m_StreamMert.Initialize() ) )
+                {
+                    ML_FUNCTION_CHECK( m_Stream.Disable() );
+                    log.m_Result = StatusCode::Failed;
+                }
+            }
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns mert tbs properties.
+        /// @param  metricSet   metric set associated with mert tbs stream.
+        /// @return properties  mert tbs properties.
+        /// @return             operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetMertStreamProperties(
+            drm_xe_ext_set_property properties[],
+            const int32_t           metricSet ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            uint32_t oaUnit       = 0;
+            uint32_t currentIndex = 0;
+            auto&    subDevice    = m_Kernel.m_Context.m_SubDevice;
+
+            auto addProperty = [&]( const uint64_t key, const uint64_t value )
+            {
+                drm_xe_ext_set_property property = {};
+                property.base.name               = DRM_XE_OA_EXTENSION_SET_PROPERTY;
+                property.property                = key;
+                property.value                   = value;
+
+                properties[currentIndex] = property;
+
+                if( currentIndex > 0 )
+                {
+                    properties[currentIndex - 1].base.next_extension = reinterpret_cast<uint64_t>( &properties[currentIndex] );
+                }
+
+                ++currentIndex;
+            };
+
+            ML_FUNCTION_CHECK( subDevice.GetTbsOaMertUnit( oaUnit ) );
+
+            addProperty( DRM_XE_OA_PROPERTY_OA_UNIT_ID, oaUnit );
+            addProperty( DRM_XE_OA_PROPERTY_SAMPLE_OA, true );
+            addProperty( DRM_XE_OA_PROPERTY_OA_METRIC_SET, static_cast<uint32_t>( metricSet ) );
+            addProperty( DRM_XE_OA_PROPERTY_OA_FORMAT, GetOaMertReportType() );
+            addProperty( DRM_XE_OA_PROPERTY_OA_PERIOD_EXPONENT, GetTimerPeriodExponent( T::ConstantsOs::Tbs::m_TimerPeriod ) );
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns oa mert report type.
+        /// @return oa mert report type status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE uint32_t GetOaMertReportType() const
+        {
+            ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
+
+            return log.m_Result = ( DRM_XE_OA_FMT_TYPE_OAM_MPEC | ( 1 << 8 ) | ( 0 << 16 ) | ( 0 << 24 ) ); // counter select = 1, counter size = 0, bc report = 0
+        }
     };
 } // namespace ML::XE3P

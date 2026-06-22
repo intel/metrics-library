@@ -56,7 +56,8 @@ namespace ML
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
         TT::KernelInterface& m_Kernel;
-        int64_t              m_Id;
+        int32_t              m_Id;
+        int32_t              m_MertId;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Configuration hw counters oa constructor.
@@ -65,7 +66,8 @@ namespace ML
         ConfigurationHwCountersOaTrait( TT::Context& context )
             : Base( context )
             , m_Kernel{ context.m_Kernel }
-            , m_Id( T::ConstantsOs::Tbs::m_Invalid )
+            , m_Id( T::ConstantsOs::Drm::m_Invalid )
+            , m_MertId( T::ConstantsOs::Drm::m_Invalid )
         {
         }
 
@@ -105,10 +107,19 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
+            ML_FUNCTION_CHECK( m_Kernel.LoadOaConfigurationToGpu( m_Id ) );
 
-            m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter++;
+            if( ML_SUCCESS( m_Kernel.LoadOaMertConfigurationToGpu( m_MertId ) ) )
+            {
+                m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter++;
+            }
+            else
+            {
+                ML_FUNCTION_CHECK( m_Kernel.UnloadOaConfigurationFromGpu( m_Id ) );
+                log.m_Result = StatusCode::Failed;
+            }
 
-            return log.m_Result = m_Kernel.LoadOaConfigurationToGpu( m_Id );
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -121,10 +132,13 @@ namespace ML
         ML_INLINE StatusCode Deactivate() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            ML_FUNCTION_CHECK( m_Kernel.UnloadOaConfigurationFromGpu( m_Id ) );
+
+            log.m_Result = m_Kernel.UnloadOaMertConfigurationFromGpu( m_MertId );
 
             m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter--;
 
-            return log.m_Result = m_Kernel.UnloadOaConfigurationFromGpu( m_Id );
+            return log.m_Result;
         }
 
     private:
@@ -134,7 +148,11 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode Initialize()
         {
-            return m_Kernel.GetOaConfiguration( m_Id );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            ML_FUNCTION_CHECK( m_Kernel.GetOaConfiguration( m_Id ) );
+            ML_FUNCTION_CHECK( m_Kernel.GetOaMertConfiguration( m_MertId ) );
+
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////

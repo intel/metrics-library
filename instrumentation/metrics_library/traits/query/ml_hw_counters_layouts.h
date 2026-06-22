@@ -186,7 +186,7 @@ namespace ML::BASE
                 uint64_t                               m_UnsliceFrequency;
                 uint64_t                               m_Reserved3;
                 uint64_t                               m_Reserved4;
-                uint32_t                               m_SplitOccured;                  // Obsolete.
+                uint32_t                               m_Reserved5;
                 uint32_t                               m_CoreFrequencyChanged;          // Core frequency has changed.
                 uint64_t                               m_CoreFrequency;                 // Core frequency during the query.
                 uint32_t                               m_ReportId;
@@ -502,7 +502,7 @@ namespace ML::XE_HPG
                 uint64_t                               m_UnsliceFrequency;
                 uint64_t                               m_Reserved3;
                 uint64_t                               m_Reserved4;
-                uint32_t                               m_SplitOccured;                  // Obsolete.
+                uint32_t                               m_Reserved5;
                 uint32_t                               m_CoreFrequencyChanged;          // Core frequency has changed.
                 uint64_t                               m_CoreFrequency;                 // Core frequency during the query.
                 uint32_t                               m_ReportId;
@@ -771,7 +771,7 @@ namespace ML::XE2_HPG
 
                 uint64_t                               m_SliceFrequency;
                 uint64_t                               m_UnsliceFrequency;
-                uint32_t                               m_SplitOccured;                  // Obsolete.
+                uint32_t                               m_Reserved3;
                 uint32_t                               m_CoreFrequencyChanged;          // Core frequency has changed.
                 uint64_t                               m_CoreFrequency;                 // Core frequency during the query.
                 uint32_t                               m_ReportId;
@@ -848,6 +848,147 @@ namespace ML::XE3P
     struct HwCountersLayoutsTrait : XE3::HwCountersLayoutsTrait<T>
     {
         ML_DECLARE_TRAIT( HwCountersLayoutsTrait, XE3 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Inherited report objects.
+        //////////////////////////////////////////////////////////////////////////
+        using ReportOa     = typename Base::ReportOa;
+        using ReportOaVisa = typename Base::ReportOaVisa;
+        using ReportUser   = typename Base::ReportUser;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Constants.
+        //////////////////////////////////////////////////////////////////////////
+        static constexpr uint32_t m_MertCountersCount = 8;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Report mert.
+        //////////////////////////////////////////////////////////////////////////
+        struct ReportMert
+        {
+            uint64_t    m_Counter[m_MertCountersCount];
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Base type for Report object.
+        //////////////////////////////////////////////////////////////////////////
+        struct Report
+        {
+            union
+            {
+                struct
+                {
+                    union
+                    {
+                        ReportOa        m_Oa;     // 576 bytes.
+                        ReportOaVisa    m_OaVisa; // 640 bytes.
+                    };
+
+                    union
+                    {
+                        ReportUser    m_User; // 16 * 8 = 128 bytes.
+
+                        struct
+                        {
+                            ReportMert    m_Mert;              // 8 * 8 = 64 bytes.
+                            ReportMert    m_MertOverflowCheck; // 8 * 8 = 64 bytes.
+                        };
+                    };
+                };
+
+                // Pec reports have to be aligned to multiple of 64 bytes.
+                uint8_t m_Payload[Base::m_ReportAlignment];
+            };
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Hw counters structures related to query.
+        //////////////////////////////////////////////////////////////////////////
+        struct Query : Base::Query
+        {
+            using ReportApiFlags = typename Base::Query::ReportApiFlags;
+
+            struct ReportApi
+            {
+                uint64_t                               m_TotalTime;                     // Total query time in nanoseconds.
+                uint64_t                               m_GpuTicks;
+                uint64_t                               m_PerformanceEventCounter[Base::m_PerformanceEventCountersCount];
+                uint64_t                               m_VisaCounter[Base::m_VisaCountersCount];
+                uint64_t                               m_BeginTimestamp;
+                uint64_t                               m_Reserved1;
+                uint64_t                               m_Reserved2;
+                TT::Layouts::OaBuffer::ReportReason    m_MiddleQueryEvents;             // All types of events occurring between query begin and query end.
+                                                                                        // Single event values are defined in ReportReason struct.
+                uint32_t                               m_OverrunOccured;
+                uint64_t                               m_MarkerUser;
+                uint64_t                               m_MarkerDriver;
+
+                uint64_t                               m_SliceFrequency;
+                uint64_t                               m_UnsliceFrequency;
+                uint32_t                               m_Reserved3;
+                uint32_t                               m_CoreFrequencyChanged;          // Core frequency has changed.
+                uint64_t                               m_CoreFrequency;                 // Core frequency during the query.
+                uint32_t                               m_ReportId;
+                uint32_t                               m_ReportsCount;
+
+                union
+                {
+                    uint64_t                           m_UserCounter[Base::m_UserCountersCount];
+                    uint64_t                           m_MertCounter[m_MertCountersCount];
+                };
+
+                uint32_t                               m_UserCounterConfigurationId;
+                ReportApiFlags                         m_Flags;                         // Report flags are defined in ReportApiFlags.
+            };
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief Base type for QueryReportGpu object.
+            //////////////////////////////////////////////////////////////////////////
+            struct ReportGpu
+            {
+                // Begin/end report.
+                Report    m_Begin;
+                Report    m_End;
+
+                union
+                {
+                    struct
+                    {
+                        // Query end marker.
+                        uint64_t    m_EndTag;
+
+                        // Oa buffer data related.
+                        TT::Layouts::OaBuffer::Register        m_OaBuffer;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPreBegin;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPostBegin;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPreEnd;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPostEnd;
+
+                        // Query id.
+                        uint32_t    m_QueryIdBegin;
+                        uint32_t    m_QueryIdEnd;
+
+                        // Command streamer identificator.
+                        uint32_t    m_CommandStreamerIdentificator;
+
+                        // Frequency change indicators.
+                        uint32_t    m_CoreFrequencyBegin;
+                        uint32_t    m_CoreFrequencyEnd;
+
+                        // Markers.
+                        uint64_t    m_MarkerUser;
+                        uint64_t    m_MarkerDriver;
+                    };
+
+                    uint8_t    m_Payload[Base::m_ReportGpuAlignment];
+                };
+            };
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Sanity check.
+        //////////////////////////////////////////////////////////////////////////
+        ML_STATIC_ASSERT( ( sizeof( typename Query::ReportGpu ) % Base::m_ReportGpuAlignment ) == 0, "Wrong structure size" );
     };
 } // namespace ML::XE3P
 

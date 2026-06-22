@@ -113,6 +113,14 @@ namespace ML::XE3P
     struct DrmLayoutsTrait : XE3::DrmLayoutsTrait<T>
     {
         ML_DECLARE_TRAIT( DrmLayoutsTrait, XE3 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief EngineClass constants.
+        //////////////////////////////////////////////////////////////////////////
+        struct EngineClass
+        {
+            static constexpr uint32_t m_Mert = 65534;
+        };
     };
 } // namespace ML::XE3P
 

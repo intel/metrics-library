@@ -130,39 +130,6 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes MI_STORE_REGISTER_MEMORY command to gpu command buffer
-        ///         to store register 64 bit data in memory.
-        /// @param  buffer          target command buffer.
-        /// @param  registerAddress register address.
-        /// @param  memoryAddress   memory address.
-        /// @param  flags           gpu command flags.
-        /// @return                 operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <typename CommandBuffer>
-        ML_INLINE static StatusCode StoreRegisterToMemory64(
-            CommandBuffer& buffer,
-            const uint32_t registerAddress,
-            const uint64_t memoryAddress,
-            const Flags    flags )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                registerAddress,
-                memoryAddress,
-                flags ) );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
-                buffer,
-                registerAddress + sizeof( uint32_t ),
-                memoryAddress + sizeof( uint32_t ),
-                flags ) );
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Writes MI_STORE_DATA_IMMEDIATE command to gpu command buffer
         ///         to store a 32 bit constant in memory.
         /// @param  buffer  target command buffer.

@@ -160,6 +160,9 @@ namespace ML::XE3P
     struct GpuRegistersTrait : XE3::GpuRegistersTrait<T>
     {
         ML_DECLARE_TRAIT( GpuRegistersTrait, XE3 );
+
+        static constexpr uint32_t m_OaMertPec0 = 0x145300;
+        static constexpr uint32_t m_OaMertPes0 = 0x145340;
     };
 } // namespace ML::XE3P
 

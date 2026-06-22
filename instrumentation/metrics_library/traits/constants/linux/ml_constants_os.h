@@ -30,12 +30,11 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct Tbs
         {
-            static constexpr bool        m_MappingRequired     = false;
-            static constexpr uint32_t    m_CacheCapacity       = 100;
-            static constexpr uint32_t    m_TimerPeriod         = 0xFFFFFFFF;
-            static constexpr int64_t     m_Invalid             = -1;
-            static constexpr const char* m_ActiveMetricSetPath = "/sys/class/drm/card%d/metrics/%s/id";
-            static constexpr const char* m_ActiveMetricSetGuid = "2f01b241-7014-42a7-9eb6-a925cad3daba";
+            static constexpr bool        m_MappingRequired         = false;
+            static constexpr uint32_t    m_TimerPeriod             = 0xFFFFFFFF;
+            static constexpr const char* m_ActiveMetricSetPath     = "/sys/class/drm/card%d/metrics/%s/id";
+            static constexpr const char* m_ActiveMetricSetGuid     = "2f01b241-7014-42a7-9eb6-a925cad3daba";
+            static constexpr const char* m_ActiveMertMetricSetGuid = "8c3d5e9a-4b62-42a7-bd71-3e6a9f2c8d14";
         };
 
         //////////////////////////////////////////////////////////////////////////

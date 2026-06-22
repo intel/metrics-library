@@ -13,7 +13,7 @@ https://opensource.org/licenses/MIT
 
 ## Supported Platforms
 
-- Intel(R) Processors with Xe3P graphics devices (formerly Crescent Island)
+- Intel(R) Processors with Xe3P graphics devices (formerly Crescent Island, Nova Lake-P)
 - Intel(R) Processors with Xe3 graphics devices (formerly Panther Lake, Wildcat Lake, Nova Lake)
 - Intel(R) Processors with Xe2 graphics devices (formerly Lunar Lake)
 - Intel(R) Processors with Arc graphics devices (formerly Alchemist, Battlemage)

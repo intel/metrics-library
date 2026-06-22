@@ -49,7 +49,6 @@ namespace ML::BASE
         const ConfigurationHandle_1_0&                  m_UserConfiguration;
         const TT::Layouts::Configuration::TimestampType m_TimestampType;
         const uint64_t                                  m_GpuTimestampFrequency;
-        const bool                                      m_DenseModeEnabled;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Hw counters query report constructor.
@@ -79,7 +78,6 @@ namespace ML::BASE
                       ? T::Layouts::Configuration::TimestampType::Oa
                       : T::Layouts::Configuration::TimestampType::Cs )
             , m_GpuTimestampFrequency( m_Kernel.GetGpuTimestampFrequency( m_TimestampType ) )
-            , m_DenseModeEnabled( m_Kernel.IsDenseMode() )
         {
         }
 
@@ -486,7 +484,8 @@ namespace ML::BASE
                 m_ReportApi.m_ReportId     = 1;
                 m_ReportApi.m_ReportsCount = 1;
 
-                AdjustUserCounters( m_ReportGpu.m_Begin.m_User, m_ReportGpu.m_End.m_User, m_ReportApi );
+                derived.AdjustUserCounters( m_ReportGpu.m_Begin.m_User, m_ReportGpu.m_End.m_User, m_ReportApi );
+                derived.AdjustMertCounters( m_ReportGpu.m_Begin, m_ReportGpu.m_End, m_ReportApi );
             }
 
             return log.m_Result;
@@ -578,14 +577,17 @@ namespace ML::BASE
             const TT::Layouts::HwCounters::Report&     end,
             TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
         {
+            const auto& derived = DerivedConst();
+
             if constexpr( calculateOa )
             {
-                DerivedConst().AdjustOaCounters( begin.m_Oa, end.m_Oa, reportApi );
+                derived.AdjustOaCounters( begin.m_Oa, end.m_Oa, reportApi );
             }
 
             if constexpr( calculateUser )
             {
-                AdjustUserCounters( begin.m_User, end.m_User, reportApi );
+                derived.AdjustUserCounters( begin.m_User, end.m_User, reportApi );
+                derived.AdjustMertCounters( begin, end, reportApi );
             }
         }
 
@@ -653,6 +655,20 @@ namespace ML::BASE
             {
                 reportApi.m_UserCounterConfigurationId = Constants::Configuration::m_InvalidHandle;
             }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Sums mmio mert counters between two reports.
+        /// @param  begin       begin mmio mert data.
+        /// @param  end         end mmio mert data.
+        /// @return reportApi   report api.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void AdjustMertCounters(
+            [[maybe_unused]] const TT::Layouts::HwCounters::Report&     begin,
+            [[maybe_unused]] const TT::Layouts::HwCounters::Report&     end,
+            [[maybe_unused]] TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
+        {
+            // Not supported.
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -1795,7 +1811,7 @@ namespace ML::XE2_HPG
         {
             ML_FUNCTION_LOG( false, &m_Context );
 
-            switch( m_Context.m_Kernel.GetQueryModeOverride() )
+            switch( m_Kernel.GetQueryModeOverride() )
             {
                 case T::Layouts::HwCounters::Query::Mode::Render:
                     return log.m_Result = m_ReportGpu.m_CommandStreamerIdentificator == T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender; // RCS.
@@ -1870,5 +1886,73 @@ namespace ML::XE3P
     struct QueryHwCountersCalculatorTrait : XE3::QueryHwCountersCalculatorTrait<T>
     {
         ML_DECLARE_TRAIT( QueryHwCountersCalculatorTrait, XE3 );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::m_Context;
+        using Base::m_Kernel;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Sums mmio user counters between two reports.
+        /// @param  begin       begin mmio user data.
+        /// @param  end         end mmio user data.
+        /// @return reportApi   report api.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void AdjustUserCounters(
+            const TT::Layouts::HwCounters::ReportUser& begin,
+            const TT::Layouts::HwCounters::ReportUser& end,
+            TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            if( !m_Kernel.IsOaMertSupported() ) // User and mert counters are mutually exclusive.
+            {
+                Base::AdjustUserCounters( begin, end, reportApi );
+            }
+            else
+            {
+                reportApi.m_UserCounterConfigurationId = Constants::Configuration::m_InvalidHandle;
+            }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Sums mmio mert counters between two reports.
+        /// @param  begin       begin mmio mert data.
+        /// @param  end         end mmio mert data.
+        /// @return reportApi   report api.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void AdjustMertCounters(
+            const TT::Layouts::HwCounters::Report&     begin,
+            const TT::Layouts::HwCounters::Report&     end,
+            TT::Layouts::HwCounters::Query::ReportApi& reportApi ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+
+            if( m_Kernel.IsOaMertSupported() )
+            {
+                for( uint32_t i = 0; i < T::Layouts::HwCounters::m_MertCountersCount; ++i )
+                {
+                    const uint32_t counterBeginHigh              = static_cast<uint32_t>( begin.m_Mert.m_Counter[i] >> 32 );
+                    const uint32_t counterBeginHighOverflowCheck = static_cast<uint32_t>( begin.m_MertOverflowCheck.m_Counter[i] >> 32 );
+
+                    const uint64_t counterBegin = ( counterBeginHigh == counterBeginHighOverflowCheck )
+                        ? begin.m_Mert.m_Counter[i]
+                        : begin.m_MertOverflowCheck.m_Counter[i];
+
+                    const uint32_t counterEndHigh              = static_cast<uint32_t>( end.m_Mert.m_Counter[i] >> 32 );
+                    const uint32_t counterEndHighOverflowCheck = static_cast<uint32_t>( end.m_MertOverflowCheck.m_Counter[i] >> 32 );
+
+                    const uint64_t counterEnd = ( counterEndHigh == counterEndHighOverflowCheck )
+                        ? end.m_Mert.m_Counter[i]
+                        : end.m_MertOverflowCheck.m_Counter[i];
+
+                    log.Debug( "Begin mert counter", i, counterBegin );
+                    log.Debug( "End mert counter", i, counterEnd );
+
+                    reportApi.m_MertCounter[i] = T::Tools::CountersDelta( counterEnd, counterBegin, 64 ) / reportApi.m_ReportsCount;
+                }
+            }
+        }
     };
 } // namespace ML::XE3P
