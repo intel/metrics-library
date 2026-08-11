@@ -32,3 +32,10 @@ Template:           Tools/MetricsLibraryGenerator/templates/configuration_api.h
     #define ML_ENABLE_ONEAPI 0
 #endif
 
+// Vulkan
+#if ML_LINUX
+    #define ML_ENABLE_VULKAN 1
+#else
+    #define ML_ENABLE_VULKAN 0
+#endif
+

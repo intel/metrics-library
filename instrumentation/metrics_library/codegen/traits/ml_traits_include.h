@@ -180,3 +180,12 @@ Template:           Tools/MetricsLibraryGenerator/templates/traits_include.h
     #endif
 #endif
 
+//////////////////////////////////////////////////////////////////////////
+/// @brief Vulkan.
+//////////////////////////////////////////////////////////////////////////
+#if ML_ENABLE_VULKAN
+    #if ML_LINUX
+        #include "linux/ml_policy_vulkan.h"
+    #endif
+#endif
+

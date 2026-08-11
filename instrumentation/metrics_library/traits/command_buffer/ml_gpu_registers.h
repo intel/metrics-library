@@ -108,19 +108,8 @@ namespace ML::XE_HPG
         // Oag mmio trigger.
         static constexpr uint32_t m_OagTrigger = 0xDB1C;
 
-        // General purpose registers per command streamer (typically used for math).
-        static constexpr uint32_t m_GeneralPurposeRegisterRender   = 0x2600;
-        static constexpr uint32_t m_GeneralPurposeRegisterCompute0 = 0x1A600;
-        static constexpr uint32_t m_GeneralPurposeRegisterCompute1 = 0x1C600;
-        static constexpr uint32_t m_GeneralPurposeRegisterCompute2 = 0x1E600;
-        static constexpr uint32_t m_GeneralPurposeRegisterCompute3 = 0x26600;
-
-        // Registers used to identity command streamers.
-        static constexpr uint32_t m_IdentityRCS  = m_GeneralPurposeRegisterRender;
-        static constexpr uint32_t m_IdentityCCS0 = m_GeneralPurposeRegisterCompute0;
-        static constexpr uint32_t m_IdentityCCS1 = m_GeneralPurposeRegisterCompute1;
-        static constexpr uint32_t m_IdentityCCS2 = m_GeneralPurposeRegisterCompute2;
-        static constexpr uint32_t m_IdentityCCS3 = m_GeneralPurposeRegisterCompute3;
+        // Command streamer engine id.
+        static constexpr uint32_t m_CommandStreamerEngineId = 0x208C;
     };
 } // namespace ML::XE_HPG
 

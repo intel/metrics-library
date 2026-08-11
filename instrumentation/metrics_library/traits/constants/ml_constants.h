@@ -101,8 +101,10 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct Query
         {
-            static constexpr uint32_t m_DummyContextId = 0xFFFFFFFF;
-            static constexpr uint32_t m_QuerySourceId  = 0xC0000000;
+            static constexpr uint32_t m_DummyContextId                = 0xFFFFFFFF;
+            static constexpr uint32_t m_QuerySourceId                 = 0xC0000000;
+            static constexpr uint32_t m_MaxTriggeredReportRetries     = 100;
+            static constexpr uint32_t m_MaxTriggeredReportGetAttempts = 100;
         };
 
         //////////////////////////////////////////////////////////////////////////

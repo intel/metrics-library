@@ -85,6 +85,31 @@ namespace ML::XE_LP::OneApi
 } // namespace ML::XE_LP::OneApi
 #endif // ML_ENABLE_ONEAPI
 
+#if ML_ENABLE_VULKAN
+namespace ML::XE_LP::Vulkan
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE_LP::Vulkan
+#endif // ML_ENABLE_VULKAN
+
 #endif // ML_ENABLE_XE_LP
 
 #if ML_ENABLE_XE_HPG
@@ -143,6 +168,31 @@ namespace ML::XE_HPG::OneApi
 
 } // namespace ML::XE_HPG::OneApi
 #endif // ML_ENABLE_ONEAPI
+
+#if ML_ENABLE_VULKAN
+namespace ML::XE_HPG::Vulkan
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE_HPG::Vulkan
+#endif // ML_ENABLE_VULKAN
 
 #endif // ML_ENABLE_XE_HPG
 
@@ -203,6 +253,31 @@ namespace ML::XE_HPC::OneApi
 } // namespace ML::XE_HPC::OneApi
 #endif // ML_ENABLE_ONEAPI
 
+#if ML_ENABLE_VULKAN
+namespace ML::XE_HPC::Vulkan
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE_HPC::Vulkan
+#endif // ML_ENABLE_VULKAN
+
 #endif // ML_ENABLE_XE_HPC
 
 #if ML_ENABLE_XE2_HPG
@@ -261,6 +336,31 @@ namespace ML::XE2_HPG::OneApi
 
 } // namespace ML::XE2_HPG::OneApi
 #endif // ML_ENABLE_ONEAPI
+
+#if ML_ENABLE_VULKAN
+namespace ML::XE2_HPG::Vulkan
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE2_HPG::Vulkan
+#endif // ML_ENABLE_VULKAN
 
 #endif // ML_ENABLE_XE2_HPG
 
@@ -321,6 +421,31 @@ namespace ML::XE3::OneApi
 } // namespace ML::XE3::OneApi
 #endif // ML_ENABLE_ONEAPI
 
+#if ML_ENABLE_VULKAN
+namespace ML::XE3::Vulkan
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3::Vulkan
+#endif // ML_ENABLE_VULKAN
+
 #endif // ML_ENABLE_XE3
 
 #if ML_ENABLE_XE3P
@@ -379,6 +504,31 @@ namespace ML::XE3P::OneApi
 
 } // namespace ML::XE3P::OneApi
 #endif // ML_ENABLE_ONEAPI
+
+#if ML_ENABLE_VULKAN
+namespace ML::XE3P::Vulkan
+{
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerCreate_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerCreate_1_0(
+        const MarkerCreateData_1_0* createData,
+        MarkerHandle_1_0*           handle )
+    {
+        return DdiMarker<T>::MarkerCreate_1_0( createData, handle );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /// @brief Instantiates template function for MarkerDelete_1_0.
+    //////////////////////////////////////////////////////////////////////////
+    StatusCode ML_STDCALL MarkerDelete_1_0(
+        const MarkerHandle_1_0 handle )
+    {
+        return DdiMarker<T>::MarkerDelete_1_0( handle );
+    }
+
+} // namespace ML::XE3P::Vulkan
+#endif // ML_ENABLE_VULKAN
 
 #endif // ML_ENABLE_XE3P
 

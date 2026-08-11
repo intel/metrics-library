@@ -368,6 +368,12 @@ namespace ML::BASE
                 slot.ClearReportGpu();                // Clear gpu memory.
                 slot.Reset();                         // Reset slot state.
                 ResetOaBufferState( slot );           // Reset oa buffer state.
+
+                // Query id must be common for sub devices in implicit scaling mode.
+                if( m_Context.m_ClientOptions.m_WorkloadPartitionEnabled )
+                {
+                    slot.m_QueryIdBegin = static_cast<uint32_t>( T::Tools::GetHash( reinterpret_cast<uintptr_t>( buffer.GetBuffer() ) ) ) | Constants::Query::m_QuerySourceId;
+                }
             }
 
             const uint64_t gpuAddress = slot.m_GpuMemory.GpuAddress;
@@ -412,6 +418,12 @@ namespace ML::BASE
                 ML_FUNCTION_CHECK( slot.CheckStateConsistency( T::Queries::HwCountersSlot::State::Ended ) ); // Validate query calls sequence correctness.
 
                 slot.m_WorkloadEnd = buffer.GetBuffer();
+
+                // Query id must be common for sub devices in implicit scaling mode.
+                if( m_Context.m_ClientOptions.m_WorkloadPartitionEnabled )
+                {
+                    slot.m_QueryIdEnd = static_cast<uint32_t>( T::Tools::GetHash( reinterpret_cast<uintptr_t>( buffer.GetBuffer() ) ) ) | Constants::Query::m_QuerySourceId;
+                }
             }
 
             ML_FUNCTION_CHECK( FlushCommandStreamer( buffer ) );
@@ -778,7 +790,7 @@ namespace ML::BASE
             const TT::Queries::HwCountersSlot& slot )
         {
             const auto     collectingMode = slot.m_ReportCollectingMode;
-            const uint32_t queryId        = static_cast<const uint32_t>( T::Tools::GetHash( reinterpret_cast<const uintptr_t>( buffer.GetBuffer() ) ) ) | Constants::Query::m_QuerySourceId;
+            const uint32_t queryId        = begin ? slot.m_QueryIdBegin : slot.m_QueryIdEnd;
 
             const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
                 ? T::GpuCommands::Flags::WorkloadPartition
@@ -970,19 +982,6 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Gets query id from triggered report from oa buffer.
-        /// @param  begin   begin/end indicator.
-        /// @param  report  query report gpu.
-        /// @return         operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <bool begin>
-        ML_INLINE uint32_t GetQueryId( [[maybe_unused]] const TT::Layouts::HwCounters::Query::ReportGpu& report ) const
-        {
-            // queryId is not used before XeHP.
-            return 0;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
         /// @brief  Validates triggered oa report against queryId (put in contextId field)
         /// @param  reportHeader    query report header.
         /// @param  offset          oa report offset.
@@ -1016,26 +1015,26 @@ namespace ML::BASE
             auto& queryReportOa = begin ? queryReport.m_Begin.m_Oa : queryReport.m_End.m_Oa;
 
             // OaBuffer data.
-            TT::OaBuffer&      oaBuffer           = m_Context.m_OaBuffer;
-            const uint32_t     oaBufferSize       = oaBuffer.GetSize();
-            const uint32_t     reportSize         = oaBuffer.GetReportSize();
-            uint32_t           reportOaOffset     = begin ? slot.m_OaBufferState.m_TailPreBeginOffset : slot.m_OaBufferState.m_TailPreEndOffset;
-            uint32_t           reportOaOffsetPost = begin ? slot.m_OaBufferState.m_TailPostBeginOffset : slot.m_OaBufferState.m_TailPostEndOffset;
-            bool               reportOaValid      = false;
-            uint32_t           foundTriggers      = 0;
-            constexpr uint32_t expectedTriggers   = 1;
+            const auto&        derived             = DerivedConst();
+            TT::OaBuffer&      oaBuffer            = m_Context.m_OaBuffer;
+            const uint32_t     oaBufferSize        = oaBuffer.GetSize();
+            const uint32_t     reportSize          = oaBuffer.GetReportSize();
+            uint32_t           reportOaOffset      = begin ? slot.m_OaBufferState.m_TailPreBeginOffset : slot.m_OaBufferState.m_TailPreEndOffset;
+            uint32_t           reportOaOffsetPost  = begin ? slot.m_OaBufferState.m_TailPostBeginOffset : slot.m_OaBufferState.m_TailPostEndOffset;
+            uint32_t           foundReportOaOffset = 0;
+            uint32_t           foundTriggers       = 0;
+            constexpr uint32_t expectedTriggers    = begin ? 1 : 2;
+            bool               reportOaValid       = false;
+
+            // Number of retries to validate oa report.
+            uint32_t remainingRetries = Constants::Query::m_MaxTriggeredReportRetries;
 
             // Validate triggered oa report.
-            const auto& derived = DerivedConst();
-
-            // Number of tries to validate oa report.
-            uint32_t remainingTries = 100;
-
-            while( !reportOaValid && ( reportOaOffset != reportOaOffsetPost ) )
+            while( reportOaOffset != reportOaOffsetPost )
             {
                 auto& reportOa = oaBuffer.template GetReport<false>( reportOaOffset );
 
-                const uint32_t queryIdExpected = derived.template GetQueryId<begin>( queryReport );
+                const uint32_t queryIdExpected = begin ? slot.m_QueryIdBegin : slot.m_QueryIdEnd;
 
                 reportOaValid =
                     derived.ValidateReportReason( reportOa.m_Header ) &&
@@ -1046,54 +1045,45 @@ namespace ML::BASE
                 {
                     if( ++foundTriggers == 1 )
                     {
+                        // Keep the offset of the first found oa report.
+                        foundReportOaOffset = reportOaOffset;
+                    }
+
+                    if( foundTriggers == expectedTriggers )
+                    {
                         // Recreate query report from the first found triggered oa report.
+                        auto& foundReportOa = oaBuffer.template GetReport<false>( foundReportOaOffset );
+
                         log.Info(
                             "Used reportOa: ",
-                            "(", FormatFlag::Decimal, FormatFlag::SetWidth5, reportOaOffset, ")",
-                            reportOa );
+                            "(", FormatFlag::Decimal, FormatFlag::SetWidth5, foundReportOaOffset, ")",
+                            foundReportOa );
 
                         // Copy triggered oa report into query oa report.
-                        derived.CopyTriggeredOaReport( queryReportOa, reportOa );
-                    }
+                        derived.CopyTriggeredOaReport( queryReportOa, foundReportOa );
 
-                    if( foundTriggers < expectedTriggers )
-                    {
-                        // Set report to not valid and advance offset if more triggers are expected.
-                        reportOaValid  = false;
-                        reportOaOffset = ( reportOaOffset + reportSize ) % oaBufferSize;
-                    }
-                }
-                else
-                {
-                    reportOaOffset = ( reportOaOffset + reportSize ) % oaBufferSize;
-
-                    if( --remainingTries == 0 )
-                    {
-                        log.Critical( "Exhausted maximum number of retries" );
                         break;
                     }
+
+                    // Continue searching for the next triggered oa report.
+                    reportOaValid = false;
+                }
+
+                reportOaOffset = ( reportOaOffset + reportSize ) % oaBufferSize;
+
+                if( --remainingRetries == 0 )
+                {
+                    log.Critical( "Exhausted maximum number of retries" );
+                    break;
                 }
             }
 
-            if( reportOaValid )
+            if( !reportOaValid )
             {
-                // Reset attempts.
-                if constexpr( expectedTriggers > 1 )
+                if( ++slot.m_TriggeredReportGetAttempt < Constants::Query::m_MaxTriggeredReportGetAttempts )
                 {
-                    slot.m_TriggeredReportGetAttempt = 0;
-                }
-            }
-            else
-            {
-                if constexpr( expectedTriggers > 1 )
-                {
-                    if( ++slot.m_TriggeredReportGetAttempt < T::Layouts::HwCounters::m_TriggeredReportGetAttempts )
-                    {
-                        log.Debug( "Triggered report is not ready yet, attempt number:", slot.m_TriggeredReportGetAttempt );
-                        return log.m_Result = StatusCode::ReportNotReady;
-                    }
-
-                    slot.m_TriggeredReportGetAttempt = 0;
+                    log.Debug( "Triggered report is not ready yet, attempt number:", slot.m_TriggeredReportGetAttempt );
+                    return log.m_Result = StatusCode::ReportNotReady;
                 }
 
                 queryReport.m_Begin.m_Oa.m_Data = {};
@@ -1101,6 +1091,9 @@ namespace ML::BASE
                 log.Critical( "Unable to recreate report from triggered oa report" );
                 log.m_Result = StatusCode::ReportLost;
             }
+
+            // Reset attempts.
+            slot.m_TriggeredReportGetAttempt = 0;
 
             return log.m_Result;
         }
@@ -1196,18 +1189,6 @@ namespace ML::XE_HPG
         {
             // Do not validate gpu timestamps because query id in mmio trigger is unique enough.
             return true;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Gets query id from triggered report from oa buffer.
-        /// @param  begin   begin/end indicator.
-        /// @param  report  query report gpu.
-        /// @return         operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <bool begin>
-        ML_INLINE uint32_t GetQueryId( const TT::Layouts::HwCounters::Query::ReportGpu& report ) const
-        {
-            return begin ? report.m_QueryIdBegin : report.m_QueryIdEnd;
         }
 
         //////////////////////////////////////////////////////////////////////////

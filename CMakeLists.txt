@@ -677,7 +677,7 @@ elseif (${PLATFORM} STREQUAL linux) # linux
             -ffast-math         # enable fast-math optimizations (equivalent intent to -Ofast)
             -Werror             # treats warning as errors
             -fvisibility=hidden # hides non-exported symbols
-            -flto               # enables Link-Time Optimization (LTO)
+            -flto               # enables Link-Time Optimization (LTO) at compile-time; must be consistent with LTO at link-time
             -fPIC               # generates position-independent code during the compilation phase
             )
     endif ()
@@ -742,6 +742,15 @@ elseif (${PLATFORM} STREQUAL linux) # linux
             LINKER:-m64 # to enable x64 build on x86 host
             )
     endif ()
+
+    if ("${BUILD_TYPE}" STREQUAL "release" OR
+        "${BUILD_TYPE}" STREQUAL "release-internal" OR
+        "${BUILD_TYPE}" STREQUAL "releaseinternal")
+        set (COMMON_LINK_OPTIONS ${COMMON_LINK_OPTIONS}
+            -flto # enables Link-Time Optimization (LTO) at link-time (no "LINKER:" prefix required); must be consistent with LTO at compile-time
+            )
+    endif ()
+
     target_link_options (
         ${PROJECT_NAME} PRIVATE
         ${COMMON_LINK_OPTIONS}

@@ -608,10 +608,10 @@ namespace ML::BASE
             const uint64_t timestampEnd   = end.m_Header.m_Timestamp;
 
             // Total time in nanoseconds.
-            reportApi.m_TotalTime += ( T::Tools::CountersDelta( timestampEnd, timestampBegin, 32 ) * Constants::Time::m_SecondInNanoseconds ) / m_GpuTimestampFrequency;
+            reportApi.m_TotalTime += ( T::Tools::CountersDelta( timestampEnd, timestampBegin, T::Layouts::HwCounters::m_TimestampValidBits ) * Constants::Time::m_SecondInNanoseconds ) / m_GpuTimestampFrequency;
 
             // Gpu ticks.
-            reportApi.m_GpuTicks = T::Tools::CountersDelta( end.m_Header.m_GpuTicks, begin.m_Header.m_GpuTicks, 32 );
+            reportApi.m_GpuTicks = T::Tools::CountersDelta( end.m_Header.m_GpuTicks, begin.m_Header.m_GpuTicks, T::Layouts::HwCounters::m_GpuTicksValidBits );
 
             // Oa counters.
             DerivedConst().OaCountersDelta( begin, end, reportApi );
@@ -1326,15 +1326,15 @@ namespace ML::XE_HPG
         {
             ML_FUNCTION_LOG( GpuCommandBufferType::Render, &m_Context );
 
-            switch( m_ReportGpu.m_CommandStreamerIdentificator )
+            switch( m_ReportGpu.m_CommandStreamerId )
             {
-                case T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender:
+                case T::Layouts::HwCounters::m_CommandStreamerIdRender:
                     return log.m_Result = GpuCommandBufferType::Render;
 
-                case T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute0:
-                case T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute1:
-                case T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute2:
-                case T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute3:
+                case T::Layouts::HwCounters::m_CommandStreamerIdCompute0:
+                case T::Layouts::HwCounters::m_CommandStreamerIdCompute1:
+                case T::Layouts::HwCounters::m_CommandStreamerIdCompute2:
+                case T::Layouts::HwCounters::m_CommandStreamerIdCompute3:
                     return log.m_Result = GpuCommandBufferType::Compute;
 
                 default:
@@ -1469,24 +1469,23 @@ namespace ML::XE_HPG
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            const auto& derived              = DerivedConst();
-            const bool  validTags            = m_QuerySlot.m_EndTag == m_ReportGpu.m_EndTag;
-            const bool  validCommandStreamer = m_ReportGpu.m_CommandStreamerIdentificator > 0;
-            const bool  validMirpc           = derived.IsMirpcCompleted();
-            const bool  validQueryMode       = derived.IsQueryModeValid();
+            const auto& derived        = DerivedConst();
+            const bool  validTags      = m_QuerySlot.m_EndTag == m_ReportGpu.m_EndTag;
+            const bool  validMirpc     = derived.IsMirpcCompleted();
+            const bool  validQueryMode = derived.IsQueryModeValid();
 
             log.Debug( "Valid tags       ", validTags );
             log.Debug( "    obtained     ", m_ReportGpu.m_EndTag );
             log.Debug( "    expected     ", m_QuerySlot.m_EndTag );
-            log.Debug( "Command streamer ", m_ReportGpu.m_CommandStreamerIdentificator );
+            log.Debug( "Command streamer ", m_ReportGpu.m_CommandStreamerId );
             log.Debug( "Valid mirpc      ", validMirpc );
             log.Debug( "Valid query mode ", validQueryMode );
 
-            if( validTags && validCommandStreamer && validMirpc && validQueryMode ) // Query commands and mirpc completed and query mode is valid.
+            if( validTags && validMirpc && validQueryMode ) // Query commands and mirpc completed and query mode is valid.
             {
                 return log.m_Result = StatusCode::Success;
             }
-            else if( validTags && validCommandStreamer && !validQueryMode ) // Query commands completed, but query mode is not valid (mirpc is not completed either).
+            else if( validTags && !validQueryMode ) // Query commands completed, but query mode is not valid (mirpc is not completed either).
             {
                 return log.m_Result = StatusCode::ReportQueryModeMismatch;
             }
@@ -1526,7 +1525,7 @@ namespace ML::XE_HPG
             const uint32_t oaTailPreEndOffset    = m_OaBufferState.m_TailPreEndOffset;
             const uint32_t oaTailPostEndOffset   = m_OaBufferState.m_TailPostEndOffset;
 
-            const auto csDescription = T::Layouts::HwCounters::GetCommandStreamerDescription( m_ReportGpu.m_CommandStreamerIdentificator, m_Context );
+            const auto csDescription = T::Layouts::HwCounters::GetCommandStreamerDescription( m_ReportGpu.m_CommandStreamerId, m_Context );
 
             log.Info(
                 "OaTails:", csDescription,
@@ -1556,7 +1555,7 @@ namespace ML::XE_HPG
                     reportOa );
             }
 
-            log.Debug( "Command streamer id", m_ReportGpu.m_CommandStreamerIdentificator );
+            log.Debug( "Command streamer id", m_ReportGpu.m_CommandStreamerId );
             log.Debug( "Gpu report" );
             log.Info( "    m_Begin.m_Oa", csDescription, m_ReportGpu.m_Begin.m_Oa );
             log.Info( "    m_End.m_Oa", csDescription, m_ReportGpu.m_End.m_Oa );
@@ -1620,10 +1619,10 @@ namespace ML::XE2_HPG
             const uint64_t timestampEnd   = end.m_Header.m_Timestamp;
 
             // Total time in nanoseconds.
-            reportApi.m_TotalTime += ( T::Tools::CountersDelta( timestampEnd, timestampBegin, 64 ) * Constants::Time::m_SecondInNanoseconds ) / m_GpuTimestampFrequency;
+            reportApi.m_TotalTime += ( T::Tools::CountersDelta( timestampEnd, timestampBegin, T::Layouts::HwCounters::m_TimestampValidBits ) * Constants::Time::m_SecondInNanoseconds ) / m_GpuTimestampFrequency;
 
             // Gpu ticks.
-            reportApi.m_GpuTicks = T::Tools::CountersDelta( end.m_Header.m_GpuTicks, begin.m_Header.m_GpuTicks, 64 );
+            reportApi.m_GpuTicks = T::Tools::CountersDelta( end.m_Header.m_GpuTicks, begin.m_Header.m_GpuTicks, T::Layouts::HwCounters::m_GpuTicksValidBits );
 
             // Pec counters.
             DerivedConst().PecCountersDelta( begin, end, reportApi );
@@ -1814,10 +1813,10 @@ namespace ML::XE2_HPG
             switch( m_Kernel.GetQueryModeOverride() )
             {
                 case T::Layouts::HwCounters::Query::Mode::Render:
-                    return log.m_Result = m_ReportGpu.m_CommandStreamerIdentificator == T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender; // RCS.
+                    return log.m_Result = m_ReportGpu.m_CommandStreamerId == T::Layouts::HwCounters::m_CommandStreamerIdRender; // RCS.
 
                 case T::Layouts::HwCounters::Query::Mode::Compute:
-                    return log.m_Result = m_ReportGpu.m_CommandStreamerIdentificator == T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute0; // Only CCS0.
+                    return log.m_Result = m_ReportGpu.m_CommandStreamerId == T::Layouts::HwCounters::m_CommandStreamerIdCompute0; // Only CCS0.
 
                 case T::Layouts::HwCounters::Query::Mode::Global:
                     return log.m_Result = true;
@@ -1827,7 +1826,7 @@ namespace ML::XE2_HPG
 
                 default:
                     ML_ASSERT_ALWAYS();
-                    return log.m_Result = m_ReportGpu.m_CommandStreamerIdentificator == T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender; // Assume RCS as default.
+                    return log.m_Result = m_ReportGpu.m_CommandStreamerId == T::Layouts::HwCounters::m_CommandStreamerIdRender; // Assume RCS as default.
             }
         }
 
@@ -1850,7 +1849,7 @@ namespace ML::XE2_HPG
 
             if( m_QuerySlot.m_ReportCollectingMode == T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters )
             {
-                const auto csDescription = T::Layouts::HwCounters::GetCommandStreamerDescription( m_ReportGpu.m_CommandStreamerIdentificator, m_Context );
+                const auto csDescription = T::Layouts::HwCounters::GetCommandStreamerDescription( m_ReportGpu.m_CommandStreamerId, m_Context );
 
                 log.Debug( "Gpu report              ", csDescription );
                 log.Debug( "    m_Begin.m_Oa        ", m_ReportGpu.m_Begin.m_Oa );

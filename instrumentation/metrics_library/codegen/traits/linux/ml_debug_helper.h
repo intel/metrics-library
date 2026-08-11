@@ -260,6 +260,10 @@ namespace ML
                     output << "Unknown";
                     break;
 
+                case ClientApi::Vulkan:
+                    output << "Vulkan";
+                    break;
+
                 default:
                     output << "Illegal value: " << std::hex << std::showbase << static_cast<uint32_t>( value );
                     output << " (" << std::dec << static_cast<uint32_t>( value ) << ")";

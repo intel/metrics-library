@@ -68,6 +68,11 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
                 return &XE_LP::OneApi::DdiFunctionTable<XE_LP::OneApi::Traits>::GetInstance();
             #endif
 
+            #if ML_ENABLE_VULKAN
+            case ClientApi::Vulkan:
+                return &XE_LP::Vulkan::DdiFunctionTable<XE_LP::Vulkan::Traits>::GetInstance();
+            #endif
+
             default:
                 ML_ASSERT_ALWAYS_NO_ADAPTER();
                 break;
@@ -88,6 +93,11 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
             #if ML_ENABLE_ONEAPI
             case ClientApi::OneApi:
                 return &XE_HPG::OneApi::DdiFunctionTable<XE_HPG::OneApi::Traits>::GetInstance();
+            #endif
+
+            #if ML_ENABLE_VULKAN
+            case ClientApi::Vulkan:
+                return &XE_HPG::Vulkan::DdiFunctionTable<XE_HPG::Vulkan::Traits>::GetInstance();
             #endif
 
             default:
@@ -112,6 +122,11 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
                 return &XE_HPC::OneApi::DdiFunctionTable<XE_HPC::OneApi::Traits>::GetInstance();
             #endif
 
+            #if ML_ENABLE_VULKAN
+            case ClientApi::Vulkan:
+                return &XE_HPC::Vulkan::DdiFunctionTable<XE_HPC::Vulkan::Traits>::GetInstance();
+            #endif
+
             default:
                 ML_ASSERT_ALWAYS_NO_ADAPTER();
                 break;
@@ -132,6 +147,11 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
             #if ML_ENABLE_ONEAPI
             case ClientApi::OneApi:
                 return &XE2_HPG::OneApi::DdiFunctionTable<XE2_HPG::OneApi::Traits>::GetInstance();
+            #endif
+
+            #if ML_ENABLE_VULKAN
+            case ClientApi::Vulkan:
+                return &XE2_HPG::Vulkan::DdiFunctionTable<XE2_HPG::Vulkan::Traits>::GetInstance();
             #endif
 
             default:
@@ -156,6 +176,11 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
                 return &XE3::OneApi::DdiFunctionTable<XE3::OneApi::Traits>::GetInstance();
             #endif
 
+            #if ML_ENABLE_VULKAN
+            case ClientApi::Vulkan:
+                return &XE3::Vulkan::DdiFunctionTable<XE3::Vulkan::Traits>::GetInstance();
+            #endif
+
             default:
                 ML_ASSERT_ALWAYS_NO_ADAPTER();
                 break;
@@ -176,6 +201,11 @@ const DdiFunctionTableBase* GetFunctionTable( const ClientType_1_0& clientType )
             #if ML_ENABLE_ONEAPI
             case ClientApi::OneApi:
                 return &XE3P::OneApi::DdiFunctionTable<XE3P::OneApi::Traits>::GetInstance();
+            #endif
+
+            #if ML_ENABLE_VULKAN
+            case ClientApi::Vulkan:
+                return &XE3P::Vulkan::DdiFunctionTable<XE3P::Vulkan::Traits>::GetInstance();
             #endif
 
             default:

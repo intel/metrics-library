@@ -35,7 +35,10 @@ struct TraitsDummy
 //////////////////////////////////////////////////////////////////////////
 /// @brief ML_LOG
 //////////////////////////////////////////////////////////////////////////
-#define ML_LOG( adapter, level, functionName, message ) IU_DBG_PRINT_TAGGED( adapter, _##level, IU_DBG_LAYER_ML, ML_LOG_TAG, functionName, message )
+// "%s" is required here to treat "message" as data - it is a dynamically
+// built string (may contain '%' e.g. from stringified conditions) and must
+// never be passed as the printf format string itself.
+#define ML_LOG( adapter, level, functionName, message ) IU_DBG_PRINT_TAGGED( adapter, _##level, IU_DBG_LAYER_ML, ML_LOG_TAG, functionName, "%s", message )
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief ML_FUNCTION_NAME_PRETTY

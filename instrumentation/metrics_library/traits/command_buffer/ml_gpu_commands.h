@@ -439,18 +439,18 @@ namespace ML::BASE
 
             if constexpr( begin )
             {
-                // Timestamp before triggered report.
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestampOnOagTriggers(
-                    buffer,
-                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
-                    flags | Flags::EnableMmioRemap ) );
-
                 // Store report id.
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
                     buffer,
                     reportId,
                     address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_ReportId ),
                     flags ) );
+
+                // Timestamp before triggered report.
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreTimestampOnOagTriggers(
+                    buffer,
+                    address + oaReportOffset + offsetof( TT::Layouts::HwCounters::ReportOa, m_Header.m_Timestamp ),
+                    flags | Flags::EnableMmioRemap ) );
 
                 // OaTail before triggered report.
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
@@ -485,6 +485,11 @@ namespace ML::BASE
             }
             else
             {
+                // Trigger additional report in oa buffer on query end to make sure the previous one is completed.
+                ML_FUNCTION_CHECK( T::GpuCommands::TriggerQueryReport(
+                    buffer,
+                    queryId ) );
+
                 // OaTail after triggered report.
                 ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                     buffer,
@@ -911,15 +916,6 @@ namespace ML::XE_HPG
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            if constexpr( begin )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
-                    buffer,
-                    0,
-                    address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CommandStreamerIdentificator ),
-                    flags ) );
-            }
-
             switch( collectingMode )
             {
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::TriggerOag:
@@ -938,7 +934,7 @@ namespace ML::XE_HPG
 
             if constexpr( !begin )
             {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreCommandStreamerIdentificator(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreCommandStreamerId(
                     buffer,
                     address,
                     flags ) );
@@ -948,141 +944,26 @@ namespace ML::XE_HPG
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes gpu commands to trigger oag report and store hw
-        ///         counters.
-        /// @param  begin       begin/end query indicator.
-        /// @param  buffer      target command buffer.
-        /// @param  address     report memory offset.
-        /// @param  reportId    report id associated with executed query.
-        /// @param  queryId     query id associated with context id field within
-        ///                     a generated report.
-        /// @param  flags       gpu command flags.
-        /// @return             operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <bool begin, typename CommandBuffer>
-        ML_INLINE static StatusCode StoreHwCountersViaOagTriggers(
-            CommandBuffer& buffer,
-            const uint64_t address,
-            const uint32_t reportId,
-            const uint32_t queryId,
-            const Flags    flags = Flags::None )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
-
-            // Store query id on begin before storing oa counters.
-            if constexpr( begin )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::template StoreQueryId<begin>(
-                    buffer,
-                    address,
-                    queryId,
-                    flags ) );
-            }
-
-            // StoreHwCounters via trigger to oa buffer and overwrite gpu ticks in report gpu with (x)cs.tick.
-            // Note: oac/oar.tick do not correlate with oag.tick.
-            ML_FUNCTION_CHECK( Base::template StoreHwCountersViaOagTriggers<begin>(
-                buffer,
-                address,
-                reportId,
-                queryId,
-                flags ) );
-
-            // Store query id on end after storing oa counters.
-            if constexpr( !begin )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::template StoreQueryId<begin>(
-                    buffer,
-                    address,
-                    queryId,
-                    flags ) );
-            }
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes gpu commands to store command streamer identificator.
+        /// @brief  Writes gpu commands to store command streamer id.
         /// @param  buffer  target command buffer.
         /// @param  address report memory offset.
         /// @param  flags   gpu command flags.
         /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
         template <typename CommandBuffer>
-        ML_INLINE static StatusCode StoreCommandStreamerIdentificator(
+        ML_INLINE static StatusCode StoreCommandStreamerId(
             CommandBuffer& buffer,
             const uint64_t address,
             const Flags    flags = Flags::None )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            // Write render command streamer identificator to general purpose register without mmio remap.
-            ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                buffer,
-                T::GpuRegisters::m_IdentityRCS,
-                T::Layouts::HwCounters::m_CommandStreamerIdentificatorRender ) );
-
-            // Write compute command streamer 0 identificator to general purpose register without mmio remap.
-            ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                buffer,
-                T::GpuRegisters::m_IdentityCCS0,
-                T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute0 ) );
-
-            // Write compute command streamer 1 identificator to general purpose register without mmio remap.
-            ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                buffer,
-                T::GpuRegisters::m_IdentityCCS1,
-                T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute1 ) );
-
-            // Write compute command streamer 2 identificator to general purpose register without mmio remap.
-            ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                buffer,
-                T::GpuRegisters::m_IdentityCCS2,
-                T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute2 ) );
-
-            // Write compute command streamer 3 identificator to general purpose register without mmio remap.
-            ML_FUNCTION_CHECK( T::GpuCommands::LoadRegisterImmediate32(
-                buffer,
-                T::GpuRegisters::m_IdentityCCS3,
-                T::Layouts::HwCounters::m_CommandStreamerIdentificatorCompute3 ) );
-
-            // Store command streamer identificator to memory with mmio remap enabled.
+            // Store command streamer id to memory with mmio remap enabled.
             ML_FUNCTION_CHECK( T::GpuCommands::StoreRegisterToMemory32(
                 buffer,
-                T::GpuRegisters::m_GeneralPurposeRegisterRender,
-                address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CommandStreamerIdentificator ),
+                T::GpuRegisters::m_CommandStreamerEngineId,
+                address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CommandStreamerId ),
                 flags | Flags::EnableMmioRemap ) );
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Writes gpu commands to store command streamer identificator.
-        /// @param  begin   begin/end query indicator.
-        /// @param  buffer  target command buffer.
-        /// @param  address report memory offset.
-        /// @param  queryId query id.
-        /// @param  flags   gpu command flags.
-        /// @return         operation status.
-        //////////////////////////////////////////////////////////////////////////
-        template <bool begin, typename CommandBuffer>
-        ML_INLINE static StatusCode StoreQueryId(
-            CommandBuffer& buffer,
-            const uint64_t address,
-            const uint32_t queryId,
-            const Flags    flags = Flags::None )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
-
-            constexpr uint64_t queryIdOffset = begin
-                ? offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_QueryIdBegin )
-                : offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_QueryIdEnd );
-
-            ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
-                buffer,
-                queryId,
-                address + queryIdOffset,
-                flags ) );
 
             return log.m_Result;
         }
@@ -1418,15 +1299,6 @@ namespace ML::XE2_HPG
         {
             ML_FUNCTION_LOG( StatusCode::Success, &buffer.m_Context );
 
-            if constexpr( begin )
-            {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreDataToMemory32(
-                    buffer,
-                    0,
-                    address + offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_CommandStreamerIdentificator ),
-                    flags ) );
-            }
-
             switch( collectingMode )
             {
                 case T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters:
@@ -1453,7 +1325,7 @@ namespace ML::XE2_HPG
 
             if constexpr( !begin )
             {
-                ML_FUNCTION_CHECK( T::GpuCommands::StoreCommandStreamerIdentificator(
+                ML_FUNCTION_CHECK( T::GpuCommands::StoreCommandStreamerId(
                     buffer,
                     address,
                     flags ) );

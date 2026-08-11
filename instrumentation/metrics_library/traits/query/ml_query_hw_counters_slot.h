@@ -54,6 +54,8 @@ namespace ML::BASE
         TT::Layouts::OaBuffer::State                         m_OaBufferState;             // Oa buffer state captured during slot execution.
         TT::Layouts::HwCounters::Query::ReportCollectingMode m_ReportCollectingMode;      // Report collecting mode (via MIRPC / SRMs / Oa triggers).
         State                                                m_State;                     // Tracks state for query slot.
+        uint32_t                                             m_QueryIdBegin;              // Query id associated with context id at the begin of the query.
+        uint32_t                                             m_QueryIdEnd;                // Query id associated with context id at the end of the query.
         uint32_t                                             m_TriggeredReportGetAttempt; // Number of triggered report get attempts.
 
         //////////////////////////////////////////////////////////////////////////
@@ -72,6 +74,8 @@ namespace ML::BASE
             , m_OaBufferState{}
             , m_ReportCollectingMode( T::Layouts::HwCounters::Query::ReportCollectingMode::ReportPerformanceCounters )
             , m_State( State::Initial )
+            , m_QueryIdBegin( static_cast<uint32_t>( T::Tools::GetHash( reinterpret_cast<uintptr_t>( this ) ) ) | Constants::Query::m_QuerySourceId )
+            , m_QueryIdEnd( static_cast<uint32_t>( T::Tools::GetHash( reinterpret_cast<uintptr_t>( this ) ) + 1 ) | Constants::Query::m_QuerySourceId )
             , m_TriggeredReportGetAttempt( 0 )
         {
         }
@@ -92,6 +96,8 @@ namespace ML::BASE
             , m_OaBufferState( slot.m_OaBufferState )
             , m_ReportCollectingMode( slot.m_ReportCollectingMode )
             , m_State( slot.m_State )
+            , m_QueryIdBegin( slot.m_QueryIdBegin )
+            , m_QueryIdEnd( slot.m_QueryIdEnd )
             , m_TriggeredReportGetAttempt( slot.m_TriggeredReportGetAttempt )
         {
         }
@@ -112,6 +118,8 @@ namespace ML::BASE
             , m_OaBufferState( slot.m_OaBufferState )
             , m_ReportCollectingMode( slot.m_ReportCollectingMode )
             , m_State( slot.m_State )
+            , m_QueryIdBegin( slot.m_QueryIdBegin )
+            , m_QueryIdEnd( slot.m_QueryIdEnd )
             , m_TriggeredReportGetAttempt( slot.m_TriggeredReportGetAttempt )
         {
         }
@@ -124,6 +132,7 @@ namespace ML::BASE
         {
             if( this != &slot )
             {
+                m_GpuMemory                 = {}; // Do not copy gpu memory, as it's unique for each slot.
                 m_EndTag                    = slot.m_EndTag;
                 m_ApiReportIndex            = slot.m_ApiReportIndex;
                 m_ApiReportsCount           = slot.m_ApiReportsCount;
@@ -132,6 +141,8 @@ namespace ML::BASE
                 m_OaBufferState             = slot.m_OaBufferState;
                 m_ReportCollectingMode      = slot.m_ReportCollectingMode;
                 m_State                     = slot.m_State;
+                m_QueryIdBegin              = slot.m_QueryIdBegin;
+                m_QueryIdEnd                = slot.m_QueryIdEnd;
                 m_TriggeredReportGetAttempt = slot.m_TriggeredReportGetAttempt;
             }
 

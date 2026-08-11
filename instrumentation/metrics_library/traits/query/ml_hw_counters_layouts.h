@@ -32,12 +32,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief Constants.
         //////////////////////////////////////////////////////////////////////////
-        static constexpr uint32_t m_OaCountersCount            = 36;
-        static constexpr uint32_t m_OaCounters40bitsCount      = 32;
-        static constexpr uint32_t m_NoaCountersCount           = 16;
-        static constexpr uint32_t m_UserCountersCount          = 16;
-        static constexpr uint32_t m_ReportGpuAlignment         = 64;
-        static constexpr uint32_t m_TriggeredReportGetAttempts = 10;
+        static constexpr uint32_t m_OaCountersCount       = 36;
+        static constexpr uint32_t m_OaCounters40bitsCount = 32;
+        static constexpr uint32_t m_NoaCountersCount      = 16;
+        static constexpr uint32_t m_UserCountersCount     = 16;
+        static constexpr uint32_t m_ReportGpuAlignment    = 64;
+        static constexpr uint32_t m_TimestampValidBits    = 32;
+        static constexpr uint32_t m_GpuTicksValidBits     = 32;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Report user.
@@ -328,33 +329,33 @@ namespace ML::XE_HPG
         //////////////////////////////////////////////////////////////////////////
         /// @brief Command streamer constants.
         //////////////////////////////////////////////////////////////////////////
-        static constexpr uint32_t m_CommandStreamerIdentificatorRender   = 0xFF000000;
-        static constexpr uint32_t m_CommandStreamerIdentificatorCompute0 = 0xFFFF0000;
-        static constexpr uint32_t m_CommandStreamerIdentificatorCompute1 = 0xFFFF0001;
-        static constexpr uint32_t m_CommandStreamerIdentificatorCompute2 = 0xFFFF0002;
-        static constexpr uint32_t m_CommandStreamerIdentificatorCompute3 = 0xFFFF0003;
+        static constexpr uint32_t m_CommandStreamerIdRender   = 0b000000;
+        static constexpr uint32_t m_CommandStreamerIdCompute0 = 0b000101;
+        static constexpr uint32_t m_CommandStreamerIdCompute1 = 0b010101;
+        static constexpr uint32_t m_CommandStreamerIdCompute2 = 0b100101;
+        static constexpr uint32_t m_CommandStreamerIdCompute3 = 0b110101;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns description about itself.
-        /// @param  commandStreamerIdentificator identificator of command streamer.
-        /// @param  context                      context.
-        /// @return                              trait name used in library's code.
+        /// @param  commandStreamerId   id of command streamer.
+        /// @param  context             context.
+        /// @return                     cs name used in library's code.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE static const std::string GetCommandStreamerDescription(
-            const uint32_t                      commandStreamerIdentificator,
+            const uint32_t                      commandStreamerId,
             [[maybe_unused]] const TT::Context& context )
         {
-            switch( commandStreamerIdentificator )
+            switch( commandStreamerId )
             {
-                case m_CommandStreamerIdentificatorRender:
+                case m_CommandStreamerIdRender:
                     return "(RCS )";
-                case m_CommandStreamerIdentificatorCompute0:
+                case m_CommandStreamerIdCompute0:
                     return "(CCS0)";
-                case m_CommandStreamerIdentificatorCompute1:
+                case m_CommandStreamerIdCompute1:
                     return "(CCS1)";
-                case m_CommandStreamerIdentificatorCompute2:
+                case m_CommandStreamerIdCompute2:
                     return "(CCS2)";
-                case m_CommandStreamerIdentificatorCompute3:
+                case m_CommandStreamerIdCompute3:
                     return "(CCS3)";
                 default:
                     ML_ASSERT_ALWAYS_ADAPTER( context.m_AdapterId );
@@ -530,18 +531,18 @@ namespace ML::XE_HPG
                         uint64_t    m_EndTag;
 
                         // Oa buffer data related.
-                        TT::Layouts::OaBuffer::Register          m_OaBuffer;
-                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPreBegin;
-                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPostBegin;
-                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPreEnd;
-                        TT::Layouts::OaBuffer::TailRegister      m_OaTailPostEnd;
+                        TT::Layouts::OaBuffer::Register        m_OaBuffer;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPreBegin;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPostBegin;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPreEnd;
+                        TT::Layouts::OaBuffer::TailRegister    m_OaTailPostEnd;
 
-                        // Query id.
-                        uint32_t    m_QueryIdBegin;
-                        uint32_t    m_QueryIdEnd;
+                        // Reserved.
+                        uint32_t    m_Reserved1;
+                        uint32_t    m_Reserved2;
 
-                        // Command streamer identificator.
-                        uint32_t    m_CommandStreamerIdentificator;
+                        // Command streamer id.
+                        uint32_t    m_CommandStreamerId;
 
                         // Frequency change indicators.
                         uint32_t    m_CoreFrequencyBegin;
@@ -593,6 +594,8 @@ namespace ML::XE2_HPG
         static constexpr uint32_t m_OaReportAlignment             = 576;
         static constexpr uint32_t m_OaVisaReportAlignment         = 640;
         static constexpr uint64_t m_MirpcResetValue               = 0xF1E2D3C4B5A69788;
+        static constexpr uint32_t m_TimestampValidBits            = 56;
+        static constexpr uint32_t m_GpuTicksValidBits             = 64;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Type of pec counter.
@@ -805,12 +808,12 @@ namespace ML::XE2_HPG
                         TT::Layouts::OaBuffer::TailRegister    m_OaTailPreEnd;
                         TT::Layouts::OaBuffer::TailRegister    m_OaTailPostEnd;
 
-                        // Query id.
-                        uint32_t    m_QueryIdBegin;
-                        uint32_t    m_QueryIdEnd;
+                        // Reserved.
+                        uint32_t    m_Reserved1;
+                        uint32_t    m_Reserved2;
 
-                        // Command streamer identificator.
-                        uint32_t    m_CommandStreamerIdentificator;
+                        // Command streamer id.
+                        uint32_t    m_CommandStreamerId;
 
                         // Frequency change indicators.
                         uint32_t    m_CoreFrequencyBegin;
@@ -964,12 +967,12 @@ namespace ML::XE3P
                         TT::Layouts::OaBuffer::TailRegister    m_OaTailPreEnd;
                         TT::Layouts::OaBuffer::TailRegister    m_OaTailPostEnd;
 
-                        // Query id.
-                        uint32_t    m_QueryIdBegin;
-                        uint32_t    m_QueryIdEnd;
+                        // Reserved.
+                        uint32_t    m_Reserved1;
+                        uint32_t    m_Reserved2;
 
-                        // Command streamer identificator.
-                        uint32_t    m_CommandStreamerIdentificator;
+                        // Command streamer id.
+                        uint32_t    m_CommandStreamerId;
 
                         // Frequency change indicators.
                         uint32_t    m_CoreFrequencyBegin;
