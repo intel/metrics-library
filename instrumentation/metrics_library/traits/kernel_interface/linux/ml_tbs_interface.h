@@ -173,17 +173,6 @@ namespace ML::BASE
         ~TbsInterfaceTrait()
         {
             m_Stream.Disable();
-
-            // Remove metric set activated by metrics discovery if used for query.
-            if( !m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled )
-            {
-                const int32_t metricSet = m_IoControl.GetKernelMetricSet();
-
-                if( metricSet != T::ConstantsOs::Drm::m_Invalid )
-                {
-                    m_IoControl.RemoveMetricSet( metricSet );
-                }
-            }
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -247,7 +236,7 @@ namespace ML::BASE
             const uint64_t period = log2( timerPeriod / timestampPeriod ) - 1;
 
             ML_ASSERT( period );
-            return log.m_Result = period;
+            return log.m_Result = ( period > 31 ) ? 31 : period;
         }
 
     private:
@@ -277,7 +266,7 @@ namespace ML::XE_LP
         using Base::GetTimerPeriodExponent;
         using Base::m_Kernel;
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns tbs properties.
         /// @param  metricSet   metric set associated with tbs stream.
         /// @return properties  tbs properties.
@@ -304,7 +293,7 @@ namespace ML::XE_LP
         }
 
     protected:
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns oa report type.
         /// @return oa report type status.
         //////////////////////////////////////////////////////////////////////////
@@ -327,7 +316,7 @@ namespace ML::XE_HPG
         //////////////////////////////////////////////////////////////////////////
         using Base::m_Kernel;
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns oa report type.
         /// @return oa report type status.
         //////////////////////////////////////////////////////////////////////////
@@ -336,7 +325,7 @@ namespace ML::XE_HPG
             return static_cast<drm_i915_oa_format>( I915_OA_FORMAT_A24u40_A14u32_B8_C8 );
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns tbs properties.
         /// @param  metricSet   metric set associated with tbs stream.
         /// @return properties  tbs properties.
@@ -432,7 +421,7 @@ namespace ML::XE2_HPG
         using Base::GetTimerPeriodExponent;
         using Base::m_Kernel;
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns oa report type.
         /// @return oa report type status.
         //////////////////////////////////////////////////////////////////////////
@@ -456,7 +445,7 @@ namespace ML::XE2_HPG
             }
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns tbs properties.
         /// @param  metricSet   metric set associated with tbs stream.
         /// @return properties  tbs properties.
@@ -564,17 +553,6 @@ namespace ML::XE3P
             if( m_Kernel.IsOaMertSupported() )
             {
                 m_StreamMert.Disable();
-
-                // Remove metric set activated by metrics discovery if used for query.
-                if( !m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled )
-                {
-                    const int32_t metricSet = m_IoControl.GetKernelMertMetricSet();
-
-                    if( metricSet != T::ConstantsOs::Drm::m_Invalid )
-                    {
-                        m_IoControl.RemoveMetricSet( metricSet );
-                    }
-                }
             }
         }
 
@@ -599,7 +577,7 @@ namespace ML::XE3P
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns mert tbs properties.
         /// @param  metricSet   metric set associated with mert tbs stream.
         /// @return properties  mert tbs properties.
@@ -643,7 +621,7 @@ namespace ML::XE3P
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns oa mert report type.
         /// @return oa mert report type status.
         //////////////////////////////////////////////////////////////////////////

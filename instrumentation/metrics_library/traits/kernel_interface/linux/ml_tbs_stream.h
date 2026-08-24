@@ -38,7 +38,6 @@ namespace ML::BASE
         int32_t              m_Id;
         int32_t              m_MetricSet;
         int32_t              m_MetricSetInternal;
-        uint64_t             m_MetricSetModificationTimestamp;
         uint64_t             m_MetricSetIndexNode;
         bool                 m_IsMetricSetUpdateRequired;
 
@@ -52,7 +51,6 @@ namespace ML::BASE
             , m_Id( T::ConstantsOs::Drm::m_Invalid )
             , m_MetricSet( T::ConstantsOs::Drm::m_Invalid )
             , m_MetricSetInternal( T::ConstantsOs::Drm::m_Invalid )
-            , m_MetricSetModificationTimestamp( 0 )
             , m_MetricSetIndexNode( 0 )
             , m_IsMetricSetUpdateRequired( true )
         {
@@ -79,14 +77,8 @@ namespace ML::BASE
             }
 
             // Try to obtain metric set activated by metrics discovery.
-            if constexpr( isMert )
-            {
-                m_MetricSet = m_Kernel.m_IoControl.GetKernelMertMetricSet();
-            }
-            else
-            {
-                m_MetricSet = m_Kernel.m_IoControl.GetKernelMetricSet();
-            }
+            const std::string kernelMetricSet = m_Kernel.m_IoControl.template GetKernelMetricSetPath<isMert>();
+            m_MetricSet                       = m_Kernel.m_IoControl.template GetKernelMetricSet( kernelMetricSet );
 
             // Otherwise, create an internal metric set to enable tbs.
             if( m_MetricSet == T::ConstantsOs::Drm::m_Invalid )
@@ -183,36 +175,23 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Updates metric set info and checks if tbs metric set needs to
         ///         be updated on next activate.
+        /// @param  kernelMetricSet metric set path in the kernel.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode UpdateMetricSetInfo()
+        ML_INLINE StatusCode UpdateMetricSetInfo( const std::string& kernelMetricSet )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
-            uint64_t modificationTimestamp = 0;
-            uint64_t indexNode             = 0;
+            uint64_t indexNode = 0;
 
-            log.Info( "Old modification timestamp", m_MetricSetModificationTimestamp );
             log.Info( "Old index node", m_MetricSetIndexNode );
 
-            if constexpr( isMert )
-            {
-                ML_FUNCTION_CHECK( m_Kernel.m_IoControl.GetKernelMertMetricSetInfo( modificationTimestamp, indexNode ) );
-            }
-            else
-            {
-                ML_FUNCTION_CHECK( m_Kernel.m_IoControl.GetKernelMetricSetInfo( modificationTimestamp, indexNode ) );
-            }
+            ML_FUNCTION_CHECK( m_Kernel.m_IoControl.GetKernelMetricSetInfo( kernelMetricSet, indexNode ) );
 
-            // OA configuration changed if modification timestamp and index node have initial values or
-            // modification timestamp or index node changed.
-            m_IsMetricSetUpdateRequired =
-                ( m_MetricSetModificationTimestamp == 0 && m_MetricSetIndexNode == 0 ) ||
-                ( m_MetricSetModificationTimestamp != modificationTimestamp ) ||
-                ( m_MetricSetIndexNode != indexNode );
+            // OA configuration changed if index node has initial value or index node changed.
+            m_IsMetricSetUpdateRequired = ( m_MetricSetIndexNode == 0 ) || ( m_MetricSetIndexNode != indexNode );
 
-            m_MetricSetModificationTimestamp = modificationTimestamp;
-            m_MetricSetIndexNode             = indexNode;
+            m_MetricSetIndexNode = indexNode;
 
             log.Info( "Metric set update required", m_IsMetricSetUpdateRequired );
 
@@ -238,7 +217,7 @@ namespace ML::XE_LP
         using Base::m_MetricSet;
         using Base::m_MetricSetInternal;
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Enables tbs stream for a given metric set.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////

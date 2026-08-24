@@ -164,11 +164,15 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Loads oa configuration to gpu through tbs interface.
         /// @param  oaConfigurationId  oa configuration id.
+        /// @param  kernelMetricSet    kernel metric set path.
         /// @return                    operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode LoadOaConfigurationToGpu( const int32_t oaConfigurationId )
+        ML_INLINE StatusCode LoadOaConfigurationToGpu(
+            const int32_t      oaConfigurationId,
+            const std::string& kernelMetricSet )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            ML_FUNCTION_CHECK( m_Tbs.m_Stream.UpdateMetricSetInfo( kernelMetricSet ) );
             ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfigurationId ) );
 
             return log.m_Result;
@@ -192,17 +196,18 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns activated by metrics discovery oa configuration
         ///         from the kernel.
-        /// @return oaConfigurationId oa configuration id.
-        /// @return                   operation status.
+        /// @return oaConfigurationId   oa configuration id.
+        /// @return kernelMetricSet     kernel metric set path.
+        /// @return                     operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaConfiguration( int32_t& oaConfigurationId )
+        ML_INLINE StatusCode GetOaConfiguration( int32_t& oaConfigurationId, std::string& kernelMetricSet )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            oaConfigurationId = m_IoControl.GetKernelMetricSet();
+            kernelMetricSet   = m_IoControl.template GetKernelMetricSetPath<false>();
+            oaConfigurationId = m_IoControl.GetKernelMetricSet( kernelMetricSet );
 
             ML_FUNCTION_CHECK( oaConfigurationId != T::ConstantsOs::Drm::m_Invalid );
-            ML_FUNCTION_CHECK( m_Tbs.m_Stream.UpdateMetricSetInfo() );
 
             return log.m_Result;
         }
@@ -226,9 +231,12 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Loads oa mert configuration to gpu through tbs interface.
         /// @param  oaMertConfigurationId   oa mert configuration id.
+        /// @param  kernelMetricSet         kernel metric set path.
         /// @return                         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode LoadOaMertConfigurationToGpu( [[maybe_unused]] const int32_t oaMertConfigurationId )
+        ML_INLINE StatusCode LoadOaMertConfigurationToGpu(
+            [[maybe_unused]] const int32_t      oaMertConfigurationId,
+            [[maybe_unused]] const std::string& kernelMetricSet )
         {
             // Not supported.
             return StatusCode::Success;
@@ -251,9 +259,12 @@ namespace ML::BASE
         /// @brief  Returns activated by metrics discovery oa mert configuration
         ///         from the kernel.
         /// @return oaMertConfigurationId   oa mert configuration id.
+        /// @return kernelMetricSet         kernel metric set path.
         /// @return                         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaMertConfiguration( [[maybe_unused]] int32_t& oaMertConfigurationId )
+        ML_INLINE StatusCode GetOaMertConfiguration(
+            [[maybe_unused]] int32_t&     oaMertConfigurationId,
+            [[maybe_unused]] std::string& kernelMetricSet )
         {
             // Not supported.
             oaMertConfigurationId = T::ConstantsOs::Drm::m_Invalid;
@@ -443,14 +454,18 @@ namespace ML::XE3P
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Loads oa mert configuration to gpu through tbs interface.
         /// @param  oaMertConfigurationId   oa mert configuration id.
+        /// @param  kernelMetricSet         kernel metric set path.
         /// @return                         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode LoadOaMertConfigurationToGpu( const int32_t oaMertConfigurationId )
+        ML_INLINE StatusCode LoadOaMertConfigurationToGpu(
+            const int32_t      oaMertConfigurationId,
+            const std::string& kernelMetricSet )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             if( m_IsOaMertSupported && oaMertConfigurationId != T::ConstantsOs::Drm::m_Invalid )
             {
+                ML_FUNCTION_CHECK( m_Tbs.m_StreamMert.UpdateMetricSetInfo( kernelMetricSet ) );
                 ML_FUNCTION_CHECK( m_Tbs.m_StreamMert.SetMetricSet( oaMertConfigurationId ) );
             }
 
@@ -480,21 +495,21 @@ namespace ML::XE3P
         /// @brief  Returns activated by metrics discovery oa mert configuration
         ///         from the kernel.
         /// @return oaMertConfigurationId   oa mert configuration id.
+        /// @return kernelMetricSet         kernel metric set path.
         /// @return                         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaMertConfiguration( int32_t& oaMertConfigurationId )
+        ML_INLINE StatusCode GetOaMertConfiguration(
+            int32_t&     oaMertConfigurationId,
+            std::string& kernelMetricSet )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             if( m_IsOaMertSupported )
             {
-                oaMertConfigurationId = m_IoControl.GetKernelMertMetricSet();
+                kernelMetricSet       = m_IoControl.template GetKernelMetricSetPath<true>();
+                oaMertConfigurationId = m_IoControl.GetKernelMetricSet( kernelMetricSet );
 
-                if( oaMertConfigurationId != T::ConstantsOs::Drm::m_Invalid )
-                {
-                    ML_FUNCTION_CHECK( m_Tbs.m_StreamMert.UpdateMetricSetInfo() );
-                }
-                else
+                if( oaMertConfigurationId == T::ConstantsOs::Drm::m_Invalid )
                 {
                     log.Info( "Oa mert is not activated" );
                 }
@@ -502,6 +517,7 @@ namespace ML::XE3P
             else
             {
                 oaMertConfigurationId = T::ConstantsOs::Drm::m_Invalid;
+                kernelMetricSet       = "";
                 log.Info( "Oa mert is not supported" );
             }
 

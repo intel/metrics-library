@@ -134,7 +134,7 @@ namespace ML::XE_HPG
             const bool     isRootDevice           = m_IsSubDevice == false;
             const bool     isSubDevice            = m_IsSubDevice == true;
             const bool     isFirstSubDevice       = m_IsSubDevice && ( m_SubDeviceIndex == 0 );
-            const bool     isKernelSupport        = IsSubDeviceSupported() && m_Engines.size() > 0;
+            const bool     isKernelSupport        = IsSubDeviceSupported() && !m_Engines.empty();
             constexpr bool isAllowImplicitScaling = T::Policy::SubDevice::m_AllowImplicitScaling;
 
             // Supported modes.
@@ -277,7 +277,7 @@ namespace ML::XE_HPG
             // Query check.
             ML_FUNCTION_CHECK( validQuery );
             ML_FUNCTION_CHECK( enginesData != nullptr );
-            ML_FUNCTION_CHECK( buffer.size() > 0 );
+            ML_FUNCTION_CHECK( !buffer.empty() );
 
             // Copy engine data.
             for( uint32_t i = 0; i < enginesData->num_engines; ++i )
@@ -318,7 +318,7 @@ namespace ML::XE_HPG
 
             // Query check.
             ML_FUNCTION_CHECK( validQuery );
-            ML_FUNCTION_CHECK( buffer.size() > 0 );
+            ML_FUNCTION_CHECK( !buffer.empty() );
 
             // Copy regions data.
             auto regionsData = reinterpret_cast<drm_i915_query_memory_regions*>( buffer.data() );
@@ -640,7 +640,7 @@ namespace ML::XE2_HPG
             // Query check.
             ML_FUNCTION_CHECK( validQuery );
             ML_FUNCTION_CHECK( oaData != nullptr );
-            ML_FUNCTION_CHECK( buffer.size() > 0 );
+            ML_FUNCTION_CHECK( !buffer.empty() );
 
             auto oaUnitOffset = reinterpret_cast<uint8_t*>( oaData->oa_units );
 
@@ -821,7 +821,7 @@ namespace ML::XE3P
             // Query check.
             ML_FUNCTION_CHECK( validQuery );
             ML_FUNCTION_CHECK( oaData != nullptr );
-            ML_FUNCTION_CHECK( buffer.size() > 0 );
+            ML_FUNCTION_CHECK( !buffer.empty() );
 
             auto oaUnitOffset = reinterpret_cast<uint8_t*>( oaData->oa_units );
 

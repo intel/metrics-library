@@ -57,7 +57,9 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         TT::KernelInterface& m_Kernel;
         int32_t              m_Id;
-        int32_t              m_MertId;
+        int32_t              m_IdMert;
+        std::string          m_KernelMetricSet;
+        std::string          m_KernelMetricSetMert;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Configuration hw counters oa constructor.
@@ -67,7 +69,9 @@ namespace ML
             : Base( context )
             , m_Kernel{ context.m_Kernel }
             , m_Id( T::ConstantsOs::Drm::m_Invalid )
-            , m_MertId( T::ConstantsOs::Drm::m_Invalid )
+            , m_IdMert( T::ConstantsOs::Drm::m_Invalid )
+            , m_KernelMetricSet( "" )
+            , m_KernelMetricSetMert( "" )
         {
         }
 
@@ -107,9 +111,9 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
-            ML_FUNCTION_CHECK( m_Kernel.LoadOaConfigurationToGpu( m_Id ) );
+            ML_FUNCTION_CHECK( m_Kernel.LoadOaConfigurationToGpu( m_Id, m_KernelMetricSet ) );
 
-            if( ML_SUCCESS( m_Kernel.LoadOaMertConfigurationToGpu( m_MertId ) ) )
+            if( ML_SUCCESS( m_Kernel.LoadOaMertConfigurationToGpu( m_IdMert, m_KernelMetricSetMert ) ) )
             {
                 m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter++;
             }
@@ -134,7 +138,7 @@ namespace ML
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( m_Kernel.UnloadOaConfigurationFromGpu( m_Id ) );
 
-            log.m_Result = m_Kernel.UnloadOaMertConfigurationFromGpu( m_MertId );
+            log.m_Result = m_Kernel.UnloadOaMertConfigurationFromGpu( m_IdMert );
 
             m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter--;
 
@@ -149,8 +153,8 @@ namespace ML
         ML_INLINE StatusCode Initialize()
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            ML_FUNCTION_CHECK( m_Kernel.GetOaConfiguration( m_Id ) );
-            ML_FUNCTION_CHECK( m_Kernel.GetOaMertConfiguration( m_MertId ) );
+            ML_FUNCTION_CHECK( m_Kernel.GetOaConfiguration( m_Id, m_KernelMetricSet ) );
+            ML_FUNCTION_CHECK( m_Kernel.GetOaMertConfiguration( m_IdMert, m_KernelMetricSetMert ) );
 
             return log.m_Result;
         }

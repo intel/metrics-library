@@ -476,7 +476,7 @@ namespace ML
             std::vector<std::string> unpackedValues = { debug.ToString( values )... };
             std::ostringstream       output;
 
-            if( unpackedValues.size() > 0 )
+            if( !unpackedValues.empty() )
             {
                 const uint32_t indent        = debug.GetIndentLevel();
                 auto           value         = unpackedValues.begin();
@@ -506,7 +506,7 @@ namespace ML
                 // Print all remaining arguments.
                 while( ++value != unpackedValues.end() )
                 {
-                    if( value->size() > 0 )
+                    if( !value->empty() )
                     {
                         // Single space has been added to avoid arguments concatenation.
                         output << ' ';

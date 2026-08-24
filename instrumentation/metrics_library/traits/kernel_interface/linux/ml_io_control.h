@@ -42,7 +42,6 @@ namespace ML::BASE
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
         TT::KernelInterface& m_Kernel;
-        std::string          m_KernelMetricSet;
         int32_t              m_DrmFile;
 
     public:
@@ -59,7 +58,6 @@ namespace ML::BASE
             : Base()
             , m_DrmOpenedByUmd( false )
             , m_Kernel( kernel )
-            , m_KernelMetricSet( "" )
             , m_DrmFile( T::ConstantsOs::Drm::m_Invalid )
             , m_DrmCard( T::ConstantsOs::Drm::m_Invalid )
         {
@@ -123,19 +121,6 @@ namespace ML::BASE
                 return log.m_Result = StatusCode::Failed;
             }
 
-            // Obtain path that contains metric set id activated by metrics discovery.
-            TT::ConstantsOs::String::Path path           = "";
-            const uint32_t                subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
-            const std::string             guid           = GenerateQueryGuid<false>( subDeviceIndex );
-            ML_FUNCTION_CHECK( guid != "" );
-
-            snprintf( path, sizeof( path ),
-                      T::ConstantsOs::Tbs::m_ActiveMetricSetPath, // Activated metric file location.
-                      m_DrmCard,                                  // Drm card index.
-                      guid.c_str() );                             // Activated metric set guid for given sub device.
-
-            m_KernelMetricSet = path;
-
             // Obtain drm performance revision.
             // No check for fail, since old kernels do not support this information.
             DerivedConst().GetDrmRevision( revision );
@@ -143,15 +128,81 @@ namespace ML::BASE
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns metric set path activated by metrics discovery.
+        /// @return metric set path.
+        //////////////////////////////////////////////////////////////////////////
+        template <bool isOaMert>
+        ML_INLINE std::string GetKernelMetricSetPath()
+        {
+            ML_FUNCTION_LOG( std::string(), &m_Kernel.m_Context );
+
+            Constants::String::Path configsPath = {};
+            snprintf( configsPath, sizeof( configsPath ), T::ConstantsOs::Tbs::m_ConfigsPath, m_DrmCard );
+
+            DIR*        configsDirectory = opendir( configsPath );
+            dirent*     entry            = nullptr;
+            uint64_t    latestInode      = 0;
+            std::string latestConfigName;
+
+            const uint32_t     subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
+            constexpr uint32_t prefix         = isOaMert ? T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaMert : T::ConstantsOs::Tbs::m_ConfigGuidPrefixOa;
+
+            if( configsDirectory != nullptr )
+            {
+                // Enumerate through all config directories and find the one with the highest index node.
+                while( ( entry = readdir( configsDirectory ) ) != nullptr )
+                {
+                    uint32_t entryPrefix     = 0;
+                    uint32_t entryReportType = 0;
+                    uint32_t entrySubDevice  = 0;
+                    uint32_t entryUnused     = 0;
+                    uint64_t entryHash       = 0;
+
+                    // Guid is formatted as "prefix-reportType-subDeviceIndex-unused-hash".
+                    const bool validDirectory = entry->d_type == DT_DIR;
+                    const bool validFormat    = validDirectory && ( sscanf( entry->d_name, T::ConstantsOs::Tbs::m_ConfigGuidFormat, &entryPrefix, &entryReportType, &entrySubDevice, &entryUnused, &entryHash ) == 5 );
+                    const bool validConfig    = validFormat && ( entryPrefix == prefix ) && ( ( entrySubDevice == subDeviceIndex ) || ( ( subDeviceIndex == 0 ) && ( entrySubDevice == T::ConstantsOs::Tbs::m_ConfigGuidSubDeviceLegacy ) ) );
+
+                    if( validConfig )
+                    {
+                        Constants::String::Path configPath = {};
+                        struct stat             fileInfo   = {};
+
+                        snprintf( configPath, sizeof( configPath ), "%s/%s/id", configsPath, entry->d_name );
+
+                        log.Debug( "Found config", entry->d_name );
+
+                        if( ( stat( configPath, &fileInfo ) == 0 ) && ( fileInfo.st_ino > latestInode ) )
+                        {
+                            latestInode      = fileInfo.st_ino;
+                            latestConfigName = configPath;
+                        }
+                    }
+                }
+
+                closedir( configsDirectory );
+            }
+
+            if( latestConfigName.empty() )
+            {
+                log.Warning( "Cannot find any oa config directory" );
+                return log.m_Result;
+            }
+
+            return log.m_Result = latestConfigName;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns metric set id activated by metrics discovery.
+        /// @param  kernelMetricSet path to the file containing metric set id.
         /// @return metric set id.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE int32_t GetKernelMetricSet() const
+        ML_INLINE int32_t GetKernelMetricSet( const std::string& kernelMetricSet )
         {
             ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
 
-            if( ML_FAIL( ReadFile( m_KernelMetricSet, log.m_Result ) ) )
+            if( ML_FAIL( ReadFile( kernelMetricSet, log.m_Result ) ) )
             {
                 log.Warning( "Cannot get kernel metric set" );
             }
@@ -159,30 +210,28 @@ namespace ML::BASE
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns information about the file containing metric set id.
-        /// @return modificationTimestamp   time of last modification of the file.
-        /// @return indexNode               index node of the file.
-        /// @return                         operation status.
+        /// @param  kernelMetricSet path to the file containing metric set id.
+        /// @return indexNode       index node of the file.
+        /// @return                 operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetKernelMetricSetInfo(
-            uint64_t& modificationTimestamp,
-            uint64_t& indexNode ) const
+            const std::string& kernelMetricSet,
+            uint64_t&          indexNode ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
             struct stat fileInfo = {};
 
-            if( stat( m_KernelMetricSet.c_str(), &fileInfo ) < 0 )
+            if( stat( kernelMetricSet.c_str(), &fileInfo ) < 0 )
             {
                 log.Warning( "Failed to get information about the metric set file", errno, strerror( errno ) );
                 return log.m_Result = StatusCode::Failed;
             }
 
-            modificationTimestamp = fileInfo.st_mtime;
-            indexNode             = fileInfo.st_ino;
+            indexNode = fileInfo.st_ino;
 
-            log.Info( "Modification timestamp", modificationTimestamp );
             log.Info( "Index node", indexNode );
 
             return log.m_Result;
@@ -226,7 +275,7 @@ namespace ML::BASE
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Closes tbs stream.
         /// @param  stream tbs stream id.
         /// @return        operation status.
@@ -408,38 +457,26 @@ namespace ML::BASE
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Generates guid for query for given sub device index.
-        /// @param  subDeviceIndex  sub device index.
-        /// @return                 generated guid.
+        /// @return generated guid.
+        //////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////
         template <bool isOaMert>
-        ML_INLINE std::string GenerateQueryGuid( const uint32_t subDeviceIndex ) const
+        ML_INLINE std::string GenerateConfigGuid() const
         {
             ML_FUNCTION_LOG( std::string(), &m_Kernel.m_Context );
 
-            const std::string defaultGuid = isOaMert
-                ? T::ConstantsOs::Tbs::m_ActiveMertMetricSetGuid
-                : T::ConstantsOs::Tbs::m_ActiveMetricSetGuid;
+            constexpr uint32_t prefix         = isOaMert ? T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaMert : T::ConstantsOs::Tbs::m_ConfigGuidPrefixOa;
+            constexpr uint32_t reportType     = 0;
+            const uint32_t     subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
+            constexpr uint32_t unused         = 0;
+            constexpr uint64_t hash           = 0;
 
-            if( subDeviceIndex == 0 )
-            {
-                return log.m_Result = defaultGuid;
-            }
+            Constants::String::Path guid = {};
+            snprintf( guid, sizeof( guid ), T::ConstantsOs::Tbs::m_ConfigGuidFormat, prefix, reportType, subDeviceIndex, unused, hash );
 
-            const std::string valueToReplace    = "42a7";
-            const uint32_t    maxSubDeviceIndex = std::pow( 2, valueToReplace.length() * 4 ) - 1;
-
-            if( subDeviceIndex > maxSubDeviceIndex )
-            {
-                log.Error( "Invalid sub device index" );
-                return log.m_Result = "";
-            }
-
-            std::stringstream stream;
-            stream << std::setfill( '0' ) << std::setw( valueToReplace.length() ) << std::hex << subDeviceIndex;
-
-            return log.m_Result = std::regex_replace( defaultGuid, std::regex( valueToReplace ), stream.str() );
+            return log.m_Result = guid;
         }
     };
 } // namespace ML::BASE
@@ -568,7 +605,7 @@ namespace ML::XE_LP
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Creates dummy metric set configuration.
         /// @return dummy metric set id.
         //////////////////////////////////////////////////////////////////////////
@@ -577,8 +614,7 @@ namespace ML::XE_LP
         {
             ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
 
-            const uint32_t    subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
-            const std::string guid           = Base::template GenerateQueryGuid<isOaMert>( subDeviceIndex );
+            const std::string guid = Base::template GenerateConfigGuid<isOaMert>();
             ML_FUNCTION_CHECK_ERROR( guid != "", T::ConstantsOs::Drm::m_Invalid );
 
             drm_i915_perf_oa_config configuration         = {};
@@ -602,7 +638,7 @@ namespace ML::XE_LP
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Removes metric set configuration from the kernel.
         /// @param  set  metric set to remove.
         /// @return      operation status.
@@ -618,7 +654,7 @@ namespace ML::XE_LP
             return log.m_Result = SendDrm( DRM_IOCTL_I915_PERF_REMOVE_CONFIG, configurationId );
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Opens tbs stream.
         /// @param  properties   tbs stream properties.
         /// @return stream       opened tbs stream id.
@@ -644,7 +680,7 @@ namespace ML::XE_LP
             return log.m_Result = SendDrm( DRM_IOCTL_I915_PERF_OPEN, parameters, stream );
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Sets new tbs metric set.
         /// @param  stream  tbs stream.
         /// @param  set     metric set to use with tbs stream.
@@ -670,7 +706,7 @@ namespace ML::XE_LP
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns chipset id.
         /// @return id  chipset id.
         /// @return     operation status.
@@ -682,7 +718,7 @@ namespace ML::XE_LP
             return log.m_Result = GetDrmParameter( I915_PARAM_CHIPSET_ID, id );
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns oa buffer cpu address.
         /// @param  stream     tbs stream id.
         /// @return addressCpu oa buffer mapped cpu address.
@@ -713,7 +749,7 @@ namespace ML::XE_LP
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns  performance module revision.
         /// @return revision performance module revision.
         /// @return          operation status.
@@ -930,7 +966,7 @@ namespace ML::XE2_HPG
         using Base::m_DrmFile;
         using Base::m_Kernel;
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Opens tbs stream.
         /// @param  properties   tbs stream properties.
         /// @return stream       opened tbs stream id.
@@ -1017,7 +1053,7 @@ namespace ML::XE2_HPG
             return log.m_Result = SendXeObservation( DRM_XE_OBSERVATION_OP_STREAM_OPEN, *properties, stream );
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Sets new tbs metric set.
         /// @param  stream  tbs stream.
         /// @param  set     metric set to use with tbs stream.
@@ -1048,7 +1084,7 @@ namespace ML::XE2_HPG
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Removes metric set configuration from the kernel.
         /// @param  set  metric set to remove.
         /// @return      operation status.
@@ -1080,7 +1116,7 @@ namespace ML::XE2_HPG
             {
                 // Query check.
                 const bool validQuery  = ML_SUCCESS( Query( DRM_XE_DEVICE_QUERY_OA_UNITS, buffer ) );
-                const bool validBuffer = buffer.size() > 0;
+                const bool validBuffer = !buffer.empty();
                 const auto oaData      = reinterpret_cast<drm_xe_query_oa_units*>( buffer.data() );
                 const bool validData   = ( oaData != nullptr ) && ( oaData->num_oa_units > 0 );
 
@@ -1095,7 +1131,7 @@ namespace ML::XE2_HPG
             {
                 // Query check.
                 const bool validQuery  = ML_SUCCESS( Query( DRM_XE_DEVICE_QUERY_GT_LIST, buffer ) );
-                const bool validBuffer = buffer.size() > 0;
+                const bool validBuffer = !buffer.empty();
 
                 auto gtsData = reinterpret_cast<drm_xe_query_gt_list*>( buffer.data() );
 
@@ -1180,7 +1216,7 @@ namespace ML::XE2_HPG
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns  observation module revision.
         /// @return revision observation module revision.
         /// @return          operation status.
@@ -1194,7 +1230,7 @@ namespace ML::XE2_HPG
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns chipset id.
         /// @return id  chipset id.
         /// @return     operation status.
@@ -1206,7 +1242,7 @@ namespace ML::XE2_HPG
             std::vector<uint8_t> buffer = {};
 
             ML_FUNCTION_CHECK( Query( DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID, buffer ) );
-            ML_FUNCTION_CHECK( buffer.size() > 0 );
+            ML_FUNCTION_CHECK( !buffer.empty() );
 
             auto config = reinterpret_cast<drm_xe_query_config*>( buffer.data() );
 
@@ -1217,7 +1253,7 @@ namespace ML::XE2_HPG
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns oa buffer cpu address.
         /// @param  stream     tbs stream id.
         /// @return addressCpu oa buffer mapped cpu address.
@@ -1248,7 +1284,7 @@ namespace ML::XE2_HPG
             return log.m_Result;
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Creates dummy metric set configuration.
         /// @return dummy metric set id.
         //////////////////////////////////////////////////////////////////////////
@@ -1257,8 +1293,7 @@ namespace ML::XE2_HPG
         {
             ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
 
-            const uint32_t    subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
-            const std::string guid           = Base::template GenerateQueryGuid<isOaMert>( subDeviceIndex );
+            const std::string guid = Base::template GenerateConfigGuid<isOaMert>();
             ML_FUNCTION_CHECK_ERROR( guid != "", T::ConstantsOs::Drm::m_Invalid );
 
             drm_xe_oa_config configuration         = {};
@@ -1379,103 +1414,5 @@ namespace ML::XE3P
     struct IoControlTrait : XE3::IoControlTrait<T>
     {
         ML_DECLARE_TRAIT( IoControlTrait, XE3 );
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Types.
-        //////////////////////////////////////////////////////////////////////////
-        using Base::ReadFile;
-        using Base::m_DrmCard;
-        using Base::m_Kernel;
-
-    protected:
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief Members.
-        //////////////////////////////////////////////////////////////////////////
-        std::string m_KernelMertMetricSet;
-
-    public:
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief IoControlTrait constructor.
-        /// @param kernel
-        //////////////////////////////////////////////////////////////////////////
-        IoControlTrait( TT::KernelInterface& kernel )
-            : Base( kernel )
-            , m_KernelMertMetricSet( "" )
-        {
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Initializes io control interface.
-        /// @param  clientData  initializing client data.
-        /// @return revision    drm performance revision.
-        /// @return initialization status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode Initialize(
-            const ClientData_1_0&           clientData,
-            TT::ConstantsOs::Drm::Revision& revision )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-            ML_FUNCTION_CHECK( Base::Initialize( clientData, revision ) );
-
-            // Obtain path that contains metric set id activated by metrics discovery.
-            TT::ConstantsOs::String::Path path           = "";
-            const uint32_t                subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
-            const std::string             guid           = Base::template GenerateQueryGuid<true>( subDeviceIndex );
-            ML_FUNCTION_CHECK( guid != "" );
-
-            snprintf( path, sizeof( path ),
-                      T::ConstantsOs::Tbs::m_ActiveMetricSetPath, // Activated metric file location.
-                      m_DrmCard,                                  // Drm card index.
-                      guid.c_str() );                             // Activated metric set guid for given sub device.
-
-            m_KernelMertMetricSet = path;
-
-            return log.m_Result;
-        }
-
-        /////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns metric set id activated by metrics discovery.
-        /// @return metric set id.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE int32_t GetKernelMertMetricSet() const
-        {
-            ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
-
-            if( ML_FAIL( ReadFile( m_KernelMertMetricSet, log.m_Result ) ) )
-            {
-                log.Warning( "Cannot get kernel mert metric set" );
-            }
-
-            return log.m_Result;
-        }
-
-        /////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns information about the file containing metric set id.
-        /// @return modificationTimestamp   time of last modification of the file.
-        /// @return indexNode               index node of the file.
-        /// @return                         operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetKernelMertMetricSetInfo(
-            uint64_t& modificationTimestamp,
-            uint64_t& indexNode ) const
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-            struct stat fileInfo = {};
-
-            if( stat( m_KernelMertMetricSet.c_str(), &fileInfo ) < 0 )
-            {
-                log.Warning( "Failed to get information about the metric set file", errno, strerror( errno ) );
-                return log.m_Result = StatusCode::Failed;
-            }
-
-            modificationTimestamp = fileInfo.st_mtime;
-            indexNode             = fileInfo.st_ino;
-
-            log.Info( "Modification timestamp", modificationTimestamp );
-            log.Info( "Index node", indexNode );
-
-            return log.m_Result;
-        }
     };
 } // namespace ML::XE3P
