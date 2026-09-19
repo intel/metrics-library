@@ -78,7 +78,7 @@ namespace ML::BASE
 
             // Try to obtain metric set activated by metrics discovery.
             const std::string kernelMetricSet = m_Kernel.m_IoControl.template GetKernelMetricSetPath<isMert>();
-            m_MetricSet                       = m_Kernel.m_IoControl.template GetKernelMetricSet( kernelMetricSet );
+            m_MetricSet                       = m_Kernel.m_IoControl.GetKernelMetricSet( kernelMetricSet );
 
             // Otherwise, create an internal metric set to enable tbs.
             if( m_MetricSet == T::ConstantsOs::Drm::m_Invalid )
