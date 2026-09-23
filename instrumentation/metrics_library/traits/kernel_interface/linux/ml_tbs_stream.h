@@ -76,15 +76,8 @@ namespace ML::BASE
                 return log.m_Result;
             }
 
-            // Try to obtain metric set activated by metrics discovery.
-            const std::string kernelMetricSet = m_Kernel.m_IoControl.template GetKernelMetricSetPath<isMert>();
-            m_MetricSet                       = m_Kernel.m_IoControl.template GetKernelMetricSet( kernelMetricSet );
-
-            // Otherwise, create an internal metric set to enable tbs.
-            if( m_MetricSet == T::ConstantsOs::Drm::m_Invalid )
-            {
-                m_MetricSetInternal = m_Kernel.m_IoControl.template CreateMetricSet<isMert>();
-            }
+            // Create an internal metric set to enable tbs.
+            m_MetricSetInternal = m_Kernel.m_IoControl.template CreateMetricSet<isMert>();
 
             return log.m_Result = Derived().Enable();
         }
@@ -175,10 +168,10 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Updates metric set info and checks if tbs metric set needs to
         ///         be updated on next activate.
-        /// @param  kernelMetricSet metric set path in the kernel.
+        /// @param  kernelMetricSet metric set file in the kernel.
         /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode UpdateMetricSetInfo( const std::string& kernelMetricSet )
+        ML_INLINE StatusCode UpdateMetricSetInfo( const int32_t kernelMetricSet )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 

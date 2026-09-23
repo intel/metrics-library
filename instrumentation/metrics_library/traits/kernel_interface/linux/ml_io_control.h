@@ -129,19 +129,21 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns metric set path activated by metrics discovery.
-        /// @return metric set path.
+        /// @brief  Returns metric set file activated by metrics discovery.
+        /// @return reportType  report type of the metric set.
+        /// @return             metric set file.
         //////////////////////////////////////////////////////////////////////////
         template <bool isOaMert>
-        ML_INLINE std::string GetKernelMetricSetPath()
+        ML_INLINE int32_t GetKernelMetricSetFile( uint32_t& reportType )
         {
-            ML_FUNCTION_LOG( std::string(), &m_Kernel.m_Context );
+            ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
 
             Constants::String::Path configsPath = {};
             snprintf( configsPath, sizeof( configsPath ), T::ConstantsOs::Tbs::m_ConfigsPath, m_DrmCard );
 
             DIR*        configsDirectory = opendir( configsPath );
             dirent*     entry            = nullptr;
+            uint32_t    latestReportType = 0;
             uint64_t    latestInode      = 0;
             std::string latestConfigName;
 
@@ -156,12 +158,12 @@ namespace ML::BASE
                     uint32_t entryPrefix     = 0;
                     uint32_t entryReportType = 0;
                     uint32_t entrySubDevice  = 0;
-                    uint32_t entryUnused     = 0;
+                    uint32_t entryLegacyMode = 0;
                     uint64_t entryHash       = 0;
 
-                    // Guid is formatted as "prefix-reportType-subDeviceIndex-unused-hash".
+                    // Guid is formatted as "prefix-reportType-subDeviceIndex-legacyMode-hash".
                     const bool validDirectory = entry->d_type == DT_DIR;
-                    const bool validFormat    = validDirectory && ( sscanf( entry->d_name, T::ConstantsOs::Tbs::m_ConfigGuidFormat, &entryPrefix, &entryReportType, &entrySubDevice, &entryUnused, &entryHash ) == 5 );
+                    const bool validFormat    = validDirectory && ( sscanf( entry->d_name, T::ConstantsOs::Tbs::m_ConfigGuidFormat, &entryPrefix, &entryReportType, &entrySubDevice, &entryLegacyMode, &entryHash ) == 5 );
                     const bool validConfig    = validFormat && ( entryPrefix == prefix ) && ( ( entrySubDevice == subDeviceIndex ) || ( ( subDeviceIndex == 0 ) && ( entrySubDevice == T::ConstantsOs::Tbs::m_ConfigGuidSubDeviceLegacy ) ) );
 
                     if( validConfig )
@@ -175,8 +177,12 @@ namespace ML::BASE
 
                         if( ( stat( configPath, &fileInfo ) == 0 ) && ( fileInfo.st_ino > latestInode ) )
                         {
+                            constexpr uint32_t legacyModeMarker     = 0x9eb7;
+                            constexpr uint32_t legacyModeReportType = 11;
+
                             latestInode      = fileInfo.st_ino;
                             latestConfigName = configPath;
+                            latestReportType = ( entryLegacyMode == legacyModeMarker ) ? legacyModeReportType : entryReportType;
                         }
                     }
                 }
@@ -190,19 +196,22 @@ namespace ML::BASE
                 return log.m_Result;
             }
 
-            return log.m_Result = latestConfigName;
+            reportType = latestReportType;
+
+            return log.m_Result = open( latestConfigName.c_str(), O_RDONLY | O_CLOEXEC );
         }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns metric set id activated by metrics discovery.
-        /// @param  kernelMetricSet path to the file containing metric set id.
+        /// @param  kernelMetricSet file descriptor of the file containing metric set id.
         /// @return metric set id.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE int32_t GetKernelMetricSet( const std::string& kernelMetricSet )
+        ML_INLINE int32_t GetKernelMetricSet( const int32_t kernelMetricSet )
         {
             ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
 
-            if( ML_FAIL( ReadFile( kernelMetricSet, log.m_Result ) ) )
+            if( kernelMetricSet == T::ConstantsOs::Drm::m_Invalid ||
+                ML_FAIL( ReadFile( kernelMetricSet, log.m_Result ) ) )
             {
                 log.Warning( "Cannot get kernel metric set" );
             }
@@ -212,19 +221,19 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns information about the file containing metric set id.
-        /// @param  kernelMetricSet path to the file containing metric set id.
+        /// @param  kernelMetricSet file descriptor of the file containing metric set id.
         /// @return indexNode       index node of the file.
         /// @return                 operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode GetKernelMetricSetInfo(
-            const std::string& kernelMetricSet,
-            uint64_t&          indexNode ) const
+            const int32_t kernelMetricSet,
+            uint64_t&     indexNode ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
             struct stat fileInfo = {};
 
-            if( stat( kernelMetricSet.c_str(), &fileInfo ) < 0 )
+            if( fstat( kernelMetricSet, &fileInfo ) < 0 )
             {
                 log.Warning( "Failed to get information about the metric set file", errno, strerror( errno ) );
                 return log.m_Result = StatusCode::Failed;
@@ -239,31 +248,24 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Reads data from file.
-        /// @param  path    file path.
+        /// @param  file    file description.
         /// @return data    data to read.
         /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
         template <typename Data>
         ML_INLINE StatusCode ReadFile(
-            const std::string& path,
-            Data&              data ) const
+            const int32_t file,
+            Data&         data ) const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
             Constants::String::Buffer buffer    = {};
-            int32_t                   file      = open( path.c_str(), O_RDONLY );
             int32_t                   readBytes = 0;
-
-            if( file < 0 )
-            {
-                return log.m_Result = StatusCode::Failed;
-            }
 
             readBytes = read( file, buffer, sizeof( buffer ) - 1 );
 
             if( readBytes < 0 )
             {
-                close( file );
                 log.Warning( "Read negative number of bytes", errno, strerror( errno ) );
                 return log.m_Result = StatusCode::Failed;
             }
@@ -271,7 +273,6 @@ namespace ML::BASE
             buffer[readBytes] = '\0';
             data              = strtoull( buffer, 0, 0 );
 
-            close( file );
             return log.m_Result;
         }
 

@@ -278,7 +278,7 @@ namespace ML::XE_LP
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
-            auto addProperty = [&]( const uint64_t key, const uint64_t value )
+            auto addProperty = [&]( const uint64_t key, const uint64_t value ) -> void
             {
                 properties.push_back( key );
                 properties.push_back( value );
@@ -340,7 +340,7 @@ namespace ML::XE_HPG
             uint32_t engineClass    = 0;
             uint32_t engineInstance = 0;
             auto&    subDevice      = m_Kernel.m_Context.m_SubDevice;
-            auto     addProperty    = [&]( const uint64_t key, const uint64_t value )
+            auto     addProperty    = [&]( const uint64_t key, const uint64_t value ) -> void
             {
                 properties.push_back( key );
                 properties.push_back( value );
@@ -461,7 +461,7 @@ namespace ML::XE2_HPG
             uint32_t currentIndex = 0;
             auto&    subDevice    = m_Kernel.m_Context.m_SubDevice;
 
-            auto addProperty = [&]( const uint64_t key, const uint64_t value )
+            auto addProperty = [&]( const uint64_t key, const uint64_t value ) -> void
             {
                 drm_xe_ext_set_property property = {};
                 property.base.name               = DRM_XE_OA_EXTENSION_SET_PROPERTY;
@@ -593,7 +593,7 @@ namespace ML::XE3P
             uint32_t currentIndex = 0;
             auto&    subDevice    = m_Kernel.m_Context.m_SubDevice;
 
-            auto addProperty = [&]( const uint64_t key, const uint64_t value )
+            auto addProperty = [&]( const uint64_t key, const uint64_t value ) -> void
             {
                 drm_xe_ext_set_property property = {};
                 property.base.name               = DRM_XE_OA_EXTENSION_SET_PROPERTY;

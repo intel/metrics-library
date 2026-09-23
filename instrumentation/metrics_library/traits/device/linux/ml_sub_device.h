@@ -298,7 +298,7 @@ namespace ML::XE_HPG
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             // Check supported memory classes. Prefer device local memory.
-            auto getPreferredMemoryClass = [&]( drm_i915_query_memory_regions* regionsData )
+            auto getPreferredMemoryClass = [&]( drm_i915_query_memory_regions* regionsData ) -> drm_i915_gem_memory_class
             {
                 for( uint32_t i = 0; i < regionsData->num_regions; ++i )
                 {

@@ -58,8 +58,10 @@ namespace ML
         TT::KernelInterface& m_Kernel;
         int32_t              m_Id;
         int32_t              m_IdMert;
-        std::string          m_KernelMetricSet;
-        std::string          m_KernelMetricSetMert;
+        int32_t              m_KernelMetricSet;
+        int32_t              m_KernelMetricSetMert;
+        uint32_t             m_ReportType;
+        uint32_t             m_ReportTypeMert;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Configuration hw counters oa constructor.
@@ -70,9 +72,27 @@ namespace ML
             , m_Kernel{ context.m_Kernel }
             , m_Id( T::ConstantsOs::Drm::m_Invalid )
             , m_IdMert( T::ConstantsOs::Drm::m_Invalid )
-            , m_KernelMetricSet( "" )
-            , m_KernelMetricSetMert( "" )
+            , m_KernelMetricSet( T::ConstantsOs::Drm::m_Invalid )
+            , m_KernelMetricSetMert( T::ConstantsOs::Drm::m_Invalid )
+            , m_ReportType( 0 )
+            , m_ReportTypeMert( 0 )
         {
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Configuration hw counters oa destructor.
+        //////////////////////////////////////////////////////////////////////////
+        ~ConfigurationHwCountersOaTrait()
+        {
+            if( m_KernelMetricSet != T::ConstantsOs::Drm::m_Invalid )
+            {
+                close( m_KernelMetricSet );
+            }
+
+            if( m_KernelMetricSetMert != T::ConstantsOs::Drm::m_Invalid )
+            {
+                close( m_KernelMetricSetMert );
+            }
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -111,9 +131,9 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
-            ML_FUNCTION_CHECK( m_Kernel.LoadOaConfigurationToGpu( m_Id, m_KernelMetricSet ) );
+            ML_FUNCTION_CHECK( m_Kernel.LoadOaConfigurationToGpu( m_Id, m_KernelMetricSet, m_ReportType ) );
 
-            if( ML_SUCCESS( m_Kernel.LoadOaMertConfigurationToGpu( m_IdMert, m_KernelMetricSetMert ) ) )
+            if( ML_SUCCESS( m_Kernel.LoadOaMertConfigurationToGpu( m_IdMert, m_KernelMetricSetMert, m_ReportTypeMert ) ) )
             {
                 m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter++;
             }
@@ -153,8 +173,8 @@ namespace ML
         ML_INLINE StatusCode Initialize()
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            ML_FUNCTION_CHECK( m_Kernel.GetOaConfiguration( m_Id, m_KernelMetricSet ) );
-            ML_FUNCTION_CHECK( m_Kernel.GetOaMertConfiguration( m_IdMert, m_KernelMetricSetMert ) );
+            ML_FUNCTION_CHECK( m_Kernel.GetOaConfiguration( m_Id, m_KernelMetricSet, m_ReportType ) );
+            ML_FUNCTION_CHECK( m_Kernel.GetOaMertConfiguration( m_IdMert, m_KernelMetricSetMert, m_ReportTypeMert ) );
 
             return log.m_Result;
         }
