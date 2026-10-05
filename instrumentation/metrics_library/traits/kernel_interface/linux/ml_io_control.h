@@ -220,6 +220,23 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns metric set id activated by metrics library.
+        /// @param  path    path to the file containing metric set id.
+        /// @return metric set id.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE int32_t GetKernelMetricSet( const std::string& path )
+        {
+            ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
+
+            if( ML_SUCCESS( ReadFile( path, log.m_Result ) ) )
+            {
+                log.Info( "Configuration already added" );
+            }
+
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns information about the file containing metric set id.
         /// @param  kernelMetricSet file descriptor of the file containing metric set id.
         /// @return indexNode       index node of the file.
@@ -273,6 +290,32 @@ namespace ML::BASE
             buffer[readBytes] = '\0';
             data              = strtoull( buffer, 0, 0 );
 
+            return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Reads data from file.
+        /// @param  path    file path.
+        /// @return data    data to read.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        template <typename Data>
+        ML_INLINE StatusCode ReadFile(
+            const std::string& path,
+            Data&              data ) const
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+
+            int32_t file = open( path.c_str(), O_RDONLY | O_CLOEXEC );
+
+            if( file < 0 )
+            {
+                return log.m_Result = StatusCode::Failed;
+            }
+
+            log.m_Result = ReadFile( file, data );
+
+            close( file );
             return log.m_Result;
         }
 
@@ -457,28 +500,6 @@ namespace ML::BASE
 
             return log.m_Result;
         }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Generates guid for query for given sub device index.
-        /// @return generated guid.
-        //////////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////
-        template <bool isOaMert>
-        ML_INLINE std::string GenerateConfigGuid() const
-        {
-            ML_FUNCTION_LOG( std::string(), &m_Kernel.m_Context );
-
-            constexpr uint32_t prefix         = isOaMert ? T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaMert : T::ConstantsOs::Tbs::m_ConfigGuidPrefixOa;
-            constexpr uint32_t reportType     = 0;
-            const uint32_t     subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
-            constexpr uint32_t unused         = 0;
-            constexpr uint64_t hash           = 0;
-
-            Constants::String::Path guid = {};
-            snprintf( guid, sizeof( guid ), T::ConstantsOs::Tbs::m_ConfigGuidFormat, prefix, reportType, subDeviceIndex, unused, hash );
-
-            return log.m_Result = guid;
-        }
     };
 } // namespace ML::BASE
 
@@ -608,15 +629,13 @@ namespace ML::XE_LP
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Creates dummy metric set configuration.
-        /// @return dummy metric set id.
+        /// @param  guid    metric set guid.
+        /// @return         dummy metric set id.
         //////////////////////////////////////////////////////////////////////////
         template <bool isOaMert>
-        ML_INLINE int32_t CreateMetricSet() const
+        ML_INLINE int32_t CreateMetricSet( const std::string& guid ) const
         {
             ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
-
-            const std::string guid = Base::template GenerateConfigGuid<isOaMert>();
-            ML_FUNCTION_CHECK_ERROR( guid != "", T::ConstantsOs::Drm::m_Invalid );
 
             drm_i915_perf_oa_config configuration         = {};
             uint32_t                configurationDummy[2] = { T::GpuRegisters::m_OaTrigger2, 0 };
@@ -1287,15 +1306,13 @@ namespace ML::XE2_HPG
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Creates dummy metric set configuration.
-        /// @return dummy metric set id.
+        /// @param  guid    metric set guid.
+        /// @return         dummy metric set id.
         //////////////////////////////////////////////////////////////////////////
         template <bool isOaMert>
-        ML_INLINE int32_t CreateMetricSet() const
+        ML_INLINE int32_t CreateMetricSet( const std::string& guid ) const
         {
             ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
-
-            const std::string guid = Base::template GenerateConfigGuid<isOaMert>();
-            ML_FUNCTION_CHECK_ERROR( guid != "", T::ConstantsOs::Drm::m_Invalid );
 
             drm_xe_oa_config configuration         = {};
             uint32_t         configurationDummy[2] = { T::GpuRegisters::m_OaTrigger2, 0 };

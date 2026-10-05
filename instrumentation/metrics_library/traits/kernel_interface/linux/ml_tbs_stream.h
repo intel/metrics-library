@@ -76,8 +76,17 @@ namespace ML::BASE
                 return log.m_Result;
             }
 
+            // Generate a GUID for the internal configuration.
+            const std::string guid = GenerateConfigGuid();
+            ML_FUNCTION_CHECK( guid != "" );
+
+            // Check if the configuration is already added in the kernel.
+            std::string configPath( Constants::String::m_MaxPath, '\0' );
+            snprintf( configPath.data(), configPath.size(), T::ConstantsOs::Tbs::m_ConfigPath, m_Kernel.m_IoControl.m_DrmCard, guid.c_str() );
+            const int32_t config = m_Kernel.m_IoControl.GetKernelMetricSet( configPath );
+
             // Create an internal metric set to enable tbs.
-            m_MetricSetInternal = m_Kernel.m_IoControl.template CreateMetricSet<isMert>();
+            m_MetricSetInternal = ( config == T::ConstantsOs::Drm::m_Invalid ) ? m_Kernel.m_IoControl.template CreateMetricSet<isMert>( guid ) : config;
 
             return log.m_Result = Derived().Enable();
         }
@@ -189,6 +198,26 @@ namespace ML::BASE
             log.Info( "Metric set update required", m_IsMetricSetUpdateRequired );
 
             return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Generates guid for query for given sub device index.
+        /// @return generated guid.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE std::string GenerateConfigGuid() const
+        {
+            ML_FUNCTION_LOG( std::string(), &m_Kernel.m_Context );
+
+            constexpr uint32_t prefix         = isMert ? T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaMert : T::ConstantsOs::Tbs::m_ConfigGuidPrefixOa;
+            constexpr uint32_t reportType     = 0;
+            const uint32_t     subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
+            constexpr uint32_t unused         = 0;
+            constexpr uint64_t hash           = 0;
+
+            Constants::String::Path guid = {};
+            snprintf( guid, sizeof( guid ), T::ConstantsOs::Tbs::m_ConfigGuidFormat, prefix, reportType, subDeviceIndex, unused, hash );
+
+            return log.m_Result = guid;
         }
     };
 } // namespace ML::BASE

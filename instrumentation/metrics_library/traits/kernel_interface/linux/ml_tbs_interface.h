@@ -629,7 +629,7 @@ namespace ML::XE3P
         {
             ML_FUNCTION_LOG( uint32_t{ 0 }, &m_Kernel.m_Context );
 
-            return log.m_Result = ( DRM_XE_OA_FMT_TYPE_OAM_MPEC | ( 1 << 8 ) | ( 0 << 16 ) | ( 0 << 24 ) ); // counter select = 1, counter size = 0, bc report = 0
+            return log.m_Result = ( DRM_XE_OA_FMT_TYPE_OAM_MPEC | ( 2 << 8 ) | ( 0 << 16 ) | ( 0 << 24 ) ); // counter select = 2, counter size = 0, bc report = 0
         }
     };
 } // namespace ML::XE3P
