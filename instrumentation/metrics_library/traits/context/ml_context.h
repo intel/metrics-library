@@ -80,6 +80,9 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ~ContextTrait()
         {
+            // Delete all cached oa configurations.
+            m_Kernel.DeleteConfigurations();
+
             // Release reference to oa buffer.
             m_OaBuffer.Release();
         }

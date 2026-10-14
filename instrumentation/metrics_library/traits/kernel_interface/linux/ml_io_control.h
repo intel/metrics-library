@@ -42,6 +42,8 @@ namespace ML::BASE
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
         TT::KernelInterface& m_Kernel;
+        DIR*                 m_ConfigsDirectory;
+        int32_t              m_ConfigsDirectoryFile;
         int32_t              m_DrmFile;
 
     public:
@@ -58,6 +60,8 @@ namespace ML::BASE
             : Base()
             , m_DrmOpenedByUmd( false )
             , m_Kernel( kernel )
+            , m_ConfigsDirectory( nullptr )
+            , m_ConfigsDirectoryFile( T::ConstantsOs::Drm::m_Invalid )
             , m_DrmFile( T::ConstantsOs::Drm::m_Invalid )
             , m_DrmCard( T::ConstantsOs::Drm::m_Invalid )
         {
@@ -68,6 +72,11 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ~IoControlTrait()
         {
+            if( m_ConfigsDirectory != nullptr )
+            {
+                closedir( m_ConfigsDirectory );
+            }
+
             if( !m_DrmOpenedByUmd )
             {
                 CloseDrm();
@@ -125,80 +134,132 @@ namespace ML::BASE
             // No check for fail, since old kernels do not support this information.
             DerivedConst().GetDrmRevision( revision );
 
+            return log.m_Result = GetKernelMetricSetDirectory();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns directory containing metric set files.
+        /// @return operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetKernelMetricSetDirectory()
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_ASSERT( m_ConfigsDirectory == nullptr );
+            ML_ASSERT( m_ConfigsDirectoryFile == T::ConstantsOs::Drm::m_Invalid );
+
+            Constants::String::Path configsPath = {};
+            snprintf( configsPath, sizeof( configsPath ), T::ConstantsOs::Tbs::m_ConfigsPath, m_DrmCard );
+
+            m_ConfigsDirectory = opendir( configsPath );
+
+            if( m_ConfigsDirectory == nullptr )
+            {
+                log.Warning( "Cannot open oa config directory", errno, strerror( errno ) );
+                return log.m_Result = StatusCode::Failed;
+            }
+
+            m_ConfigsDirectoryFile = dirfd( m_ConfigsDirectory );
+
+            return log.m_Result;
+        }
+
+        /////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns data of activated by metrics discovery
+        ///         oa configuration from the kernel.
+        /// @param  oa      oa configuration data.
+        /// @param  mert    mert configuration data.
+        /// @return         operation status.
+        /////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetKernelMetricSetData(
+            TT::Configurations::HwCountersOa::ConfigurationData& oa,
+            TT::Configurations::HwCountersOa::ConfigurationData& mert )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
+            ML_FUNCTION_CHECK( m_ConfigsDirectory != nullptr );
+            ML_FUNCTION_CHECK( m_ConfigsDirectoryFile != T::ConstantsOs::Drm::m_Invalid );
+
+            Constants::String::Path configPath               = {};
+            dirent*                 entry                    = nullptr;
+            const uint32_t          subDeviceIndex           = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
+            constexpr uint32_t      prefixOa                 = T::ConstantsOs::Tbs::m_ConfigGuidPrefixOa;
+            constexpr uint32_t      prefixOaMert             = T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaMert;
+            constexpr const char*   prefixStringOa           = T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaString;
+            constexpr const char*   prefixStringOaMert       = T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaMertString;
+            constexpr uint32_t      prefixStringLengthOa     = std::char_traits<char>::length( T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaString );
+            constexpr uint32_t      prefixStringLengthOaMert = std::char_traits<char>::length( T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaMertString );
+
+            oa   = {};
+            mert = {};
+
+            // Configuration directory is shared across multiple configurations.
+            std::lock_guard<std::mutex> guard( m_Kernel.m_ConfigurationManager.m_Mutex );
+
+            rewinddir( m_ConfigsDirectory );
+
+            // Enumerate through all config directories and find the one with the highest index node.
+            while( ( entry = readdir( m_ConfigsDirectory ) ) != nullptr )
+            {
+                const bool validDirectory    = ( entry->d_type == DT_DIR ) && ( strcmp( entry->d_name, "." ) != 0 ) && ( strcmp( entry->d_name, ".." ) != 0 );
+                const bool validPrefixOa     = validDirectory && ( strncmp( entry->d_name, prefixStringOa, prefixStringLengthOa ) == 0 );
+                const bool validPrefixOaMert = validDirectory && ( strncmp( entry->d_name, prefixStringOaMert, prefixStringLengthOaMert ) == 0 );
+
+                if( !validPrefixOa && ( entry->d_ino > oa.m_IndexNode ) &&
+                    !validPrefixOaMert && ( entry->d_ino > mert.m_IndexNode ) )
+                {
+                    continue;
+                }
+
+                uint32_t entryPrefix     = 0;
+                uint32_t entryReportType = 0;
+                uint32_t entrySubDevice  = 0;
+                uint32_t entryLegacyMode = 0;
+                uint64_t entryHash       = 0;
+
+                // Guid is formatted as "prefix-reportType-subDeviceIndex-legacyMode-hash".
+                const bool validFormat = sscanf( entry->d_name, T::ConstantsOs::Tbs::m_ConfigGuidFormat, &entryPrefix, &entryReportType, &entrySubDevice, &entryLegacyMode, &entryHash ) == 5;
+                const bool validPrefix = validDirectory && validFormat && ( ( entryPrefix == prefixOa ) || ( entryPrefix == prefixOaMert ) );
+                const bool validConfig = validPrefix && ( ( entrySubDevice == subDeviceIndex ) || ( ( subDeviceIndex == 0 ) && ( entrySubDevice == T::ConstantsOs::Tbs::m_ConfigGuidSubDeviceLegacy ) ) );
+
+                if( validConfig )
+                {
+                    log.Debug( "Found config", entry->d_name );
+
+                    auto& data = ( entryPrefix == prefixOa ) ? oa : mert;
+
+                    // Kernfs index nodes grow monotonically and a config directory is created before its id file.
+                    if( entry->d_ino > data.m_IndexNode )
+                    {
+                        constexpr uint32_t legacyModeMarker     = 0x9eb7;
+                        constexpr uint32_t legacyModeReportType = 11;
+
+                        snprintf( configPath, sizeof( configPath ), T::ConstantsOs::Tbs::m_ConfigPathRelative, entry->d_name );
+
+                        data.m_IndexNode  = entry->d_ino;
+                        data.m_Name       = configPath;
+                        data.m_ReportType = ( entryLegacyMode == legacyModeMarker ) ? legacyModeReportType : entryReportType;
+                    }
+                }
+            }
+
+            if( oa.m_Name.empty() && mert.m_Name.empty() )
+            {
+                log.Warning( "Cannot find any oa config directory" );
+                log.m_Result = StatusCode::Failed;
+            }
+
             return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns metric set file activated by metrics discovery.
-        /// @return reportType  report type of the metric set.
-        /// @return             metric set file.
+        /// @param  name    name of the file containing metric set id.
+        /// @return         metric set file.
         //////////////////////////////////////////////////////////////////////////
-        template <bool isOaMert>
-        ML_INLINE int32_t GetKernelMetricSetFile( uint32_t& reportType )
+        ML_INLINE int32_t GetKernelMetricSetFile( const std::string& name )
         {
             ML_FUNCTION_LOG( int32_t{ T::ConstantsOs::Drm::m_Invalid }, &m_Kernel.m_Context );
 
-            Constants::String::Path configsPath = {};
-            snprintf( configsPath, sizeof( configsPath ), T::ConstantsOs::Tbs::m_ConfigsPath, m_DrmCard );
-
-            DIR*        configsDirectory = opendir( configsPath );
-            dirent*     entry            = nullptr;
-            uint32_t    latestReportType = 0;
-            uint64_t    latestInode      = 0;
-            std::string latestConfigName;
-
-            const uint32_t     subDeviceIndex = m_Kernel.m_Context.m_ClientOptions.m_IsSubDevice ? m_Kernel.m_Context.m_ClientOptions.m_SubDeviceIndex : 0;
-            constexpr uint32_t prefix         = isOaMert ? T::ConstantsOs::Tbs::m_ConfigGuidPrefixOaMert : T::ConstantsOs::Tbs::m_ConfigGuidPrefixOa;
-
-            if( configsDirectory != nullptr )
-            {
-                // Enumerate through all config directories and find the one with the highest index node.
-                while( ( entry = readdir( configsDirectory ) ) != nullptr )
-                {
-                    uint32_t entryPrefix     = 0;
-                    uint32_t entryReportType = 0;
-                    uint32_t entrySubDevice  = 0;
-                    uint32_t entryLegacyMode = 0;
-                    uint64_t entryHash       = 0;
-
-                    // Guid is formatted as "prefix-reportType-subDeviceIndex-legacyMode-hash".
-                    const bool validDirectory = entry->d_type == DT_DIR;
-                    const bool validFormat    = validDirectory && ( sscanf( entry->d_name, T::ConstantsOs::Tbs::m_ConfigGuidFormat, &entryPrefix, &entryReportType, &entrySubDevice, &entryLegacyMode, &entryHash ) == 5 );
-                    const bool validConfig    = validFormat && ( entryPrefix == prefix ) && ( ( entrySubDevice == subDeviceIndex ) || ( ( subDeviceIndex == 0 ) && ( entrySubDevice == T::ConstantsOs::Tbs::m_ConfigGuidSubDeviceLegacy ) ) );
-
-                    if( validConfig )
-                    {
-                        Constants::String::Path configPath = {};
-                        struct stat             fileInfo   = {};
-
-                        snprintf( configPath, sizeof( configPath ), "%s/%s/id", configsPath, entry->d_name );
-
-                        log.Debug( "Found config", entry->d_name );
-
-                        if( ( stat( configPath, &fileInfo ) == 0 ) && ( fileInfo.st_ino > latestInode ) )
-                        {
-                            constexpr uint32_t legacyModeMarker     = 0x9eb7;
-                            constexpr uint32_t legacyModeReportType = 11;
-
-                            latestInode      = fileInfo.st_ino;
-                            latestConfigName = configPath;
-                            latestReportType = ( entryLegacyMode == legacyModeMarker ) ? legacyModeReportType : entryReportType;
-                        }
-                    }
-                }
-
-                closedir( configsDirectory );
-            }
-
-            if( latestConfigName.empty() )
-            {
-                log.Warning( "Cannot find any oa config directory" );
-                return log.m_Result;
-            }
-
-            reportType = latestReportType;
-
-            return log.m_Result = open( latestConfigName.c_str(), O_RDONLY | O_CLOEXEC );
+            return log.m_Result = openat( m_ConfigsDirectoryFile, name.c_str(), O_RDONLY | O_CLOEXEC );
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -232,33 +293,6 @@ namespace ML::BASE
             {
                 log.Info( "Configuration already added" );
             }
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns information about the file containing metric set id.
-        /// @param  kernelMetricSet file descriptor of the file containing metric set id.
-        /// @return indexNode       index node of the file.
-        /// @return                 operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetKernelMetricSetInfo(
-            const int32_t kernelMetricSet,
-            uint64_t&     indexNode ) const
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-            struct stat fileInfo = {};
-
-            if( fstat( kernelMetricSet, &fileInfo ) < 0 )
-            {
-                log.Warning( "Failed to get information about the metric set file", errno, strerror( errno ) );
-                return log.m_Result = StatusCode::Failed;
-            }
-
-            indexNode = fileInfo.st_ino;
-
-            log.Info( "Index node", indexNode );
 
             return log.m_Result;
         }

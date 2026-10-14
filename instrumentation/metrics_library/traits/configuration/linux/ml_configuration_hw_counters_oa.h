@@ -30,8 +30,31 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         using Base = DdiObject<T, TT::Configurations::HwCountersOa, ConfigurationHandle_1_0, ObjectType::ConfigurationHwCountersOa>;
         using Base::Allocate;
-        using Base::Delete;
         using Base::m_Context;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Base type for HwCounters configuration data object.
+        //////////////////////////////////////////////////////////////////////////
+        struct ConfigurationData
+        {
+            std::string m_Name;
+            int32_t     m_Id;
+            int32_t     m_KernelMetricSet;
+            uint64_t    m_IndexNode;
+            uint32_t    m_ReportType;
+
+            //////////////////////////////////////////////////////////////////////////
+            /// @brief ConfigurationData constructor.
+            //////////////////////////////////////////////////////////////////////////
+            ConfigurationData()
+                : m_Name()
+                , m_Id( T::ConstantsOs::Drm::m_Invalid )
+                , m_KernelMetricSet( T::ConstantsOs::Drm::m_Invalid )
+                , m_IndexNode( 0 )
+                , m_ReportType( 0 )
+            {
+            }
+        };
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Base type for HwCounters configuration manager object.
@@ -41,13 +64,17 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             /// @brief Members.
             //////////////////////////////////////////////////////////////////////////
-            int32_t m_OaConfigurationReferenceCounter;
+            int32_t                                     m_OaConfigurationReferenceCounter;
+            std::mutex                                  m_Mutex;
+            std::map<uint64_t, ConfigurationHandle_1_0> m_ActiveConfigurations;
 
             //////////////////////////////////////////////////////////////////////////
             /// @brief ConfigurationManager constructor.
             //////////////////////////////////////////////////////////////////////////
             ConfigurationManager()
                 : m_OaConfigurationReferenceCounter( 0 )
+                , m_Mutex{}
+                , m_ActiveConfigurations{}
             {
             }
         };
@@ -56,12 +83,10 @@ namespace ML
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
         TT::KernelInterface& m_Kernel;
-        int32_t              m_Id;
-        int32_t              m_IdMert;
-        int32_t              m_KernelMetricSet;
-        int32_t              m_KernelMetricSetMert;
-        uint32_t             m_ReportType;
-        uint32_t             m_ReportTypeMert;
+        ConfigurationData    m_Oa;
+        ConfigurationData    m_Mert;
+        uint64_t             m_Hash;
+        int32_t              m_ReferenceCounter;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Configuration hw counters oa constructor.
@@ -70,12 +95,10 @@ namespace ML
         ConfigurationHwCountersOaTrait( TT::Context& context )
             : Base( context )
             , m_Kernel{ context.m_Kernel }
-            , m_Id( T::ConstantsOs::Drm::m_Invalid )
-            , m_IdMert( T::ConstantsOs::Drm::m_Invalid )
-            , m_KernelMetricSet( T::ConstantsOs::Drm::m_Invalid )
-            , m_KernelMetricSetMert( T::ConstantsOs::Drm::m_Invalid )
-            , m_ReportType( 0 )
-            , m_ReportTypeMert( 0 )
+            , m_Oa()
+            , m_Mert()
+            , m_Hash( 0 )
+            , m_ReferenceCounter( 1 )
         {
         }
 
@@ -84,14 +107,14 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         ~ConfigurationHwCountersOaTrait()
         {
-            if( m_KernelMetricSet != T::ConstantsOs::Drm::m_Invalid )
+            if( m_Oa.m_KernelMetricSet != T::ConstantsOs::Drm::m_Invalid )
             {
-                close( m_KernelMetricSet );
+                close( m_Oa.m_KernelMetricSet );
             }
 
-            if( m_KernelMetricSetMert != T::ConstantsOs::Drm::m_Invalid )
+            if( m_Mert.m_KernelMetricSet != T::ConstantsOs::Drm::m_Invalid )
             {
-                close( m_KernelMetricSetMert );
+                close( m_Mert.m_KernelMetricSet );
             }
         }
 
@@ -105,21 +128,78 @@ namespace ML
             TT::Context&             context,
             ConfigurationHandle_1_0& handle )
         {
-            auto       configuration = Allocate( context );
-            const bool valid         = configuration && ML_SUCCESS( configuration->Initialize() );
+            ML_FUNCTION_LOG( StatusCode::Success, &context );
 
-            if( valid )
+            auto& kernel = context.m_Kernel;
+
+            std::array<ConfigurationData, 2> data = {};
+
+            ConfigurationData& oa   = data[0];
+            ConfigurationData& mert = data[1];
+
+            // Gets name, index node and report.
+            ML_FUNCTION_CHECK( kernel.GetOaConfigurationData( oa, mert ) );
+
+            const uint64_t hash = GetConfigurationHash( oa.m_IndexNode, mert.m_IndexNode );
+
+            if( kernel.IsOaConfigurationHandle( hash, handle ) )
             {
-                handle = configuration->GetHandle();
-            }
-            else
-            {
-                Delete( configuration );
+                return log.m_Result;
             }
 
-            return valid
-                ? StatusCode::Success
-                : StatusCode::Failed;
+            if( auto configuration = Allocate( context );
+                configuration != nullptr )
+            {
+                if( ML_FAIL( log.m_Result = kernel.GetOaConfiguration( oa ) ) ||
+                    ML_FAIL( log.m_Result = kernel.GetOaMertConfiguration( mert ) ) )
+                {
+                    Base::Delete( configuration );
+                    return log.m_Result;
+                }
+
+                configuration->m_Oa   = oa;
+                configuration->m_Mert = mert;
+                configuration->m_Hash = hash;
+                handle                = configuration->GetHandle();
+
+                auto& configurationManager = kernel.m_ConfigurationManager;
+
+                std::lock_guard<std::mutex> guard( configurationManager.m_Mutex );
+
+                configurationManager.m_ActiveConfigurations.emplace( hash, handle );
+
+                return log.m_Result;
+            }
+
+            return log.m_Result = StatusCode::Failed;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Decreases oa configuration reference counter.
+        ///         If reference counter is equal to zero, deletes configuration object.
+        /// @return handle  configuration handle.
+        /// @return         operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE static StatusCode Delete( const ConfigurationHandle_1_0& handle )
+        {
+            if constexpr( !T::Policy::Configuration::m_DeferDelete )
+            {
+                auto& configuration        = T::Configurations::HwCountersOa::FromHandle( handle );
+                auto& configurationManager = configuration.m_Context.m_Kernel.m_ConfigurationManager;
+
+                ML_FUNCTION_LOG( StatusCode::Success, &configuration.m_Context );
+
+                std::lock_guard<std::mutex> guard( configurationManager.m_Mutex );
+
+                if( --( configuration.m_ReferenceCounter ) == 0 )
+                {
+                    configurationManager.m_ActiveConfigurations.erase( configuration.m_Hash );
+
+                    Base::Delete( &configuration );
+                }
+            }
+
+            return StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -131,15 +211,15 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
-            ML_FUNCTION_CHECK( m_Kernel.LoadOaConfigurationToGpu( m_Id, m_KernelMetricSet, m_ReportType ) );
+            ML_FUNCTION_CHECK( m_Kernel.LoadOaConfigurationToGpu( m_Oa.m_Id, m_Oa.m_IndexNode, m_Oa.m_ReportType ) );
 
-            if( ML_SUCCESS( m_Kernel.LoadOaMertConfigurationToGpu( m_IdMert, m_KernelMetricSetMert, m_ReportTypeMert ) ) )
+            if( ML_SUCCESS( m_Kernel.LoadOaMertConfigurationToGpu( m_Mert.m_Id, m_Mert.m_IndexNode, m_Mert.m_ReportType ) ) )
             {
                 m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter++;
             }
             else
             {
-                ML_FUNCTION_CHECK( m_Kernel.UnloadOaConfigurationFromGpu( m_Id ) );
+                ML_FUNCTION_CHECK( m_Kernel.UnloadOaConfigurationFromGpu( m_Oa.m_Id ) );
                 log.m_Result = StatusCode::Failed;
             }
 
@@ -156,9 +236,9 @@ namespace ML
         ML_INLINE StatusCode Deactivate() const
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            ML_FUNCTION_CHECK( m_Kernel.UnloadOaConfigurationFromGpu( m_Id ) );
+            ML_FUNCTION_CHECK( m_Kernel.UnloadOaConfigurationFromGpu( m_Oa.m_Id ) );
 
-            log.m_Result = m_Kernel.UnloadOaMertConfigurationFromGpu( m_IdMert );
+            log.m_Result = m_Kernel.UnloadOaMertConfigurationFromGpu( m_Mert.m_Id );
 
             m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter--;
 
@@ -167,16 +247,22 @@ namespace ML
 
     private:
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Initializes activated oa configuration.
-        /// @return operation status.
+        /// @brief  Returns a hash of oa and mert configuration index nodes.
+        /// @param  indexNodeOa     oa configuration index node.
+        /// @param  indexNodeMert   mert configuration index node.
+        /// @return                 configuration hash.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode Initialize()
+        ML_INLINE static uint64_t GetConfigurationHash(
+            const uint64_t indexNodeOa,
+            const uint64_t indexNodeMert )
         {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            ML_FUNCTION_CHECK( m_Kernel.GetOaConfiguration( m_Id, m_KernelMetricSet, m_ReportType ) );
-            ML_FUNCTION_CHECK( m_Kernel.GetOaMertConfiguration( m_IdMert, m_KernelMetricSetMert, m_ReportTypeMert ) );
+            constexpr uint64_t prime = 0x9e3779b97f4a7c15ull;
+            uint64_t           hash  = 0;
 
-            return log.m_Result;
+            hash ^= T::Tools::GetHash( static_cast<uint64_t>( indexNodeOa ) ) + prime + ( hash << 6 ) + ( hash >> 2 );
+            hash ^= T::Tools::GetHash( static_cast<uint64_t>( indexNodeMert ) ) + prime + ( hash << 12 ) + ( hash >> 4 );
+
+            return hash;
         }
 
         //////////////////////////////////////////////////////////////////////////

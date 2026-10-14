@@ -40,6 +40,7 @@ namespace ML
             static constexpr const char* m_ConfigGuidFormat             = "%08x-%04x-%04x-%04x-%012" PRIx64;
             static constexpr const char* m_ConfigsPath                  = "/sys/class/drm/card%d/metrics";
             static constexpr const char* m_ConfigPath                   = "/sys/class/drm/card%d/metrics/%s/id";
+            static constexpr const char* m_ConfigPathRelative           = "%s/id";
         };
 
         //////////////////////////////////////////////////////////////////////////

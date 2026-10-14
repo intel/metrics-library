@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 ============================= end_copyright_notice ===========================*/
 
 /*
-@file ml_policy_openapi.h
+@file ml_policy_oneapi.h
 
 @brief Policies for OneApi.
 */
@@ -24,6 +24,14 @@ namespace ML::BASE
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( PolicyOneApiTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( PolicyOneApiTrait );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Configuration policies.
+        //////////////////////////////////////////////////////////////////////////
+        struct Configuration
+        {
+            static constexpr bool m_DeferDelete = false;
+        };
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Query hw counters policies.

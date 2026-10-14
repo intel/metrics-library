@@ -39,7 +39,6 @@ namespace ML::BASE
         int32_t              m_MetricSet;
         int32_t              m_MetricSetInternal;
         uint64_t             m_MetricSetIndexNode;
-        bool                 m_IsMetricSetUpdateRequired;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Tbs stream constructor.
@@ -52,7 +51,6 @@ namespace ML::BASE
             , m_MetricSet( T::ConstantsOs::Drm::m_Invalid )
             , m_MetricSetInternal( T::ConstantsOs::Drm::m_Invalid )
             , m_MetricSetIndexNode( 0 )
-            , m_IsMetricSetUpdateRequired( true )
         {
         }
 
@@ -102,23 +100,36 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Allows to use a new metric set by gpu.
-        /// @param  set metric set id.
-        /// @return     operation status.
+        /// @param  set         metric set id.
+        /// @param  indexNode   index node of the kernel metric set directory.
+        /// @return             operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode SetMetricSet( int32_t set )
+        ML_INLINE StatusCode SetMetricSet(
+            int32_t        set,
+            const uint64_t indexNode )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
             ML_FUNCTION_CHECK( IsEnabled() );
 
-            log.Debug( "Used set", m_MetricSet );
+            log.Debug( "Old set", m_MetricSet );
             log.Debug( "New set", set );
 
-            if( m_IsMetricSetUpdateRequired )
+            // OA configuration changed if index node has initial value or index node changed.
+            const bool isMetricSetUpdateRequired = ( m_MetricSetIndexNode == 0 ) || ( m_MetricSetIndexNode != indexNode );
+
+            if( isMetricSetUpdateRequired )
             {
+                log.Debug( "Old index node", m_MetricSetIndexNode );
+                log.Debug( "New index node", indexNode );
+
                 log.m_Result = m_Kernel.m_IoControl.SetTbsMetricSet( m_Id, set );
             }
 
-            m_MetricSet = ML_SUCCESS( log.m_Result ) ? set : m_MetricSet;
+            if( ML_SUCCESS( log.m_Result ) )
+            {
+                m_MetricSet          = set;
+                m_MetricSetIndexNode = indexNode;
+            }
 
             log.Debug( "Current set", m_MetricSet );
 
@@ -170,32 +181,6 @@ namespace ML::BASE
                 m_Kernel.m_IoControl.CloseTbs( m_Id );
                 m_Id = T::ConstantsOs::Drm::m_Invalid;
             }
-
-            return log.m_Result;
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        /// @brief  Updates metric set info and checks if tbs metric set needs to
-        ///         be updated on next activate.
-        /// @param  kernelMetricSet metric set file in the kernel.
-        /// @return operation status.
-        //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode UpdateMetricSetInfo( const int32_t kernelMetricSet )
-        {
-            ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
-
-            uint64_t indexNode = 0;
-
-            log.Info( "Old index node", m_MetricSetIndexNode );
-
-            ML_FUNCTION_CHECK( m_Kernel.m_IoControl.GetKernelMetricSetInfo( kernelMetricSet, indexNode ) );
-
-            // OA configuration changed if index node has initial value or index node changed.
-            m_IsMetricSetUpdateRequired = ( m_MetricSetIndexNode == 0 ) || ( m_MetricSetIndexNode != indexNode );
-
-            m_MetricSetIndexNode = indexNode;
-
-            log.Info( "Metric set update required", m_IsMetricSetUpdateRequired );
 
             return log.m_Result;
         }

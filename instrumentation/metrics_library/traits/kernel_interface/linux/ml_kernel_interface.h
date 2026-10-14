@@ -56,6 +56,21 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
+        /// @brief Destroys all cached oa configurations.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE void DeleteConfigurations()
+        {
+            std::lock_guard<std::mutex> guard( m_ConfigurationManager.m_Mutex );
+
+            for( auto& configuration : m_ConfigurationManager.m_ActiveConfigurations )
+            {
+                T::Configurations::HwCountersOa::Base::Delete( configuration.second );
+            }
+
+            m_ConfigurationManager.m_ActiveConfigurations.clear();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         /// @brief  Initializes kernel interface.
         /// @param  clientData  initializing client data.
         /// @return             operation status.
@@ -163,19 +178,18 @@ namespace ML::BASE
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Loads oa configuration to gpu through tbs interface.
-        /// @param  oaConfigurationId  oa configuration id.
-        /// @param  kernelMetricSet    kernel metric set file.
-        /// @param  reportType         report type.
-        /// @return                    operation status.
+        /// @param  oaConfigurationId   oa configuration id.
+        /// @param  indexNode           index node of the kernel metric set directory.
+        /// @param  reportType          report type.
+        /// @return                     operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode LoadOaConfigurationToGpu(
             const int32_t                   oaConfigurationId,
-            const int32_t                   kernelMetricSet,
+            const uint64_t                  indexNode,
             [[maybe_unused]] const uint32_t reportType )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            ML_FUNCTION_CHECK( m_Tbs.m_Stream.UpdateMetricSetInfo( kernelMetricSet ) );
-            ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfigurationId ) );
+            ML_FUNCTION_CHECK( m_Tbs.m_Stream.SetMetricSet( oaConfigurationId, indexNode ) );
 
             return log.m_Result;
         }
@@ -196,34 +210,73 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns activated by metrics discovery oa configuration
-        ///         from the kernel.
-        /// @return oaConfigurationId   oa configuration id.
-        /// @return kernelMetricSet     kernel metric set file.
-        /// @return reportType          report type.
-        /// @return                     operation status.
+        /// @brief  Returns data of activated by metrics discovery
+        ///         oa configuration from the kernel.
+        /// @return oa      oa configuration data.
+        /// @return mert    mert configuration data.
+        /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaConfiguration(
-            int32_t&  oaConfigurationId,
-            int32_t&  kernelMetricSet,
-            uint32_t& reportType )
+        ML_INLINE StatusCode GetOaConfigurationData(
+            TT::Configurations::HwCountersOa::ConfigurationData& oa,
+            TT::Configurations::HwCountersOa::ConfigurationData& mert )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            kernelMetricSet = m_IoControl.template GetKernelMetricSetFile<false>( reportType );
+            ML_FUNCTION_CHECK( m_IoControl.GetKernelMetricSetData( oa, mert ) );
 
-            ML_FUNCTION_CHECK( kernelMetricSet != T::ConstantsOs::Drm::m_Invalid );
+            return log.m_Result;
+        }
 
-            oaConfigurationId = m_IoControl.GetKernelMetricSet( kernelMetricSet );
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Returns activated by metrics discovery oa configuration
+        ///         from the kernel.
+        /// @return oa  oa configuration data.
+        /// @return     operation status.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE StatusCode GetOaConfiguration( TT::Configurations::HwCountersOa::ConfigurationData& oa )
+        {
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            if( oaConfigurationId == T::ConstantsOs::Drm::m_Invalid )
+            oa.m_KernelMetricSet = m_IoControl.GetKernelMetricSetFile( oa.m_Name );
+
+            ML_FUNCTION_CHECK( oa.m_KernelMetricSet != T::ConstantsOs::Drm::m_Invalid );
+
+            oa.m_Id = m_IoControl.GetKernelMetricSet( oa.m_KernelMetricSet );
+
+            if( oa.m_Id == T::ConstantsOs::Drm::m_Invalid )
             {
-                close( kernelMetricSet );
-                kernelMetricSet     = T::ConstantsOs::Drm::m_Invalid;
-                return log.m_Result = StatusCode::Failed;
+                close( oa.m_KernelMetricSet );
+                oa.m_KernelMetricSet = T::ConstantsOs::Drm::m_Invalid;
+                return log.m_Result  = StatusCode::Failed;
             }
 
             return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Gets cached configuration handle by configuration hash.
+        /// @param  configurationHash   oa configuration hash.
+        /// @return handle              oa configuration handle.
+        /// @return                     true if configuration found, false otherwise.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsOaConfigurationHandle(
+            const uint64_t           configurationHash,
+            ConfigurationHandle_1_0& handle )
+        {
+            std::lock_guard<std::mutex> guard( m_ConfigurationManager.m_Mutex );
+
+            if( auto iterator = m_ConfigurationManager.m_ActiveConfigurations.find( configurationHash );
+                iterator != m_ConfigurationManager.m_ActiveConfigurations.end() )
+            {
+                auto& savedConfiguration = T::Configurations::HwCountersOa::FromHandle( iterator->second );
+                savedConfiguration.m_ReferenceCounter++;
+
+                handle = iterator->second;
+
+                return true;
+            }
+
+            return false;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -245,13 +298,13 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Loads oa mert configuration to gpu through tbs interface.
         /// @param  oaMertConfigurationId   oa mert configuration id.
-        /// @param  kernelMetricSet         kernel metric set file.
+        /// @param  indexNode               index node of the kernel metric set directory.
         /// @param  reportType              report type.
         /// @return                         operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode LoadOaMertConfigurationToGpu(
             [[maybe_unused]] const int32_t  oaMertConfigurationId,
-            [[maybe_unused]] const int32_t  kernelMetricSet,
+            [[maybe_unused]] const uint64_t indexNode,
             [[maybe_unused]] const uint32_t reportType )
         {
             // Not supported.
@@ -274,18 +327,14 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns activated by metrics discovery oa mert configuration
         ///         from the kernel.
-        /// @return oaMertConfigurationId   oa mert configuration id.
-        /// @return kernelMetricSet         kernel metric set file.
-        /// @return reportType              report type.
-        /// @return                         operation status.
+        /// @return mert    oa mert configuration data.
+        /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaMertConfiguration(
-            [[maybe_unused]] int32_t&  oaMertConfigurationId,
-            [[maybe_unused]] int32_t&  kernelMetricSet,
-            [[maybe_unused]] uint32_t& reportType )
+        ML_INLINE StatusCode GetOaMertConfiguration( [[maybe_unused]] TT::Configurations::HwCountersOa::ConfigurationData& mert )
         {
             // Not supported.
-            oaMertConfigurationId = T::ConstantsOs::Drm::m_Invalid;
+            mert.m_Id              = T::ConstantsOs::Drm::m_Invalid;
+            mert.m_KernelMetricSet = T::ConstantsOs::Drm::m_Invalid;
             return StatusCode::Success;
         }
 
@@ -472,21 +521,20 @@ namespace ML::XE3P
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Loads oa mert configuration to gpu through tbs interface.
         /// @param  oaMertConfigurationId   oa mert configuration id.
-        /// @param  kernelMetricSet         kernel metric set file.
+        /// @param  indexNode               index node of the kernel metric set directory.
         /// @param  reportType              report type.
         /// @return                         operation status.
         //////////////////////////////////////////////////////////////////////////
         ML_INLINE StatusCode LoadOaMertConfigurationToGpu(
             const int32_t                   oaMertConfigurationId,
-            const int32_t                   kernelMetricSet,
+            const uint64_t                  indexNode,
             [[maybe_unused]] const uint32_t reportType )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             if( m_IsOaMertSupported && oaMertConfigurationId != T::ConstantsOs::Drm::m_Invalid )
             {
-                ML_FUNCTION_CHECK( m_Tbs.m_StreamMert.UpdateMetricSetInfo( kernelMetricSet ) );
-                ML_FUNCTION_CHECK( m_Tbs.m_StreamMert.SetMetricSet( oaMertConfigurationId ) );
+                ML_FUNCTION_CHECK( m_Tbs.m_StreamMert.SetMetricSet( oaMertConfigurationId, indexNode ) );
             }
 
             return log.m_Result;
@@ -514,32 +562,27 @@ namespace ML::XE3P
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Returns activated by metrics discovery oa mert configuration
         ///         from the kernel.
-        /// @return oaMertConfigurationId   oa mert configuration id.
-        /// @return kernelMetricSet         kernel metric set file.
-        /// @return reportType              report type.
-        /// @return                         operation status.
+        /// @return mert    oa mert configuration data.
+        /// @return         operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE StatusCode GetOaMertConfiguration(
-            int32_t&  oaMertConfigurationId,
-            int32_t&  kernelMetricSet,
-            uint32_t& reportType )
+        ML_INLINE StatusCode GetOaMertConfiguration( TT::Configurations::HwCountersOa::ConfigurationData& mert )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             if( m_IsOaMertSupported )
             {
-                kernelMetricSet       = m_IoControl.template GetKernelMetricSetFile<true>( reportType );
-                oaMertConfigurationId = m_IoControl.GetKernelMetricSet( kernelMetricSet );
+                mert.m_KernelMetricSet = m_IoControl.GetKernelMetricSetFile( mert.m_Name );
+                mert.m_Id              = m_IoControl.GetKernelMetricSet( mert.m_KernelMetricSet );
 
-                if( oaMertConfigurationId == T::ConstantsOs::Drm::m_Invalid )
+                if( mert.m_Id == T::ConstantsOs::Drm::m_Invalid )
                 {
                     log.Info( "Oa mert is not activated" );
                 }
             }
             else
             {
-                oaMertConfigurationId = T::ConstantsOs::Drm::m_Invalid;
-                kernelMetricSet       = T::ConstantsOs::Drm::m_Invalid;
+                mert.m_Id              = T::ConstantsOs::Drm::m_Invalid;
+                mert.m_KernelMetricSet = T::ConstantsOs::Drm::m_Invalid;
                 log.Info( "Oa mert is not supported" );
             }
 
