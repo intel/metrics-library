@@ -51,7 +51,7 @@ namespace ML::BASE
             : Base()
             , m_Kernel( kernel )
             , m_OaBufferType( T::Layouts::OaBuffer::Type::Oa )
-            , m_OaBuffer( kernel.m_Tbs.GetOaBufferMapped( m_OaBufferType ) )
+            , m_OaBuffer( m_Kernel.m_Tbs.GetOaBufferMapped( m_OaBufferType ) )
             , m_ReportSplitted{}
         {
         }
@@ -65,19 +65,23 @@ namespace ML::BASE
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
             // Some cases does not require mapped oa buffer.
-            // For example when tbs is used by metrics discovery.
-            log.m_Result = m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled
-                ? StatusCode::Success
-                : m_OaBuffer.Map();
-
-            // Mapped oa buffer may not be required for some cases.
-            // For example linux without oa buffer mapping patch
-            // will use a standard mirpc (without context switch handling).
-            log.m_Result = T::ConstantsOs::Tbs::m_MappingRequired
-                ? log.m_Result
-                : StatusCode::Success;
+            // For example when tbs is used by metrics discovery or
+            // OAR/OAC reports do not require mapped oa buffer.
+            if( DerivedConst().IsMappingRequired() && !m_OaBuffer.IsMapped() )
+            {
+                log.m_Result = m_OaBuffer.Map();
+            }
 
             return log.m_Result;
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks if mapping is required.
+        /// @return true if mapping is required, false otherwise.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsMappingRequired() const
+        {
+            return !m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -129,9 +133,9 @@ namespace ML::BASE
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Kernel.m_Context );
 
-            return log.m_Result = m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled
-                ? StatusCode::Success
-                : m_OaBuffer.Unmap();
+            return log.m_Result = m_OaBuffer.IsMapped()
+                ? m_OaBuffer.Unmap()
+                : StatusCode::Success;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -540,6 +544,24 @@ namespace ML::XE2_HPG
     struct OaBufferMappedTrait : XE_HPG::OaBufferMappedTrait<T>
     {
         ML_DECLARE_TRAIT( OaBufferMappedTrait, XE_HPG );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base::m_Kernel;
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks if mapping is required.
+        /// @return true if mapping is required, false otherwise.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsMappingRequired() const
+        {
+            const auto queryMode = m_Kernel.GetQueryModeOverride();
+
+            return !m_Kernel.m_Context.m_ClientOptions.m_TbsEnabled &&
+                ( queryMode == T::Layouts::HwCounters::Query::Mode::Global ||
+                  queryMode == T::Layouts::HwCounters::Query::Mode::GlobalExtended );
+        }
     };
 } // namespace ML::XE2_HPG
 

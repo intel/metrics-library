@@ -32,11 +32,13 @@ namespace ML::BASE
         TT::ConstantsOs::Drm::Revision                         m_Revision;
         TT::IoControl                                          m_IoControl;
         TT::TbsInterface                                       m_Tbs;
+        TT::OaBuffer                                           m_OaBuffer;
         TT::Configurations::HwCountersOa::ConfigurationManager m_ConfigurationManager;
         uint64_t                                               m_OaFrequency;
         uint64_t                                               m_CsFrequency;
         uint64_t                                               m_GpuTimestampTickValue;
         int32_t                                                m_DeviceId;
+        std::mutex                                             m_TbsMutex;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief KernelInterfaceTrait constructor.
@@ -47,11 +49,13 @@ namespace ML::BASE
             , m_Revision( T::ConstantsOs::Drm::Revision::Unsupported )
             , m_IoControl( static_cast<TT::KernelInterface&>( *this ) )
             , m_Tbs( static_cast<TT::KernelInterface&>( *this ) )
+            , m_OaBuffer( static_cast<TT::KernelInterface&>( *this ) )
             , m_ConfigurationManager{}
             , m_OaFrequency( 0 )
             , m_CsFrequency( 0 )
             , m_GpuTimestampTickValue( 0 )
             , m_DeviceId( T::ConstantsOs::Drm::m_Invalid )
+            , m_TbsMutex{}
         {
         }
 
@@ -82,7 +86,6 @@ namespace ML::BASE
             ML_FUNCTION_CHECK( m_IoControl.Initialize( clientData, m_Revision ) );
             ML_FUNCTION_CHECK( InitializeDevice() );
             ML_FUNCTION_CHECK( InitializeSubDevice() );
-            ML_FUNCTION_CHECK( m_Tbs.Initialize() );
 
             return log.m_Result;
         }
@@ -166,14 +169,28 @@ namespace ML::BASE
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /// @brief  Returns tbs state.
-        /// @return true if tbs is enabled.
+        /// @brief  Enables tbs and maps oa buffer on first use. It is not done during
+        ///         context initialization, because only queries require tbs and
+        ///         stream markers have to work while tbs is used by another process.
+        /// @return operation status.
         //////////////////////////////////////////////////////////////////////////
-        ML_INLINE bool TbsIsEnabled() const
+        ML_INLINE StatusCode EnableTbs()
         {
-            ML_FUNCTION_LOG( false, &m_Context );
+            ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            return log.m_Result = m_Tbs.IsEnabled();
+            std::lock_guard<std::mutex> guard( m_TbsMutex );
+
+            if( !m_Tbs.m_Stream.IsEnabled() )
+            {
+                ML_FUNCTION_CHECK( m_Tbs.Initialize() );
+            }
+
+            if( m_OaBuffer.IsMappingRequired() && !m_OaBuffer.IsValid() )
+            {
+                ML_FUNCTION_CHECK( m_OaBuffer.Initialize() );
+            }
+
+            return log.m_Result;
         }
 
         //////////////////////////////////////////////////////////////////////////

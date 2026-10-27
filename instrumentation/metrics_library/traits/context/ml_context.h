@@ -41,7 +41,6 @@ namespace ML
         uint32_t                  m_AdapterId;
         TT::Debug                 m_Debug;
         TT::KernelInterface       m_Kernel;
-        TT::OaBuffer              m_OaBuffer;
         TT::ClientOptions         m_ClientOptions;
         const ClientHandle_1_0    m_ClientHandle;
         const ClientCallbacks_1_0 m_ClientCallbacks;
@@ -63,7 +62,6 @@ namespace ML
             , m_AdapterId( IU_ADAPTER_ID_UNKNOWN )
             , m_Debug{}
             , m_Kernel( *this )
-            , m_OaBuffer( m_Kernel )
             , m_ClientOptions( *createData.ClientData, *this )
             , m_ClientHandle( createData.ClientData->Handle )
             , m_ClientCallbacks{ *createData.ClientCallbacks }
@@ -84,7 +82,7 @@ namespace ML
             m_Kernel.DeleteConfigurations();
 
             // Release reference to oa buffer.
-            m_OaBuffer.Release();
+            m_Kernel.m_OaBuffer.Release();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -140,7 +138,6 @@ namespace ML
 
             ML_FUNCTION_CHECK( m_Kernel.Initialize( m_ClientData ) );
             ML_FUNCTION_CHECK( m_Kernel.GetAdapterId( m_AdapterId ) );
-            ML_FUNCTION_CHECK( m_OaBuffer.Initialize() );
 
             return log.m_Result;
         }

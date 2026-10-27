@@ -172,7 +172,10 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         ~TbsInterfaceTrait()
         {
-            m_Stream.Disable();
+            if( m_Stream.IsEnabled() )
+            {
+                m_Stream.Disable();
+            }
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -550,7 +553,7 @@ namespace ML::XE3P
         //////////////////////////////////////////////////////////////////////////
         ~TbsInterfaceTrait()
         {
-            if( m_Kernel.IsOaMertSupported() )
+            if( m_StreamMert.IsEnabled() )
             {
                 m_StreamMert.Disable();
             }

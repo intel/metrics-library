@@ -43,8 +43,8 @@ namespace ML::BASE
         TT::Layouts::HwCounters::Report&                m_ReportEnd;
         TT::Layouts::HwCounters::Query::ReportApi&      m_ReportApi;
         TT::Layouts::OaBuffer::State&                   m_OaBufferState;
-        TT::OaBuffer&                                   m_OaBuffer;
         TT::KernelInterface&                            m_Kernel;
+        TT::OaBuffer&                                   m_OaBuffer;
         GpuCommandBufferType                            m_CommandBufferType;
         const ConfigurationHandle_1_0&                  m_UserConfiguration;
         const TT::Layouts::Configuration::TimestampType m_TimestampType;
@@ -69,8 +69,8 @@ namespace ML::BASE
             , m_ReportEnd( m_ReportGpu.m_End )
             , m_ReportApi( reportApi )
             , m_OaBufferState( m_QuerySlot.m_OaBufferState )
-            , m_OaBuffer( m_Context.m_OaBuffer )
             , m_Kernel( m_Context.m_Kernel )
+            , m_OaBuffer( m_Kernel.m_OaBuffer )
             , m_CommandBufferType( GpuCommandBufferType::Last )
             , m_UserConfiguration( query.m_UserConfiguration )
             , m_TimestampType(
@@ -211,7 +211,7 @@ namespace ML::BASE
             auto& flags = m_ReportApi.m_Flags;
             flags       = {};
 
-            flags.m_ReportContextSwitchLost |= !m_OaBuffer.IsValid();
+            flags.m_ReportContextSwitchLost |= ( DerivedConst().UseOaBuffer() && !m_OaBuffer.IsValid() );
 
             switch( status )
             {

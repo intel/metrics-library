@@ -40,6 +40,8 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
         //////////////////////////////////////////////////////////////////////////
+        TT::KernelInterface&                        m_Kernel;
+        TT::OaBuffer&                               m_OaBuffer;
         TT::Layouts::HwCounters::Query::GetDataMode m_GetDataMode;
         ConfigurationHandle_1_0                     m_UserConfiguration;
         std::vector<TT::Queries::HwCountersSlot>    m_Slots;
@@ -51,7 +53,9 @@ namespace ML::BASE
         //////////////////////////////////////////////////////////////////////////
         QueryHwCountersTrait( TT::Context& context )
             : Base( context )
-            , m_GetDataMode( context.m_Kernel.GetQueryHwCountersReportingMode() )
+            , m_Kernel( m_Context.m_Kernel )
+            , m_OaBuffer( m_Kernel.m_OaBuffer )
+            , m_GetDataMode( m_Kernel.GetQueryHwCountersReportingMode() )
             , m_UserConfiguration{ nullptr }
             , m_Slots{}
             , m_IsUserConfigurationCopied( false )
@@ -214,13 +218,12 @@ namespace ML::BASE
             auto& query = FromHandle( getData.Handle );
             ML_FUNCTION_LOG( StatusCode::Success, &query.m_Context );
 
-            auto& kernel     = query.m_Context.m_Kernel;
-            auto  reportsApi = static_cast<TT::Layouts::HwCounters::Query::ReportApi*>( getData.Data );
+            auto reportsApi = static_cast<TT::Layouts::HwCounters::Query::ReportApi*>( getData.Data );
 
             // Check if a configuration was activated before executing query commands.
             if constexpr( T::Policy::QueryHwCounters::GetData::m_CheckConfigurationActivation )
             {
-                if( kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter <= 0 )
+                if( query.m_Kernel.m_ConfigurationManager.m_OaConfigurationReferenceCounter <= 0 )
                 {
                     log.Error( "Empty configuration found" );
                     return log.m_Result = StatusCode::ReportWithEmptyConfiguration;
@@ -285,11 +288,11 @@ namespace ML::BASE
             TT::Layouts::HwCounters::Query::ReportGpu& report )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
-            ML_FUNCTION_CHECK( m_Context.m_OaBuffer.IsValid() );
+            ML_FUNCTION_CHECK( m_OaBuffer.IsValid() );
 
             log.m_Result = FindTriggeredOaReport<true>( slot, report );
             log.m_Result = ML_SUCCESS( log.m_Result ) ? FindTriggeredOaReport<false>( slot, report ) : log.m_Result;
-            log.m_Result = ML_SUCCESS( log.m_Result ) ? m_Context.m_OaBuffer.DumpReports( slot.m_OaBufferState ) : log.m_Result;
+            log.m_Result = ML_SUCCESS( log.m_Result ) ? m_OaBuffer.DumpReports( slot.m_OaBufferState ) : log.m_Result;
 
             return log.m_Result;
         }
@@ -303,6 +306,7 @@ namespace ML::BASE
         ML_INLINE StatusCode Initialize( const uint32_t slotCount )
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
+            ML_FUNCTION_CHECK( m_Kernel.EnableTbs() );
             ML_FUNCTION_CHECK( slotCount <= T::Policy::QueryHwCounters::Create::m_MaxSlotCount );
 
             if constexpr( T::Policy::QueryHwCounters::Create::m_UserCounters )
@@ -1016,9 +1020,8 @@ namespace ML::BASE
 
             // OaBuffer data.
             const auto&        derived             = DerivedConst();
-            TT::OaBuffer&      oaBuffer            = m_Context.m_OaBuffer;
-            const uint32_t     oaBufferSize        = oaBuffer.GetSize();
-            const uint32_t     reportSize          = oaBuffer.GetReportSize();
+            const uint32_t     oaBufferSize        = m_OaBuffer.GetSize();
+            const uint32_t     reportSize          = m_OaBuffer.GetReportSize();
             uint32_t           reportOaOffset      = begin ? slot.m_OaBufferState.m_TailPreBeginOffset : slot.m_OaBufferState.m_TailPreEndOffset;
             uint32_t           reportOaOffsetPost  = begin ? slot.m_OaBufferState.m_TailPostBeginOffset : slot.m_OaBufferState.m_TailPostEndOffset;
             uint32_t           foundReportOaOffset = 0;
@@ -1032,7 +1035,7 @@ namespace ML::BASE
             // Validate triggered oa report.
             while( reportOaOffset != reportOaOffsetPost )
             {
-                auto& reportOa = oaBuffer.template GetReport<false>( reportOaOffset );
+                auto& reportOa = m_OaBuffer.template GetReport<false>( reportOaOffset );
 
                 const uint32_t queryIdExpected = begin ? slot.m_QueryIdBegin : slot.m_QueryIdEnd;
 
@@ -1052,7 +1055,7 @@ namespace ML::BASE
                     if( foundTriggers == expectedTriggers )
                     {
                         // Recreate query report from the first found triggered oa report.
-                        auto& foundReportOa = oaBuffer.template GetReport<false>( foundReportOaOffset );
+                        auto& foundReportOa = m_OaBuffer.template GetReport<false>( foundReportOaOffset );
 
                         log.Info(
                             "Used reportOa: ",
@@ -1258,6 +1261,7 @@ namespace ML::XE2_HPG
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base::m_Context;
+        using Base::m_Kernel;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Checks oa report collecting mode.
@@ -1268,7 +1272,7 @@ namespace ML::XE2_HPG
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
             auto& mode = slot.m_ReportCollectingMode;
-            mode       = m_Context.m_Kernel.GetReportCollectingModeOverride();
+            mode       = m_Kernel.GetReportCollectingModeOverride();
 
             log.Debug( "Oa report collecting mode", mode );
         }
@@ -1295,6 +1299,7 @@ namespace ML::XE3P
         /// @brief Types.
         //////////////////////////////////////////////////////////////////////////
         using Base::m_Context;
+        using Base::m_Kernel;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Writes mmio user counters commands to command buffer.
@@ -1310,7 +1315,7 @@ namespace ML::XE3P
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            if( !m_Context.m_Kernel.IsOaMertSupported() ) // User and mert counters are mutually exclusive.
+            if( !m_Kernel.IsOaMertSupported() ) // User and mert counters are mutually exclusive.
             {
                 ML_FUNCTION_CHECK( Base::template WriteUserCounters<begin>( buffer, offset ) );
             }
@@ -1332,7 +1337,7 @@ namespace ML::XE3P
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            if( m_Context.m_Kernel.IsOaMertSupported() )
+            if( m_Kernel.IsOaMertSupported() )
             {
                 const auto flags = m_Context.m_ClientOptions.m_WorkloadPartitionEnabled
                     ? T::GpuCommands::Flags::WorkloadPartition
@@ -1401,7 +1406,7 @@ namespace ML::XE3P
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            if( !m_Context.m_Kernel.IsOaMertSupported() ) // User and mert counters are mutually exclusive.
+            if( !m_Kernel.IsOaMertSupported() ) // User and mert counters are mutually exclusive.
             {
                 ML_FUNCTION_CHECK( Base::CopyUserCounters( buffer, slotSource, slotTarget ) );
             }
@@ -1424,7 +1429,7 @@ namespace ML::XE3P
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
 
-            if( m_Context.m_Kernel.IsOaMertSupported() )
+            if( m_Kernel.IsOaMertSupported() )
             {
                 constexpr uint32_t offsetBegin = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_Begin.m_Mert );
                 constexpr uint32_t offsetEnd   = offsetof( TT::Layouts::HwCounters::Query::ReportGpu, m_End.m_Mert );

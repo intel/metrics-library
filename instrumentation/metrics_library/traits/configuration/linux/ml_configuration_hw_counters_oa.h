@@ -211,6 +211,7 @@ namespace ML
         {
             ML_FUNCTION_LOG( StatusCode::Success, &m_Context );
             ML_FUNCTION_CHECK( activateData.Type == GpuConfigurationActivationType::Tbs );
+            ML_FUNCTION_CHECK( m_Kernel.EnableTbs() );
             ML_FUNCTION_CHECK( m_Kernel.LoadOaConfigurationToGpu( m_Oa.m_Id, m_Oa.m_IndexNode, m_Oa.m_ReportType ) );
 
             if( ML_SUCCESS( m_Kernel.LoadOaMertConfigurationToGpu( m_Mert.m_Id, m_Mert.m_IndexNode, m_Mert.m_ReportType ) ) )

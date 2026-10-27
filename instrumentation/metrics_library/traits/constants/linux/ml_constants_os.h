@@ -30,7 +30,6 @@ namespace ML
         //////////////////////////////////////////////////////////////////////////
         struct Tbs
         {
-            static constexpr bool        m_MappingRequired              = false;
             static constexpr uint64_t    m_TimerPeriod                  = 0xFFFFFFFFFFFFFFFF;
             static constexpr uint32_t    m_ConfigGuidSubDeviceLegacy    = 0x42a7;
             static constexpr uint32_t    m_ConfigGuidPrefixOa           = 0x2f01b241;
