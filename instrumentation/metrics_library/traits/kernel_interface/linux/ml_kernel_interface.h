@@ -20,10 +20,17 @@ namespace ML::BASE
     /// @brief Base type for KernelInterfaceTrait object.
     //////////////////////////////////////////////////////////////////////////
     template <typename T>
-    struct KernelInterfaceTrait
+    struct KernelInterfaceTrait : TraitObject<T, TT::KernelInterface>
     {
         ML_DELETE_DEFAULT_CONSTRUCTOR( KernelInterfaceTrait );
         ML_DELETE_DEFAULT_COPY_AND_MOVE( KernelInterfaceTrait );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief Types.
+        //////////////////////////////////////////////////////////////////////////
+        using Base = TraitObject<T, TT::KernelInterface>;
+        using Base::Derived;
+        using Base::DerivedConst;
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Members.
@@ -47,9 +54,9 @@ namespace ML::BASE
         KernelInterfaceTrait( TT::Context& context )
             : m_Context( context )
             , m_Revision( T::ConstantsOs::Drm::Revision::Unsupported )
-            , m_IoControl( static_cast<TT::KernelInterface&>( *this ) )
-            , m_Tbs( static_cast<TT::KernelInterface&>( *this ) )
-            , m_OaBuffer( static_cast<TT::KernelInterface&>( *this ) )
+            , m_IoControl( Derived() )
+            , m_Tbs( Derived() )
+            , m_OaBuffer( Derived() )
             , m_ConfigurationManager{}
             , m_OaFrequency( 0 )
             , m_CsFrequency( 0 )
@@ -185,7 +192,9 @@ namespace ML::BASE
                 ML_FUNCTION_CHECK( m_Tbs.Initialize() );
             }
 
-            if( m_OaBuffer.IsMappingRequired() && !m_OaBuffer.IsValid() )
+            if( DerivedConst().IsOaBufferMappingSupported() &&
+                m_OaBuffer.IsMappingRequired() &&
+                !m_OaBuffer.IsValid() )
             {
                 ML_FUNCTION_CHECK( m_OaBuffer.Initialize() );
             }
@@ -393,6 +402,15 @@ namespace ML::BASE
             return m_IoControl.GetReportCollectingModeOverride();
         }
 
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks if OA buffer mapping is supported.
+        /// @return true if OA buffer mapping is supported.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsOaBufferMappingSupported() const
+        {
+            return m_Revision >= T::ConstantsOs::Drm::Revision::PrelimOaBufferMap;
+        }
+
     private:
         //////////////////////////////////////////////////////////////////////////
         /// @brief  Initializes device.
@@ -494,6 +512,15 @@ namespace ML::XE2_HPG
     struct KernelInterfaceTrait : XE_HPG::KernelInterfaceTrait<T>
     {
         ML_DECLARE_TRAIT( KernelInterfaceTrait, XE_HPG );
+
+        //////////////////////////////////////////////////////////////////////////
+        /// @brief  Checks if OA buffer mapping is supported.
+        /// @return true if OA buffer mapping is supported.
+        //////////////////////////////////////////////////////////////////////////
+        ML_INLINE bool IsOaBufferMappingSupported() const
+        {
+            return true;
+        }
     };
 } // namespace ML::XE2_HPG
 

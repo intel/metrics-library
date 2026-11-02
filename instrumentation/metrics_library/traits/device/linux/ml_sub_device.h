@@ -255,7 +255,7 @@ namespace ML::XE_HPG
         ML_INLINE bool IsSubDeviceSupported() const
         {
             const uint32_t     revision  = static_cast<uint32_t>( m_Context.m_Kernel.m_Revision );
-            constexpr uint32_t expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::SubDevices );
+            constexpr uint32_t expected  = static_cast<uint32_t>( T::ConstantsOs::Drm::Revision::PrelimEngineClassInstance );
             const bool         supported = revision >= expected;
 
             return supported;

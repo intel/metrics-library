@@ -52,16 +52,24 @@ namespace ML
             //////////////////////////////////////////////////////////////////////////
             enum class Revision : uint32_t
             {
-                Unsupported      = 0,
-                OaSupported      = 1,
-                OaConfiguration  = 2,
-                HoldPreemption   = 3,
-                AllowedSsEu      = 4,
-                PollOaPeriod     = 5,
-                TriggerReports   = 6,
-                TriggerWhitelist = 7,
-                OaBufferMapping  = 8,
-                SubDevices       = 10
+                Unsupported         = 0,
+                OaSupported         = 1, // I915_PERF_IOCTL_ENABLE & I915_PERF_IOCTL_DISABLE
+                OaConfiguration     = 2, // I915_PERF_IOCTL_CONFIG
+                HoldPreemption      = 3, // DRM_I915_PERF_PROP_HOLD_PREEMPTION
+                AllowedSsEu         = 4, // DRM_I915_PERF_PROP_ALLOWED_SSEU
+                PollOaPeriod        = 5, // DRM_I915_PERF_PROP_POLL_OA_PERIOD
+                EngineClassInstance = 6, // DRM_I915_PERF_PROP_OA_ENGINE_CLASS & DRM_I915_PERF_PROP_OA_ENGINE_INSTANCE
+                OamSupported        = 7, // OAM support
+
+                PrelimOaBufferMap         = PRELIM_PERF_VERSION + 0, // PRELIM_I915_PERF_IOCTL_GET_OA_BUFFER_INFO
+                PrelimOaBufferSize        = PRELIM_PERF_VERSION + 1, // PRELIM_DRM_I915_PERF_PROP_OA_BUFFER_SIZE
+                PrelimEngineClassInstance = PRELIM_PERF_VERSION + 2, // PRELIM_DRM_I915_PERF_PROP_OA_ENGINE_CLASS & PRELIM_DRM_I915_PERF_PROP_OA_ENGINE_INSTANCE
+                PrelimMmioTrgQueueFull    = PRELIM_PERF_VERSION + 3, // PRELIM_DRM_I915_PERF_RECORD_OA_MMIO_TRG_Q_FULL
+                PrelimOamSupported        = PRELIM_PERF_VERSION + 4, // OAM support
+                PrelimOacSupported        = PRELIM_PERF_VERSION + 5, // OAC support
+                PrelimEussSupported       = PRELIM_PERF_VERSION + 6, // EUSS support
+                PrelimMpesConfiguration   = PRELIM_PERF_VERSION + 7, // MPES configuration support
+                PrelimOaNotifyNumReports  = PRELIM_PERF_VERSION + 8, // PRELIM_DRM_I915_PERF_PROP_OA_NOTIFY_NUM_REPORTS
             };
 
             static constexpr int32_t     m_Invalid = -1;
